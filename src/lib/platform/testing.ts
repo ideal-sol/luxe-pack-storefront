@@ -1,0 +1,24 @@
+import { createMockFetch, type MockFetchController } from "@oripa/storefront-testkit/mock";
+import { createBrowserAuthClient } from "./auth-client";
+import { STOREFRONT_SITE_VERSION } from "./runtime-configuration";
+
+export interface AuthClientTestHarness {
+  readonly client: ReturnType<typeof createBrowserAuthClient>;
+  readonly mock: MockFetchController;
+}
+
+export function createAuthClientTestHarness(cookieValue?: string): AuthClientTestHarness {
+  const mock = createMockFetch();
+  const client = createBrowserAuthClient(
+    {
+      baseUrl: "https://storefront.test/platform",
+      defaultTimeoutMs: 1_000,
+      siteVersion: STOREFRONT_SITE_VERSION,
+    },
+    {
+      cookie_reader: () => cookieValue,
+      fetch: mock.fetch,
+    },
+  );
+  return { client, mock };
+}

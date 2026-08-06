@@ -18,15 +18,20 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "policy:check": "node scripts/check-policy.mjs",
+    "artifact:check": "node scripts/verify-vendored-artifacts.mjs",
+    "auth-boundary:check": "node scripts/check-auth-boundary.mjs",
     "security:check": "node scripts/check-secrets.mjs",
-    "validate": "pnpm policy:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "validate": "pnpm artifact:check && pnpm policy:check && pnpm auth-boundary:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
+    "@oripa/storefront-client": "file:vendor/oripa/MIG-061U/oripa-storefront-client-2.0.0-alpha.1.tgz",
     "next": "16.3.0",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@oripa/site-schema": "file:vendor/oripa/MIG-061U/oripa-site-schema-2.0.0-alpha.1.tgz",
+    "@oripa/storefront-testkit": "file:vendor/oripa/MIG-061U/oripa-storefront-testkit-2.0.0-alpha.1.tgz",
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "7.0.0",
@@ -40,5 +45,11 @@
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
     "vitest": "4.1.10"
+  },
+  "pnpm": {
+    "overrides": {
+      "@oripa/site-schema@2.0.0-alpha.1": "file:vendor/oripa/MIG-061U/oripa-site-schema-2.0.0-alpha.1.tgz",
+      "@oripa/storefront-client@2.0.0-alpha.1": "file:vendor/oripa/MIG-061U/oripa-storefront-client-2.0.0-alpha.1.tgz"
+    }
   }
 }

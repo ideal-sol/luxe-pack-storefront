@@ -37,6 +37,8 @@ export const publicRoutes = [
   "/gachas/[slug]",
   "/login",
   "/register",
+  "/verify-email",
+  "/verify-email/[userId]/[hash]",
   "/points",
   "/notices",
   "/notices/[noticeId]",

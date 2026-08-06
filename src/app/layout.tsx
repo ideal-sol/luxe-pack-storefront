@@ -3,6 +3,7 @@ import { MobileBottomNavigation } from "@/components/layout/mobile-bottom-naviga
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { ToastProvider } from "@/components/common/toast-provider";
+import { SessionProvider } from "@/components/auth/session-provider";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -23,10 +24,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="ja">
       <body>
         <ToastProvider>
-          <SiteHeader />
-          <main className="site-main">{children}</main>
-          <SiteFooter />
-          <MobileBottomNavigation />
+          <SessionProvider>
+            <SiteHeader />
+            <main className="site-main">{children}</main>
+            <SiteFooter />
+            <MobileBottomNavigation />
+          </SessionProvider>
         </ToastProvider>
       </body>
     </html>
