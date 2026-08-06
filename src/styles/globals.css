@@ -159,6 +159,79 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .verification-card .button { margin: 6px 0 22px; }
 .verification-card__success { color: #326747 !important; font-weight: 700; }
 
+.public-home-state { padding-block: 64px 96px; }
+.home-banners { background: #e9e2d6; padding-block: 18px; }
+.home-banners__rail { display: grid; gap: 14px; grid-auto-columns: min(88vw, 740px); grid-auto-flow: column; overflow-x: auto; padding: 2px 2px 12px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+.home-banner { aspect-ratio: 16 / 8.2; background: var(--ink); border: 1px solid rgba(23,22,20,.12); border-radius: 18px; box-shadow: 0 12px 32px rgba(35,28,18,.14); display: block; overflow: hidden; position: relative; scroll-snap-align: start; }
+.home-banner::after { background: linear-gradient(180deg, transparent 42%, rgba(13,12,11,.78)); content: ""; inset: 0; pointer-events: none; position: absolute; }
+.home-banner .catalog-asset { height: 100%; }
+.home-banner__caption { bottom: 22px; color: var(--white); display: flex; flex-direction: column; gap: 5px; left: 22px; position: absolute; right: 22px; z-index: 2; }
+.home-banner__caption span { color: var(--bronze-light); font-size: .56rem; font-weight: 800; letter-spacing: .18em; }
+.home-banner__caption strong { font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.3rem, 5vw, 2.5rem); font-weight: 400; }
+.home-categories, .home-gachas, .home-notices { padding-block: 62px; }
+.home-gachas { background: var(--white); border-block: 1px solid var(--line); }
+.home-notices { background: var(--paper-deep); }
+.catalog-section-heading { align-items: end; display: flex; justify-content: space-between; margin-bottom: 28px; }
+.catalog-section-heading p { color: var(--bronze); font-size: .58rem; font-weight: 800; letter-spacing: .18em; margin: 0 0 8px; }
+.catalog-section-heading h2 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.8rem, 7vw, 3rem); font-weight: 400; letter-spacing: -.04em; margin: 0; }
+.catalog-section-heading > a { border-bottom: 1px solid currentColor; font-size: .68rem; font-weight: 800; padding-bottom: 4px; white-space: nowrap; }
+.catalog-section-heading > a span { color: var(--bronze); margin-left: 8px; }
+.category-links { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.category-links a { background: var(--white); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 7px 20px rgba(35,28,18,.06); display: flex; flex-direction: column; gap: 7px; min-height: 88px; padding: 18px; transition: border-color .2s ease, translate .2s ease; }
+.category-links a:hover { border-color: var(--bronze); translate: 0 -2px; }
+.category-links span { font-size: .82rem; font-weight: 800; }
+.category-links small { color: var(--muted); font-size: .58rem; letter-spacing: .05em; line-height: 1.5; }
+.gacha-grid { display: grid; gap: 14px 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.gacha-card { background: var(--white); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 8px 24px rgba(35,28,18,.07); min-width: 0; overflow: hidden; transition: box-shadow .2s ease, translate .2s ease; }
+.gacha-card:hover { box-shadow: 0 14px 34px rgba(35,28,18,.13); translate: 0 -3px; }
+.gacha-card__image { aspect-ratio: 4 / 4.7; background: var(--paper-deep); display: block; overflow: hidden; position: relative; }
+.gacha-card__image .catalog-asset { height: 100%; }
+.gacha-card__category { background: rgba(23,22,20,.86); border-radius: 999px; bottom: 9px; color: var(--white); font-size: .52rem; font-weight: 800; left: 9px; max-width: calc(100% - 18px); overflow: hidden; padding: 5px 9px; position: absolute; text-overflow: ellipsis; white-space: nowrap; z-index: 2; }
+.gacha-card__body { padding: 12px 11px 14px; }
+.gacha-card__tags { display: flex; gap: 5px; min-height: 18px; overflow: hidden; }
+.gacha-card__tags span { color: var(--bronze); font-size: .52rem; font-weight: 800; white-space: nowrap; }
+.gacha-card h3 { font-size: .78rem; line-height: 1.55; margin: 6px 0 12px; min-height: 2.4em; }
+.gacha-card__meta { align-items: end; border-top: 1px solid var(--line); display: flex; gap: 6px; justify-content: space-between; padding-top: 10px; }
+.gacha-card__meta p { display: flex; flex-direction: column; margin: 0; min-width: 0; }
+.gacha-card__meta p:first-child strong { color: var(--danger); font-family: Georgia, serif; font-size: 1.05rem; }
+.gacha-card__meta p:first-child span, .gacha-card__meta p:last-child span { color: var(--muted); font-size: .48rem; }
+.gacha-card__meta p:last-child { align-items: end; }
+.gacha-card__meta p:last-child strong { font-size: .72rem; }
+.gacha-card__meta p:last-child small { color: var(--muted); font-size: .46rem; }
+.catalog-asset { background: linear-gradient(145deg, #f3ead8, #c7ac7f); overflow: hidden; position: relative; width: 100%; }
+.catalog-asset img { object-fit: cover; }
+.catalog-asset__fallback { align-items: center; background: radial-gradient(circle at 50% 45%, rgba(255,255,255,.54), transparent 48%), linear-gradient(145deg, #eee6d7, #c8aa78); color: var(--ink); display: flex; flex-direction: column; gap: 16px; height: 100%; justify-content: center; min-height: 180px; width: 100%; }
+.catalog-asset__fallback span { align-items: center; border: 1px solid currentColor; display: flex; font-family: Georgia, serif; height: 52px; justify-content: center; rotate: 45deg; width: 52px; }
+.catalog-asset__fallback small { font-size: .5rem; font-weight: 800; letter-spacing: .16em; }
+.notice-list { background: var(--white); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.notice-list a { border-bottom: 1px solid var(--line); display: grid; gap: 6px 10px; grid-template-columns: auto 1fr; padding: 18px; }
+.notice-list a:last-child { border-bottom: 0; }
+.notice-list time { color: var(--muted); font-family: monospace; font-size: .62rem; }
+.notice-list a > span { background: var(--danger); border-radius: 999px; color: #fff; font-size: .5rem; font-weight: 800; justify-self: start; padding: 3px 7px; }
+.notice-list strong, .notice-list p { grid-column: 1 / -1; }
+.notice-list strong { font-size: .8rem; }
+.notice-list p { color: var(--muted); font-size: .7rem; line-height: 1.6; margin: 0; }
+.catalog-message { align-items: center; background: var(--white); border: 1px solid var(--line); border-radius: 14px; display: flex; flex-direction: column; min-height: 220px; padding: 34px 22px; text-align: center; }
+.catalog-message > p { color: var(--bronze); font-size: .56rem; font-weight: 800; letter-spacing: .2em; margin: 0 0 10px; }
+.catalog-message h2 { font-family: Georgia, serif; font-size: 1.55rem; font-weight: 400; margin: 0; }
+.catalog-message > span { color: var(--muted); font-size: .76rem; line-height: 1.7; margin-top: 12px; }
+.catalog-message .button { margin-top: 22px; }
+.catalog-message--error { border-color: rgba(161,67,53,.35); }
+.catalog-message--error > p { color: var(--danger); }
+.catalog-loading { align-items: center; display: flex; flex-direction: column; gap: 14px; justify-content: center; min-height: 300px; }
+.catalog-loading > span { animation: spin 1s linear infinite; border: 2px solid var(--line); border-radius: 50%; border-top-color: var(--bronze); height: 30px; width: 30px; }
+.catalog-loading p { color: var(--muted); font-size: .74rem; }
+.catalog-page { max-width: 1240px; }
+.catalog-browser { min-height: 380px; }
+.catalog-tabs { display: flex; gap: 8px; margin: 0 -20px 28px; overflow-x: auto; padding: 0 20px 10px; scrollbar-width: none; }
+.catalog-tabs::-webkit-scrollbar { display: none; }
+.catalog-tabs button { background: var(--white); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; flex: 0 0 auto; font-size: .7rem; font-weight: 800; min-height: 40px; padding: 8px 18px; }
+.catalog-tabs button:focus-visible { outline: 3px solid rgba(185,133,66,.4); outline-offset: 2px; }
+.catalog-tabs button[aria-pressed="true"] { background: var(--ink); color: var(--white); }
+.catalog-browser__filter-note { background: #fff6e5; border-left: 3px solid var(--bronze); color: var(--muted); font-size: .68rem; margin: 0 0 24px; padding: 12px 14px; }
+.catalog-browser__count { color: var(--muted); font-family: monospace; font-size: .62rem; letter-spacing: .12em; margin: 0 0 15px; }
+.catalog-browser__more { display: flex; justify-content: center; padding-top: 36px; }
+
 .dialog-backdrop { align-items: center; background: rgba(23,22,20,.7); display: flex; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 80; }
 .dialog-card { background: var(--white); box-shadow: var(--shadow); max-width: 480px; padding: 34px; width: 100%; }
 .dialog-card__eyebrow { color: var(--bronze); font-size: .6rem; font-weight: 800; letter-spacing: .18em; }
@@ -211,6 +284,22 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .site-footer__brand { grid-column: auto; }
   .mobile-navigation { display: none; }
   .auth-form { padding: 42px; }
+  .home-banners { padding-block: 28px; }
+  .home-banners__rail { grid-auto-columns: min(76vw, 900px); }
+  .home-banner { aspect-ratio: 16 / 6.8; border-radius: 22px; }
+  .home-categories, .home-gachas, .home-notices { padding-block: 88px; }
+  .category-links { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .gacha-grid { gap: 24px 18px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .gacha-card__body { padding: 17px 16px 18px; }
+  .gacha-card h3 { font-size: .9rem; }
+  .notice-list a { align-items: center; gap: 12px 18px; grid-template-columns: 110px auto 1fr; padding: 20px 24px; }
+  .notice-list strong { grid-column: auto; }
+  .notice-list p { grid-column: 3; }
+  .catalog-tabs { margin-inline: 0; padding-inline: 0; }
+}
+
+@media (min-width: 1080px) {
+  .gacha-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
 @media (prefers-reduced-motion: reduce) {

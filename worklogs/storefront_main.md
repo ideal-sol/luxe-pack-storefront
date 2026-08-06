@@ -89,3 +89,48 @@ password reset, Point, Draw, Prize, shipping, payment, or production switching.
 SITE-003 should consume only resolved Public contracts and retain the Session and
 Platform boundaries. Preview authentication remains a separate Platform
 connectivity task.
+
+## SITE-003 — Public home and gacha catalog
+
+- Issue: `#5`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `6261a8a5f594102e898f77c7d0e05d58218298d7`
+- Branch: `site/SITE-003-public-home-catalog`
+
+### Purpose
+
+Connect the public home and gacha list to the pinned Public Contract while keeping
+public reads independent from Session and preserving the SITE-002 boundary.
+
+### Changes
+
+- Added a canonical Public Catalog adapter and Provider using the existing browser transport.
+- Added banner, category, gacha-card, notice, cursor, typed state, and asset-fallback UI.
+- Rebuilt `/` and `/gachas` as responsive public data surfaces without implementing detail or mutations.
+- Added Testkit contract/component coverage, current context, design notes, and a catalog presentation Change Request.
+
+### Verification
+
+- Artifact integrity: PASS
+- Policy, authentication boundary, and catalog boundary checks: PASS
+- Secret／PII lightweight scan: PASS
+- Dependency audit at high severity: PASS, no known vulnerabilities
+- `pnpm lint`: PASS
+- `pnpm typecheck`: PASS
+- `pnpm test`: PASS, 8 files／36 tests
+- `pnpm build`: PASS
+
+Final Clean Directory and GitHub results are fixed to the SITE-003 PR evidence.
+Live Preview communication, Browser E2E, and pixel-perfect visual comparison are
+not performed by this Task.
+
+### Not implemented
+
+Gacha detail, Draw, Point, member pages, live Preview routing, explicit sales-state
+derivation, sorting without Contract, and production infrastructure.
+
+### Next task
+
+SITE-004 should reuse the public adapter, cards, asset fallback, and existing
+Session boundary. Pending Platform contracts remain authoritative blockers for
+Point, user history, Preview connectivity, and any explicit catalog status/order.

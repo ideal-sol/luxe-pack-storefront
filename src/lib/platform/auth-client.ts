@@ -1,14 +1,13 @@
 import { createStorefrontIdentityClient } from "@oripa/storefront-client";
-import { createBrowserStorefrontClient } from "@oripa/storefront-client/browser";
 import type {
   PublicComponents,
   StorefrontIdentityClient,
   StorefrontTransport,
 } from "@oripa/storefront-client";
 import {
-  readPlatformRuntimeConfiguration,
   type PlatformRuntimeConfiguration,
 } from "./runtime-configuration";
+import { createBrowserPlatformTransport, type BrowserClientOverrides } from "./browser-client";
 
 type Schemas = PublicComponents["schemas"];
 
@@ -40,14 +39,9 @@ export function createAuthClientAdapter(transport: StorefrontTransport): AuthCli
 }
 
 export function createBrowserAuthClient(
-  configuration: PlatformRuntimeConfiguration = readPlatformRuntimeConfiguration(),
-  overrides: Pick<Parameters<typeof createBrowserStorefrontClient>[0], "cookie_reader" | "fetch"> = {},
+  configuration?: PlatformRuntimeConfiguration,
+  overrides: BrowserClientOverrides = {},
 ): AuthClientAdapter {
-  const transport = createBrowserStorefrontClient({
-    base_url: configuration.baseUrl,
-    default_timeout_ms: configuration.defaultTimeoutMs,
-    site_version: configuration.siteVersion,
-    ...overrides,
-  });
+  const transport = createBrowserPlatformTransport(configuration, overrides);
   return createAuthClientAdapter(transport);
 }

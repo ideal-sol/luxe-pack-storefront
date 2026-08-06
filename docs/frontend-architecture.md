@@ -8,6 +8,7 @@
 4. `src/lib/routes` is the single navigation definition.
 5. `src/lib/platform` owns runtime configuration and the narrow canonical Client adapter.
 6. `src/components/auth` owns session orchestration and authentication presentation.
+7. `src/components/catalog` owns public catalog orchestration and contract-backed presentation.
 
 ## Server and Client Components
 
@@ -19,6 +20,12 @@ unavailable/session expired/error states, and refreshes after successful identit
 mutations. It stores the typed session response only in memory and does not cache
 credentials or authentication material.
 
+The root Public Client Provider constructs a separate read adapter from the same
+browser transport configuration. It does not depend on Session state. Home and
+catalog Client Components start public requests independently, while endpoint
+paths, query encoding, response types, retry behavior, and transport metadata
+remain owned by the canonical Client.
+
 ## State and data rules
 
 - No direct database or Platform request from a React Component.
@@ -28,6 +35,10 @@ credentials or authentication material.
 - Public environment variables are read only by the Platform runtime adapter, never by Components.
 - Browser credentials, CSRF setup, cookies, and protocol headers are delegated to the pinned Client.
 - Typed requests and responses are aliases of generated Client types; they are not handwritten.
+- Catalog cards display returned fields without inferring publication, sales,
+  sold-out, eligibility, first-user, LINE-user, or daily-limit state.
+- Cursor continuation uses the returned `meta` object and the Client query type;
+  category changes start a new first page.
 
 ## Testing
 
@@ -36,3 +47,8 @@ submission protection, header state, and email verification. Contract tests inje
 the deterministic Storefront Testkit into the real browser client. Policy tests
 reject direct Platform paths, browser protocol details outside the boundary, and
 authentication persistence. Money, Draw, and Point mutations remain later Tasks.
+
+SITE-003 adds deterministic Client/Testkit contract tests for banners, notices,
+categories, tags, gacha summaries, category queries, and cursor queries. Component
+tests cover loading, empty, typed errors, missing configuration, image fallback,
+navigation, multiple cards, and independence from authenticated/anonymous Session.

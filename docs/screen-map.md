@@ -2,11 +2,11 @@
 
 ## Public navigation
 
-| Route | Purpose | SITE-002 state |
+| Route | Purpose | SITE-003 state |
 | --- | --- | --- |
-| `/` | Storefront landing and primary navigation | Foundation presentation |
-| `/gachas` | Public pack list | Empty placeholder |
-| `/gachas/[slug]` | Public pack detail | Empty placeholder |
+| `/` | Banners, categories, current gacha summaries, and notice summaries | Public Client-connected; Testkit verified |
+| `/gachas` | Public gacha cards, category filter, and cursor continuation | Public Client-connected; Testkit verified |
+| `/gachas/[slug]` | Public pack detail | Placeholder; detail implementation is outside SITE-003 |
 | `/notices` | Public notices | Empty placeholder |
 | `/notices/[noticeId]` | Public notice detail | Empty placeholder |
 | `/pages/[slug]` | Managed public content | Empty placeholder |
@@ -30,3 +30,7 @@ The Header now renders neutral, unauthenticated, and authenticated controls from
 the Session Provider. Point balance remains `--`. The verification completion
 route accepts only the values required by the canonical Client; Platform must
 confirm the external redirect mapping before Preview use.
+
+The desktop and mobile navigation continue to use `src/lib/routes/navigation.ts`.
+The mobile current-page rule treats gacha detail placeholders as part of the
+`/gachas` section. Public home and catalog rendering does not wait for Session.
