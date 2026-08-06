@@ -37,3 +37,55 @@ Real API integration, authentication behavior, pack data, point behavior, draw b
 ### Next task
 
 SITE-002 confirms the published Platform contracts and introduces the real `@oripa/storefront-client` boundary without direct Component requests.
+
+## SITE-002 — Authentication client integration and session foundation
+
+- Issue: `#3`
+- Risk: HIGH (`R3`)
+- Base SHA: `8bcfd30860081d75598eae4ba021931ac096467f`
+- Branch: `site/SITE-002-authentication-client-integration`
+
+### Purpose
+
+Vendor and verify the MIG-061U authentication artifacts, then establish the
+canonical browser authentication and session boundary without changing Platform
+or implementing live Preview routing.
+
+### Changes
+
+- Pinned Client, Testkit, and Site Schema `2.0.0-alpha.1` tarballs using relative
+  file dependencies and added repeatable Manifest/archive integrity checks.
+- Added runtime configuration, browser Auth Adapter, typed Problem presentation,
+  Session Provider, login, registration, logout, and email-verification UI.
+- Connected Header authentication controls and kept Point balance unconnected.
+- Added deterministic Testkit contract coverage, boundary checks, clean-install
+  CI, and the Preview connectivity Platform Change Request.
+
+### Verification
+
+- Artifact Manifest, five formal SHA-256 values, and bundled `SHA256SUMS`: PASS
+- Vendor archive identity, path, content, and Lifecycle Script checks: PASS
+- `pnpm policy:check`: PASS
+- `pnpm auth-boundary:check`: PASS
+- `pnpm security:check`: PASS
+- `pnpm audit --audit-level high`: PASS, no known vulnerabilities
+- `pnpm lint`: PASS
+- `pnpm typecheck`: PASS
+- `pnpm test`: PASS, 6 files / 24 tests
+- `pnpm build`: PASS
+- Repository-external clean install, lint, typecheck, test, and build: PASS
+
+GitHub results are fixed to the PR Head in the machine-readable self-review.
+Live Preview authentication was not run because the Public route, Origin, and
+same-Origin proxy contract remains pending.
+
+### Not implemented
+
+Live Preview authentication, Public route/proxy infrastructure, LINE Login, SMS,
+password reset, Point, Draw, Prize, shipping, payment, or production switching.
+
+### Next task
+
+SITE-003 should consume only resolved Public contracts and retain the Session and
+Platform boundaries. Preview authentication remains a separate Platform
+connectivity task.

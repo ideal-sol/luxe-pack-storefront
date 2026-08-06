@@ -20,7 +20,7 @@ if (forbidden.length > 0) {
 
 const directApiMarker = "/api" + "/v2";
 const boundaryViolations = tracked
-  .filter((path) => path.startsWith("src/") && path !== "src/lib/platform/README.md")
+  .filter((path) => path.startsWith("src/") && !path.startsWith("src/lib/platform/"))
   .filter((path) => {
     try {
       return readFileSync(path, "utf8").includes(directApiMarker);

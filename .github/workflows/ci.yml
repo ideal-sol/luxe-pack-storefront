@@ -24,7 +24,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+      - run: pnpm artifact:check
       - run: pnpm policy:check
+      - run: pnpm auth-boundary:check
 
   quality-gate:
     name: quality-gate
@@ -48,6 +50,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+      - run: pnpm artifact:check
+      - run: pnpm auth-boundary:check
       - run: pnpm security:check
       - run: pnpm audit --audit-level high
 
@@ -63,6 +67,17 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - run: pnpm build
+      - name: Validate from a clean directory
+        run: |
+          clean_root="$(mktemp -d)"
+          trap 'rm -rf -- "$clean_root"' EXIT
+          git archive HEAD | tar -x -C "$clean_root"
+          cd "$clean_root"
+          pnpm install --frozen-lockfile
+          pnpm lint
+          pnpm typecheck
+          pnpm test
+          pnpm build
 
   ci-gate:
     name: ci-gate

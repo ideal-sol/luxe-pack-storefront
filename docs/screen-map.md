@@ -2,7 +2,7 @@
 
 ## Public navigation
 
-| Route | Purpose | SITE-001 state |
+| Route | Purpose | SITE-002 state |
 | --- | --- | --- |
 | `/` | Storefront landing and primary navigation | Foundation presentation |
 | `/gachas` | Public pack list | Empty placeholder |
@@ -10,12 +10,14 @@
 | `/notices` | Public notices | Empty placeholder |
 | `/notices/[noticeId]` | Public notice detail | Empty placeholder |
 | `/pages/[slug]` | Managed public content | Empty placeholder |
-| `/login` | Login entry | Development notice |
-| `/register` | Registration entry | Development notice |
+| `/login` | Email/password login | Client-connected form; runtime configuration required |
+| `/register` | Registration entry | Client-connected form and pending-verification state |
+| `/verify-email` | Verification guidance and optional resend | Client-connected when canonical `user_id` is present |
+| `/verify-email/[userId]/[hash]` | One-time email verification completion | Client-connected canonical completion input |
 
 ## Member navigation
 
-| Route | Purpose | SITE-001 state |
+| Route | Purpose | SITE-002 state |
 | --- | --- | --- |
 | `/points` | Balance, products, and purchase entry | Login-required placeholder |
 | `/mypage` | Account hub | Login-required placeholder |
@@ -24,4 +26,7 @@
 | `/mypage/prizes` | Acquired items | Login-required placeholder |
 | `/mypage/line` | LINE connection | Login-required placeholder |
 
-The desktop Header and Mobile Bottom Navigation use the same definitions from `src/lib/routes/navigation.ts`. Dynamic identifiers are routing inputs only; SITE-001 does not interpret them as business data.
+The Header now renders neutral, unauthenticated, and authenticated controls from
+the Session Provider. Point balance remains `--`. The verification completion
+route accepts only the values required by the canonical Client; Platform must
+confirm the external redirect mapping before Preview use.
