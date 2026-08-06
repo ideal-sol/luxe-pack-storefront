@@ -93,6 +93,7 @@ connectivity task.
 ## SITE-003 — Public home and gacha catalog
 
 - Issue: `#5`
+- Pull Request: `#6`
 - Risk: MEDIUM (`R2`)
 - Base SHA: `6261a8a5f594102e898f77c7d0e05d58218298d7`
 - Branch: `site/SITE-003-public-home-catalog`

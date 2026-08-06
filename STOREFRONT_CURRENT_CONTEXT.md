@@ -4,8 +4,9 @@
 
 - SITE-001 Storefront foundation and common layout: completed
 - SITE-002 Authentication client integration and session foundation: completed
-- SITE-003 Public home and gacha catalog: implementation task in progress on Issue `#5`
+- SITE-003 Public home and gacha catalog: implementation and Local validation complete in PR `#6`
 - SITE-003 Base and latest published `main` at task start: `6261a8a5f594102e898f77c7d0e05d58218298d7`
+- SITE-003 implementation commit: `bde0fb0295e88babd70dad9772a74d64a7358c84`
 
 The SITE-002 Session Provider, authentication Header, typed error boundary, and
 Platform runtime configuration remain the shared foundation. Public Catalog reads
