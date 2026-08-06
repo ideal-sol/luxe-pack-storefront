@@ -1,12 +1,16 @@
 # API dependency map
 
-SITE-002 resolves authentication only through the MIG-061U Public OpenAPI and
+SITE-003 resolves public home and catalog reads through the MIG-061U Public OpenAPI and
 `@oripa/storefront-client` `2.0.0-alpha.1`. This map does not invent absent
 operations or response shapes.
 
 | Screen | Required capability | Contract state |
 | --- | --- | --- |
-| Pack list and detail | Public pack catalog and detail | Confirm before integration |
+| Home banners | Public banner collection | **Resolved — MIG-061U content client** |
+| Home and pack list | Public gacha summary collection and cursor | **Resolved — MIG-061U catalog client** |
+| Catalog filter | Public categories; tag contract is also available | **Resolved — MIG-061U catalog client** |
+| Home notices | Public notice summary collection | **Resolved — MIG-061U content client** |
+| Pack detail | Public gacha detail | Contract available; implementation deferred beyond SITE-003 |
 | Login | Password login and current browser session | **Resolved — MIG-061U identity client** |
 | Registration | Registration and pending email verification | **Resolved — MIG-061U identity client** |
 | Logout | Browser session invalidation | **Resolved — MIG-061U identity client** |
@@ -18,6 +22,7 @@ operations or response shapes.
 | Draw history | Current user's draw history list | **Pending Contract** |
 | Notices and pages | Public managed content | Confirm before integration |
 | Authentication in Preview | Public route, Origin, HTTPS, and same-Origin proxy | **Pending Contract** |
+| Catalog presentation | Explicit display status, optional order, featured placement | **Pending Contract** |
 
 ## Platform Change Request rule
 

@@ -10,6 +10,32 @@ export interface AuthProblemPresentation {
   readonly sessionExpired: boolean;
 }
 
+export type PlatformProblemPresentation = AuthProblemPresentation;
+
+export function presentPlatformProblem(error: unknown): PlatformProblemPresentation {
+  if (error instanceof ApiProblemError) {
+    return {
+      fieldErrors: error.errors ?? {},
+      message: error.status === 429
+        ? "アクセスが集中しています。時間をおいて、もう一度お試しください。"
+        : "情報を取得できませんでした。時間をおいて、もう一度お試しください。",
+      sessionExpired: isAuthProblemError(error, "SESSION_EXPIRED"),
+    };
+  }
+  if (error instanceof StorefrontTransportError) {
+    return {
+      fieldErrors: {},
+      message: "通信を完了できませんでした。接続を確認して、もう一度お試しください。",
+      sessionExpired: false,
+    };
+  }
+  return {
+    fieldErrors: {},
+    message: "予期しない問題が発生しました。時間をおいて、もう一度お試しください。",
+    sessionExpired: false,
+  };
+}
+
 export function presentAuthProblem(error: unknown): AuthProblemPresentation {
   if (error instanceof ApiProblemError) {
     let message = "処理を完了できませんでした。入力内容を確認して、もう一度お試しください。";

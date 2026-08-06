@@ -30,3 +30,12 @@ Set the public `NEXT_PUBLIC_PLATFORM_API_BASE_URL` only in an approved runtime.
 Without it, the build still succeeds and the UI reports that authentication
 configuration is unavailable. Live Preview connectivity is intentionally pending
 the contract in `docs/platform-change-requests/SITE-002-preview-auth-connectivity.md`.
+
+## Public catalog
+
+Public home and gacha-list reads use the same pinned browser transport through the
+`src/lib/platform` Public Catalog adapter. The UI consumes only generated Client
+types for banners, categories, gacha summaries, cursor metadata, and notice
+summaries. Catalog loading does not wait for Session resolution. Missing runtime
+configuration is rendered as an explicit state and does not fall back to invented
+data.

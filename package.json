@@ -20,8 +20,9 @@
     "policy:check": "node scripts/check-policy.mjs",
     "artifact:check": "node scripts/verify-vendored-artifacts.mjs",
     "auth-boundary:check": "node scripts/check-auth-boundary.mjs",
+    "catalog-boundary:check": "node scripts/check-catalog-boundary.mjs",
     "security:check": "node scripts/check-secrets.mjs",
-    "validate": "pnpm artifact:check && pnpm policy:check && pnpm auth-boundary:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "validate": "pnpm artifact:check && pnpm policy:check && pnpm auth-boundary:check && pnpm catalog-boundary:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
     "@oripa/storefront-client": "file:vendor/oripa/MIG-061U/oripa-storefront-client-2.0.0-alpha.1.tgz",
