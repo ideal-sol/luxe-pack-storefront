@@ -1,0 +1,83 @@
+name: Storefront CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 22.22.3
+  PNPM_VERSION: 10.12.1
+
+jobs:
+  policy-gate:
+    name: policy-gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+      - run: pnpm policy:check
+
+  quality-gate:
+    name: quality-gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+
+  security-gate:
+    name: security-gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+      - run: pnpm security:check
+      - run: pnpm audit --audit-level high
+
+  integration-gate:
+    name: integration-gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm build
+
+  ci-gate:
+    name: ci-gate
+    if: always()
+    needs: [policy-gate, quality-gate, security-gate, integration-gate]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every gate
+        env:
+          INTEGRATION_RESULT: ${{ needs.integration-gate.result }}
+          POLICY_RESULT: ${{ needs.policy-gate.result }}
+          QUALITY_RESULT: ${{ needs.quality-gate.result }}
+          SECURITY_RESULT: ${{ needs.security-gate.result }}
+        run: |
+          test "$POLICY_RESULT" = success
+          test "$QUALITY_RESULT" = success
+          test "$SECURITY_RESULT" = success
+          test "$INTEGRATION_RESULT" = success
