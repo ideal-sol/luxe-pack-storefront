@@ -65,3 +65,23 @@ rhythm while Luxe Pack keeps its own routes and canonical Platform content:
 ORIPAONE route names, brand content, legal text, and long-form copy are not reused.
 Only the Platform-returned Luxe Pack `body_html` is rendered through the safe
 content boundary.
+
+## SITE-004 gacha detail
+
+The verified detail-screen observations guide the Luxe Pack composition without
+adopting ORIPAONE routes, assets, product copy, or business rules:
+
+- breadcrumb, large main visual, title, returned badges, facts, and progress;
+- attention/terms accordion populated only by returned Luxe Pack content;
+- rank-ordered prize sections with a responsive two-column mobile and
+  three-column desktop grid;
+- accessible prize overlay with large fallback-capable image, title, Close,
+  Escape handling, focus return, and background-scroll suppression;
+- fixed bottom CTA above Mobile Navigation, with safe-area spacing and an
+  approximately 800-pixel centered desktop interior;
+- explicit sold-out, ended, coming-soon, eligibility, and daily-limit messages
+  from the MIG-061Y presentation response.
+
+The UI uses Luxe Pack's existing ink, ivory, and bronze system. Draw counts are
+not copied from the reference: only `allowed_draw_counts` returned by Platform
+are shown.

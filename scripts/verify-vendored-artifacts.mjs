@@ -4,20 +4,20 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const vendor = path.join(root, "vendor/oripa/MIG-061U");
-const version = "2.0.0-alpha.1";
-const sourceCommit = "76d8161de759d8969e74543f6d79b5f5b17cee1d";
+const vendor = path.join(root, "vendor/oripa/MIG-061Y");
+const version = "2.0.0-alpha.2";
+const sourceCommit = "12610e1fefa9c4a6cb555fdd933253bbe54dd0e4";
 const expected = new Map([
-  ["artifact-manifest.json", "19afdd410b676b6703b61bc7e20d09834bc9d67f412742a7f942e23af6ca8708"],
-  ["oripa-site-schema-2.0.0-alpha.1.tgz", "8111b15b7540e7932a2bf29a51e1116771688ec5fb6395050a1135ae7956d035"],
-  ["oripa-storefront-client-2.0.0-alpha.1.tgz", "6fa0ccbf612c1c870bdf76e1222cef7498b36693f7da4d0cf53481aedcd3190e"],
-  ["oripa-storefront-testkit-2.0.0-alpha.1.tgz", "a53f248aaa2b7d00ead43aaa5f5b739fc45f52db4a1903aa43210d115671bafe"],
-  ["public.openapi.json", "71e8b5ab885a1e04fa64ecff0b4365be6552424e2dd625a8ddadbf60f66e6005"],
+  ["artifact-manifest.json", "9a48612c702b5d5b530145bcbe9b848fb081fd5994ac8f73e99395039fb404e0"],
+  ["oripa-site-schema-2.0.0-alpha.2.tgz", "adbd0157cc5a1b48c984ad1786cc62c8370d70d49ade6fd5662b74fd300d1136"],
+  ["oripa-storefront-client-2.0.0-alpha.2.tgz", "5bade24015db08848c7f6a2134ee256f8471f81ea140f2e5ad5581bfb67d3e5e"],
+  ["oripa-storefront-testkit-2.0.0-alpha.2.tgz", "0ddb5dd88c6663575bcb43d07034da9175f436f60951b53c8fa53e1b81379370"],
+  ["public.openapi.json", "ea95cd45465c9ec37824dab529c433ed8cfa7f1ba97b89d623f25b457f1952dc"],
 ]);
 const packageNames = new Map([
-  ["oripa-site-schema-2.0.0-alpha.1.tgz", "@oripa/site-schema"],
-  ["oripa-storefront-client-2.0.0-alpha.1.tgz", "@oripa/storefront-client"],
-  ["oripa-storefront-testkit-2.0.0-alpha.1.tgz", "@oripa/storefront-testkit"],
+  ["oripa-site-schema-2.0.0-alpha.2.tgz", "@oripa/site-schema"],
+  ["oripa-storefront-client-2.0.0-alpha.2.tgz", "@oripa/storefront-client"],
+  ["oripa-storefront-testkit-2.0.0-alpha.2.tgz", "@oripa/storefront-testkit"],
 ]);
 
 function sha256(file) {
@@ -45,7 +45,7 @@ for (const [file, digest] of expected) {
 if (sums.size !== expected.size - 1) throw new Error("SHA256SUMS entry set is invalid");
 
 const manifest = JSON.parse(readFileSync(path.join(vendor, "artifact-manifest.json"), "utf8"));
-if (manifest.task_id !== "MIG-061U" || manifest.source_commit !== sourceCommit) {
+if (manifest.task_id !== "MIG-061Y" || manifest.source_commit !== sourceCommit) {
   throw new Error("Artifact provenance mismatch");
 }
 if (manifest.public_openapi?.file !== "public.openapi.json" || manifest.public_openapi.sha256 !== expected.get("public.openapi.json")) {

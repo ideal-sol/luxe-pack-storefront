@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | `/` | Banners, categories, current gacha summaries, and notice summaries | Public Client-connected; Testkit verified |
 | `/gachas` | Public gacha cards, category filter, and cursor continuation | Public Client-connected; Testkit verified |
-| `/gachas/[slug]` | Public pack detail | Placeholder; detail implementation is outside SITE-003 |
+| `/gachas/[slug]` | Public pack detail | Detail and MIG-061Y presentation connected; Draw mutation deferred to SITE-005 |
 | `/notices` | Public notices | Content Client-connected cursor list; Testkit verified |
 | `/notices/[noticeId]` | Public notice detail | Content Client-connected canonical HTML; sanitized before rendering |
 | `/pages/[slug]` | Managed public content | Content Client-connected by slug; sanitized document layout |
@@ -39,3 +39,8 @@ SITE-009 keeps the existing Luxe Pack routes rather than adopting the reference
 site's routes. Home notice summaries link to the list and ID-based detail routes.
 Existing Footer page links are centralized in the navigation definition; the
 Platform remains authoritative for whether each requested slug is published.
+
+SITE-004 keeps the Luxe Pack `/gachas/[slug]` route and adds the returned main
+asset, facts, progress, notices, rank/prize sections, modal, eligibility, daily
+limit, allowed-count selection, and sticky CTA. Anonymous login guidance is used
+only when the canonical CTA action requests it. Draw execution is not present.
