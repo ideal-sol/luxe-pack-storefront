@@ -1,7 +1,7 @@
 # Platform connection boundary
 
-This directory is the only approved home for Platform connection setup. SITE-002
-pins the MIG-061U `@oripa/storefront-client` artifact and exposes narrow browser
+This directory is the only approved home for Platform connection setup. The
+Repository pins the current MIG-061Y `@oripa/storefront-client` artifact and exposes narrow browser
 authentication and public-read adapters plus runtime configuration, typed error
 presentation, and testkit harnesses.
 
@@ -15,5 +15,9 @@ presentation, and testkit harnesses.
 - SITE-003 public reads use the canonical Catalog and Content facades. Components
   receive generated banner, category, gacha-summary, notice, and cursor types and
   do not encode endpoint or query behavior.
+- SITE-004 detail reads use canonical `getGachaBySlug` and
+  `getGachaPresentation` methods. Components render generated sale, eligibility,
+  daily-limit, allowed-count, reason, and CTA values without deriving them from
+  Session, dates, remaining counts, or Point balance.
 - Point, Draw, Prize, payment, and missing operations remain Platform contracts;
   this boundary does not invent them.

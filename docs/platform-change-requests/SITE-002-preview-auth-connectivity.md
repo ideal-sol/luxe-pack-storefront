@@ -2,6 +2,15 @@
 
 ## Status and decision owner
 
+MIG-061Z resolved the Platform-side Public Origin and same-Origin `/api/v2/`
+proxy at <https://test.luxe-pack.biz>, including HTTPS and required response
+header/Cookie forwarding. The Storefront application itself is not deployed at
+that Origin and `/` currently returns HTTP 404. Therefore the routing contract is
+resolved on Platform, while full Storefront-plus-API browser authentication E2E
+remains pending deployment and is not claimed by SITE-004.
+
+The following text preserves the SITE-002 requirements that MIG-061Z addressed.
+
 Storefront implementation is ready for a same-Origin browser-cookie session, but
 SITE-002 does not expose the Public API, configure Platform runtime, or perform a
 live Preview authentication trial. Platform and infrastructure owners must select

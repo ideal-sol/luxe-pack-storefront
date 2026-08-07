@@ -1,5 +1,5 @@
 import { ApiProblemError } from "@oripa/storefront-client";
-import { CURRENT_SITE_SCHEMA_VERSION } from "@oripa/site-schema";
+import { readFileSync } from "node:fs";
 import {
   assertBrowserRequestBoundary,
   PUBLIC_AUTH_FIXTURE,
@@ -28,9 +28,12 @@ function enqueueCsrf(harness: ReturnType<typeof createAuthClientTestHarness>) {
   );
 }
 
-describe("MIG-061U authentication contract", () => {
+describe("MIG-061Y authentication contract", () => {
   it("imports the pinned Client, Schema, and Testkit at the expected version", () => {
-    expect(CURRENT_SITE_SCHEMA_VERSION).toBe("2.0.0-alpha.1");
+    for (const packageName of ["site-schema", "storefront-client", "storefront-testkit"]) {
+      const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
+      expect(packageJson.version).toBe("2.0.0-alpha.2");
+    }
     expect(PUBLIC_AUTH_FIXTURE.authenticated_session.authenticated).toBe(true);
     expect(ApiProblemError).toBeTypeOf("function");
   });
@@ -43,7 +46,7 @@ describe("MIG-061U authentication contract", () => {
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/auth/session` }, { body: session, status: 200 });
 
     await expect(harness.client.getCurrentSession()).resolves.toMatchObject({ data: session });
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.1", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.2", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -72,7 +75,7 @@ describe("MIG-061U authentication contract", () => {
     );
     await expect(login.client.login({ email: "fixture@example.test", password: "fixture-password" }))
       .resolves.toMatchObject({ data: PUBLIC_AUTH_FIXTURE.authenticated_session });
-    assertBrowserRequestBoundary(login.mock.requests[1]!, { client_version: "2.0.0-alpha.1", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(login.mock.requests[1]!, { client_version: "2.0.0-alpha.2", site_version: "0.1.0" });
     login.mock.assertExhausted();
   });
 

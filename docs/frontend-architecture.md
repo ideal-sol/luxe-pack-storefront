@@ -35,6 +35,13 @@ uses an explicit element, attribute, and URL-scheme allowlist before the sole
 context with `noopener noreferrer`; scriptable schemes and event attributes are
 discarded.
 
+SITE-004 extends the Catalog adapter with the generated `getGachaBySlug` and
+`getGachaPresentation` methods. The detail Component first resolves canonical
+content, then passes the returned gacha ID to the user-specific presentation
+read. Sale state, eligibility, reason, allowed counts, daily limit, and CTA state
+are rendered directly from that presentation. Session state, timestamps, counts,
+and Point balance are never converted into eligibility or CTA policy.
+
 ## State and data rules
 
 - No direct database or Platform request from a React Component.
@@ -52,6 +59,11 @@ discarded.
   converted into page numbers.
 - Notice and static-page availability is determined by the Client response or a
   typed 404 status, never by a Frontend slug registry.
+- Remaining/total arithmetic is used only for the visual progress bar. It does
+  not determine sale state, inventory availability, or CTA behavior.
+- Detail-time Point insufficiency is not published in MIG-061Y. SITE-004 does not
+  add a Frontend substitute; SITE-005 must use a Backend-authoritative mutation
+  or later presentation contract.
 
 ## Testing
 
@@ -69,4 +81,6 @@ navigation, multiple cards, and independence from authenticated/anonymous Sessio
 SITE-009 adds Content Client/Testkit contract tests for notice cursor reads,
 notice detail, and static-page lookup. Component tests cover list/detail/document
 states, links, cursor continuation, route switching, long-form structure, and XSS
-removal. SITE-004 remains held on its separate Platform eligibility contract.
+removal. SITE-004 adds MIG-061Y Testkit coverage for explicit sale states,
+anonymous/authenticated eligibility, allowed counts, daily limits, CTA state,
+detail UI, prize modal accessibility, and the no-mutation boundary.

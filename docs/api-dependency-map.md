@@ -1,7 +1,7 @@
 # API dependency map
 
-SITE-003 resolves public home and catalog reads through the MIG-061U Public OpenAPI and
-`@oripa/storefront-client` `2.0.0-alpha.1`. This map does not invent absent
+Public reads use the MIG-061Y Public OpenAPI and `@oripa/storefront-client`
+`2.0.0-alpha.2`. This map does not invent absent
 operations or response shapes.
 
 | Screen | Required capability | Contract state |
@@ -10,7 +10,8 @@ operations or response shapes.
 | Home and pack list | Public gacha summary collection and cursor | **Resolved — MIG-061U catalog client** |
 | Catalog filter | Public categories; tag contract is also available | **Resolved — MIG-061U catalog client** |
 | Home notices | Public notice summary collection | **Resolved — MIG-061U content client** |
-| Pack detail | Public gacha detail | Contract available; implementation deferred beyond SITE-003 |
+| Pack detail | Public gacha detail by slug | **Resolved — MIG-061Y catalog client; SITE-004 implemented** |
+| Pack detail CTA | User-specific presentation state | **Resolved — MIG-061Y `getGachaPresentation`; SITE-004 implemented** |
 | Login | Password login and current browser session | **Resolved — MIG-061U identity client** |
 | Registration | Registration and pending email verification | **Resolved — MIG-061U identity client** |
 | Logout | Browser session invalidation | **Resolved — MIG-061U identity client** |
@@ -23,9 +24,10 @@ operations or response shapes.
 | Notice list | Public notice summaries and cursor | **Resolved — MIG-061U content client** |
 | Notice detail | Public notice detail by opaque ID | **Resolved — MIG-061U content client** |
 | Static pages | Public canonical HTML page by slug | **Resolved — MIG-061U content client; sanitized renderer required** |
-| Authentication in Preview | Public route, Origin, HTTPS, and same-Origin proxy | **Pending Contract** |
+| Platform API in Preview | Public route, Origin, HTTPS, and same-Origin proxy | **Resolved by MIG-061Z; Storefront application deployment remains pending** |
 | Catalog presentation | Explicit display status, optional order, featured placement | **Pending Contract** |
-| Gacha detail CTA | Sale/display state, eligibility, allowed draw counts, daily remaining count, and ineligible reason | **Pending Contract — blocks SITE-004** |
+| Gacha detail Point insufficiency | Backend-authoritative Point affordability at presentation or Draw time | **Pending Contract — not inferred by SITE-004** |
+| Prize inventory | User-prize read state and Backend-authoritative allowed actions | **Pending Contract — SITE-007 held** |
 
 ## Platform Change Request rule
 

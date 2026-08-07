@@ -9,7 +9,7 @@ const directApi = "/api" + "/v2";
 const inferredState = [
   /remaining_count\s*(?:===|!==|<=|>=|<|>)/,
   /publish_(?:start|end)_at\s*(?:===|!==|<=|>=|<|>)/,
-  /\b(?:isSoldOut|soldOut|isEligible|firstUser|lineUser|dailyLimit)\b/,
+  /\b(?:isSoldOut|soldOut|isEligible|firstUser|lineUser)\b/,
 ];
 const failures = [];
 

@@ -1,5 +1,11 @@
-import { PlaceholderPage } from "@/components/common/placeholder-page";
+import { GachaDetailView } from "@/components/catalog/gacha-detail";
+import { PageContainer } from "@/components/layout/page-container";
 
-export default function GachaDetailPage() {
-  return <PlaceholderPage description="パック詳細と購入導線は正規API契約の接続後に表示します。" eyebrow="PACK DETAIL" title="パック詳細" />;
+export default async function GachaDetailPage({ params }: { readonly params: Promise<{ readonly slug: string }> }) {
+  const { slug } = await params;
+  return (
+    <PageContainer className="gacha-detail-page" size="narrow">
+      <GachaDetailView slug={slug} />
+    </PageContainer>
+  );
 }

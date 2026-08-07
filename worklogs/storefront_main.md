@@ -182,3 +182,42 @@ results and Self-review are recorded on the SITE-009 Pull Request.
 SITE-004 Issue `#9`, Policy, Branch, Worktree, and uncommitted Platform Change
 Request remain held and unchanged. Its sale state, eligibility, allowed draw
 counts, daily remaining count, and ineligible reason remain Pending Contract.
+
+## SITE-004 — Gacha detail and draw eligibility
+
+- Issue: `#9`
+- Risk: MEDIUM (`R2`)
+- Original Base SHA: `ec8c9b9c45447baba693e48707a5fe207975ccd5`
+- Resumed Base SHA: `093e662d03da61ba2d5955ab00c87056eb80b5b8`
+- Branch: `site/SITE-004-gacha-detail`
+
+### Purpose
+
+Resume the preserved SITE-004 task after MIG-061Y resolved its core presentation
+contract, and implement public detail plus Backend-authoritative eligibility and
+draw-option presentation without starting the Draw mutation.
+
+### Changes
+
+- Preserved the historical Change Request, fast-forwarded the existing branch,
+  and upgraded the pinned Client, Testkit, and Site Schema packages to the
+  verified MIG-061Y `2.0.0-alpha.2` bundle.
+- Connected `getGachaBySlug` and `getGachaPresentation` behind the existing
+  Platform adapter.
+- Implemented responsive main detail, returned facts and progress, notices,
+  ordered rank/prize grids, accessible prize modal, canonical sale/eligibility
+  states, daily-limit presentation, returned-count selection, and sticky CTA.
+- Added Artifact/Contract/UI regression and boundary checks. The boundary rejects
+  local sale, eligibility, daily-limit, allowed-count, and Point-insufficiency
+  rules.
+
+### Not implemented
+
+Draw mutation, Idempotency, Point consumption or insufficiency inference, result
+presentation, animation, Storefront Preview deployment, or synthetic Catalog
+data. SITE-007 remains held in its separate worktree and Policy.
+
+### Next task
+
+SITE-005 may consume the selected count and CTA boundary, but must use the
+canonical Backend mutation for affordability, execution, and result semantics.

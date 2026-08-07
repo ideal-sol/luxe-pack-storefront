@@ -19,12 +19,15 @@ export type ContentNoticeCollection = Schemas["ContentNoticeCollection"];
 export type ContentNoticeSummary = Schemas["ContentNoticeSummary"];
 export type ContentStaticPage = Schemas["ContentStaticPage"];
 export type GachaCategory = Schemas["GachaCategory"];
+export type GachaDetail = Schemas["GachaDetail"];
+export type GachaPresentationState = Schemas["GachaPresentationState"];
+export type GachaSaleState = Schemas["GachaSaleState"];
 export type GachaSummary = Schemas["GachaSummary"];
 export type GachaSummaryCollection = Schemas["GachaSummaryCollection"];
 
 export type PublicCatalogAdapter = Pick<
   StorefrontCatalogClient,
-  "listGachaCategories" | "listGachaTags" | "listGachas"
+  "getGachaBySlug" | "getGachaPresentation" | "listGachaCategories" | "listGachaTags" | "listGachas"
 > & Pick<
   StorefrontContentContactClient,
   "getNotice" | "getStaticPage" | "listBanners" | "listNotices"
@@ -34,6 +37,8 @@ export function createPublicCatalogAdapter(transport: StorefrontTransport): Publ
   const catalog = createStorefrontCatalogClient(transport);
   const content = createStorefrontContentContactClient(transport);
   return {
+    getGachaBySlug: catalog.getGachaBySlug,
+    getGachaPresentation: catalog.getGachaPresentation,
     getNotice: content.getNotice,
     getStaticPage: content.getStaticPage,
     listBanners: content.listBanners,
