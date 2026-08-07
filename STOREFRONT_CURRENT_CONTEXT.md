@@ -12,6 +12,14 @@ The SITE-002 Session Provider, authentication Header, typed error boundary, and
 Platform runtime configuration remain the shared foundation. Public Catalog reads
 are independent from Session loading and authentication state.
 
+## Design reference
+
+The canonical design reference is <https://oripaone.jp/>. Storefront screen
+composition, layout, and responsive behavior should prioritize delivery speed and
+reproduction accuracy while strongly referencing its general UI structure,
+spacing, navigation, card composition, and short UI labels. Components must keep
+assets replaceable with Luxe Pack-specific materials.
+
 ## Platform artifacts
 
 - Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.1`
