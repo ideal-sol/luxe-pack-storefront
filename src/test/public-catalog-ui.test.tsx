@@ -25,6 +25,8 @@ function response<T>(data: T) {
 
 function publicClient(overrides: Partial<PublicCatalogAdapter> = {}): PublicCatalogAdapter {
   return {
+    getNotice: vi.fn().mockResolvedValue(response(PUBLIC_CONTENT_FIXTURE.notice)),
+    getStaticPage: vi.fn(),
     listBanners: vi.fn().mockResolvedValue(response({ items: [PUBLIC_CONTENT_FIXTURE.banner] })),
     listGachaCategories: vi.fn().mockResolvedValue(response(categoryCollection)),
     listGachaTags: vi.fn().mockResolvedValue(response({ data: summary.tags })),
@@ -103,6 +105,9 @@ describe("public catalog UI", () => {
     expect(screen.getByRole("heading", { name: "販売中ガチャ" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /もっと見る/ })).toHaveAttribute("href", "/gachas");
     expect(screen.getByText(PUBLIC_CONTENT_FIXTURE.notice.title)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /一覧を見る/ })).toHaveAttribute("href", "/notices");
+    expect(screen.getByRole("link", { name: new RegExp(PUBLIC_CONTENT_FIXTURE.notice.title) }))
+      .toHaveAttribute("href", `/notices/${PUBLIC_CONTENT_FIXTURE.notice.id}`);
   });
 
   it("distinguishes home loading, empty, typed error, and configuration unavailable", async () => {

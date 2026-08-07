@@ -14,7 +14,10 @@ import type { PlatformRuntimeConfiguration } from "./runtime-configuration";
 type Schemas = PublicComponents["schemas"];
 
 export type ContentBanner = Schemas["ContentBanner"];
+export type ContentNotice = Schemas["ContentNotice"];
+export type ContentNoticeCollection = Schemas["ContentNoticeCollection"];
 export type ContentNoticeSummary = Schemas["ContentNoticeSummary"];
+export type ContentStaticPage = Schemas["ContentStaticPage"];
 export type GachaCategory = Schemas["GachaCategory"];
 export type GachaSummary = Schemas["GachaSummary"];
 export type GachaSummaryCollection = Schemas["GachaSummaryCollection"];
@@ -22,12 +25,17 @@ export type GachaSummaryCollection = Schemas["GachaSummaryCollection"];
 export type PublicCatalogAdapter = Pick<
   StorefrontCatalogClient,
   "listGachaCategories" | "listGachaTags" | "listGachas"
-> & Pick<StorefrontContentContactClient, "listBanners" | "listNotices">;
+> & Pick<
+  StorefrontContentContactClient,
+  "getNotice" | "getStaticPage" | "listBanners" | "listNotices"
+>;
 
 export function createPublicCatalogAdapter(transport: StorefrontTransport): PublicCatalogAdapter {
   const catalog = createStorefrontCatalogClient(transport);
   const content = createStorefrontContentContactClient(transport);
   return {
+    getNotice: content.getNotice,
+    getStaticPage: content.getStaticPage,
     listBanners: content.listBanners,
     listGachaCategories: catalog.listGachaCategories,
     listGachaTags: catalog.listGachaTags,

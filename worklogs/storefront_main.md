@@ -135,3 +135,50 @@ derivation, sorting without Contract, and production infrastructure.
 SITE-004 should reuse the public adapter, cards, asset fallback, and existing
 Session boundary. Pending Platform contracts remain authoritative blockers for
 Point, user history, Preview connectivity, and any explicit catalog status/order.
+
+## SITE-009 — Notices and static pages
+
+- Issue: `#10`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `ec8c9b9c45447baba693e48707a5fe207975ccd5`
+- Branch: `site/SITE-009-notices-static-pages`
+
+### Purpose
+
+Replace the notice and static-page placeholders with the pinned public Content
+contract while SITE-004 remains independently held on its missing eligibility
+contract.
+
+### Changes
+
+- Extended the existing public adapter with canonical notice-detail and
+  static-page reads.
+- Implemented the notice cursor list, notice detail, and responsive long-form
+  document routes with explicit loading, empty, not-found, typed-error, and
+  configuration states.
+- Added an allowlist HTML sanitizer boundary, safe external-link attributes,
+  centralized existing Footer page links, deterministic Contract/UI tests, and a
+  content boundary CI check.
+
+### Not implemented
+
+Live Preview communication, Browser E2E, invented static content or slugs, SEO
+fields absent from the Contract, and SITE-004 gacha-detail behavior.
+
+### Verification
+
+- Artifact, Policy, Auth, Catalog, Content boundary, and Secret checks: PASS
+- Dependency audit at high severity: PASS, no known vulnerabilities
+- `pnpm lint`: PASS
+- `pnpm typecheck`: PASS
+- `pnpm test`: PASS, 9 files／45 tests
+- `pnpm build`: PASS
+
+Browser E2E and live Preview communication were not run. Fixed-head GitHub
+results and Self-review are recorded on the SITE-009 Pull Request.
+
+### Parallel task state
+
+SITE-004 Issue `#9`, Policy, Branch, Worktree, and uncommitted Platform Change
+Request remain held and unchanged. Its sale state, eligibility, allowed draw
+counts, daily remaining count, and ineligible reason remain Pending Contract.

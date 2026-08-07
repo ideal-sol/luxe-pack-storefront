@@ -28,6 +28,7 @@ jobs:
       - run: pnpm policy:check
       - run: pnpm auth-boundary:check
       - run: pnpm catalog-boundary:check
+      - run: pnpm content-boundary:check
 
   quality-gate:
     name: quality-gate
@@ -54,6 +55,7 @@ jobs:
       - run: pnpm artifact:check
       - run: pnpm auth-boundary:check
       - run: pnpm catalog-boundary:check
+      - run: pnpm content-boundary:check
       - run: pnpm security:check
       - run: pnpm audit --audit-level high
 

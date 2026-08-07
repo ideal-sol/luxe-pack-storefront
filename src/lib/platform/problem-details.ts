@@ -12,6 +12,10 @@ export interface AuthProblemPresentation {
 
 export type PlatformProblemPresentation = AuthProblemPresentation;
 
+export function isPlatformNotFound(error: unknown) {
+  return error instanceof ApiProblemError && error.status === 404;
+}
+
 export function presentPlatformProblem(error: unknown): PlatformProblemPresentation {
   if (error instanceof ApiProblemError) {
     return {

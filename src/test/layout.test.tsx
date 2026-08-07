@@ -23,6 +23,8 @@ describe("shared layout", () => {
     render(<SiteFooter />);
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
     expect(screen.getByText("Information")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "利用規約" })).toHaveAttribute("href", "/pages/terms");
+    expect(screen.getByRole("link", { name: "プライバシーポリシー" })).toHaveAttribute("href", "/pages/privacy");
   });
 
   it("renders mobile navigation", () => {
