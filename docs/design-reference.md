@@ -2,7 +2,15 @@
 
 ## Reference
 
-The public layout at <https://oripaone.jp/> was reviewed on 2026-08-06 as a structural reference only.
+The canonical Luxe Pack Storefront design reference is <https://oripaone.jp/>.
+Its screen composition, layout, and responsive behavior guide the Storefront.
+Implementation should prioritize delivery speed and reproduction accuracy.
+General UI structures, spacing, navigation, card composition, and short UI labels
+may be used as strong references while keeping every asset boundary replaceable
+with Luxe Pack-specific materials.
+
+The public layout at <https://oripaone.jp/> was reviewed on 2026-08-06 as a
+structural reference.
 
 Observed principles used in SITE-001:
 
@@ -23,10 +31,12 @@ public data surfaces:
 - section headings with concise list-navigation actions;
 - persistent mobile navigation and visible keyboard focus.
 
-The task-supplied `oripone.jp` hostname did not resolve during SITE-003. The
-previously documented `oripaone.jp` reference was protected by an automated
-browser challenge during re-check, so SITE-003 relies on the prior reviewed
-observations recorded above rather than claiming a new pixel comparison.
+The task-supplied, misspelled `oripone.jp` hostname did not resolve during
+SITE-003. This sentence preserves the historical access record; the correct
+canonical design-reference URL is <https://oripaone.jp/>. That reference was
+protected by an automated browser challenge during re-check, so SITE-003 relies
+on the prior reviewed observations recorded above rather than claiming a new
+pixel comparison.
 
 ## Luxe Pack interpretation
 
