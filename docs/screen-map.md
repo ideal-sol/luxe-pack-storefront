@@ -7,9 +7,9 @@
 | `/` | Banners, categories, current gacha summaries, and notice summaries | Public Client-connected; Testkit verified |
 | `/gachas` | Public gacha cards, category filter, and cursor continuation | Public Client-connected; Testkit verified |
 | `/gachas/[slug]` | Public pack detail | Placeholder; detail implementation is outside SITE-003 |
-| `/notices` | Public notices | Empty placeholder |
-| `/notices/[noticeId]` | Public notice detail | Empty placeholder |
-| `/pages/[slug]` | Managed public content | Empty placeholder |
+| `/notices` | Public notices | Content Client-connected cursor list; Testkit verified |
+| `/notices/[noticeId]` | Public notice detail | Content Client-connected canonical HTML; sanitized before rendering |
+| `/pages/[slug]` | Managed public content | Content Client-connected by slug; sanitized document layout |
 | `/login` | Email/password login | Client-connected form; runtime configuration required |
 | `/register` | Registration entry | Client-connected form and pending-verification state |
 | `/verify-email` | Verification guidance and optional resend | Client-connected when canonical `user_id` is present |
@@ -34,3 +34,8 @@ confirm the external redirect mapping before Preview use.
 The desktop and mobile navigation continue to use `src/lib/routes/navigation.ts`.
 The mobile current-page rule treats gacha detail placeholders as part of the
 `/gachas` section. Public home and catalog rendering does not wait for Session.
+
+SITE-009 keeps the existing Luxe Pack routes rather than adopting the reference
+site's routes. Home notice summaries link to the list and ID-based detail routes.
+Existing Footer page links are centralized in the navigation definition; the
+Platform remains authoritative for whether each requested slug is published.

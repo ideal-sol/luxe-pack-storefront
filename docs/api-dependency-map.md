@@ -20,9 +20,12 @@ operations or response shapes.
 | Points | Point product list and purchase eligibility | **Pending Contract** |
 | Points | Point purchase mutation | **Pending Contract** |
 | Draw history | Current user's draw history list | **Pending Contract** |
-| Notices and pages | Public managed content | Confirm before integration |
+| Notice list | Public notice summaries and cursor | **Resolved — MIG-061U content client** |
+| Notice detail | Public notice detail by opaque ID | **Resolved — MIG-061U content client** |
+| Static pages | Public canonical HTML page by slug | **Resolved — MIG-061U content client; sanitized renderer required** |
 | Authentication in Preview | Public route, Origin, HTTPS, and same-Origin proxy | **Pending Contract** |
 | Catalog presentation | Explicit display status, optional order, featured placement | **Pending Contract** |
+| Gacha detail CTA | Sale/display state, eligibility, allowed draw counts, daily remaining count, and ineligible reason | **Pending Contract — blocks SITE-004** |
 
 ## Platform Change Request rule
 

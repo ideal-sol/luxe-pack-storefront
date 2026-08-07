@@ -1,11 +1,5 @@
 import Link from "next/link";
-import { accountNavigation, primaryNavigation } from "@/lib/routes/navigation";
-
-const informationLinks = [
-  { href: "/pages/guide", label: "ご利用ガイド" },
-  { href: "/pages/terms", label: "利用規約" },
-  { href: "/pages/privacy", label: "プライバシーポリシー" },
-] as const;
+import { accountNavigation, informationNavigation, primaryNavigation } from "@/lib/routes/navigation";
 
 export function SiteFooter() {
   return (
@@ -28,7 +22,7 @@ export function SiteFooter() {
         </div>
         <div>
           <h2>Information</h2>
-          {informationLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+          {informationNavigation.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
         </div>
       </div>
       <div className="page-container site-footer__bottom">

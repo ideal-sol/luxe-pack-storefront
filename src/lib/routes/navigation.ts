@@ -31,6 +31,12 @@ export const accountNavigation = [
   { href: "/mypage/line", label: "LINE連携" },
 ] as const;
 
+export const informationNavigation = [
+  { href: "/pages/guide", label: "ご利用ガイド" },
+  { href: "/pages/terms", label: "利用規約" },
+  { href: "/pages/privacy", label: "プライバシーポリシー" },
+] as const;
+
 export const publicRoutes = [
   "/",
   "/gachas",

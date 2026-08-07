@@ -1,5 +1,11 @@
-import { PlaceholderPage } from "@/components/common/placeholder-page";
+import { NoticeDetail } from "@/components/content/notice-detail";
+import { PageContainer } from "@/components/layout/page-container";
 
-export default function NoticeDetailPage() {
-  return <PlaceholderPage description="お知らせ本文はPlatform接続後に表示します。" eyebrow="INFORMATION" title="お知らせ詳細" />;
+export default async function NoticeDetailPage({ params }: { readonly params: Promise<{ noticeId: string }> }) {
+  const { noticeId } = await params;
+  return (
+    <section className="route-page content-route">
+      <PageContainer size="narrow"><NoticeDetail noticeId={noticeId} /></PageContainer>
+    </section>
+  );
 }

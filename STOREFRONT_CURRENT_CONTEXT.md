@@ -5,6 +5,8 @@
 - SITE-001 Storefront foundation and common layout: completed
 - SITE-002 Authentication client integration and session foundation: completed
 - SITE-003 Public home and gacha catalog: implementation and Local validation complete in PR `#6`
+- SITE-004 Gacha detail and draw eligibility: blocked on the Platform eligibility and allowed-draw-count contract; Issue `#9` remains open
+- SITE-009 Notices and static pages: canonical Content Client integration implemented independently from the held SITE-004 worktree
 - SITE-003 Base and latest published `main` at task start: `6261a8a5f594102e898f77c7d0e05d58218298d7`
 - SITE-003 implementation commit: `bde0fb0295e88babd70dad9772a74d64a7358c84`
 
@@ -36,6 +38,8 @@ assets replaceable with Luxe Pack-specific materials.
 - Public gacha categories and tags
 - Public banners
 - Public notice summaries
+- Public notice list with cursor continuation and public notice detail
+- Public static pages by slug with sanitized canonical HTML presentation
 - Public gacha detail exists in the Client but remains outside SITE-003 implementation scope
 
 ## Preview constraint
@@ -53,10 +57,11 @@ uses Testkit only and does not claim live Preview connectivity.
 - Current user's gacha history list
 - Preview Public Route, Origin, and same-Origin proxy
 - Explicit catalog display status, optional ordering, and featured placement
+- SITE-004 sale/display state, user eligibility, allowed draw counts, daily remaining count, and ineligible reason
 
 ## Next task
 
-SITE-004 should implement only its explicitly approved route and should reuse the
-Public Catalog adapter, asset fallback, cards, Session Provider, and typed Platform
-error presentation. Gacha execution, point purchase, and inferred sales decisions
-remain prohibited without a dedicated contract-aware Task.
+SITE-004 remains held until the versioned OpenAPI, Client, and Testkit publish its
+Backend-authoritative eligibility and draw-option contract. Other independent
+public-content Tasks may reuse the Content adapter and safe canonical HTML renderer
+without changing or committing the SITE-004 Change Request.

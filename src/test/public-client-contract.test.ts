@@ -58,4 +58,31 @@ describe("MIG-061U public catalog contract", () => {
     await expect(harness.client.listNotices({ limit: 3 })).resolves.toMatchObject({ data: { items: [PUBLIC_CONTENT_FIXTURE.notice] } });
     harness.mock.assertExhausted();
   });
+
+  it("uses canonical notice detail and static page methods", async () => {
+    const staticPage = {
+      body_html: "<h2>Fixture heading</h2><p>Fixture static content.</p>",
+      checksum_sha256: "7a9cfb28bf7ec29156a06182de4097920877db4279b231306f975c2e6c0f6200",
+      id: "0198a001-0000-7000-8000-000000000204",
+      is_legal: true,
+      publish_end_at: null,
+      publish_start_at: "2026-07-28T00:00:00Z",
+      slug: "fixture-page",
+      title: "Fixture Page",
+    } as const;
+    const harness = createPublicClientTestHarness();
+    harness.mock.enqueueJson(
+      { method: "GET", url: `${origin}/content/notices/${PUBLIC_CONTENT_FIXTURE.notice.id}` },
+      { body: PUBLIC_CONTENT_FIXTURE.notice, status: 200 },
+    );
+    harness.mock.enqueueJson(
+      { method: "GET", url: `${origin}/content/pages/${staticPage.slug}` },
+      { body: staticPage, status: 200 },
+    );
+    await expect(harness.client.getNotice(PUBLIC_CONTENT_FIXTURE.notice.id))
+      .resolves.toMatchObject({ data: PUBLIC_CONTENT_FIXTURE.notice });
+    await expect(harness.client.getStaticPage(staticPage.slug))
+      .resolves.toMatchObject({ data: staticPage });
+    harness.mock.assertExhausted();
+  });
 });

@@ -1,5 +1,11 @@
-import { PlaceholderPage } from "@/components/common/placeholder-page";
+import { StaticPage } from "@/components/content/static-page";
+import { PageContainer } from "@/components/layout/page-container";
 
-export default function ContentPage() {
-  return <PlaceholderPage description="公開コンテンツは確定した内容のみを表示します。" eyebrow="LUXE PACK" title="コンテンツ準備中" />;
+export default async function ContentPage({ params }: { readonly params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  return (
+    <section className="route-page content-route">
+      <PageContainer size="narrow"><StaticPage slug={slug} /></PageContainer>
+    </section>
+  );
 }

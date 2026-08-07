@@ -21,14 +21,16 @@
     "artifact:check": "node scripts/verify-vendored-artifacts.mjs",
     "auth-boundary:check": "node scripts/check-auth-boundary.mjs",
     "catalog-boundary:check": "node scripts/check-catalog-boundary.mjs",
+    "content-boundary:check": "node scripts/check-content-boundary.mjs",
     "security:check": "node scripts/check-secrets.mjs",
-    "validate": "pnpm artifact:check && pnpm policy:check && pnpm auth-boundary:check && pnpm catalog-boundary:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "validate": "pnpm artifact:check && pnpm policy:check && pnpm auth-boundary:check && pnpm catalog-boundary:check && pnpm content-boundary:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
     "@oripa/storefront-client": "file:vendor/oripa/MIG-061U/oripa-storefront-client-2.0.0-alpha.1.tgz",
     "next": "16.3.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "sanitize-html": "2.17.6"
   },
   "devDependencies": {
     "@oripa/site-schema": "file:vendor/oripa/MIG-061U/oripa-site-schema-2.0.0-alpha.1.tgz",
@@ -40,6 +42,7 @@
     "@types/node": "22.20.1",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
+    "@types/sanitize-html": "2.16.1",
     "eslint": "9.39.4",
     "eslint-config-next": "16.3.0",
     "jsdom": "30.0.1",

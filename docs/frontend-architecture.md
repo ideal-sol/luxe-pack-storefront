@@ -9,6 +9,7 @@
 5. `src/lib/platform` owns runtime configuration and the narrow canonical Client adapter.
 6. `src/components/auth` owns session orchestration and authentication presentation.
 7. `src/components/catalog` owns public catalog orchestration and contract-backed presentation.
+8. `src/components/content` owns public notices, static documents, and the single sanitized HTML boundary.
 
 ## Server and Client Components
 
@@ -26,6 +27,14 @@ catalog Client Components start public requests independently, while endpoint
 paths, query encoding, response types, retry behavior, and transport metadata
 remain owned by the canonical Client.
 
+SITE-009 extends the same adapter with `listNotices`, `getNotice`, and
+`getStaticPage`. Notice and static-page Components never construct endpoint paths
+or response types. Canonical `body_html` passes through `safe-content.tsx`, which
+uses an explicit element, attribute, and URL-scheme allowlist before the sole
+`dangerouslySetInnerHTML` boundary. External HTTPS links receive a new browsing
+context with `noopener noreferrer`; scriptable schemes and event attributes are
+discarded.
+
 ## State and data rules
 
 - No direct database or Platform request from a React Component.
@@ -39,6 +48,10 @@ remain owned by the canonical Client.
   sold-out, eligibility, first-user, LINE-user, or daily-limit state.
 - Cursor continuation uses the returned `meta` object and the Client query type;
   category changes start a new first page.
+- Notice continuation uses the returned `next_cursor` unchanged; it is not
+  converted into page numbers.
+- Notice and static-page availability is determined by the Client response or a
+  typed 404 status, never by a Frontend slug registry.
 
 ## Testing
 
@@ -52,3 +65,8 @@ SITE-003 adds deterministic Client/Testkit contract tests for banners, notices,
 categories, tags, gacha summaries, category queries, and cursor queries. Component
 tests cover loading, empty, typed errors, missing configuration, image fallback,
 navigation, multiple cards, and independence from authenticated/anonymous Session.
+
+SITE-009 adds Content Client/Testkit contract tests for notice cursor reads,
+notice detail, and static-page lookup. Component tests cover list/detail/document
+states, links, cursor continuation, route switching, long-form structure, and XSS
+removal. SITE-004 remains held on its separate Platform eligibility contract.
