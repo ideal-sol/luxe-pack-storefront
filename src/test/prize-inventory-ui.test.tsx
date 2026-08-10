@@ -59,6 +59,15 @@ const denied = prize({
   id: "0198a001-0000-7000-8000-000000000203",
   name: "選択不可の景品",
 });
+const pointOnly = prize({
+  allowed_actions: {
+    point_exchange: { allowed: true, unavailable_reason: null },
+    selection: { allowed: true, unavailable_reason: null },
+    shipping: { allowed: false, unavailable_reason: "status_not_actionable" },
+  },
+  id: "0198a001-0000-7000-8000-000000000204",
+  name: "ポイント交換のみ可能な景品",
+});
 
 function client(overrides: Partial<PrizeInventoryAdapter> = {}): PrizeInventoryAdapter {
   return {
@@ -110,17 +119,8 @@ describe("prize inventory UI", () => {
   });
 
   it("renders no action when selected items have no Backend-common action", async () => {
-    const selectionOnly = prize({
-      allowed_actions: {
-        point_exchange: { allowed: false, unavailable_reason: "exchange_points_unavailable" },
-        selection: { allowed: true, unavailable_reason: null },
-        shipping: { allowed: false, unavailable_reason: "status_not_actionable" },
-      },
-      id: "0198a001-0000-7000-8000-000000000204",
-      name: "共通操作なしの景品",
-    });
-    renderInventory(client({ listPrizes: vi.fn().mockResolvedValue(response({ items: [selectionOnly], next_cursor: null })) }));
-    fireEvent.click(await screen.findByRole("checkbox", { name: "共通操作なしの景品を選択" }));
+    renderInventory(client({ listPrizes: vi.fn().mockResolvedValue(response({ items: [shippingOnly, pointOnly], next_cursor: null })) }));
+    fireEvent.click(await screen.findByRole("button", { name: "全て選択" }));
     expect(screen.getByText("選択中の景品に共通して利用できる操作はありません。")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "発送を依頼" })).not.toBeInTheDocument();
   });
