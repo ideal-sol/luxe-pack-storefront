@@ -386,3 +386,33 @@ reload-safe result presentation.
 Synthetic Preview data, live Draw E2E, animation, Header Point updates, Draw
 history listing, or optimistic Point/Prize state. The Preview Catalog currently
 has no public Gacha suitable for a safe Draw test.
+
+## SITE-013 — Storefront Preview deployment
+
+- Issue: `#24`
+- Risk: HIGH (`R3`)
+- Base SHA: `d24c6d8992d2eed296e58ebc31845b006645db43`
+- Branch: `site/SITE-013-preview-deployment`
+
+### Purpose
+
+Deploy the reviewed Storefront production build to `test.luxe-pack.biz` while
+preserving the MIG-061Z Public API proxy, TLS, Admin API boundary, production
+Storefront, V1, and Platform Repository.
+
+### Changes
+
+- Added a non-mutating HTTPS smoke tool for public/member shells, Public API
+  reads, the Admin boundary, redirect, and production-origin non-impact.
+- Added the Preview release layout, root-owned public environment file,
+  localhost-only systemd service, minimal Nginx change, Backup, and rollback
+  runbook.
+- Defined the same-Origin `/api/v2` build/runtime configuration without adding
+  Platform URLs, Cookie details, or secrets to Components.
+
+### Boundaries
+
+SITE-012 remains independently held on its Browser-safe fulfillment and typed
+Problem Contract. Preview smoke performs no Login, Draw, Shipping, Point
+Exchange, or synthetic-data mutation. Responsive Browser review remains a
+separate manual verification when no Browser runner is available.

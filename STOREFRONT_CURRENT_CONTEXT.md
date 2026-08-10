@@ -12,6 +12,7 @@
 - SITE-006 My page top and member navigation: completed by this change
 - SITE-011 LINE account link UI: implemented by this change
 - SITE-005 Gacha draw execution and result: implemented by this change
+- SITE-013 Storefront Preview deployment: implemented by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -67,13 +68,18 @@ Platform response or Frontend business decision changed.
   caller-owned canonical Idempotency Keys, generated `DrawProblemCode`, and
   completed-result recovery through `getDrawRequest`
 
-## Preview constraint
+## Preview deployment
 
 MIG-061Z resolves the Platform Public Origin at <https://test.luxe-pack.biz> and
 the same-Origin `/api/v2/` proxy, including HTTPS, Cookie/header forwarding, and
-cache-header forwarding. The Storefront application itself is not deployed at
-that Origin and `/` currently returns HTTP 404, so full browser same-Origin E2E
-has not been performed.
+cache-header forwarding. SITE-013 adds a Preview-only production Next.js service
+on `127.0.0.1:3200` and connects only the virtual host's `/` location to it. The
+existing Platform proxy, Admin API 404 boundary, TLS configuration, production
+Storefront, and V1 remain unchanged.
+
+The deployed build uses `NEXT_PUBLIC_PLATFORM_API_BASE_URL=/api/v2`, so Browser
+requests remain same-Origin. State-changing authenticated Preview journeys are
+not exercised by deployment smoke.
 
 ## Pending contracts
 
@@ -89,12 +95,12 @@ has not been performed.
 - Prize expiry lifecycle, grace-period, and automatic-conversion semantics
 - LINE Official Account friend/addition state
 - LINE unlink UI orchestration after recent reauthentication
-- Storefront Preview application deployment and end-to-end asset reachability
+- Storefront responsive Browser review and authenticated state-changing Preview journeys
 
 ## Next task
 
-SITE-005 is complete. Later Prize mutation Tasks can reuse SITE-007 selection, but must
-revalidate actions in Backend and resolve group mutation, address, and
-stale-selection behavior. A later identity Task may add LINE unlink only after
-the post-reauthentication continuation is canonical; friend state also remains a
-Platform presentation contract.
+SITE-013 makes the merged Storefront shell and read-only Public API paths
+available on the Preview Origin. SITE-012 remains blocked on a Browser-safe Prize
+fulfillment mutation and typed rejection contract. Later Prize mutation Tasks
+must revalidate actions in Backend; identity work must retain the canonical
+post-reauthentication and friend-state boundaries.
