@@ -11,7 +11,9 @@
 - SITE-010 Visual and responsive convergence: completed
 - SITE-006 My page top and member navigation: completed by this change
 - SITE-011 LINE account link UI: implemented by this change
-- SITE-011 Base and latest published `main` at Task start: `e8cef8b68ecd3c1e3501ea8d56081fa264abb335`
+- SITE-005 Gacha draw execution and result: implemented by this change
+- SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
+- SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
 The SITE-002 Session Provider, authentication Header, typed error boundary, and
 Platform runtime configuration remain the shared foundation. Public Catalog reads
@@ -33,12 +35,12 @@ Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.4`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.4`
-- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.4`
-- Source Commit: `a3f8aeb3af5dc7a22f533c2e920e2b1a0c450f33`
-- Artifact authority: `vendor/oripa/MIG-062A/artifact-manifest.json`
-- Public OpenAPI SHA-256: `d9512a3bce378172b8ee330ed29f56a71a2b478329fdcf469e58909523ee7e08`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.6`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.6`
+- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.6`
+- Source Commit: `fedc176f06518edcf9dd57c0387a6d03eee7471b`
+- Artifact authority: `vendor/oripa/MIG-062C/artifact-manifest.json`
+- Public OpenAPI SHA-256: `6f4fc425718a57237fa89c0f6c75b196c0bf287022ce117dd916dd9b2cf457a1`
 
 ## Available contracts
 
@@ -61,6 +63,9 @@ Platform response or Frontend business decision changed.
 - Current external identities and LINE link transaction start through
   `listExternalIdentities` and `startLineIdentityLink`; authorization URL,
   callback validation, and return path remain owned by the generated identity contract
+- Browser-safe Draw mutation through `createBrowserStorefrontDrawClient`,
+  caller-owned canonical Idempotency Keys, generated `DrawProblemCode`, and
+  completed-result recovery through `getDrawRequest`
 
 ## Preview constraint
 
@@ -78,7 +83,8 @@ has not been performed.
 - Point purchase
 - Current user's gacha history list
 - Explicit catalog display status, optional ordering, and featured placement
-- Point-insufficient presentation at gacha-detail time
+- Point-insufficient presentation at gacha-detail time (Draw execution uses the
+  canonical Backend typed error and does not depend on this presentation)
 - Prize inventory canonical status grouping/filter contract
 - Prize expiry lifecycle, grace-period, and automatic-conversion semantics
 - LINE Official Account friend/addition state
@@ -87,10 +93,7 @@ has not been performed.
 
 ## Next task
 
-SITE-005 remains independently held on its Platform Draw mutation boundary and
-is unchanged by SITE-011. When resumed, it can reuse SITE-004's selected-count
-and canonical CTA boundary, but must let the Backend mutation decide Point
-insufficiency. Later Prize mutation Tasks can reuse SITE-007 selection, but must
+SITE-005 is complete. Later Prize mutation Tasks can reuse SITE-007 selection, but must
 revalidate actions in Backend and resolve group mutation, address, and
 stale-selection behavior. A later identity Task may add LINE unlink only after
 the post-reauthentication continuation is canonical; friend state also remains a

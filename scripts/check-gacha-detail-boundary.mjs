@@ -1,7 +1,10 @@
 import { readFileSync } from "node:fs";
 
-const file = "src/components/catalog/gacha-detail.tsx";
-const content = readFileSync(file, "utf8");
+const files = [
+  "src/components/catalog/gacha-detail.tsx",
+  "src/components/draw/gacha-draw-panel.tsx",
+];
+const content = files.map((file) => readFileSync(file, "utf8")).join("\n");
 const directApi = "/api" + "/v2";
 const violations = [];
 
@@ -9,7 +12,6 @@ const forbidden = new Map([
   ["direct-api", content.includes(directApi)],
   ["direct-fetch", /\bfetch\s*\(/.test(content)],
   ["session-derived-eligibility", /\buseSession\b/.test(content)],
-  ["draw-mutation", /\bcreateDraw\b/.test(content)],
   ["auth-storage", /\b(?:localStorage|sessionStorage)\b/.test(content)],
   ["remaining-derived-state", /remaining_count\s*(?:===|!==|<=|>=|<|>)/.test(content)],
   ["date-derived-state", /publish_(?:start|end)_at\s*(?:===|!==|<=|>=|<|>)/.test(content) || /\bDate\.now\s*\(/.test(content)],

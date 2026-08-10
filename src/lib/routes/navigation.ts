@@ -33,6 +33,10 @@ export const accountNavigation = [
 
 export const lineAccountRoute = accountNavigation[4].href;
 
+export function drawResultRoute(drawRequestId: string) {
+  return `/draws/${encodeURIComponent(drawRequestId)}/result`;
+}
+
 export const informationNavigation = [
   { href: "/pages/guide", label: "ご利用ガイド" },
   { href: "/pages/terms", label: "利用規約" },
@@ -60,6 +64,7 @@ export const publicRoutes = [
   "/",
   "/gachas",
   "/gachas/[slug]",
+  "/draws/[drawRequestId]/result",
   "/login",
   "/register",
   "/verify-email",

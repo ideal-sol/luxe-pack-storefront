@@ -1,7 +1,7 @@
 # Platform connection boundary
 
 This directory is the only approved home for Platform connection setup. The
-Repository pins the current MIG-062A `@oripa/storefront-client` artifact and exposes narrow browser
+Repository pins the current MIG-062C `@oripa/storefront-client` artifact and exposes narrow browser
 authentication and public-read adapters plus runtime configuration, typed error
 presentation, and testkit harnesses.
 
@@ -22,5 +22,8 @@ presentation, and testkit harnesses.
 - SITE-007 Prize reads expose only canonical `listPrizes` and `getPrize` methods.
   Components use generated `presentation` and `allowed_actions`, not deprecated
   open snapshots, status/date inference, or mutation methods.
-- Point, Draw, Prize mutation, payment, and missing operations remain Platform
+- SITE-005 Draw execution uses `createBrowserStorefrontDrawClient`; Components
+  never parse Cookies or construct CSRF headers. Result recovery uses only
+  `getDrawRequest` and cannot replay a Draw.
+- Point purchase, Prize mutation, payment, and missing operations remain Platform
   contracts; this boundary does not invent them.

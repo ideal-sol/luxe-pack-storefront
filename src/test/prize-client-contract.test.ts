@@ -11,13 +11,13 @@ import { createPrizeClientTestHarness } from "@/lib/platform/testing";
 const origin = "https://storefront.test/platform";
 const fixture = PUBLIC_USER_PRIZE_FIXTURE as UserPrize;
 
-describe("MIG-062A prize inventory contract", () => {
-  it("pins every Production package to alpha.4 and retains existing contracts", () => {
+describe("MIG-062C prize inventory contract regression", () => {
+  it("pins every Production package to alpha.6 and retains existing contracts", () => {
     for (const packageName of ["site-schema", "storefront-client", "storefront-testkit"]) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
-      expect(packageJson.version).toBe("2.0.0-alpha.4");
+      expect(packageJson.version).toBe("2.0.0-alpha.6");
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("d9512a3bce378172b8ee330ed29f56a71a2b478329fdcf469e58909523ee7e08");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("6f4fc425718a57237fa89c0f6c75b196c0bf287022ce117dd916dd9b2cf457a1");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getUserSession",
       "loginUser",
@@ -52,7 +52,7 @@ describe("MIG-062A prize inventory contract", () => {
     });
     expect(data.items[0]?.allowed_actions).toEqual(fixture.allowed_actions);
     expect(data.next_cursor).toBe("next-page");
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.4", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.6", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 

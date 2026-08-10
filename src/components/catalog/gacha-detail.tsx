@@ -12,6 +12,7 @@ import { isPlatformNotFound, presentPlatformProblem } from "@/lib/platform";
 import { CatalogAsset } from "./catalog-asset";
 import { CatalogLoading, CatalogMessage } from "./catalog-message";
 import { usePublicClient } from "./public-client-provider";
+import { GachaDrawPanel } from "@/components/draw/gacha-draw-panel";
 
 type DetailState =
   | { readonly status: "loading" }
@@ -33,19 +34,6 @@ const saleStateLabels: Readonly<Record<GachaSaleState, string>> = {
   on_sale: "販売中",
   sold_out: "完売",
 };
-const reasonLabels: Readonly<Record<NonNullable<GachaPresentationState["ineligible_reason"]>, string>> = {
-  audience_not_eligible: "このガチャの対象条件を満たしていません。",
-  authentication_required: "抽選するにはログインが必要です。",
-  daily_limit_reached: "本日の抽選上限に達しています。",
-  sale_ended: "このガチャの販売は終了しました。",
-  sale_not_started: "このガチャはまだ販売開始前です。",
-  sold_out: "このガチャは完売しました。",
-};
-const audienceLabels: Readonly<Record<GachaPresentationState["audience"], string>> = {
-  all_users: "すべてのユーザー",
-  first_time_users: "初回ユーザー",
-  line_users: "LINE連携ユーザー",
-};
 
 function formatDateTime(value: string | null) {
   if (!value) return null;
@@ -61,28 +49,6 @@ function remainingPercentage(detail: GachaDetail) {
   return Math.min(100, Math.max(0, (detail.remaining_count / detail.total_count) * 100));
 }
 
-function statusMessage(presentation: GachaPresentationState) {
-  const reason = presentation.ineligible_reason ?? presentation.cta.reason;
-  if (reason) return reasonLabels[reason] ?? "現在は抽選を利用できません。";
-  return presentation.eligible ? "このガチャの抽選対象です。" : "現在は抽選を利用できません。";
-}
-
-function DailyLimit({ dailyLimit }: { readonly dailyLimit: GachaPresentationState["daily_limit"] }) {
-  return (
-    <dl className="gacha-daily-limit" aria-label="日次抽選回数">
-      {dailyLimit.unlimited ? (
-        <div><dt>日次回数</dt><dd>制限なし</dd></div>
-      ) : (
-        <>
-          <div><dt>上限</dt><dd>{number.format(dailyLimit.limit)}回</dd></div>
-          <div><dt>利用済み</dt><dd>{dailyLimit.used === null ? "--" : `${number.format(dailyLimit.used)}回`}</dd></div>
-          <div><dt>残り</dt><dd>{dailyLimit.remaining === null ? "--" : `${number.format(dailyLimit.remaining)}回`}</dd></div>
-        </>
-      )}
-      <div><dt>更新予定</dt><dd>{formatDateTime(dailyLimit.resets_at) ?? "--"}</dd></div>
-    </dl>
-  );
-}
 
 function PrizeModal({ prize, onClose }: { readonly prize: Prize; readonly onClose: () => void }) {
   const titleId = useId();
@@ -177,57 +143,6 @@ function PrizeSections({ detail }: { readonly detail: GachaDetail }) {
   );
 }
 
-function DrawPanel({ detail, presentation }: { readonly detail: GachaDetail; readonly presentation: GachaPresentationState }) {
-  const [selectedCount, setSelectedCount] = useState<GachaPresentationState["allowed_draw_counts"][number] | null>(
-    presentation.allowed_draw_counts[0] ?? null,
-  );
-  const visible = presentation.cta.state !== "hidden";
-  const enabled = presentation.cta.state === "enabled";
-
-  return (
-    <>
-      <section aria-label="抽選状態" className={`gacha-eligibility gacha-eligibility--${presentation.sale_state}`}>
-        <div>
-          <span>{saleStateLabels[presentation.sale_state]}</span>
-          <strong>{statusMessage(presentation)}</strong>
-          <small>対象: {audienceLabels[presentation.audience]}</small>
-        </div>
-        <DailyLimit dailyLimit={presentation.daily_limit} />
-      </section>
-      {visible && (
-        <aside aria-label="抽選オプション" className={`gacha-draw-tray gacha-draw-tray--${presentation.cta.state}`} data-cta-state={presentation.cta.state}>
-          <div className="gacha-draw-tray__inner">
-            <div className="gacha-draw-tray__summary">
-              <p><span>1回</span><strong>{number.format(detail.price_points)}pt</strong></p>
-              <p><span>残り</span><strong>{number.format(detail.remaining_count)}</strong><small>/ {number.format(detail.total_count)}</small></p>
-              <div aria-label={`残り${detail.remaining_count}口、全${detail.total_count}口`} className="gacha-progress gacha-progress--compact" role="progressbar" aria-valuemax={detail.total_count} aria-valuemin={0} aria-valuenow={detail.remaining_count}>
-                <span style={{ width: `${remainingPercentage(detail)}%` }} />
-              </div>
-            </div>
-            <div className="gacha-draw-tray__options" aria-label="抽選回数">
-              {presentation.allowed_draw_counts.map((count) => (
-                <button aria-pressed={selectedCount === count} disabled={!enabled} key={count} onClick={() => setSelectedCount(count)} type="button">
-                  {number.format(count)}回
-                </button>
-              ))}
-            </div>
-            <div className="gacha-draw-tray__action">
-              {presentation.cta.action === "login" && enabled ? (
-                <Link className="button button--accent" href="/login">ログインして抽選する</Link>
-              ) : (
-                <button aria-describedby="draw-boundary-note" className="button button--accent" disabled type="button">
-                  {selectedCount ? `${number.format(selectedCount)}回を選択中` : "抽選を利用できません"}
-                </button>
-              )}
-              <small id="draw-boundary-note">実際の抽選はSITE-005で接続します。</small>
-            </div>
-          </div>
-        </aside>
-      )}
-    </>
-  );
-}
-
 function DetailContent({ detail, presentation }: { readonly detail: GachaDetail; readonly presentation: GachaPresentationState }) {
   const asset = detail.presentation_asset?.media_type === "image" ? detail.presentation_asset : null;
   const publishEnd = formatDateTime(detail.publish_end_at);
@@ -263,7 +178,7 @@ function DetailContent({ detail, presentation }: { readonly detail: GachaDetail;
         </details>
       )}
       <PrizeSections detail={detail} />
-      <DrawPanel detail={detail} presentation={presentation} />
+      <GachaDrawPanel detail={detail} presentation={presentation} />
     </article>
   );
 }
