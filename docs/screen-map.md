@@ -17,10 +17,10 @@
 
 ## Member navigation
 
-| Route | Purpose | SITE-002 state |
+| Route | Purpose | Current state |
 | --- | --- | --- |
 | `/points` | Balance, products, and purchase entry | Login-required placeholder |
-| `/mypage` | Account hub | Login-required placeholder |
+| `/mypage` | Account hub | Session-connected member summary, centralized shortcuts/support navigation, and logout |
 | `/mypage/points` | Point history | Login-required placeholder |
 | `/mypage/draws` | Draw history | Login-required placeholder |
 | `/mypage/prizes` | Acquired item inventory and Backend-authoritative selection | MIG-062A Prize Client-connected; no mutation |
@@ -30,6 +30,12 @@ The Header now renders neutral, unauthenticated, and authenticated controls from
 the Session Provider. Point balance remains `--`. The verification completion
 route accepts only the values required by the canonical Client; Platform must
 confirm the external redirect mapping before Preview use.
+
+The My Page top uses only the existing Session `email_verified` and account
+`state` fields for its member summary. Points, draw history, Prize inventory,
+LINE, notices, and support links come from `src/lib/routes/navigation.ts`.
+Nickname, Avatar, Rank, Point balance, and unconfirmed member products are not
+shown because no corresponding SITE-006 contract was assumed.
 
 The Prize inventory preserves `/mypage/prizes`, uses cursor continuation, and
 shows generated status badges without inventing status groups. Its mobile bulk

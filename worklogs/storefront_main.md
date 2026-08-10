@@ -290,3 +290,34 @@ or modifying Platform-backed state and business decisions.
 Platform adapters, contracts, Session behavior, routes, sale/eligibility logic,
 allowed draw counts, and Prize actions are unchanged. SITE-005 remains in its
 separate Issue, Policy, Branch, and Worktree and is not part of this change.
+
+## SITE-006 — My page top and member navigation
+
+- Issue: `#18`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `849effc27dae6f6f8576ffb2337646bfa798e4c5`
+- Branch: `site/SITE-006-mypage-top`
+
+### Purpose
+
+Replace the `/mypage` login-required placeholder with a Session-backed member
+hub that reuses the current member routes and SITE-010 visual rhythm without
+inventing Profile, Point, or membership contracts.
+
+### Changes
+
+- Added an authenticated one-column member dashboard with Session verification
+  and account-state summary.
+- Centralized My Page shortcuts, account navigation, and support navigation in
+  `src/lib/routes/navigation.ts` and reused them in the screen.
+- Added points, draw history, Prize inventory, LINE, notices, guide, terms, and
+  privacy navigation plus logout through the existing Session boundary.
+- Added Targeted coverage for authenticated, loading, unauthenticated, logout,
+  central Route reuse, Mobile Navigation, and excluded unconfirmed features.
+
+### Boundaries
+
+No Profile Change Request is needed for the implemented scope. Nickname, Avatar,
+Rank, Point balance, Premium Plan, Jackpot, Coupon, invitation, SMS, and Profile
+showcase remain absent. SITE-005 remains independently held on its Platform
+Contract and was not changed.

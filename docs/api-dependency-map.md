@@ -16,6 +16,8 @@ operations or response shapes.
 | Registration | Registration and pending email verification | **Resolved — MIG-061U identity client** |
 | Logout | Browser session invalidation | **Resolved — MIG-061U identity client** |
 | Email verification | Resend and one-time completion | **Resolved — MIG-061U identity client** |
+| My Page top | Current browser Session user verification and account state | **Resolved — existing identity Session; SITE-006 implemented** |
+| Member Profile enrichment | Nickname, Avatar, Rank, or Profile showcase | **Not available and not required by SITE-006 — not displayed** |
 | Points | Point balance | **Pending Contract** |
 | Point history | Point ledger/history | **Pending Contract** |
 | Points | Point product list and purchase eligibility | **Pending Contract** |
