@@ -31,6 +31,11 @@ public data surfaces:
 - section headings with concise list-navigation actions;
 - persistent mobile navigation and visible keyboard focus.
 
+The list density above records the SITE-003 implementation at that time. SITE-010
+supersedes its column count for current implemented screens: gacha cards use one
+image-led column on mobile and two columns on desktop, matching the later verified
+work reference without changing the Catalog contract.
+
 The task-supplied, misspelled `oripone.jp` hostname did not resolve during
 SITE-003. This sentence preserves the historical access record; the correct
 canonical design-reference URL is <https://oripaone.jp/>. That reference was
@@ -99,3 +104,27 @@ statuses, and “ポイント” terminology. No reference product, image, route
 business rule is copied. Status tabs are intentionally omitted until Platform
 publishes a canonical grouping; the design does not turn a visual reference into
 a Frontend state model.
+
+## SITE-010 visual and responsive convergence
+
+SITE-010 applies the verified work observations consistently across the current
+Home, Catalog, Detail, Auth, Content, and Prize inventory surfaces:
+
+- primary route content uses an approximately 800-pixel centered desktop reading
+  width, while Auth forms remain a calmer 560-pixel column;
+- mobile content uses 12–16-pixel effective rhythm where available, a compact
+  52-pixel Header, and safe-area-aware Bottom Navigation stacking; desktop uses
+  a 60-pixel Header;
+- Home banners center a primary card while allowing adjacent content to remain
+  discoverable, and category/filter rails scroll only inside their own boundary;
+- gacha lists use one image-led column on mobile and two columns on desktop;
+- shared cards, forms, state panels, dialogs, and notifications reuse consistent
+  radius, border, shadow, focus-ring, and touch-target treatment;
+- Gacha Detail keeps its returned-state logic and places its Sticky CTA above
+  Mobile Navigation; Prize inventory does the same for its non-mutating bulk tray;
+- Notice and legal-document content retains date/title/divider/chevron hierarchy,
+  readable long-form spacing, and locally scrollable tables.
+
+The convergence is presentation-only. It does not introduce a UI library, copy
+ORIPAONE assets or content, alter Luxe Pack routes, or reinterpret any Platform
+sale, eligibility, Draw, Session, or Prize action contract.

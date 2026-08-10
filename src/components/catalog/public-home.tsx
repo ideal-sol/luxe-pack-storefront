@@ -106,7 +106,7 @@ export function PublicHome() {
   return (
     <>
       <section className="home-banners" aria-label="メインビジュアル">
-        <PageContainer>
+        <PageContainer className="home-content">
           {banners.length > 0 ? (
             <div className="home-banners__rail">{banners.map((banner, index) => <Banner banner={banner} key={banner.id} priority={index === 0} />)}</div>
           ) : (
@@ -116,7 +116,7 @@ export function PublicHome() {
       </section>
 
       <section className="home-categories">
-        <PageContainer>
+        <PageContainer className="home-content">
           <header className="catalog-section-heading"><div><p>FIND YOUR PACK</p><h2>カテゴリーから探す</h2></div><Link href="/gachas">すべて見る <span>→</span></Link></header>
           {categories.length > 0 ? (
             <nav aria-label="ガチャカテゴリー" className="category-links">
@@ -127,7 +127,7 @@ export function PublicHome() {
       </section>
 
       <section className="home-gachas">
-        <PageContainer>
+        <PageContainer className="home-content">
           <header className="catalog-section-heading"><div><p>NOW AVAILABLE</p><h2>販売中ガチャ</h2></div><Link href="/gachas">もっと見る <span>→</span></Link></header>
           {gachas.length > 0 ? (
             <div className="gacha-grid">{gachas.map((gacha, index) => <GachaCard gacha={gacha} key={gacha.id} priority={index < 2} />)}</div>
