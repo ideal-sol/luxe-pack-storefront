@@ -1,5 +1,15 @@
-import { PlaceholderPage } from "@/components/common/placeholder-page";
+import { ExternalIdentityClientProvider } from "@/components/account/external-identity-client-provider";
+import { LineAccountLink } from "@/components/account/line-account-link";
+import { PageTitle } from "@/components/common/page-title";
+import { PageContainer } from "@/components/layout/page-container";
 
 export default function LineConnectionPage() {
-  return <PlaceholderPage description="LINE連携はProviderと認証仕様の確定後に実装します。" eyebrow="MY PAGE / CONNECTION" loginRequired title="LINE連携" />;
+  return (
+    <PageContainer className="route-page mypage-page" size="narrow">
+      <PageTitle description="LINEアカウントとの連携状態を確認できます。" eyebrow="MY PAGE / CONNECTION" title="LINE連携" />
+      <ExternalIdentityClientProvider>
+        <LineAccountLink />
+      </ExternalIdentityClientProvider>
+    </PageContainer>
+  );
 }

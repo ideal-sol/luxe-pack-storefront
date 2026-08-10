@@ -24,7 +24,7 @@
 | `/mypage/points` | Point history | Login-required placeholder |
 | `/mypage/draws` | Draw history | Login-required placeholder |
 | `/mypage/prizes` | Acquired item inventory and Backend-authoritative selection | MIG-062A Prize Client-connected; no mutation |
-| `/mypage/line` | LINE connection | Login-required placeholder |
+| `/mypage/line` | LINE connection | Session and External Identity Client-connected state/link UI; unlink deferred pending safe reauthentication journey |
 
 The Header now renders neutral, unauthenticated, and authenticated controls from
 the Session Provider. Point balance remains `--`. The verification completion
@@ -36,6 +36,13 @@ The My Page top uses only the existing Session `email_verified` and account
 LINE, notices, and support links come from `src/lib/routes/navigation.ts`.
 Nickname, Avatar, Rank, Point balance, and unconfirmed member products are not
 shown because no corresponding SITE-006 contract was assumed.
+
+The LINE page uses the centralized My Page route, reads only the generated
+external identity collection, and starts linking with the canonical Platform
+authorization URL. It does not parse callback parameters or store provider
+tokens. Friend state is absent from alpha.4. Although recent reauthentication
+and unlink methods exist, no unlink button is exposed until their safe
+post-return confirmation journey is fixed.
 
 The Prize inventory preserves `/mypage/prizes`, uses cursor continuation, and
 shows generated status badges without inventing status groups. Its mobile bulk

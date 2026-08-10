@@ -31,6 +31,8 @@ export const accountNavigation = [
   { href: "/mypage/line", label: "LINE連携" },
 ] as const;
 
+export const lineAccountRoute = accountNavigation[4].href;
+
 export const informationNavigation = [
   { href: "/pages/guide", label: "ご利用ガイド" },
   { href: "/pages/terms", label: "利用規約" },

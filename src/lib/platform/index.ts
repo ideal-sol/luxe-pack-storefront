@@ -10,6 +10,15 @@ export {
 } from "./auth-client";
 export { presentAuthProblem, type AuthProblemPresentation } from "./problem-details";
 export {
+  createBrowserExternalIdentityClient,
+  createExternalIdentityAdapter,
+  type ExternalIdentity,
+  type ExternalIdentityAdapter,
+  type ExternalIdentityCollection,
+  type ExternalIdentitySession,
+  type ExternalIdentityStart,
+} from "./external-identity-client";
+export {
   isPlatformNotFound,
   presentPlatformProblem,
   type PlatformProblemPresentation,
