@@ -10,7 +10,8 @@
 - SITE-007 Prize inventory and selection UI: completed
 - SITE-010 Visual and responsive convergence: completed
 - SITE-006 My page top and member navigation: completed by this change
-- SITE-006 Base and latest published `main` at Task start: `849effc27dae6f6f8576ffb2337646bfa798e4c5`
+- SITE-011 LINE account link UI: implemented by this change
+- SITE-011 Base and latest published `main` at Task start: `e8cef8b68ecd3c1e3501ea8d56081fa264abb335`
 
 The SITE-002 Session Provider, authentication Header, typed error boundary, and
 Platform runtime configuration remain the shared foundation. Public Catalog reads
@@ -57,6 +58,9 @@ Platform response or Frontend business decision changed.
 - Authenticated My Page top through the existing browser Session fields and
   centralized member/support Route definitions; no Profile enrichment contract
   is assumed
+- Current external identities and LINE link transaction start through
+  `listExternalIdentities` and `startLineIdentityLink`; authorization URL,
+  callback validation, and return path remain owned by the generated identity contract
 
 ## Preview constraint
 
@@ -77,13 +81,17 @@ has not been performed.
 - Point-insufficient presentation at gacha-detail time
 - Prize inventory canonical status grouping/filter contract
 - Prize expiry lifecycle, grace-period, and automatic-conversion semantics
+- LINE Official Account friend/addition state
+- LINE unlink UI orchestration after recent reauthentication
 - Storefront Preview application deployment and end-to-end asset reachability
 
 ## Next task
 
 SITE-005 remains independently held on its Platform Draw mutation boundary and
-is unchanged by SITE-006. When resumed, it can reuse SITE-004's selected-count
+is unchanged by SITE-011. When resumed, it can reuse SITE-004's selected-count
 and canonical CTA boundary, but must let the Backend mutation decide Point
 insufficiency. Later Prize mutation Tasks can reuse SITE-007 selection, but must
 revalidate actions in Backend and resolve group mutation, address, and
-stale-selection behavior.
+stale-selection behavior. A later identity Task may add LINE unlink only after
+the post-reauthentication continuation is canonical; friend state also remains a
+Platform presentation contract.

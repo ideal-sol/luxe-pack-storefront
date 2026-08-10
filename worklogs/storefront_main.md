@@ -321,3 +321,36 @@ No Profile Change Request is needed for the implemented scope. Nickname, Avatar,
 Rank, Point balance, Premium Plan, Jackpot, Coupon, invitation, SMS, and Profile
 showcase remain absent. SITE-005 remains independently held on its Platform
 Contract and was not changed.
+
+## SITE-011 — LINE account link UI
+
+- Issue: `#20`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `e8cef8b68ecd3c1e3501ea8d56081fa264abb335`
+- Branch: `site/SITE-011-line-account-link`
+
+### Purpose
+
+Replace `/mypage/line` with a Session-gated External Identity screen that reads
+the canonical link state and starts a Platform-owned LINE authorization
+transaction without recreating OAuth or eligibility rules.
+
+### Changes
+
+- Added an alpha.4 External Identity adapter and runtime Provider around the
+  generated `listExternalIdentities` and `startLineIdentityLink` methods.
+- Added unlinked, linked, loading, typed error, configuration unavailable, and
+  login-required UI using the existing My Page route and common state treatment.
+- Added Testkit/Component contract coverage and a LINE-specific boundary check
+  that rejects direct API calls, browser credential storage, protocol details,
+  and Component-owned callback parsing.
+- Recorded friend state and unlink orchestration gaps in the SITE-011 Platform
+  Change Request instead of deriving either from identity presence.
+
+### Boundaries
+
+The Storefront follows only the returned authorization URL and supplies the
+generated local return path. OAuth code/state, provider tokens, Cookie/CSRF
+details, callback verification, friend state, and recent-authentication
+enforcement are not implemented in Components. Real external LINE authentication
+remains untested. SITE-005 is unchanged.

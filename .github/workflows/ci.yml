@@ -27,6 +27,7 @@ jobs:
       - run: pnpm artifact:check
       - run: pnpm policy:check
       - run: pnpm auth-boundary:check
+      - run: pnpm line-identity-boundary:check
       - run: pnpm catalog-boundary:check
       - run: pnpm content-boundary:check
       - run: pnpm gacha-detail-boundary:check
@@ -56,6 +57,7 @@ jobs:
       - run: corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
       - run: pnpm artifact:check
       - run: pnpm auth-boundary:check
+      - run: pnpm line-identity-boundary:check
       - run: pnpm catalog-boundary:check
       - run: pnpm content-boundary:check
       - run: pnpm gacha-detail-boundary:check

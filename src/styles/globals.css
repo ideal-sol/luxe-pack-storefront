@@ -439,6 +439,24 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .mypage-logout { background: transparent; border: 1px solid var(--danger); border-radius: var(--radius-control); color: var(--danger); cursor: pointer; font-size: .76rem; font-weight: 800; min-height: 48px; width: 100%; }
 .mypage-logout:disabled { cursor: wait; opacity: .55; }
 
+.line-account { display: grid; gap: 18px; }
+.line-account__back { align-items: center; color: var(--muted); display: inline-flex; font-size: .72rem; font-weight: 750; min-height: 44px; width: fit-content; }
+.line-account__card { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow); display: grid; gap: 20px; padding: 24px 20px; }
+.line-account__card--linked { border-color: rgba(42, 119, 75, .42); }
+.line-account__mark { align-items: center; aspect-ratio: 1; background: #06c755; border-radius: 18px; color: var(--white); display: flex; font-size: .68rem; font-weight: 900; justify-content: center; letter-spacing: -.04em; width: 58px; }
+.line-account__copy > p { color: var(--bronze); font-size: .56rem; font-weight: 850; letter-spacing: .18em; margin: 0 0 8px; }
+.line-account__copy h2 { font-family: Georgia, "Yu Mincho", serif; font-size: clamp(1.55rem, 7vw, 2.2rem); font-weight: 450; line-height: 1.35; margin: 0; }
+.line-account__copy > span { color: var(--muted); display: block; font-size: .76rem; line-height: 1.8; margin-top: 12px; }
+.line-account__card dl { border-top: 1px solid var(--line); margin: 0; padding-top: 18px; }
+.line-account__card dl div { align-items: center; display: flex; gap: 20px; justify-content: space-between; }
+.line-account__card dt { color: var(--muted); font-size: .68rem; }
+.line-account__card dd { font-size: .74rem; font-weight: 750; margin: 0; text-align: right; }
+.line-account__link { justify-self: stretch; width: 100%; }
+.line-account__problem { background: #fff6f4; border: 1px solid rgba(145, 65, 54, .3); color: var(--danger); font-size: .72rem; line-height: 1.7; margin: 0; padding: 14px 16px; }
+.line-account__notice { background: var(--paper-deep); border-radius: var(--radius-card); padding: 20px; }
+.line-account__notice h2 { font-size: .76rem; margin: 0 0 9px; }
+.line-account__notice p { color: var(--muted); font-size: .68rem; line-height: 1.8; margin: 0; }
+
 .dialog-backdrop { align-items: center; background: rgba(23,22,20,.7); display: flex; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 80; }
 .dialog-card { background: var(--white); border-radius: var(--radius-card); box-shadow: var(--shadow); max-width: 480px; padding: 34px; width: 100%; }
 .dialog-card__eyebrow { color: var(--bronze); font-size: .6rem; font-weight: 800; letter-spacing: .18em; }
@@ -536,6 +554,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
   .mypage-summary { align-items: center; gap: 38px; grid-template-columns: minmax(0, 1fr) minmax(260px, .72fr); padding: 32px; }
   .mypage-summary dl { border-left: 1px solid rgba(255,255,255,.16); border-top: 0; padding: 8px 0 8px 32px; }
   .mypage-shortcuts a { min-height: 124px; padding: 24px 28px; }
+  .line-account__card { align-items: center; gap: 26px; grid-template-columns: auto minmax(0, 1fr) auto; padding: 32px; }
+  .line-account__card dl { border-left: 1px solid var(--line); border-top: 0; min-width: 190px; padding: 8px 0 8px 26px; }
+  .line-account__card dl div { display: grid; gap: 6px; }
+  .line-account__card dd { text-align: left; }
+  .line-account__link { justify-self: end; min-width: 210px; width: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {

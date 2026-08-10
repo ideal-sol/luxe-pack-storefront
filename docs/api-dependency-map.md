@@ -17,6 +17,11 @@ operations or response shapes.
 | Logout | Browser session invalidation | **Resolved — MIG-061U identity client** |
 | Email verification | Resend and one-time completion | **Resolved — MIG-061U identity client** |
 | My Page top | Current browser Session user verification and account state | **Resolved — existing identity Session; SITE-006 implemented** |
+| LINE link state | Current user's linked External Identity collection | **Resolved — alpha.4 `listExternalIdentities`; SITE-011 implemented** |
+| LINE link start | Session-bound canonical LINE authorization transaction | **Resolved — alpha.4 `startLineIdentityLink`; SITE-011 implemented** |
+| LINE callback | One-time generated `completeLineLogin` boundary and canonical return path | **Resolved Contract — Platform callback owns code/state validation; real external ceremony not yet run** |
+| LINE friend state | Official Account friend/addition presentation | **Pending Contract — not inferred from identity presence** |
+| LINE unlink UI | Recent reauthentication completion and safe post-return continuation | **Pending journey contract — mutation exists but no fake CTA is exposed** |
 | Member Profile enrichment | Nickname, Avatar, Rank, or Profile showcase | **Not available and not required by SITE-006 — not displayed** |
 | Points | Point balance | **Pending Contract** |
 | Point history | Point ledger/history | **Pending Contract** |
