@@ -10,7 +10,7 @@ describe("navigation definitions", () => {
 
   it("contains every required placeholder route", () => {
     expect(publicRoutes).toEqual(expect.arrayContaining([
-      "/", "/gachas", "/gachas/[slug]", "/login", "/register", "/points",
+      "/", "/gachas", "/gachas/[slug]", "/draws/[drawRequestId]/result", "/login", "/register", "/points",
       "/notices", "/notices/[noticeId]", "/pages/[slug]", "/mypage",
       "/mypage/points", "/mypage/draws", "/mypage/prizes", "/mypage/line",
     ]));

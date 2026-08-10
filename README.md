@@ -15,8 +15,8 @@ Required runtime versions are Node `22.22.3` and pnpm `10.12.1`.
 
 ## Platform client
 
-The current MIG-062A Production artifacts are vendored at
-`vendor/oripa/MIG-062A` and fixed to version `2.0.0-alpha.4` using
+The current MIG-062C Production artifacts are vendored at
+`vendor/oripa/MIG-062C` and fixed to version `2.0.0-alpha.6` using
 Repository-relative `file:` dependencies. Historical bundles remain immutable. Run
 `pnpm artifact:check` to verify the Manifest, SHA-256 values, package identities,
 archive paths, Lifecycle Script boundary, and absence of server-specific file
@@ -46,6 +46,12 @@ data.
 `getGachaPresentation`. The returned sale state, eligibility, allowed draw
 counts, daily limit, reason, and CTA state are authoritative. SITE-004 does not
 perform a Draw mutation or infer Point insufficiency.
+
+SITE-005 connects that canonical CTA to the generated Browser-safe Draw Client.
+The Client owns Cookie/CSRF protocol handling, while the UI owns only a transient
+canonical Idempotency Key for one operation. `/draws/[drawRequestId]/result`
+always reloads the completed response with `getDrawRequest`; it does not resubmit
+the mutation or optimistically update Point and Prize state.
 
 ## Prize inventory
 

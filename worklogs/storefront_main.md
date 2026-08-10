@@ -354,3 +354,35 @@ generated local return path. OAuth code/state, provider tokens, Cookie/CSRF
 details, callback verification, friend state, and recent-authentication
 enforcement are not implemented in Components. Real external LINE authentication
 remains untested. SITE-005 is unchanged.
+
+## SITE-005 — Gacha Draw execution and result
+
+- Issue: `#15`
+- Risk: HIGH (`R3`)
+- Original Base SHA: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
+- Resumed Base SHA: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
+- Branch: `site/SITE-005-gacha-draw-execution`
+
+### Purpose
+
+Resume the preserved Draw task after MIG-062C resolved the Browser CSRF and typed
+Draw-error blockers, then connect SITE-004's canonical selection to execution and
+reload-safe result presentation.
+
+### Changes
+
+- Verified and pinned MIG-062C `2.0.0-alpha.6` without adopting alpha.5 or
+  modifying earlier bundles.
+- Added the generated Browser Draw adapter, canonical Idempotency helper,
+  confirmation and double-submit boundary, generated typed-error presentation,
+  and safe unknown-error fallback.
+- Added `/draws/[drawRequestId]/result`, which retrieves the completed response
+  through `getDrawRequest` on every mount and never submits a Draw.
+- Added Contract, Component, recovery, Artifact, compatibility, and boundary
+  coverage without Frontend sale, eligibility, Point, inventory, or award rules.
+
+### Not implemented
+
+Synthetic Preview data, live Draw E2E, animation, Header Point updates, Draw
+history listing, or optimistic Point/Prize state. The Preview Catalog currently
+has no public Gacha suitable for a safe Draw test.

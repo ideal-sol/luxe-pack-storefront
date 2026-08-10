@@ -8,7 +8,11 @@ import {
 import { vi } from "vitest";
 import { GachaDetailView } from "@/components/catalog/gacha-detail";
 import { PublicClientProvider } from "@/components/catalog/public-client-provider";
-import type { GachaDetail, GachaPresentationState, PublicCatalogAdapter } from "@/lib/platform";
+import { DrawClientProvider } from "@/components/draw/draw-client-provider";
+import type { DrawClientAdapter, GachaDetail, GachaPresentationState, PublicCatalogAdapter } from "@/lib/platform";
+
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 const detail = PUBLIC_CATALOG_FIXTURE.data as GachaDetail;
@@ -34,9 +38,15 @@ function publicClient(overrides: Partial<PublicCatalogAdapter> = {}): PublicCata
 }
 
 function renderDetail(client: PublicCatalogAdapter | null = publicClient()) {
+  const drawClient = {
+    createDraw: vi.fn(),
+    getDrawRequest: vi.fn(),
+  } as DrawClientAdapter;
   return render(
     <PublicClientProvider client={client}>
-      <GachaDetailView slug={detail.slug} />
+      <DrawClientProvider client={drawClient}>
+        <GachaDetailView slug={detail.slug} />
+      </DrawClientProvider>
     </PublicClientProvider>,
   );
 }
@@ -125,7 +135,7 @@ describe("gacha detail UI", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
-  it("renders only Backend-returned draw counts and performs no Draw mutation", async () => {
+  it("renders only Backend-returned draw counts and opens the execution confirmation", async () => {
     renderDetail();
     const one = await screen.findByRole("button", { name: "1回" });
     expect(screen.getByRole("button", { name: "5回" })).toBeEnabled();
@@ -133,7 +143,8 @@ describe("gacha detail UI", () => {
     expect(screen.queryByRole("button", { name: "100回" })).not.toBeInTheDocument();
     fireEvent.click(one);
     expect(one).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "1回を選択中" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "1回抽選する" }));
+    expect(screen.getByRole("dialog", { name: "抽選内容を確認" })).toBeInTheDocument();
   });
 
   it("uses the canonical login CTA for an anonymous presentation", async () => {

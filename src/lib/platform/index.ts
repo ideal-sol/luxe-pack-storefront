@@ -45,6 +45,16 @@ export {
   type PlatformRuntimeConfiguration,
 } from "./runtime-configuration";
 export {
+  createBrowserDrawClient,
+  createIdempotencyKey,
+  isDrawProblemError,
+  type DrawClientAdapter,
+  type DrawResponse,
+  type StorefrontDrawCount,
+  type StorefrontDrawProblemCode,
+} from "./draw-client";
+export { presentDrawProblem, type DrawProblemPresentation } from "./draw-problem";
+export {
   createBrowserPrizeInventoryClient,
   createPrizeInventoryAdapter,
   type PrizeInventoryAdapter,

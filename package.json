@@ -22,22 +22,23 @@
     "auth-boundary:check": "node scripts/check-auth-boundary.mjs",
     "catalog-boundary:check": "node scripts/check-catalog-boundary.mjs",
     "gacha-detail-boundary:check": "node scripts/check-gacha-detail-boundary.mjs",
+    "draw-boundary:check": "node scripts/check-draw-boundary.mjs",
     "line-identity-boundary:check": "node scripts/check-line-identity-boundary.mjs",
     "prize-boundary:check": "node scripts/check-prize-boundary.mjs",
     "content-boundary:check": "node scripts/check-content-boundary.mjs",
     "security:check": "node scripts/check-secrets.mjs",
-    "validate": "pnpm artifact:check && pnpm policy:check && pnpm auth-boundary:check && pnpm line-identity-boundary:check && pnpm catalog-boundary:check && pnpm content-boundary:check && pnpm gacha-detail-boundary:check && pnpm prize-boundary:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "validate": "pnpm artifact:check && pnpm policy:check && pnpm auth-boundary:check && pnpm line-identity-boundary:check && pnpm catalog-boundary:check && pnpm content-boundary:check && pnpm gacha-detail-boundary:check && pnpm draw-boundary:check && pnpm prize-boundary:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
-    "@oripa/storefront-client": "file:vendor/oripa/MIG-062A/oripa-storefront-client-2.0.0-alpha.4.tgz",
+    "@oripa/storefront-client": "file:vendor/oripa/MIG-062C/oripa-storefront-client-2.0.0-alpha.6.tgz",
     "next": "16.3.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "sanitize-html": "2.17.6"
   },
   "devDependencies": {
-    "@oripa/site-schema": "file:vendor/oripa/MIG-062A/oripa-site-schema-2.0.0-alpha.4.tgz",
-    "@oripa/storefront-testkit": "file:vendor/oripa/MIG-062A/oripa-storefront-testkit-2.0.0-alpha.4.tgz",
+    "@oripa/site-schema": "file:vendor/oripa/MIG-062C/oripa-site-schema-2.0.0-alpha.6.tgz",
+    "@oripa/storefront-testkit": "file:vendor/oripa/MIG-062C/oripa-storefront-testkit-2.0.0-alpha.6.tgz",
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "7.0.0",
@@ -55,8 +56,8 @@
   },
   "pnpm": {
     "overrides": {
-      "@oripa/site-schema@2.0.0-alpha.4": "file:vendor/oripa/MIG-062A/oripa-site-schema-2.0.0-alpha.4.tgz",
-      "@oripa/storefront-client@2.0.0-alpha.4": "file:vendor/oripa/MIG-062A/oripa-storefront-client-2.0.0-alpha.4.tgz"
+      "@oripa/site-schema@2.0.0-alpha.6": "file:vendor/oripa/MIG-062C/oripa-site-schema-2.0.0-alpha.6.tgz",
+      "@oripa/storefront-client@2.0.0-alpha.6": "file:vendor/oripa/MIG-062C/oripa-storefront-client-2.0.0-alpha.6.tgz"
     }
   }
 }

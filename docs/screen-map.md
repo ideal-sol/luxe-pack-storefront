@@ -6,7 +6,8 @@
 | --- | --- | --- |
 | `/` | Banners, categories, current gacha summaries, and notice summaries | Public Client-connected; Testkit verified |
 | `/gachas` | Public gacha cards, category filter, and cursor continuation | Public Client-connected; Testkit verified |
-| `/gachas/[slug]` | Public pack detail | Detail and MIG-061Y presentation connected; Draw mutation deferred to SITE-005 |
+| `/gachas/[slug]` | Public pack detail and Draw entry | Detail/presentation plus Browser-safe Draw confirmation and mutation connected |
+| `/draws/[drawRequestId]/result` | Completed Draw result | Authenticated `getDrawRequest` recovery; reload performs GET only |
 | `/notices` | Public notices | Content Client-connected cursor list; Testkit verified |
 | `/notices/[noticeId]` | Public notice detail | Content Client-connected canonical HTML; sanitized before rendering |
 | `/pages/[slug]` | Managed public content | Content Client-connected by slug; sanitized document layout |
@@ -40,7 +41,7 @@ shown because no corresponding SITE-006 contract was assumed.
 The LINE page uses the centralized My Page route, reads only the generated
 external identity collection, and starts linking with the canonical Platform
 authorization URL. It does not parse callback parameters or store provider
-tokens. Friend state is absent from alpha.4. Although recent reauthentication
+tokens. Friend state is absent from alpha.6. Although recent reauthentication
 and unlink methods exist, no unlink button is exposed until their safe
 post-return confirmation journey is fixed.
 
@@ -61,4 +62,6 @@ Platform remains authoritative for whether each requested slug is published.
 SITE-004 keeps the Luxe Pack `/gachas/[slug]` route and adds the returned main
 asset, facts, progress, notices, rank/prize sections, modal, eligibility, daily
 limit, allowed-count selection, and sticky CTA. Anonymous login guidance is used
-only when the canonical CTA action requests it. Draw execution is not present.
+only when the canonical CTA action requests it. SITE-005 submits only after a
+confirmation, uses the generated Browser Draw Client and Idempotency helper, and
+recovers the canonical result by public Draw Request ID without replaying mutation.

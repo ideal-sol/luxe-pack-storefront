@@ -1,7 +1,7 @@
 # API dependency map
 
-Storefront reads use the MIG-062A Public OpenAPI and `@oripa/storefront-client`
-`2.0.0-alpha.4`. This map does not invent absent
+Storefront operations use the MIG-062C Public OpenAPI and `@oripa/storefront-client`
+`2.0.0-alpha.6`. This map does not invent absent
 operations or response shapes.
 
 | Screen | Required capability | Contract state |
@@ -12,6 +12,8 @@ operations or response shapes.
 | Home notices | Public notice summary collection | **Resolved — MIG-061U content client** |
 | Pack detail | Public gacha detail by slug | **Resolved — MIG-061Y catalog client; SITE-004 implemented** |
 | Pack detail CTA | User-specific presentation state | **Resolved — MIG-061Y `getGachaPresentation`; SITE-004 implemented** |
+| Draw execution | Browser-owned CSRF, caller Idempotency Key, typed Backend rejection, and completed response | **Resolved — MIG-062C `createBrowserStorefrontDrawClient`; SITE-005 implemented** |
+| Draw result | Completed Draw Request read by public ID | **Resolved — alpha.6 `getDrawRequest`; reload-safe SITE-005 route** |
 | Login | Password login and current browser session | **Resolved — MIG-061U identity client** |
 | Registration | Registration and pending email verification | **Resolved — MIG-061U identity client** |
 | Logout | Browser session invalidation | **Resolved — MIG-061U identity client** |
@@ -33,7 +35,7 @@ operations or response shapes.
 | Static pages | Public canonical HTML page by slug | **Resolved — MIG-061U content client; sanitized renderer required** |
 | Platform API in Preview | Public route, Origin, HTTPS, and same-Origin proxy | **Resolved by MIG-061Z; Storefront application deployment remains pending** |
 | Catalog presentation | Explicit display status, optional order, featured placement | **Pending Contract** |
-| Gacha detail Point insufficiency | Backend-authoritative Point affordability at presentation or Draw time | **Pending Contract — not inferred by SITE-004** |
+| Gacha detail Point insufficiency | Backend-authoritative Point affordability before Draw | **Presentation remains pending; SITE-005 uses only the typed Draw mutation rejection** |
 | Prize inventory | User-prize presentation, cursor, and Backend-authoritative allowed actions | **Resolved — MIG-062A `listPrizes` / `getPrize`; SITE-007 implemented** |
 | Prize status tabs | Canonical grouping or status filter | **Pending Contract — SITE-007 does not infer grouping** |
 | Prize expiry lifecycle | Grace period, automatic conversion, and final expiry semantics | **Pending Contract — display-only deadline** |
