@@ -1,7 +1,7 @@
 # API dependency map
 
-Public reads use the MIG-061Y Public OpenAPI and `@oripa/storefront-client`
-`2.0.0-alpha.2`. This map does not invent absent
+Storefront reads use the MIG-062A Public OpenAPI and `@oripa/storefront-client`
+`2.0.0-alpha.4`. This map does not invent absent
 operations or response shapes.
 
 | Screen | Required capability | Contract state |
@@ -27,7 +27,9 @@ operations or response shapes.
 | Platform API in Preview | Public route, Origin, HTTPS, and same-Origin proxy | **Resolved by MIG-061Z; Storefront application deployment remains pending** |
 | Catalog presentation | Explicit display status, optional order, featured placement | **Pending Contract** |
 | Gacha detail Point insufficiency | Backend-authoritative Point affordability at presentation or Draw time | **Pending Contract — not inferred by SITE-004** |
-| Prize inventory | User-prize read state and Backend-authoritative allowed actions | **Pending Contract — SITE-007 held** |
+| Prize inventory | User-prize presentation, cursor, and Backend-authoritative allowed actions | **Resolved — MIG-062A `listPrizes` / `getPrize`; SITE-007 implemented** |
+| Prize status tabs | Canonical grouping or status filter | **Pending Contract — SITE-007 does not infer grouping** |
+| Prize expiry lifecycle | Grace period, automatic conversion, and final expiry semantics | **Pending Contract — display-only deadline** |
 
 ## Platform Change Request rule
 

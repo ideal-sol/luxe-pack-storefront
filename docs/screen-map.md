@@ -23,13 +23,18 @@
 | `/mypage` | Account hub | Login-required placeholder |
 | `/mypage/points` | Point history | Login-required placeholder |
 | `/mypage/draws` | Draw history | Login-required placeholder |
-| `/mypage/prizes` | Acquired items | Login-required placeholder |
+| `/mypage/prizes` | Acquired item inventory and Backend-authoritative selection | MIG-062A Prize Client-connected; no mutation |
 | `/mypage/line` | LINE connection | Login-required placeholder |
 
 The Header now renders neutral, unauthenticated, and authenticated controls from
 the Session Provider. Point balance remains `--`. The verification completion
 route accepts only the values required by the canonical Client; Platform must
 confirm the external redirect mapping before Preview use.
+
+The Prize inventory preserves `/mypage/prizes`, uses cursor continuation, and
+shows generated status badges without inventing status groups. Its mobile bulk
+tray exposes only actions allowed for every selected item; action buttons are a
+non-mutating boundary for later Tasks.
 
 The desktop and mobile navigation continue to use `src/lib/routes/navigation.ts`.
 The mobile current-page rule treats gacha detail placeholders as part of the

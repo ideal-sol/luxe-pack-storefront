@@ -1,5 +1,15 @@
-import { PlaceholderPage } from "@/components/common/placeholder-page";
+import { PageTitle } from "@/components/common/page-title";
+import { PageContainer } from "@/components/layout/page-container";
+import { PrizeClientProvider } from "@/components/prizes/prize-client-provider";
+import { PrizeInventory } from "@/components/prizes/prize-inventory";
 
 export default function PrizesPage() {
-  return <PlaceholderPage description="獲得情報は確定Contractの接続後に表示します。" eyebrow="MY PAGE / ITEMS" loginRequired title="獲得アイテム" />;
+  return (
+    <PageContainer className="route-page inventory-page">
+      <PageTitle description="獲得した景品の状態を確認し、Platformが許可した景品だけを選択できます。" eyebrow="MY PAGE / ITEMS" title="獲得アイテム" />
+      <PrizeClientProvider>
+        <PrizeInventory />
+      </PrizeClientProvider>
+    </PageContainer>
+  );
 }

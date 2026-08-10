@@ -1,7 +1,7 @@
 # Platform connection boundary
 
 This directory is the only approved home for Platform connection setup. The
-Repository pins the current MIG-061Y `@oripa/storefront-client` artifact and exposes narrow browser
+Repository pins the current MIG-062A `@oripa/storefront-client` artifact and exposes narrow browser
 authentication and public-read adapters plus runtime configuration, typed error
 presentation, and testkit harnesses.
 
@@ -19,5 +19,8 @@ presentation, and testkit harnesses.
   `getGachaPresentation` methods. Components render generated sale, eligibility,
   daily-limit, allowed-count, reason, and CTA values without deriving them from
   Session, dates, remaining counts, or Point balance.
-- Point, Draw, Prize, payment, and missing operations remain Platform contracts;
-  this boundary does not invent them.
+- SITE-007 Prize reads expose only canonical `listPrizes` and `getPrize` methods.
+  Components use generated `presentation` and `allowed_actions`, not deprecated
+  open snapshots, status/date inference, or mutation methods.
+- Point, Draw, Prize mutation, payment, and missing operations remain Platform
+  contracts; this boundary does not invent them.
