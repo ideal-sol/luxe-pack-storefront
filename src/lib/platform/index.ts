@@ -35,3 +35,15 @@ export {
   readPlatformRuntimeConfiguration,
   type PlatformRuntimeConfiguration,
 } from "./runtime-configuration";
+export {
+  createBrowserPrizeInventoryClient,
+  createPrizeInventoryAdapter,
+  type PrizeInventoryAdapter,
+  type UserPrize,
+  type UserPrizeActionUnavailableReason,
+  type UserPrizeAllowedActions,
+  type UserPrizeCollection,
+  type UserPrizeDetail,
+  type UserPrizePresentation,
+  type UserPrizeStatus,
+} from "./prize-client";

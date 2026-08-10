@@ -13,11 +13,11 @@ pnpm validate
 
 Required runtime versions are Node `22.22.3` and pnpm `10.12.1`.
 
-## Authentication client
+## Platform client
 
-The current MIG-061Y artifacts are vendored at `vendor/oripa/MIG-061Y` and fixed
-to version `2.0.0-alpha.2` using Repository-relative `file:` dependencies. The
-historical MIG-061U bundle remains immutable. Run
+The current MIG-062A Production artifacts are vendored at
+`vendor/oripa/MIG-062A` and fixed to version `2.0.0-alpha.4` using
+Repository-relative `file:` dependencies. Historical bundles remain immutable. Run
 `pnpm artifact:check` to verify the Manifest, SHA-256 values, package identities,
 archive paths, Lifecycle Script boundary, and absence of server-specific file
 dependencies.
@@ -46,3 +46,11 @@ data.
 `getGachaPresentation`. The returned sale state, eligibility, allowed draw
 counts, daily limit, reason, and CTA state are authoritative. SITE-004 does not
 perform a Draw mutation or infer Point insufficiency.
+
+## Prize inventory
+
+`/mypage/prizes` uses only generated MIG-062A `presentation` and
+`allowed_actions` fields through the narrow Prize adapter. Selection and bulk
+action visibility follow Backend-returned action states. SITE-007 does not run a
+shipping or point-exchange mutation, infer actions from status or dates, or use
+the deprecated open display snapshots.

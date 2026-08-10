@@ -359,6 +359,51 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .gacha-draw-tray__action .button:disabled { cursor: not-allowed; opacity: .58; }
 .gacha-draw-tray__action small { color: #a89f91; font-size: .54rem; text-align: center; }
 
+.inventory-page { padding-bottom: 230px; }
+.inventory { display: grid; gap: 18px; }
+.inventory__toolbar { align-items: end; border-bottom: 1px solid var(--line); display: flex; gap: 16px; justify-content: space-between; padding-bottom: 16px; }
+.inventory__toolbar p { color: var(--bronze); font-size: .58rem; font-weight: 800; letter-spacing: .18em; margin: 0 0 7px; }
+.inventory__toolbar h2 { font-family: Georgia, "Yu Mincho", serif; font-size: 1.55rem; font-weight: 400; margin: 0; }
+.inventory__selection-actions { display: flex; gap: 7px; }
+.inventory__selection-actions button { background: var(--white); border: 1px solid var(--line); color: var(--ink); cursor: pointer; font-size: .66rem; font-weight: 750; min-height: 42px; padding: 8px 12px; }
+.inventory__selection-actions button:disabled { cursor: not-allowed; opacity: .42; }
+.inventory__selection-actions button:focus-visible, .inventory-card__select input:focus-visible + span, .inventory-action-tray button:focus-visible { outline: 3px solid rgba(185,133,66,.38); outline-offset: 3px; }
+.inventory__status-note { color: var(--muted); font-size: .66rem; line-height: 1.7; margin: 0; }
+.inventory__list { display: grid; gap: 12px; }
+.inventory-card { background: var(--white); border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 12px; grid-template-columns: 36px 92px minmax(0, 1fr); min-width: 0; padding: 12px; transition: border-color .15s ease, box-shadow .15s ease; }
+.inventory-card--selected { border-color: var(--bronze); box-shadow: 0 12px 30px rgba(35,28,18,.1); }
+.inventory-card__select { align-items: center; cursor: pointer; display: flex; justify-content: center; }
+.inventory-card__select input { height: 1px; opacity: 0; position: absolute; width: 1px; }
+.inventory-card__select span { align-items: center; border: 1px solid var(--line); border-radius: 50%; display: flex; height: 25px; justify-content: center; width: 25px; }
+.inventory-card__select input:checked + span { background: var(--bronze); border-color: var(--bronze); }
+.inventory-card__select input:checked + span::after { border: solid var(--white); border-width: 0 2px 2px 0; content: ""; height: 8px; rotate: 45deg; width: 4px; }
+.inventory-card__select input:disabled + span { background: var(--paper-deep); cursor: not-allowed; opacity: .56; }
+.inventory-card__image { aspect-ratio: 1; background: var(--paper-deep); border-radius: 8px; overflow: hidden; }
+.inventory-card__image .catalog-asset { height: 100%; }
+.inventory-card__image .catalog-asset__fallback { min-height: 0; }
+.inventory-card__image .catalog-asset__fallback span { height: 34px; width: 34px; }
+.inventory-card__body { min-width: 0; }
+.inventory-card__badges { display: flex; flex-wrap: wrap; gap: 5px; }
+.inventory-card__badges span { background: var(--ink); border-radius: 999px; color: var(--white); font-size: .52rem; font-weight: 800; padding: 5px 8px; }
+.inventory-card__badges span + span { background: var(--paper-deep); color: var(--ink); }
+.inventory-card h2 { font-size: .78rem; line-height: 1.55; margin: 10px 0; overflow-wrap: anywhere; }
+.inventory-card dl { display: grid; gap: 5px; margin: 0; }
+.inventory-card dl div { display: flex; font-size: .58rem; gap: 8px; justify-content: space-between; }
+.inventory-card dt { color: var(--muted); }
+.inventory-card dd { font-weight: 700; margin: 0; text-align: right; }
+.inventory-card__reason { color: var(--danger); font-size: .56rem; line-height: 1.55; margin: 9px 0 0; }
+.inventory__continuation-error { color: var(--danger); font-size: .7rem; text-align: center; }
+.inventory__more { justify-self: center; }
+.inventory-action-tray { background: rgba(23,22,20,.97); bottom: calc(66px + env(safe-area-inset-bottom)); color: var(--white); left: 0; padding: 12px 12px calc(12px + env(safe-area-inset-bottom)); position: fixed; right: 0; z-index: 45; }
+.inventory-action-tray__inner { display: grid; gap: 8px; margin-inline: auto; max-width: 800px; }
+.inventory-action-tray p { margin: 0; }
+.inventory-action-tray p strong { color: var(--bronze-light); font-family: Georgia, serif; font-size: 1.1rem; }
+.inventory-action-tray p, .inventory-action-tray small, .inventory-action-tray span { font-size: .58rem; }
+.inventory-action-tray small, .inventory-action-tray span { color: #b6aea2; line-height: 1.55; }
+.inventory-action-tray__inner > div { display: flex; gap: 7px; }
+.inventory-action-tray button { background: var(--bronze-light); border: 0; color: var(--ink); flex: 1; font-size: .7rem; font-weight: 800; min-height: 44px; }
+.inventory-action-tray button:disabled { cursor: not-allowed; opacity: .72; }
+
 .dialog-backdrop { align-items: center; background: rgba(23,22,20,.7); display: flex; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 80; }
 .dialog-card { background: var(--white); box-shadow: var(--shadow); max-width: 480px; padding: 34px; width: 100%; }
 .dialog-card__eyebrow { color: var(--bronze); font-size: .6rem; font-weight: 800; letter-spacing: .18em; }
@@ -442,6 +487,15 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .gacha-draw-tray { bottom: 0; padding: 14px 24px; }
   .gacha-draw-tray__inner { align-items: center; grid-template-columns: minmax(210px, .8fr) minmax(220px, 1fr) minmax(200px, .7fr); }
   .gacha-draw-tray__action small { text-align: left; }
+  .inventory-page { padding-bottom: 150px; }
+  .inventory { gap: 22px; }
+  .inventory-card { gap: 20px; grid-template-columns: 42px 132px minmax(0, 1fr); padding: 16px; }
+  .inventory-card h2 { font-size: .92rem; }
+  .inventory-card dl { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .inventory-card dl div { display: grid; gap: 4px; }
+  .inventory-card dd { text-align: left; }
+  .inventory-action-tray { bottom: 0; padding: 14px 24px; }
+  .inventory-action-tray__inner { align-items: center; grid-template-columns: auto minmax(320px, 1fr) auto; }
 }
 
 @media (min-width: 1080px) {

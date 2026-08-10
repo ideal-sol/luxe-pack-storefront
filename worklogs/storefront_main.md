@@ -221,3 +221,41 @@ data. SITE-007 remains held in its separate worktree and Policy.
 
 SITE-005 may consume the selected count and CTA boundary, but must use the
 canonical Backend mutation for affordability, execution, and result semantics.
+
+## SITE-007 — Prize inventory and selection UI
+
+- Issue: `#12`
+- Risk: MEDIUM (`R2`)
+- Original Base SHA: `093e662d03da61ba2d5955ab00c87056eb80b5b8`
+- Resumed Base SHA: `6a2e743cc8c390a2a335e83643c52499c032d666`
+- Branch: `site/SITE-007-prize-inventory`
+
+### Purpose
+
+Resume the preserved Prize inventory task after MIG-062A published typed
+presentation and Backend-authoritative action state, without beginning shipping
+or point-exchange mutations.
+
+### Changes
+
+- Preserved the historical Change Request, fast-forwarded the existing branch,
+  and pinned the verified MIG-062A `2.0.0-alpha.4` bundle.
+- Added a narrow `listPrizes` / `getPrize` adapter and authenticated responsive
+  inventory with cursor continuation, generated status/rank/facts, and fallback
+  images.
+- Added individual, select-all, and reset controls based only on
+  `allowed_actions.selection`, plus a non-mutating mobile bulk tray derived only
+  from Backend-returned shipping and point-exchange action states.
+- Added Artifact, compatibility, Contract, UI, and boundary coverage.
+
+### Not implemented
+
+Shipping, point-exchange, address, or Prize-state mutation; inferred status
+groups; automatic expiry; Storefront Preview deployment; or live authenticated
+Preview verification.
+
+### Next task
+
+Later Prize mutation work must revalidate selections in Backend and resolve
+status grouping, expiry lifecycle, group compatibility, address, Idempotency, and
+stale-action errors. SITE-005 remains independent.

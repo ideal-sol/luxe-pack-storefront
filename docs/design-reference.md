@@ -85,3 +85,17 @@ adopting ORIPAONE routes, assets, product copy, or business rules:
 The UI uses Luxe Pack's existing ink, ivory, and bronze system. Draw counts are
 not copied from the reference: only `allowed_draw_counts` returned by Platform
 are shown.
+
+## SITE-007 prize inventory
+
+The verified ORIPAONE inventory observations inform the one-column card rhythm,
+image/status hierarchy, individual and bulk selection controls, and mobile action
+tray stacked above Bottom Navigation. Desktop remains an approximately 800-pixel
+centered reading column; mobile keeps compact 12–16 pixel effective spacing and
+safe-area bottom padding.
+
+Luxe Pack retains `/mypage/prizes`, its own visual system, generated Platform
+statuses, and “ポイント” terminology. No reference product, image, route, or
+business rule is copied. Status tabs are intentionally omitted until Platform
+publishes a canonical grouping; the design does not turn a visual reference into
+a Frontend state model.

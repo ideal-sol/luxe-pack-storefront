@@ -10,6 +10,7 @@
 6. `src/components/auth` owns session orchestration and authentication presentation.
 7. `src/components/catalog` owns public catalog orchestration and contract-backed presentation.
 8. `src/components/content` owns public notices, static documents, and the single sanitized HTML boundary.
+9. `src/components/prizes` owns authenticated inventory orchestration and Backend-authoritative selection presentation.
 
 ## Server and Client Components
 
@@ -42,6 +43,14 @@ read. Sale state, eligibility, reason, allowed counts, daily limit, and CTA stat
 are rendered directly from that presentation. Session state, timestamps, counts,
 and Point balance are never converted into eligibility or CTA policy.
 
+SITE-007 adds a separate authenticated Prize adapter limited to generated
+`listPrizes` and `getPrize` reads. Cards use `presentation`; deprecated open
+snapshots are ignored. Selection reads only `allowed_actions.selection.allowed`,
+and the bulk tray is the intersection of Backend-returned shipping and point
+exchange actions for selected items. Status, deadline, and exchange value are
+display facts and never inputs to an action decision. No Prize mutation is
+exposed by the adapter.
+
 ## State and data rules
 
 - No direct database or Platform request from a React Component.
@@ -64,6 +73,10 @@ and Point balance are never converted into eligibility or CTA policy.
 - Detail-time Point insufficiency is not published in MIG-061Y. SITE-004 does not
   add a Frontend substitute; SITE-005 must use a Backend-authoritative mutation
   or later presentation contract.
+- User Prize statuses are shown literally through presentation labels. Because
+  MIG-062A publishes no canonical grouping, SITE-007 does not invent status tabs.
+- `storage_expires_at` is formatted for display only. The Frontend does not derive
+  expiry, selection, shipping, or point-exchange availability from it.
 
 ## Testing
 
@@ -84,3 +97,9 @@ states, links, cursor continuation, route switching, long-form structure, and XS
 removal. SITE-004 adds MIG-061Y Testkit coverage for explicit sale states,
 anonymous/authenticated eligibility, allowed counts, daily limits, CTA state,
 detail UI, prize modal accessibility, and the no-mutation boundary.
+
+SITE-007 adds MIG-062A contract coverage for typed presentation, nullable assets,
+cursor reads, and action states. Component tests cover login/configuration/read
+states, individual/select-all/reset behavior, Backend-only bulk actions, and the
+no-mutation boundary. Earlier Auth, Catalog, Content, Gacha Presentation, and Draw
+operations are checked for alpha.4 compatibility.

@@ -5,10 +5,10 @@
 - SITE-001 Storefront foundation and common layout: completed
 - SITE-002 Authentication client integration and session foundation: completed
 - SITE-003 Public home and gacha catalog: completed
-- SITE-004 Gacha detail and draw eligibility: resumed on Issue `#9`; MIG-061Y contract-backed implementation completed by this change
+- SITE-004 Gacha detail and draw eligibility: completed
 - SITE-009 Notices and static pages: completed
-- SITE-007 Prize inventory and selection UI: held on its separate Platform Contract
-- Resumed SITE-004 base and latest published `main`: `093e662d03da61ba2d5955ab00c87056eb80b5b8`
+- SITE-007 Prize inventory and selection UI: MIG-062A contract-backed implementation completed by this change
+- SITE-007 resumed base and latest published `main`: `6a2e743cc8c390a2a335e83643c52499c032d666`
 
 The SITE-002 Session Provider, authentication Header, typed error boundary, and
 Platform runtime configuration remain the shared foundation. Public Catalog reads
@@ -24,12 +24,12 @@ assets replaceable with Luxe Pack-specific materials.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.2`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.2`
-- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.2`
-- Source Commit: `12610e1fefa9c4a6cb555fdd933253bbe54dd0e4`
-- Artifact authority: `vendor/oripa/MIG-061Y/artifact-manifest.json`
-- Public OpenAPI SHA-256: `ea95cd45465c9ec37824dab529c433ed8cfa7f1ba97b89d623f25b457f1952dc`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.4`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.4`
+- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.4`
+- Source Commit: `a3f8aeb3af5dc7a22f533c2e920e2b1a0c450f33`
+- Artifact authority: `vendor/oripa/MIG-062A/artifact-manifest.json`
+- Public OpenAPI SHA-256: `d9512a3bce378172b8ee330ed29f56a71a2b478329fdcf469e58909523ee7e08`
 
 ## Available contracts
 
@@ -43,6 +43,9 @@ assets replaceable with Luxe Pack-specific materials.
 - Public gacha detail by slug
 - User-specific gacha presentation through `getGachaPresentation`: sale state,
   audience, eligibility, ineligible reason, allowed draw counts, daily limit, and CTA state
+- Current-user Prize collection/detail through `listPrizes` and `getPrize`, with
+  typed presentation, cursor continuation, and Backend-authoritative shipping,
+  point-exchange, and selection action states
 
 ## Preview constraint
 
@@ -61,11 +64,14 @@ has not been performed.
 - Current user's gacha history list
 - Explicit catalog display status, optional ordering, and featured placement
 - Point-insufficient presentation at gacha-detail time
-- SITE-007 prize inventory read/action contract
+- Prize inventory canonical status grouping/filter contract
+- Prize expiry lifecycle, grace-period, and automatic-conversion semantics
 - Storefront Preview application deployment and end-to-end asset reachability
 
 ## Next task
 
 SITE-005 can reuse SITE-004's selected-count and canonical CTA boundary for the
 Draw mutation. It must let the Backend mutation decide Point insufficiency and
-must not derive it from any Frontend balance. SITE-007 remains separately held.
+must not derive it from any Frontend balance. Later Prize mutation Tasks can
+reuse SITE-007 selection, but must revalidate actions in Backend and resolve
+group mutation, address, and stale-selection behavior.
