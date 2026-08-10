@@ -259,3 +259,34 @@ Preview verification.
 Later Prize mutation work must revalidate selections in Backend and resolve
 status grouping, expiry lifecycle, group compatibility, address, Idempotency, and
 stale-action errors. SITE-005 remains independent.
+
+## SITE-010 — Visual and responsive convergence
+
+- Issue: `#16`
+- Risk: LOW–MEDIUM (`R2`)
+- Base SHA: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
+- Branch: `site/SITE-010-visual-responsive-convergence`
+
+### Purpose
+
+Converge the already implemented Storefront routes on the verified ORIPAONE
+visual and responsive observations without adding APIs, changing route meaning,
+or modifying Platform-backed state and business decisions.
+
+### Changes
+
+- Added small shared presentation tokens for the 800-pixel reading width, card
+  and control radii, and keyboard focus.
+- Converged Header height, Home banner/category rails, mobile/desktop gacha grid,
+  Auth form width, Content documents, Gacha Detail sticky/modal treatment, and
+  Prize inventory cards/tray.
+- Contained horizontal scrolling at banner, category, filter, Draw-option, and
+  document-table boundaries while preventing page-level horizontal overflow.
+- Added a targeted stylesheet regression for reading width, grid breakpoints,
+  overflow containment, focus targets, and mobile tray stacking.
+
+### Boundaries
+
+Platform adapters, contracts, Session behavior, routes, sale/eligibility logic,
+allowed draw counts, and Prize actions are unchanged. SITE-005 remains in its
+separate Issue, Policy, Branch, and Worktree and is not part of this change.

@@ -7,8 +7,9 @@
 - SITE-003 Public home and gacha catalog: completed
 - SITE-004 Gacha detail and draw eligibility: completed
 - SITE-009 Notices and static pages: completed
-- SITE-007 Prize inventory and selection UI: MIG-062A contract-backed implementation completed by this change
-- SITE-007 resumed base and latest published `main`: `6a2e743cc8c390a2a335e83643c52499c032d666`
+- SITE-007 Prize inventory and selection UI: completed
+- SITE-010 Visual and responsive convergence: completed by this change
+- SITE-010 Base and latest published `main` at Task start: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 
 The SITE-002 Session Provider, authentication Header, typed error boundary, and
 Platform runtime configuration remain the shared foundation. Public Catalog reads
@@ -21,6 +22,12 @@ composition, layout, and responsive behavior should prioritize delivery speed an
 reproduction accuracy while strongly referencing its general UI structure,
 spacing, navigation, card composition, and short UI labels. Components must keep
 assets replaceable with Luxe Pack-specific materials.
+
+SITE-010 converges the implemented routes on an approximately 800-pixel desktop
+reading width, 12–16-pixel mobile edge rhythm, 52/60-pixel mobile/desktop Header,
+single-column mobile and two-column desktop gacha grids, and shared card, control,
+focus, safe-area, and sticky-action treatment. This is presentation-only; no
+Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
@@ -70,8 +77,9 @@ has not been performed.
 
 ## Next task
 
-SITE-005 can reuse SITE-004's selected-count and canonical CTA boundary for the
-Draw mutation. It must let the Backend mutation decide Point insufficiency and
-must not derive it from any Frontend balance. Later Prize mutation Tasks can
-reuse SITE-007 selection, but must revalidate actions in Backend and resolve
-group mutation, address, and stale-selection behavior.
+SITE-005 remains an independent task and can reuse SITE-004's selected-count and
+canonical CTA boundary for the Draw mutation. It must let the Backend mutation
+decide Point insufficiency and must not derive it from any Frontend balance.
+Later Prize mutation Tasks can reuse SITE-007 selection, but must revalidate
+actions in Backend and resolve group mutation, address, and stale-selection
+behavior.

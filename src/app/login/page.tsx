@@ -4,7 +4,7 @@ import { PageContainer } from "@/components/layout/page-container";
 
 export default function LoginPage() {
   return (
-    <PageContainer className="route-page" size="narrow">
+    <PageContainer className="route-page auth-page" size="narrow">
       <PageTitle description="登録済みのメールアドレスとパスワードでログインします。" eyebrow="WELCOME BACK" title="ログイン" />
       <LoginForm />
     </PageContainer>

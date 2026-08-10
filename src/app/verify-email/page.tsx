@@ -9,7 +9,7 @@ export default async function VerifyEmailPage({
 }) {
   const { user_id: userId } = await searchParams;
   return (
-    <PageContainer className="route-page" size="narrow">
+    <PageContainer className="route-page auth-page" size="narrow">
       <PageTitle description="認証メールに記載されたリンクからメールアドレスを確認します。" eyebrow="EMAIL VERIFICATION" title="メール認証" />
       <EmailVerificationNotice {...(userId ? { userId } : {})} />
     </PageContainer>
