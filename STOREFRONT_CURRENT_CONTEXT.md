@@ -8,8 +8,9 @@
 - SITE-004 Gacha detail and draw eligibility: completed
 - SITE-009 Notices and static pages: completed
 - SITE-007 Prize inventory and selection UI: completed
-- SITE-010 Visual and responsive convergence: completed by this change
-- SITE-010 Base and latest published `main` at Task start: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
+- SITE-010 Visual and responsive convergence: completed
+- SITE-006 My page top and member navigation: completed by this change
+- SITE-006 Base and latest published `main` at Task start: `849effc27dae6f6f8576ffb2337646bfa798e4c5`
 
 The SITE-002 Session Provider, authentication Header, typed error boundary, and
 Platform runtime configuration remain the shared foundation. Public Catalog reads
@@ -53,6 +54,9 @@ Platform response or Frontend business decision changed.
 - Current-user Prize collection/detail through `listPrizes` and `getPrize`, with
   typed presentation, cursor continuation, and Backend-authoritative shipping,
   point-exchange, and selection action states
+- Authenticated My Page top through the existing browser Session fields and
+  centralized member/support Route definitions; no Profile enrichment contract
+  is assumed
 
 ## Preview constraint
 
@@ -77,9 +81,9 @@ has not been performed.
 
 ## Next task
 
-SITE-005 remains an independent task and can reuse SITE-004's selected-count and
-canonical CTA boundary for the Draw mutation. It must let the Backend mutation
-decide Point insufficiency and must not derive it from any Frontend balance.
-Later Prize mutation Tasks can reuse SITE-007 selection, but must revalidate
-actions in Backend and resolve group mutation, address, and stale-selection
-behavior.
+SITE-005 remains independently held on its Platform Draw mutation boundary and
+is unchanged by SITE-006. When resumed, it can reuse SITE-004's selected-count
+and canonical CTA boundary, but must let the Backend mutation decide Point
+insufficiency. Later Prize mutation Tasks can reuse SITE-007 selection, but must
+revalidate actions in Backend and resolve group mutation, address, and
+stale-selection behavior.

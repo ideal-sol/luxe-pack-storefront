@@ -37,6 +37,23 @@ export const informationNavigation = [
   { href: "/pages/privacy", label: "プライバシーポリシー" },
 ] as const;
 
+export const myPageShortcutNavigation = [
+  { ...accountNavigation[1], description: "ポイント情報を確認する", eyebrow: "POINTS" },
+  { ...accountNavigation[2], description: "ガチャの利用履歴を確認する", eyebrow: "DRAW HISTORY" },
+  { ...accountNavigation[3], description: "獲得した景品を確認する", eyebrow: "PRIZES" },
+] as const;
+
+export const myPageAccountNavigation = [
+  { ...accountNavigation[4], description: "LINE連携の設定を確認する" },
+] as const;
+
+export const myPageSupportNavigation = [
+  { ...primaryNavigation[2], description: "Luxe Packからのお知らせ" },
+  { ...informationNavigation[0], description: "Storefrontの利用方法" },
+  { ...informationNavigation[1], description: "サービスの利用条件" },
+  { ...informationNavigation[2], description: "個人情報の取り扱い" },
+] as const;
+
 export const publicRoutes = [
   "/",
   "/gachas",
