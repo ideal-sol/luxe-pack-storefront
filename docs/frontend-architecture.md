@@ -13,6 +13,19 @@
 9. `src/components/prizes` owns authenticated inventory orchestration and Backend-authoritative selection presentation.
 10. `src/components/draw` owns confirmation, transient Idempotency operation state, typed Draw-error presentation, and GET-only result recovery.
 
+## Preview runtime
+
+The merged Preview build runs as a production Next.js process bound only to
+`127.0.0.1:3200` and managed by a Preview-specific systemd unit. Nginx terminates
+TLS for `test.luxe-pack.biz`, preserves the existing `/api/v2` Platform proxy and
+`/admin/api/` 404 boundary, and proxies only Storefront routes to Next.js.
+
+The browser Platform base is `/api/v2`; Components and adapters do not know the
+Platform upstream. Release directories are created from a reviewed Git commit,
+and a `current` symlink identifies the exact deployed Squash Commit. Operational
+details, Backup, verification, and rollback are defined in
+`docs/operations/preview-deployment.md`.
+
 ## Server and Client Components
 
 Pages, Footer, containers, titles, and static state panels are Server Components by default. Session Provider, Header authentication state, forms, Mobile active-route navigation, Toast state, Confirmation Dialog interaction, and the root error boundary are explicit Client Components with `"use client"`.
