@@ -4,17 +4,17 @@ import { createContext, useContext, useState } from "react";
 import {
   createBrowserPrizeInventoryClient,
   PlatformConfigurationError,
-  type PrizeInventoryAdapter,
+  type PrizeFulfillmentAdapter,
 } from "@/lib/platform";
 
 interface PrizeClientContextValue {
-  readonly client: PrizeInventoryAdapter | null;
+  readonly client: PrizeFulfillmentAdapter | null;
   readonly configurationAvailable: boolean;
 }
 
 const PrizeClientContext = createContext<PrizeClientContextValue | null>(null);
 
-function resolveClient(injected: PrizeInventoryAdapter | null | undefined) {
+function resolveClient(injected: PrizeFulfillmentAdapter | null | undefined) {
   if (injected !== undefined) return injected;
   return createBrowserPrizeInventoryClient();
 }
@@ -24,9 +24,9 @@ export function PrizeClientProvider({
   client: injectedClient,
 }: {
   readonly children: React.ReactNode;
-  readonly client?: PrizeInventoryAdapter | null;
+  readonly client?: PrizeFulfillmentAdapter | null;
 }) {
-  const [client] = useState<PrizeInventoryAdapter | null>(() => {
+  const [client] = useState<PrizeFulfillmentAdapter | null>(() => {
     try {
       return resolveClient(injectedClient);
     } catch (error) {

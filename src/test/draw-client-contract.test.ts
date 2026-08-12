@@ -23,13 +23,13 @@ function enqueueCsrf(harness: ReturnType<typeof createDrawClientTestHarness>) {
   );
 }
 
-describe("MIG-062C browser Draw contract", () => {
-  it("pins alpha.6 and retains every Storefront operation used before the upgrade", () => {
+describe("MIG-062E browser Draw contract regression", () => {
+  it("pins alpha.8 and retains every Storefront operation used before the upgrade", () => {
     for (const packageName of ["site-schema", "storefront-client", "storefront-testkit"]) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
-      expect(packageJson.version).toBe("2.0.0-alpha.6");
+      expect(packageJson.version).toBe("2.0.0-alpha.8");
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("6f4fc425718a57237fa89c0f6c75b196c0bf287022ce117dd916dd9b2cf457a1");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("210692ca1fa89c7ae28fc942c07d2b740eac7e2230d6b8c255570ac6bc16d568");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getUserSession", "loginUser", "registerUser",
       "listGachas", "getGachaBySlug", "getGachaPresentation",
@@ -56,7 +56,7 @@ describe("MIG-062C browser Draw contract", () => {
     expect(harness.mock.requests[1]?.credentials).toBe("include");
     expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBe(key);
     expect(harness.mock.requests[1]?.headers["x-xsrf-token"]).toBe(csrf);
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.6", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.8", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 

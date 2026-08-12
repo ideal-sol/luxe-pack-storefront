@@ -1,7 +1,7 @@
 # API dependency map
 
-Storefront operations use the MIG-062C Public OpenAPI and `@oripa/storefront-client`
-`2.0.0-alpha.6`. This map does not invent absent
+Storefront operations use the MIG-062E Public OpenAPI and `@oripa/storefront-client`
+`2.0.0-alpha.8`. This map does not invent absent
 operations or response shapes.
 
 | Screen | Required capability | Contract state |
@@ -37,6 +37,9 @@ operations or response shapes.
 | Catalog presentation | Explicit display status, optional order, featured placement | **Pending Contract** |
 | Gacha detail Point insufficiency | Backend-authoritative Point affordability before Draw | **Presentation remains pending; SITE-005 uses only the typed Draw mutation rejection** |
 | Prize inventory | User-prize presentation, cursor, and Backend-authoritative allowed actions | **Resolved — MIG-062A `listPrizes` / `getPrize`; SITE-007 implemented** |
+| Prize address | Browser-safe address list/detail/create/update/delete, typed validation, and uncertain-result reconciliation | **Resolved — MIG-062E Prize Shipping Client; SITE-012 implemented** |
+| Prize shipping | Caller-keyed shipping mutation, typed Backend revalidation, and Shipping/Prize/Address reads | **Resolved — MIG-062E `createShippingRequest`; SITE-012 implemented** |
+| Prize point exchange | Caller-keyed exchange mutation, typed Backend revalidation, and canonical read reconciliation | **Resolved — MIG-062E `exchangePrizes`; SITE-012 implemented** |
 | Prize status tabs | Canonical grouping or status filter | **Pending Contract — SITE-007 does not infer grouping** |
 | Prize expiry lifecycle | Grace period, automatic conversion, and final expiry semantics | **Pending Contract — display-only deadline** |
 

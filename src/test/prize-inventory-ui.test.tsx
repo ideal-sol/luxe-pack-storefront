@@ -5,7 +5,7 @@ import { vi } from "vitest";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { PrizeClientProvider } from "@/components/prizes/prize-client-provider";
 import { PrizeInventory } from "@/components/prizes/prize-inventory";
-import type { AuthClientAdapter, AuthSession, PrizeInventoryAdapter, UserPrize } from "@/lib/platform";
+import type { AuthClientAdapter, AuthSession, PrizeFulfillmentAdapter, UserPrize } from "@/lib/platform";
 
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 const authenticated = PUBLIC_AUTH_FIXTURE.authenticated_session;
@@ -69,15 +69,24 @@ const pointOnly = prize({
   name: "ポイント交換のみ可能な景品",
 });
 
-function client(overrides: Partial<PrizeInventoryAdapter> = {}): PrizeInventoryAdapter {
+function client(overrides: Partial<PrizeFulfillmentAdapter> = {}): PrizeFulfillmentAdapter {
   return {
+    createShippingAddress: vi.fn(),
+    createShippingRequest: vi.fn(),
+    deleteShippingAddress: vi.fn(),
+    exchangePrizes: vi.fn(),
     getPrize: vi.fn(),
+    getShippingAddress: vi.fn(),
+    getShippingRequest: vi.fn(),
     listPrizes: vi.fn().mockResolvedValue(response({ items: [both, shippingOnly, denied], next_cursor: null })),
+    listShippingAddresses: vi.fn().mockResolvedValue(response({ items: [] })),
+    listShippingRequests: vi.fn().mockResolvedValue(response({ items: [], next_cursor: null })),
+    updateShippingAddress: vi.fn(),
     ...overrides,
-  } as PrizeInventoryAdapter;
+  } as PrizeFulfillmentAdapter;
 }
 
-function renderInventory(prizeClient: PrizeInventoryAdapter | null = client(), auth: AuthClientAdapter | null = authClient()) {
+function renderInventory(prizeClient: PrizeFulfillmentAdapter | null = client(), auth: AuthClientAdapter | null = authClient()) {
   return render(
     <SessionProvider client={auth}>
       <PrizeClientProvider client={prizeClient}>
@@ -106,8 +115,8 @@ describe("prize inventory UI", () => {
     expect(deniedCheckbox).toBeDisabled();
     fireEvent.click(bothCheckbox);
     expect(bothCheckbox).toBeChecked();
-    expect(screen.getByRole("button", { name: "ポイントに交換" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "発送を依頼" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "ポイントに交換" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "発送を依頼" })).toBeEnabled();
 
     fireEvent.click(screen.getByRole("button", { name: "全て選択" }));
     expect(screen.getByRole("checkbox", { name: "発送のみ可能な景品を選択" })).toBeChecked();
@@ -135,7 +144,8 @@ describe("prize inventory UI", () => {
     expect(await screen.findByRole("heading", { name: "発送のみ可能な景品" })).toBeInTheDocument();
     expect(listPrizes).toHaveBeenNthCalledWith(1);
     expect(listPrizes).toHaveBeenNthCalledWith(2, "next-page");
-    expect(Object.keys(prizeClient).sort()).toEqual(["getPrize", "listPrizes"]);
+    expect(prizeClient.exchangePrizes).not.toHaveBeenCalled();
+    expect(prizeClient.createShippingRequest).not.toHaveBeenCalled();
   });
 
   it("distinguishes loading, empty, typed error, configuration, and login required", async () => {

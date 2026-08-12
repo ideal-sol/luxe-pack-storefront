@@ -56,8 +56,19 @@ export {
 export { presentDrawProblem, type DrawProblemPresentation } from "./draw-problem";
 export {
   createBrowserPrizeInventoryClient,
-  createPrizeInventoryAdapter,
+  createIdempotencyKey as createFulfillmentIdempotencyKey,
+  FULFILLMENT_MUTATION_RETRY_SEMANTICS,
+  isFulfillmentProblemError,
+  type PrizeExchangeResponse,
+  type PrizeFulfillmentAdapter,
   type PrizeInventoryAdapter,
+  type ShippingAddress,
+  type ShippingAddressCollection,
+  type ShippingAddressInput,
+  type ShippingRequestCollection,
+  type ShippingRequestDetail,
+  type ShippingRequestSummary,
+  type StorefrontFulfillmentProblemCode,
   type UserPrize,
   type UserPrizeActionUnavailableReason,
   type UserPrizeAllowedActions,
@@ -66,3 +77,7 @@ export {
   type UserPrizePresentation,
   type UserPrizeStatus,
 } from "./prize-client";
+export {
+  presentFulfillmentProblem,
+  type FulfillmentProblemPresentation,
+} from "./fulfillment-problem";
