@@ -19,6 +19,7 @@
 - SITE-018 Authenticated My Page route Session continuity: completed by this change
 - SITE-019 Prize Inventory Preview Read diagnosis: completed by this change
 - SITE-014 Gacha Catalog display contract alignment: completed by this change
+- SITE-020 Gacha Detail visual QA fix: implemented by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -133,6 +134,12 @@ SITE-014 resumes on MIG-062G alpha.9. Catalog items now carry the same canonical
 sale/eligibility decision family as Detail/Draw plus explicit display flags.
 Home and `/gachas` retain Backend-returned ended, sold-out, and ineligible items
 in order; cards never derive state from dates, counts, audience, or Session.
+
+SITE-020 keeps variable-length Gacha Detail rank labels inside responsive pill
+badges and adds Detail-only Footer clearance for the fixed Draw tray. Mobile
+clearance includes the existing Bottom Navigation and safe-area stack. This is
+presentation-only and does not alter Draw options, sale state, eligibility, or
+any Platform Contract.
 
 ## Pending contracts
 

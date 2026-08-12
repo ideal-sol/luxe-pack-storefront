@@ -622,3 +622,26 @@ The release is built with the existing public Preview environment after
 MIG-062E alpha.8 integrity verification. Smoke covers public/member shells and
 read-only API/Admin boundaries. Address registration, Shipping, Point Exchange,
 and other state-changing authenticated operations are not exercised.
+
+## SITE-020 — Gacha Detail visual QA fix
+
+- Issue: `#39`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `ef325f0a06e14b374fda4c590720b7b102f77675`
+- Branch: `site/SITE-020-gacha-detail-visual-qa-fix`
+
+### Purpose
+
+Resolve only the two Browser-confirmed Detail presentation defects: a
+variable-length Rank label escaping its fixed circular badge, and the fixed Draw
+tray obscuring Footer navigation and terminal content.
+
+### Changes
+
+- Make the existing Rank badge a bounded, wrapping pill and allow its adjacent
+  heading row to wrap without overlap or horizontal overflow.
+- Add Footer clearance only while a Gacha Draw tray exists, with separate
+  Desktop and Mobile spacing that retains the Bottom Navigation and safe-area
+  stack.
+- Retain every existing Draw option, CTA, sale, eligibility, and Platform
+  boundary without modification.
