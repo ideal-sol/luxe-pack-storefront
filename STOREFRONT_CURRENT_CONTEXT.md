@@ -87,6 +87,13 @@ The deployed build uses `NEXT_PUBLIC_PLATFORM_API_BASE_URL=/api/v2`, so Browser
 requests remain same-Origin. State-changing authenticated Preview journeys are
 not exercised by deployment smoke.
 
+SITE-015 refreshes the Preview application release to SITE-012 Squash Commit
+`980985099fe5a1612b9da5a61b73b371a9b7b864`. The Nginx `/api/v2` proxy,
+`/admin/api/` boundary, TLS, Preview service definition, listen port, production
+Storefront, V1, and Platform remain unchanged. Shipping, point-exchange, and
+address UI are present in the build, but deployment smoke performs no
+state-changing fulfillment operation.
+
 ## Pending contracts
 
 - Point balance

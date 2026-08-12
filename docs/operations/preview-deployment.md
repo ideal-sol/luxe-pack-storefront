@@ -138,6 +138,31 @@ To roll back the first deployment:
 For a later application-only rollback, repoint `current` to the previously
 verified release and restart the Preview service; no Nginx change is required.
 
+## Application-only release refresh
+
+A refresh reuses the installed Nginx virtual host, Preview systemd unit,
+localhost port, runtime user, and public environment file. Do not edit or reload
+Nginx for an application-only refresh.
+
+1. Record the current symlink target, service state, filesystem capacity, and
+   the Nginx configuration checksum.
+2. Create a new immutable directory named for the approved application commit
+   from `git archive <commit>`; never copy an untracked local report.
+3. Verify Artifact integrity, perform the frozen install and production build
+   with the Preview public environment, and confirm the required UI source is
+   present before switching.
+4. Atomically repoint `current` to the verified release and restart only
+   `luxe-pack-storefront-preview.service`.
+5. Run the non-mutating HTTPS/API/Admin-boundary smoke checks and verify that the
+   Nginx checksum, TLS/API boundaries, and production Storefront remain
+   unchanged.
+6. If restart or smoke fails, atomically repoint `current` to the recorded
+   previously verified release and restart the Preview service. Do not modify
+   Nginx during this rollback.
+
+Retain the previous verified release until the refresh smoke has passed. Never
+remove unrelated releases or other service data to obtain capacity.
+
 ## Verification
 
 Run `pnpm preview:smoke` after the HTTPS switch. It checks the public and member
