@@ -91,6 +91,13 @@ retried: an uncertain transport result is reconciled through
 successful mutation is followed by canonical Prize, Shipping, and Address reads;
 the UI does not optimistically change Prize state or Point balance.
 
+The Prize Browser factory supplies the shared receiver-safe fetch function to the
+generated Browser Client. This preserves native Browser invocation semantics while
+leaving credentials, Cookie/CSRF handling, paths, decoding, typed problems, and
+retry behavior under the canonical Client. Preview Prize reads must reach the
+Platform before the UI classifies a successful collection, empty collection, or
+typed problem.
+
 ## State and data rules
 
 - No direct database or Platform request from a React Component.

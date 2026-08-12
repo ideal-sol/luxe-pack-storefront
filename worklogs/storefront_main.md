@@ -1,5 +1,32 @@
 # Storefront worklog
 
+## SITE-019 — Prize Inventory Preview Read diagnosis
+
+- Issue: `#36`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `b86e6af7ee7dfa8c6d1762b17fab30b437229ed6`
+- Branch: `site/SITE-019-prize-inventory-read-diagnosis`
+
+### Diagnosis
+
+The authenticated Preview reproduced the Prize Inventory Error state on Desktop
+and Mobile. Session reads remained HTTP 200, but the Prize request never reached
+the network. The Prize-specific generated Browser Client received the native
+`window.fetch` without the receiver-safe wrapper introduced for the shared
+Browser transport, so Chrome rejected it before Platform communication.
+
+A diagnostic receiver wrapper preserved the Window receiver without changing
+the request. The canonical Prize read then returned HTTP 200 and the Client/UI
+accepted the non-empty inventory, proving that Platform data, response decoding,
+adapter presentation, and the Preview user Prize state were valid.
+
+### Change
+
+- Reuse the shared receiver-safe Browser fetch in the Prize Client factory.
+- Add a receiver-sensitive empty-collection regression test.
+- Do not change Platform paths, schemas, typed problems, fixtures, Prize action
+  rules, or fulfillment mutations.
+
 ## SITE-018 — Authenticated My Page route Session continuity
 
 - Issue: `#34`
