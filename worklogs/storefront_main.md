@@ -27,7 +27,9 @@ the SITE-016 Node Client diagnosis succeeded.
 
 Home and Catalog render three cards, Notices renders its normal empty state, and
 Terms renders the known Platform 404 as not found. Hydration and page runtime
-errors remain absent.
+errors remain absent. After deployment, one approved Preview test-user Login
+journey verifies that the shared receiver fix also restores Session／CSRF／Login
+transport; no credential or protocol value is retained.
 
 ## SITE-016 — Preview public data diagnosis
 

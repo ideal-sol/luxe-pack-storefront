@@ -62,3 +62,8 @@ After the fix, Browser verification must show:
 - `/pages/terms`: the known HTTP 404 renders the normal not-found state;
 - no transport failure, hydration error, or page runtime error at either
   required viewport.
+
+The same shared transport constructs the authentication adapter. After Preview
+deployment, run one approved test-user Login journey and verify the CSRF Session
+initialization and Login request reach the Platform. Record status and Cookie／
+CSRF presence only; never record credential, Cookie, Token, or header values.
