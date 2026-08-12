@@ -15,6 +15,7 @@
 - SITE-013 Storefront Preview deployment: implemented by this change
 - SITE-012 Prize shipping and point exchange: implemented by this change
 - SITE-016 Preview public data diagnosis: completed by this change
+- SITE-017 Preview Browser runtime diagnosis: completed by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -102,6 +103,12 @@ page is not published and returns Platform Problem Details with HTTP 404. No
 Storefront Client, adapter, presentation, or runtime configuration defect was
 reproduced. The repeatable, response-body-free diagnosis is documented in
 `docs/operations/preview-public-data-diagnosis.md`.
+
+SITE-017 reproduces the Browser-only failure in Chromium. The generated Client's
+stored native `window.fetch` was invoked with a non-Window receiver and Chrome
+rejected it with `Illegal invocation` before any Public API request. The shared
+Storefront Browser transport now supplies a receiver-safe fetch function. No API
+path, runtime configuration, response contract, or presentation rule changed.
 
 ## Pending contracts
 
