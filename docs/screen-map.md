@@ -4,8 +4,8 @@
 
 | Route | Purpose | SITE-003 state |
 | --- | --- | --- |
-| `/` | Banners, categories, current gacha summaries, and notice summaries | Public Client-connected; Testkit verified |
-| `/gachas` | Public gacha cards, category filter, and cursor continuation | Public Client-connected; Testkit verified |
+| `/` | Banners, categories, Backend-visible gacha summaries, and notice summaries | alpha.9 Catalog presentation-connected; mixed sale states retained |
+| `/gachas` | Backend-ordered gacha cards, category filter, and cursor continuation | alpha.9 sale/eligibility/display flags; Testkit verified |
 | `/gachas/[slug]` | Public pack detail and Draw entry | Detail/presentation plus Browser-safe Draw confirmation and mutation connected |
 | `/draws/[drawRequestId]/result` | Completed Draw result | Authenticated `getDrawRequest` recovery; reload performs GET only |
 | `/notices` | Public notices | Content Client-connected cursor list; Testkit verified |

@@ -5,12 +5,12 @@ import { useEffect, useId, useRef, useState } from "react";
 import type {
   GachaDetail,
   GachaPresentationState,
-  GachaSaleState,
   PlatformProblemPresentation,
 } from "@/lib/platform";
 import { isPlatformNotFound, presentPlatformProblem } from "@/lib/platform";
 import { CatalogAsset } from "./catalog-asset";
 import { CatalogLoading, CatalogMessage } from "./catalog-message";
+import { gachaSaleStateLabels } from "./gacha-presentation";
 import { usePublicClient } from "./public-client-provider";
 import { GachaDrawPanel } from "@/components/draw/gacha-draw-panel";
 
@@ -28,13 +28,6 @@ type DetailState =
 type Prize = GachaDetail["ranks"][number]["prizes"][number];
 
 const number = new Intl.NumberFormat("ja-JP");
-const saleStateLabels: Readonly<Record<GachaSaleState, string>> = {
-  coming_soon: "販売開始前",
-  ended: "販売終了",
-  on_sale: "販売中",
-  sold_out: "完売",
-};
-
 function formatDateTime(value: string | null) {
   if (!value) return null;
   return new Intl.DateTimeFormat("ja-JP", {
@@ -156,7 +149,7 @@ function DetailContent({ detail, presentation }: { readonly detail: GachaDetail;
           <CatalogAsset alt={asset?.alt_text ?? detail.title} fallbackLabel="PACK IMAGE" priority {...(asset?.path ? { src: asset.path } : {})} />
         </div>
         <div className="gacha-detail__summary">
-          <div className="gacha-detail__badges"><span>{saleStateLabels[presentation.sale_state]}</span><span>{detail.category.name}</span></div>
+          <div className="gacha-detail__badges"><span>{gachaSaleStateLabels[presentation.sale_state]}</span><span>{detail.category.name}</span></div>
           <h1>{detail.title}</h1>
           <div className="gacha-detail__tags">{detail.tags.map((tag) => <span key={tag.id}>#{tag.name}</span>)}</div>
           <dl className="gacha-detail__facts">

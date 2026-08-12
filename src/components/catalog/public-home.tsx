@@ -128,7 +128,7 @@ export function PublicHome() {
 
       <section className="home-gachas">
         <PageContainer className="home-content">
-          <header className="catalog-section-heading"><div><p>NOW AVAILABLE</p><h2>販売中ガチャ</h2></div><Link href="/gachas">もっと見る <span>→</span></Link></header>
+          <header className="catalog-section-heading"><div><p>PACK LINEUP</p><h2>ガチャラインナップ</h2></div><Link href="/gachas">もっと見る <span>→</span></Link></header>
           {gachas.length > 0 ? (
             <div className="gacha-grid">{gachas.map((gacha, index) => <GachaCard gacha={gacha} key={gacha.id} priority={index < 2} />)}</div>
           ) : <CatalogMessage description="現在表示できるガチャはありません。" eyebrow="EMPTY" title="ラインナップを準備中です" />}

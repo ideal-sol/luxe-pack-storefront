@@ -195,13 +195,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .gacha-card__tags { display: flex; gap: 5px; min-height: 18px; overflow: hidden; }
 .gacha-card__tags span { color: var(--bronze); font-size: .52rem; font-weight: 800; white-space: nowrap; }
 .gacha-card h3 { font-size: .9rem; line-height: 1.55; margin: 7px 0 14px; min-height: 2.4em; }
-.gacha-card__meta { align-items: end; border-top: 1px solid var(--line); display: flex; gap: 6px; justify-content: space-between; padding-top: 10px; }
+.gacha-card__presentation { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; margin: -3px 0 10px; min-height: 24px; }
+.gacha-card__presentation span { color: var(--muted); font-size: .55rem; font-weight: 700; line-height: 1.45; }
+.gacha-card__presentation .gacha-card__sale-state { background: var(--paper-deep); border-radius: 999px; color: var(--ink); padding: 4px 8px; }
+.gacha-card__presentation .gacha-card__sale-state--sold_out,
+.gacha-card__presentation .gacha-card__sale-state--ended { background: #fce9e8; color: var(--danger); }
+.gacha-card__presentation .gacha-card__sale-state--coming_soon { background: #f4eee4; color: var(--bronze); }
+.gacha-card__meta { align-items: end; border-top: 1px solid var(--line); display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(4.8rem, 1fr)); padding-top: 10px; }
 .gacha-card__meta p { display: flex; flex-direction: column; margin: 0; min-width: 0; }
 .gacha-card__meta p:first-child strong { color: var(--danger); font-family: Georgia, serif; font-size: 1.05rem; }
-.gacha-card__meta p:first-child span, .gacha-card__meta p:last-child span { color: var(--muted); font-size: .48rem; }
-.gacha-card__meta p:last-child { align-items: end; }
-.gacha-card__meta p:last-child strong { font-size: .72rem; }
-.gacha-card__meta p:last-child small { color: var(--muted); font-size: .46rem; }
+.gacha-card__meta p span { color: var(--muted); font-size: .48rem; }
+.gacha-card__meta p:not(:first-child) { align-items: end; }
+.gacha-card__meta p:not(:first-child) strong { font-size: .72rem; }
+.gacha-card__meta p small { color: var(--muted); font-size: .46rem; }
 .catalog-asset { background: linear-gradient(145deg, #f3ead8, #c7ac7f); overflow: hidden; position: relative; width: 100%; }
 .catalog-asset img { object-fit: cover; }
 .catalog-asset__fallback { align-items: center; background: radial-gradient(circle at 50% 45%, rgba(255,255,255,.54), transparent 48%), linear-gradient(145deg, #eee6d7, #c8aa78); color: var(--ink); display: flex; flex-direction: column; gap: 16px; height: 100%; justify-content: center; min-height: 180px; width: 100%; }

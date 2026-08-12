@@ -15,8 +15,8 @@ Required runtime versions are Node `22.22.3` and pnpm `10.12.1`.
 
 ## Platform client
 
-The current MIG-062E Production artifacts are vendored at
-`vendor/oripa/MIG-062E` and fixed to version `2.0.0-alpha.8` using
+The current MIG-062G Production artifacts are vendored at
+`vendor/oripa/MIG-062G` and fixed to version `2.0.0-alpha.9` using
 Repository-relative `file:` dependencies. Historical bundles remain immutable. Run
 `pnpm artifact:check` to verify the Manifest, SHA-256 values, package identities,
 archive paths, Lifecycle Script boundary, and absence of server-specific file
@@ -41,6 +41,12 @@ types for banners, categories, gacha summaries, cursor metadata, and notice
 summaries. Catalog loading does not wait for Session resolution. Missing runtime
 configuration is rendered as an explicit state and does not fall back to invented
 data.
+
+MIG-062G adds Backend-authoritative Catalog presentation to every returned Gacha.
+Cards retain ended, sold-out, and authenticated-ineligible entries in Backend
+order, render the generated sale/eligibility presentation, and use only generated
+display flags to omit Point, total-count, and Draw-count facts. The Frontend does
+not derive state from dates, remaining units, audience, or Session fields.
 
 `/gachas/[slug]` combines the canonical detail read with MIG-061Y
 `getGachaPresentation`. The returned sale state, eligibility, allowed draw
