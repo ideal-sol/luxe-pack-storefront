@@ -1,14 +1,14 @@
 # API dependency map
 
-Storefront operations use the MIG-062E Public OpenAPI and `@oripa/storefront-client`
-`2.0.0-alpha.8`. This map does not invent absent
+Storefront operations use the MIG-062G Public OpenAPI and `@oripa/storefront-client`
+`2.0.0-alpha.9`. This map does not invent absent
 operations or response shapes.
 
 | Screen | Required capability | Contract state |
 | --- | --- | --- |
 | Home banners | Public banner collection | **Resolved — MIG-061U content client** |
-| Home and pack list | Public gacha summary collection and cursor | **Resolved — MIG-061U catalog client** |
-| Catalog filter | Public categories; tag contract is also available | **Resolved — MIG-061U catalog client** |
+| Home and pack list | Backend-visible mixed-state summary collection and cursor | **Resolved — MIG-062G alpha.9 Catalog presentation; SITE-014 implemented** |
+| Catalog filter/order | Public categories, tags, opaque cursor, and Backend-stable ordering | **Resolved — MIG-062G preserves existing query/cursor contract** |
 | Home notices | Public notice summary collection | **Resolved — MIG-061U content client** |
 | Pack detail | Public gacha detail by slug | **Resolved — MIG-061Y catalog client; SITE-004 implemented** |
 | Pack detail CTA | User-specific presentation state | **Resolved — MIG-061Y `getGachaPresentation`; SITE-004 implemented** |
@@ -34,7 +34,7 @@ operations or response shapes.
 | Notice detail | Public notice detail by opaque ID | **Resolved — MIG-061U content client** |
 | Static pages | Public canonical HTML page by slug | **Resolved — MIG-061U content client; sanitized renderer required** |
 | Platform API in Preview | Public route, Origin, HTTPS, and same-Origin proxy | **Resolved by MIG-061Z; Storefront application deployment remains pending** |
-| Catalog presentation | Explicit display status, optional order, featured placement | **Pending Contract** |
+| Catalog presentation | Sale state, anonymous/authenticated eligibility, reason, CTA, and display-fact flags | **Resolved — MIG-062G alpha.9 generated `GachaSummary.presentation`** |
 | Gacha detail Point insufficiency | Backend-authoritative Point affordability before Draw | **Presentation remains pending; SITE-005 uses only the typed Draw mutation rejection** |
 | Prize inventory | User-prize presentation, cursor, and Backend-authoritative allowed actions | **Resolved — MIG-062A `listPrizes` / `getPrize`; SITE-007 implemented** |
 | Prize address | Browser-safe address list/detail/create/update/delete, typed validation, and uncertain-result reconciliation | **Resolved — MIG-062E Prize Shipping Client; SITE-012 implemented** |

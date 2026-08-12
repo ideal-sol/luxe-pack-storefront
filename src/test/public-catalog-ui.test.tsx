@@ -1,12 +1,18 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
-import { PUBLIC_AUTH_FIXTURE, PUBLIC_CATALOG_FIXTURE, PUBLIC_CONTENT_FIXTURE } from "@oripa/storefront-testkit";
+import {
+  PUBLIC_AUTH_FIXTURE,
+  PUBLIC_CATALOG_FIXTURE,
+  PUBLIC_CONTENT_FIXTURE,
+  PUBLIC_GACHA_CATALOG_DISPLAY_FIXTURES,
+} from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { GachaCatalog } from "@/components/catalog/gacha-catalog";
+import { GachaCard } from "@/components/catalog/gacha-card";
 import { PublicClientProvider } from "@/components/catalog/public-client-provider";
 import { PublicHome } from "@/components/catalog/public-home";
-import type { AuthClientAdapter, PublicCatalogAdapter } from "@/lib/platform";
+import type { AuthClientAdapter, GachaSummary, PublicCatalogAdapter } from "@/lib/platform";
 
 const replace = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -18,6 +24,9 @@ const metadata = { idempotency_replayed: false, status: 200 } as const;
 const summary = PUBLIC_CATALOG_FIXTURE.data;
 const categoryCollection = { data: [summary.category] };
 const gachaCollection = { data: [summary], meta: { has_more: false, next_cursor: null, page_size: 1 } };
+const displayFixtures = PUBLIC_GACHA_CATALOG_DISPLAY_FIXTURES as unknown as Readonly<
+  Record<keyof typeof PUBLIC_GACHA_CATALOG_DISPLAY_FIXTURES, GachaSummary>
+>;
 
 function response<T>(data: T) {
   return { data, metadata };
@@ -48,6 +57,53 @@ describe("public catalog UI", () => {
     );
     expect(await screen.findAllByRole("link", { name: `${summary.title}の詳細を見る` })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: summary.title })[0]).toHaveAttribute("href", `/gachas/${summary.slug}`);
+  });
+
+  it.each([
+    ["on_sale", "販売中", "抽選対象"],
+    ["coming_soon", "販売開始前", "このガチャはまだ販売開始前です。"],
+    ["ended", "販売終了", "このガチャの販売は終了しました。"],
+    ["sold_out", "完売", "このガチャは完売しました。"],
+    ["authenticated_eligible", "販売中", "抽選対象"],
+    ["authenticated_ineligible", "販売中", "このガチャの対象条件を満たしていません。"],
+    ["anonymous", "販売中", "抽選するにはログインが必要です。"],
+  ] as const)("renders the alpha.9 %s presentation without local state derivation", (fixtureName, saleLabel, reasonLabel) => {
+    render(<GachaCard gacha={displayFixtures[fixtureName]} />);
+    expect(screen.getByText(saleLabel)).toBeInTheDocument();
+    expect(screen.getByText(reasonLabel)).toBeInTheDocument();
+  });
+
+  it.each(["ended", "sold_out"] as const)("uses Backend display flags for %s facts", (fixtureName) => {
+    const fixture = displayFixtures[fixtureName];
+    render(<GachaCard gacha={fixture} />);
+    expect(screen.queryByText(new Intl.NumberFormat("ja-JP").format(fixture.price_points))).not.toBeInTheDocument();
+    expect(screen.getByLabelText(`残り${fixture.remaining_count}口`)).toBeInTheDocument();
+    expect(screen.queryByLabelText(`残り${fixture.remaining_count}口、全${fixture.total_count}口`)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(`抽選済み${fixture.drawn_count}回`)).not.toBeInTheDocument();
+    expect(screen.getByLabelText("販売・対象状態")).toHaveAttribute("data-cta-state", "hidden");
+  });
+
+  it("shows Backend-enabled on-sale facts and CTA presentation", () => {
+    const fixture = displayFixtures.on_sale;
+    render(<GachaCard gacha={fixture} />);
+    expect(screen.getByText(new Intl.NumberFormat("ja-JP").format(fixture.price_points))).toBeInTheDocument();
+    expect(screen.getByLabelText(`残り${fixture.remaining_count}口、全${fixture.total_count}口`)).toBeInTheDocument();
+    expect(screen.getByLabelText(`抽選済み${fixture.drawn_count}回`)).toBeInTheDocument();
+    expect(screen.getByLabelText("販売・対象状態")).toHaveAttribute("data-cta-state", "enabled");
+  });
+
+  it("keeps ended, sold-out, and authenticated-ineligible items in Backend order", async () => {
+    const data = [displayFixtures.ended, displayFixtures.sold_out, displayFixtures.authenticated_ineligible];
+    renderPublic(
+      <GachaCatalog />,
+      publicClient({ listGachas: vi.fn().mockResolvedValue(response({ ...gachaCollection, data })) }),
+    );
+    expect(await screen.findAllByRole("link", { name: `${summary.title}の詳細を見る` })).toHaveLength(3);
+    expect(screen.getAllByLabelText("販売・対象状態").map((item) => item.textContent)).toEqual([
+      expect.stringContaining("販売終了"),
+      expect.stringContaining("完売"),
+      expect.stringContaining("対象条件を満たしていません"),
+    ]);
   });
 
   it("distinguishes loading, empty, typed error, and configuration unavailable", async () => {
@@ -102,7 +158,7 @@ describe("public catalog UI", () => {
   it("renders home sections and links to the full catalog", async () => {
     renderPublic(<PublicHome />, publicClient());
     await screen.findByText(PUBLIC_CONTENT_FIXTURE.banner.title);
-    expect(screen.getByRole("heading", { name: "販売中ガチャ" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "ガチャラインナップ" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /もっと見る/ })).toHaveAttribute("href", "/gachas");
     expect(screen.getByText(PUBLIC_CONTENT_FIXTURE.notice.title)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /一覧を見る/ })).toHaveAttribute("href", "/notices");

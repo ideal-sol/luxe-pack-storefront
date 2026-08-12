@@ -18,6 +18,7 @@
 - SITE-017 Preview Browser runtime diagnosis: completed by this change
 - SITE-018 Authenticated My Page route Session continuity: completed by this change
 - SITE-019 Prize Inventory Preview Read diagnosis: completed by this change
+- SITE-014 Gacha Catalog display contract alignment: completed by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -41,17 +42,19 @@ Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.8`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.8`
-- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.8`
-- Source Commit: `5c9053ca2434847032a51f8b4f09dd25c8ef8535`
-- Artifact authority: `vendor/oripa/MIG-062E/artifact-manifest.json`
-- Public OpenAPI SHA-256: `210692ca1fa89c7ae28fc942c07d2b740eac7e2230d6b8c255570ac6bc16d568`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.9`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.9`
+- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.9`
+- Source Commit: `36220b5c08820741b4763363a7e86c18274b9688`
+- Artifact authority: `vendor/oripa/MIG-062G/artifact-manifest.json`
+- Public OpenAPI SHA-256: `737c6e174f9e47a0543a6b39a0e778fb46c50b24c20564dd7a8636439010e702`
 
 ## Available contracts
 
 - Browser Session, registration, password login, logout, and email verification
-- Public gacha list with cursor, category, and tag query support
+- Public gacha list with Backend-stable cursor ordering, category/tag queries,
+  mixed sale states, anonymous/authenticated eligibility, reason, CTA, and
+  display-fact policy
 - Public gacha categories and tags
 - Public banners
 - Public notice summaries
@@ -126,6 +129,11 @@ native fetch receiver is preserved. The Prize-specific Browser Client factory no
 uses the same receiver-safe fetch boundary as the shared Browser transport. No
 Prize response, action rule, fixture, mutation, or Platform behavior changed.
 
+SITE-014 resumes on MIG-062G alpha.9. Catalog items now carry the same canonical
+sale/eligibility decision family as Detail/Draw plus explicit display flags.
+Home and `/gachas` retain Backend-returned ended, sold-out, and ineligible items
+in order; cards never derive state from dates, counts, audience, or Session.
+
 ## Pending contracts
 
 - Point balance
@@ -133,7 +141,7 @@ Prize response, action rule, fixture, mutation, or Platform behavior changed.
 - Point products and purchase eligibility
 - Point purchase
 - Current user's gacha history list
-- Explicit catalog display status, optional ordering, and featured placement
+- Optional featured placement beyond the Backend-stable Catalog order
 - Point-insufficient presentation at gacha-detail time (Draw execution uses the
   canonical Backend typed error and does not depend on this presentation)
 - Prize inventory canonical status grouping/filter contract

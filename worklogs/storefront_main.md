@@ -1,5 +1,35 @@
 # Storefront worklog
 
+## SITE-014 — Gacha Catalog display contract alignment
+
+- Issue: `#27`
+- Risk: MEDIUM (`R2`)
+- Original Base SHA: `980985099fe5a1612b9da5a61b73b371a9b7b864`
+- Resumed Base SHA: `fc3ef3473618c16d3f5fb016f771aae7c7f5edd2`
+- Branch: `site/SITE-014-catalog-display-contract`
+
+### Resolution
+
+MIG-062G Production Artifact `2.0.0-alpha.9` resolves the historical Catalog
+list presentation blocker. The existing list operation now returns
+Backend-designated mixed sale states with generated user presentation and display
+flags while preserving category, tag, opaque cursor, and Backend-stable order.
+
+### Changes
+
+- Pin all three Production packages and Public OpenAPI to MIG-062G alpha.9.
+- Keep ended, sold-out, and authenticated-ineligible items returned by the
+  Backend; do not post-filter or sort them.
+- Render generated sale/eligibility/reason presentation.
+- Use only Backend display flags to omit Point, total-count, and Draw-count facts.
+- Preserve the original Change Request and append the MIG-062G resolution.
+- Add Testkit coverage for all published mixed-state/anonymous/authenticated fixtures.
+
+### Not changed
+
+Detail/Draw eligibility semantics, Platform routes, Business Rules, Draw
+Mutation, Preview data, and unrelated Visual QA remain unchanged.
+
 ## SITE-019 — Prize Inventory Preview Read diagnosis
 
 - Issue: `#36`

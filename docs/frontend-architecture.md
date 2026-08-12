@@ -109,6 +109,10 @@ typed problem.
 - Typed requests and responses are aliases of generated Client types; they are not handwritten.
 - Catalog cards display returned fields without inferring publication, sales,
   sold-out, eligibility, first-user, LINE-user, or daily-limit state.
+- Catalog cards preserve Backend-returned ordering and consume alpha.9
+  `presentation` directly. Sale/eligibility/reason/CTA are never reconstructed;
+  `display.show_price_points`, `display.show_total_count`, and
+  `display.show_drawn_count` alone control those optional facts.
 - Cursor continuation uses the returned `meta` object and the Client query type;
   category changes start a new first page.
 - Notice continuation uses the returned `next_cursor` unchanged; it is not
@@ -149,10 +153,15 @@ SITE-007 adds MIG-062A contract coverage for typed presentation, nullable assets
 cursor reads, and action states. Component tests cover login/configuration/read
 states, individual/select-all/reset behavior, Backend-only bulk actions, and the
 no-mutation boundary. Earlier Auth, Catalog, Content, Gacha Presentation, and Draw
-operations are checked for alpha.8 compatibility. SITE-005 additionally covers
+operations are checked for alpha.9 compatibility. SITE-005 additionally covers
 Browser-owned CSRF, same-key retry, new-operation keys, double-click suppression,
 generated Draw problems, public-ID result GET, reload recovery, and the absence
 of optimistic Point/Prize mutation. SITE-012 adds Browser fulfillment Contract
 coverage plus Component tests for same-key retry, double-click suppression,
 typed rejection, successful read reconciliation, and uncertain address
 update/delete result reconciliation.
+
+SITE-014 adds alpha.9 mixed-state Catalog Contract coverage for on-sale,
+coming-soon, ended, sold-out, anonymous, authenticated-eligible, and
+authenticated-ineligible presentation. Tests retain Backend order and verify
+that ended/sold-out cards obey display flags despite nonzero fixture counts.

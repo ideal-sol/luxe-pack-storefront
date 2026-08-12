@@ -2,6 +2,7 @@ import {
   assertBrowserRequestBoundary,
   PUBLIC_CATALOG_FIXTURE,
   PUBLIC_CONTENT_FIXTURE,
+  PUBLIC_GACHA_CATALOG_DISPLAY_FIXTURES,
   PUBLIC_GACHA_PRESENTATION_FIXTURE,
 } from "@oripa/storefront-testkit";
 import { createPublicClientTestHarness } from "@/lib/platform/testing";
@@ -12,7 +13,7 @@ const gachaCollection = {
   meta: { has_more: false, next_cursor: null, page_size: 1 },
 };
 
-describe("MIG-062E public catalog contract regression", () => {
+describe("MIG-062G public catalog contract regression", () => {
   it("uses the canonical gacha list with category and cursor queries", async () => {
     const category = createPublicClientTestHarness();
     category.mock.enqueueJson(
@@ -21,7 +22,7 @@ describe("MIG-062E public catalog contract regression", () => {
     );
     await expect(category.client.listGachas({ limit: 20, category: PUBLIC_CATALOG_FIXTURE.data.category.slug }))
       .resolves.toMatchObject({ data: gachaCollection });
-    assertBrowserRequestBoundary(category.mock.requests[0]!, { client_version: "2.0.0-alpha.8", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(category.mock.requests[0]!, { client_version: "2.0.0-alpha.9", site_version: "0.1.0" });
     category.mock.assertExhausted();
 
     const cursor = createPublicClientTestHarness();
@@ -48,7 +49,33 @@ describe("MIG-062E public catalog contract regression", () => {
       .resolves.toMatchObject({ data: PUBLIC_CATALOG_FIXTURE });
     await expect(harness.client.getGachaPresentation(PUBLIC_CATALOG_FIXTURE.data.id))
       .resolves.toMatchObject({ data: PUBLIC_GACHA_PRESENTATION_FIXTURE });
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.8", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.9", site_version: "0.1.0" });
+    harness.mock.assertExhausted();
+  });
+
+  it("preserves mixed sale-state ordering with category, tag, and cursor queries", async () => {
+    const harness = createPublicClientTestHarness();
+    const ordered = [
+      PUBLIC_GACHA_CATALOG_DISPLAY_FIXTURES.ended,
+      PUBLIC_GACHA_CATALOG_DISPLAY_FIXTURES.sold_out,
+      PUBLIC_GACHA_CATALOG_DISPLAY_FIXTURES.authenticated_ineligible,
+    ];
+    const query = {
+      category: PUBLIC_CATALOG_FIXTURE.data.category.slug,
+      cursor: "cursor-mixed-states",
+      limit: 20,
+      tag: PUBLIC_CATALOG_FIXTURE.data.tags[0]!.slug,
+    };
+    harness.mock.enqueueJson(
+      {
+        method: "GET",
+        url: `${origin}/gachas?limit=20&cursor=cursor-mixed-states&category=${query.category}&tag=${query.tag}`,
+      },
+      { body: { data: ordered, meta: { has_more: false, next_cursor: null, page_size: 3 } }, status: 200 },
+    );
+    const { data } = await harness.client.listGachas(query);
+    expect(data.data.map((item) => item.presentation?.sale_state)).toEqual(["ended", "sold_out", "on_sale"]);
+    expect(data.data[2]?.presentation?.ineligible_reason).toBe("audience_not_eligible");
     harness.mock.assertExhausted();
   });
 
