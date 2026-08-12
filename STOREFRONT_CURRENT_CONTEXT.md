@@ -14,6 +14,7 @@
 - SITE-005 Gacha draw execution and result: implemented by this change
 - SITE-013 Storefront Preview deployment: implemented by this change
 - SITE-012 Prize shipping and point exchange: implemented by this change
+- SITE-016 Preview public data diagnosis: completed by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -94,6 +95,14 @@ Storefront, V1, and Platform remain unchanged. Shipping, point-exchange, and
 address UI are present in the build, but deployment smoke performs no
 state-changing fulfillment operation.
 
+SITE-016 verifies public reads through the runtime-equivalent relative `/api/v2`
+base and pinned alpha.8 Client. Catalog data is available and Client-accepted;
+banners and notices are valid empty collections. The canonical `terms` static
+page is not published and returns Platform Problem Details with HTTP 404. No
+Storefront Client, adapter, presentation, or runtime configuration defect was
+reproduced. The repeatable, response-body-free diagnosis is documented in
+`docs/operations/preview-public-data-diagnosis.md`.
+
 ## Pending contracts
 
 - Point balance
@@ -109,10 +118,11 @@ state-changing fulfillment operation.
 - LINE Official Account friend/addition state
 - LINE unlink UI orchestration after recent reauthentication
 - Storefront responsive Browser review and authenticated state-changing Preview journeys
+- Canonical Preview static content for `terms` (and any other required Footer slugs)
 
 ## Next task
 
-SITE-012 connects the existing Prize selection UI to the MIG-062E Browser-safe
-fulfillment boundary. A later task may add canonical Prize status grouping and
-expiry lifecycle presentation; identity work must retain the canonical
-post-reauthentication and friend-state boundaries.
+Platform content operations should publish the required canonical static pages
+before a content-complete Preview review. A later task may add canonical Prize
+status grouping and expiry lifecycle presentation; identity work must retain the
+canonical post-reauthentication and friend-state boundaries.
