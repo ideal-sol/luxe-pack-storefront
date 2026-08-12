@@ -16,6 +16,7 @@
 - SITE-012 Prize shipping and point exchange: implemented by this change
 - SITE-016 Preview public data diagnosis: completed by this change
 - SITE-017 Preview Browser runtime diagnosis: completed by this change
+- SITE-018 Authenticated My Page route Session continuity: completed by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -109,6 +110,14 @@ stored native `window.fetch` was invoked with a non-Window receiver and Chrome
 rejected it with `Illegal invocation` before any Public API request. The shared
 Storefront Browser transport now supplies a receiver-safe fetch function. No API
 path, runtime configuration, response contract, or presentation rule changed.
+
+SITE-018 confirms that the Platform Session, Cookie, root Session Provider, and
+client-side navigation remain authenticated across My Page routes. The defect
+was limited to pending-contract placeholder pages that rendered Login Required
+unconditionally. Those pages now distinguish Session loading, authenticated,
+unauthenticated／expired, and configuration／transport error states. Pending Point
+and Draw-history data remains unimplemented and is shown only as the existing
+neutral empty state for authenticated users.
 
 ## Pending contracts
 

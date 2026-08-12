@@ -1,5 +1,36 @@
 # Storefront worklog
 
+## SITE-018 — Authenticated My Page route Session continuity
+
+- Issue: `#34`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `0b3066242d3f23be4d64acc7c8a9193c75f420f9`
+- Branch: `site/SITE-018-mypage-session-continuity`
+
+### Diagnosis
+
+An actual Preview Browser Login remained valid: Cookies were present, current
+Session reads returned 200, the root Header stayed authenticated, and My Page,
+Prize, and LINE routes rendered normally. Only Point-history and Draw-history
+placeholders showed Login Required because they did so unconditionally without
+reading Session state.
+
+### Changes
+
+- Made the shared authenticated placeholder guard consume the root Session.
+- Loading no longer becomes unauthenticated; authenticated members see the
+  existing neutral pending-content state, while anonymous／expired and error
+  states remain distinct.
+- Added focused coverage for loading, authenticated, anonymous, and unavailable
+  configuration states.
+- Did not implement or infer Point and Draw-history contracts.
+
+### Browser acceptance
+
+After Preview deployment, one Login must support client navigation and full
+reloads across My Page, Point history, Draw history, Prize inventory, and LINE
+routes at Desktop and Mobile without another Login.
+
 ## SITE-017 — Preview Browser runtime diagnosis
 
 - Issue: `#32`

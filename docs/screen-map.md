@@ -22,8 +22,8 @@
 | --- | --- | --- |
 | `/points` | Balance, products, and purchase entry | Login-required placeholder |
 | `/mypage` | Account hub | Session-connected member summary, centralized shortcuts/support navigation, and logout |
-| `/mypage/points` | Point history | Login-required placeholder |
-| `/mypage/draws` | Draw history | Login-required placeholder |
+| `/mypage/points` | Point history | Session-aware authenticated placeholder; data Contract pending |
+| `/mypage/draws` | Draw history | Session-aware authenticated placeholder; data Contract pending |
 | `/mypage/prizes` | Acquired item inventory, Backend-authoritative selection, address management, shipping, and point exchange | MIG-062E Browser Prize Fulfillment Client-connected |
 | `/mypage/line` | LINE connection | Session and External Identity Client-connected state/link UI; unlink deferred pending safe reauthentication journey |
 
