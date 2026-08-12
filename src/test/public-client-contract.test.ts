@@ -82,6 +82,24 @@ describe("MIG-062E public catalog contract regression", () => {
     harness.mock.assertExhausted();
   });
 
+  it("accepts canonical empty public content without treating it as an error", async () => {
+    const harness = createPublicClientTestHarness();
+    harness.mock.enqueueJson(
+      { method: "GET", url: `${origin}/content/banners` },
+      { body: { items: [] }, status: 200 },
+    );
+    harness.mock.enqueueJson(
+      { method: "GET", url: `${origin}/content/notices?limit=10` },
+      { body: { items: [], next_cursor: null }, status: 200 },
+    );
+
+    await expect(harness.client.listBanners()).resolves.toMatchObject({ data: { items: [] } });
+    await expect(harness.client.listNotices({ limit: 10 })).resolves.toMatchObject({
+      data: { items: [], next_cursor: null },
+    });
+    harness.mock.assertExhausted();
+  });
+
   it("uses canonical notice detail and static page methods", async () => {
     const staticPage = {
       body_html: "<h2>Fixture heading</h2><p>Fixture static content.</p>",

@@ -26,6 +26,7 @@
     "line-identity-boundary:check": "node scripts/check-line-identity-boundary.mjs",
     "prize-boundary:check": "node scripts/check-prize-boundary.mjs",
     "preview:smoke": "node scripts/preview-smoke.mjs",
+    "preview:diagnose-public": "node scripts/diagnose-preview-public-data.mjs",
     "content-boundary:check": "node scripts/check-content-boundary.mjs",
     "security:check": "node scripts/check-secrets.mjs",
     "validate": "pnpm artifact:check && pnpm policy:check && pnpm auth-boundary:check && pnpm line-identity-boundary:check && pnpm catalog-boundary:check && pnpm content-boundary:check && pnpm gacha-detail-boundary:check && pnpm draw-boundary:check && pnpm prize-boundary:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"

@@ -1,5 +1,40 @@
 # Storefront worklog
 
+## SITE-016 — Preview public data diagnosis
+
+- Issue: `#30`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `1098cc3e0f5cd77b0a4043bf62f3aeef3c67f984`
+- Branch: `site/SITE-016-preview-public-data-diagnosis`
+
+### Purpose
+
+Classify the Preview public-screen failure report through the canonical alpha.8
+Client without changing Visuals, fixtures, Platform data, or state.
+
+### Result
+
+- Home: banners/notices are valid empty collections; categories and gachas have
+  Client-accepted display data.
+- Gacha catalog: valid, non-empty Client response.
+- Notices: valid empty Client response.
+- Terms: typed Platform Problem Details with HTTP 404; canonical content is not
+  published in Preview.
+- Same-Origin runtime configuration, transport, Client response handling, and
+  Storefront adapters succeeded. No Storefront defect was reproduced.
+
+### Changes
+
+- Added a non-mutating, response-body-free Preview Client diagnosis command.
+- Added empty public-content Contract regression coverage.
+- Recorded the Platform static-content requirement without adding fixtures or
+  changing presentation behavior.
+
+### Not implemented
+
+Visual changes, synthetic content, Platform data changes, authenticated actions,
+and SITE-014 changes.
+
 ## SITE-001 — Storefront foundation and common layout
 
 - Issue: `#1`
