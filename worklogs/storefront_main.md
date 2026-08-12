@@ -448,3 +448,23 @@ The Frontend does not read Cookie or CSRF values, infer fulfillment actions from
 status/deadline/points, update Prize or Point state optimistically, or parse an
 unknown Backend detail string. Canonical status grouping and expiry lifecycle
 remain Pending Contracts.
+
+## SITE-015 — Storefront Preview release refresh
+
+- Issue: `#28`
+- Risk: HIGH (`R3`)
+- Base and deployment target: `980985099fe5a1612b9da5a61b73b371a9b7b864`
+- Branch: `site/SITE-015-preview-release-refresh`
+
+### Purpose and boundary
+
+Refresh the existing Preview application to the SITE-012 merged release through
+the established immutable-release/current-symlink process. The refresh changes
+only the Next.js application release and restarts only the existing Preview
+service. It does not modify Nginx, `/api/v2`, `/admin/api/`, TLS, DNS, production
+Storefront, V1, Platform, or payment configuration.
+
+The release is built with the existing public Preview environment after
+MIG-062E alpha.8 integrity verification. Smoke covers public/member shells and
+read-only API/Admin boundaries. Address registration, Shipping, Point Exchange,
+and other state-changing authenticated operations are not exercised.
