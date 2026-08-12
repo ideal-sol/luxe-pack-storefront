@@ -17,6 +17,7 @@
 - SITE-016 Preview public data diagnosis: completed by this change
 - SITE-017 Preview Browser runtime diagnosis: completed by this change
 - SITE-018 Authenticated My Page route Session continuity: completed by this change
+- SITE-019 Prize Inventory Preview Read diagnosis: completed by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -118,6 +119,12 @@ unconditionally. Those pages now distinguish Session loading, authenticated,
 unauthenticated／expired, and configuration／transport error states. Pending Point
 and Draw-history data remains unimplemented and is shown only as the existing
 neutral empty state for authenticated users.
+
+SITE-019 reproduces the Prize Inventory failure in a real Browser and confirms
+that the Platform returns HTTP 200 data accepted by the canonical Client once the
+native fetch receiver is preserved. The Prize-specific Browser Client factory now
+uses the same receiver-safe fetch boundary as the shared Browser transport. No
+Prize response, action rule, fixture, mutation, or Platform behavior changed.
 
 ## Pending contracts
 

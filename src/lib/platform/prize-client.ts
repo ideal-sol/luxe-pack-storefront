@@ -7,7 +7,7 @@ import {
   type PublicComponents,
 } from "@oripa/storefront-client";
 import { createBrowserStorefrontPrizeShippingClient } from "@oripa/storefront-client/browser";
-import type { BrowserClientOverrides } from "./browser-client";
+import { callGlobalFetch, type BrowserClientOverrides } from "./browser-client";
 import {
   readPlatformRuntimeConfiguration,
   type PlatformRuntimeConfiguration,
@@ -43,6 +43,7 @@ export function createBrowserPrizeInventoryClient(
     default_timeout_ms: configuration.defaultTimeoutMs,
     site_version: configuration.siteVersion,
     ...overrides,
+    fetch: overrides.fetch ?? callGlobalFetch,
   });
 }
 

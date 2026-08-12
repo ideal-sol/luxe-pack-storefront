@@ -10,7 +10,7 @@ export type BrowserClientOverrides = Pick<
   "cookie_reader" | "fetch"
 >;
 
-const callGlobalFetch: typeof globalThis.fetch = (input, init) => globalThis.fetch(input, init);
+export const callGlobalFetch: typeof globalThis.fetch = (input, init) => globalThis.fetch(input, init);
 
 export function createBrowserPlatformTransport(
   configuration: PlatformRuntimeConfiguration = readPlatformRuntimeConfiguration(),
