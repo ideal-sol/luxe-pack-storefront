@@ -12,7 +12,7 @@ const gachaCollection = {
   meta: { has_more: false, next_cursor: null, page_size: 1 },
 };
 
-describe("MIG-062C public catalog contract regression", () => {
+describe("MIG-062E public catalog contract regression", () => {
   it("uses the canonical gacha list with category and cursor queries", async () => {
     const category = createPublicClientTestHarness();
     category.mock.enqueueJson(
@@ -21,7 +21,7 @@ describe("MIG-062C public catalog contract regression", () => {
     );
     await expect(category.client.listGachas({ limit: 20, category: PUBLIC_CATALOG_FIXTURE.data.category.slug }))
       .resolves.toMatchObject({ data: gachaCollection });
-    assertBrowserRequestBoundary(category.mock.requests[0]!, { client_version: "2.0.0-alpha.6", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(category.mock.requests[0]!, { client_version: "2.0.0-alpha.8", site_version: "0.1.0" });
     category.mock.assertExhausted();
 
     const cursor = createPublicClientTestHarness();
@@ -48,7 +48,7 @@ describe("MIG-062C public catalog contract regression", () => {
       .resolves.toMatchObject({ data: PUBLIC_CATALOG_FIXTURE });
     await expect(harness.client.getGachaPresentation(PUBLIC_CATALOG_FIXTURE.data.id))
       .resolves.toMatchObject({ data: PUBLIC_GACHA_PRESENTATION_FIXTURE });
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.6", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.8", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 

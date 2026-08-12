@@ -13,6 +13,7 @@ import {
   type UserPrizeStatus,
 } from "@/lib/platform";
 import { usePrizeClient } from "./prize-client-provider";
+import { PrizeFulfillmentDialog, type FulfillmentAction } from "./prize-fulfillment";
 
 type InventoryState =
   | { readonly status: "idle" }
@@ -27,7 +28,7 @@ type InventoryState =
       readonly continuationProblem?: PlatformProblemPresentation;
     };
 
-type BulkAction = "point_exchange" | "shipping";
+type BulkAction = FulfillmentAction;
 
 const number = new Intl.NumberFormat("ja-JP");
 const statusLabels: Readonly<Record<UserPrizeStatus, string>> = {
@@ -121,18 +122,18 @@ function availableBulkActions(items: readonly UserPrize[], selected: ReadonlySet
   );
 }
 
-function BulkActionTray({ actions, count }: { readonly actions: readonly BulkAction[]; readonly count: number }) {
+function BulkActionTray({ actions, count, onAction }: { readonly actions: readonly BulkAction[]; readonly count: number; readonly onAction: (action: BulkAction) => void }) {
   if (count === 0) return null;
   return (
     <aside aria-label="選択した景品の操作" className="inventory-action-tray">
       <div className="inventory-action-tray__inner">
         <p><strong>{number.format(count)}</strong>件を選択中</p>
         <div>
-          {actions.includes("point_exchange") && <button disabled type="button">ポイントに交換</button>}
-          {actions.includes("shipping") && <button disabled type="button">発送を依頼</button>}
+          {actions.includes("point_exchange") && <button onClick={() => onAction("point_exchange")} type="button">ポイントに交換</button>}
+          {actions.includes("shipping") && <button onClick={() => onAction("shipping")} type="button">発送を依頼</button>}
           {actions.length === 0 && <span>選択中の景品に共通して利用できる操作はありません。</span>}
         </div>
-        <small>操作の実行は後続Taskで接続します。</small>
+        <small>操作可否と完了結果はPlatformが実行時に再検証します。</small>
       </div>
     </aside>
   );
@@ -144,6 +145,7 @@ export function PrizeInventory() {
   const [requestKey, setRequestKey] = useState(0);
   const [state, setState] = useState<InventoryState>({ status: "idle" });
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const [fulfillmentAction, setFulfillmentAction] = useState<FulfillmentAction | null>(null);
   const sessionUserId = session.status === "authenticated" ? session.session.user?.id ?? null : null;
 
   useEffect(() => {
@@ -165,6 +167,16 @@ export function PrizeInventory() {
   const actions = useMemo(() => state.status === "ready"
     ? availableBulkActions(state.items, selected)
     : [], [selected, state]);
+  const selectedItems = useMemo(() => state.status === "ready"
+    ? state.items.filter((item) => selected.has(item.id))
+    : [], [selected, state]);
+
+  const reconcileInventory = useCallback(async () => {
+    if (!client || !sessionUserId) return;
+    const { data } = await client.listPrizes();
+    setState({ items: data.items, loadingMore: false, nextCursor: data.next_cursor, sessionUserId, status: "ready" });
+    setSelected(new Set());
+  }, [client, sessionUserId]);
 
   const loadMore = useCallback(async () => {
     if (!client || state.status !== "ready" || !state.nextCursor || state.loadingMore) return;
@@ -252,7 +264,16 @@ export function PrizeInventory() {
           {state.loadingMore ? "読み込み中" : "さらに表示"}
         </button>
       )}
-      <BulkActionTray actions={actions} count={selected.size} />
+      <BulkActionTray actions={actions} count={selected.size} onAction={setFulfillmentAction} />
+      {client && (
+        <PrizeFulfillmentDialog
+          action={fulfillmentAction}
+          client={client}
+          onClose={() => setFulfillmentAction(null)}
+          onReconcile={reconcileInventory}
+          selectedItems={selectedItems}
+        />
+      )}
     </section>
   );
 }

@@ -15,8 +15,8 @@ Required runtime versions are Node `22.22.3` and pnpm `10.12.1`.
 
 ## Platform client
 
-The current MIG-062C Production artifacts are vendored at
-`vendor/oripa/MIG-062C` and fixed to version `2.0.0-alpha.6` using
+The current MIG-062E Production artifacts are vendored at
+`vendor/oripa/MIG-062E` and fixed to version `2.0.0-alpha.8` using
 Repository-relative `file:` dependencies. Historical bundles remain immutable. Run
 `pnpm artifact:check` to verify the Manifest, SHA-256 values, package identities,
 archive paths, Lifecycle Script boundary, and absence of server-specific file
@@ -31,7 +31,7 @@ Set the public `NEXT_PUBLIC_PLATFORM_API_BASE_URL` only in an approved runtime.
 Without it, the build still succeeds and the UI reports that Platform
 configuration is unavailable. MIG-061Z established the Platform Public Origin
 and same-Origin API proxy; deploying the Storefront application at that Origin
-remains outside this Repository task.
+is handled by the separate Preview deployment runbook.
 
 ## Public catalog
 
@@ -55,8 +55,9 @@ the mutation or optimistically update Point and Prize state.
 
 ## Prize inventory
 
-`/mypage/prizes` uses only generated MIG-062A `presentation` and
-`allowed_actions` fields through the narrow Prize adapter. Selection and bulk
-action visibility follow Backend-returned action states. SITE-007 does not run a
-shipping or point-exchange mutation, infer actions from status or dates, or use
-the deprecated open display snapshots.
+`/mypage/prizes` uses generated `presentation` and `allowed_actions` fields.
+Selection and bulk action visibility follow Backend-returned action states.
+SITE-012 connects those actions to the MIG-062E Browser-safe Prize fulfillment
+client for address, shipping, and point-exchange operations. Caller Idempotency
+Keys, typed problems, and canonical read reconciliation are used without
+inferring actions from status/dates or optimistically updating Prize/Point state.

@@ -416,3 +416,35 @@ SITE-012 remains independently held on its Browser-safe fulfillment and typed
 Problem Contract. Preview smoke performs no Login, Draw, Shipping, Point
 Exchange, or synthetic-data mutation. Responsive Browser review remains a
 separate manual verification when no Browser runner is available.
+
+## SITE-012 — Prize shipping and point exchange (resumed)
+
+- Issue: `#23`
+- Risk: HIGH (`R3`)
+- Original Base: `d24c6d8992d2eed296e58ebc31845b006645db43`
+- Resumed Base: `aa7acd20feef3ca85812048193bb6d2cd0c5bd68`
+- Branch: `site/SITE-012-prize-fulfillment`
+
+### Changes
+
+- Preserved the held Change Request and fast-forwarded the existing branch and
+  Policy to the resumed Base without a merge commit, rebase, or force push.
+- Verified the MIG-062E Manifest, SHA256SUMS, package archives, and Public
+  OpenAPI before pinning Production dependencies to `2.0.0-alpha.8`. The alpha.6
+  vendor remains unchanged and alpha.7 was not introduced.
+- Connected the existing `/mypage/prizes` selection UI to generated Browser-safe
+  address, point-exchange, and shipping methods.
+- Retained one caller Idempotency Key for a same-operation retry, suppressed
+  duplicate submission, used generated typed fulfillment problems, and
+  reconciled successful mutations through canonical Prize, Shipping, and Address
+  reads.
+- Address update/delete are not automatically retried. Uncertain transport
+  results are checked with the relevant canonical Address read before the UI
+  decides whether the requested state is present.
+
+### Boundaries
+
+The Frontend does not read Cookie or CSRF values, infer fulfillment actions from
+status/deadline/points, update Prize or Point state optimistically, or parse an
+unknown Backend detail string. Canonical status grouping and expiry lifecycle
+remain Pending Contracts.

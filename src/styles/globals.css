@@ -433,6 +433,22 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .inventory-action-tray__inner > div { display: flex; gap: 7px; }
 .inventory-action-tray button { background: var(--bronze-light); border: 0; color: var(--ink); flex: 1; font-size: .7rem; font-weight: 800; min-height: 44px; }
 .inventory-action-tray button:disabled { cursor: not-allowed; opacity: .72; }
+.fulfillment-dialog { overflow-y: auto; }
+.fulfillment-dialog__card { max-height: calc(100dvh - 32px); max-width: 680px; overflow-y: auto; }
+.fulfillment-dialog__summary, .fulfillment-dialog__success { background: var(--paper-deep); border-radius: var(--radius-control); display: grid; gap: 8px; padding: 18px; }
+.fulfillment-dialog__summary span, .fulfillment-dialog__summary small, .fulfillment-dialog__success p { color: var(--muted); font-size: .7rem; line-height: 1.7; margin: 0; }
+.fulfillment-dialog__summary strong { color: var(--bronze); font-family: Georgia, serif; font-size: 1.5rem; }
+.fulfillment-dialog__error { background: #fff4f1; border-left: 3px solid var(--danger); color: var(--danger); font-size: .72rem; line-height: 1.7; padding: 12px 14px; }
+.fulfillment-addresses, .fulfillment-address-form__fields { display: grid; gap: 14px; }
+.fulfillment-addresses__heading { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
+.fulfillment-addresses__list { display: grid; gap: 8px; }
+.fulfillment-address { align-items: center; border: 1px solid var(--line); border-radius: var(--radius-control); display: flex; gap: 10px; justify-content: space-between; padding: 12px; }
+.fulfillment-address label { align-items: center; cursor: pointer; display: flex; gap: 10px; min-width: 0; }
+.fulfillment-address label span { display: grid; gap: 4px; }
+.fulfillment-address label small { color: var(--muted); font-size: .64rem; }
+.fulfillment-address > div { display: flex; gap: 5px; }
+.fulfillment-address > div button { background: transparent; border: 0; border-bottom: 1px solid currentColor; color: var(--muted); cursor: pointer; font-size: .62rem; padding: 5px; }
+.fulfillment-address-form__fields { grid-template-columns: 1fr; }
 
 .mypage-page { max-width: calc(var(--content-reading) + 40px); }
 .mypage-dashboard { display: grid; gap: 26px; }
@@ -580,6 +596,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
   .inventory-card dd { text-align: left; }
   .inventory-action-tray { bottom: 0; padding: 14px 24px; }
   .inventory-action-tray__inner { align-items: center; grid-template-columns: auto minmax(320px, 1fr) auto; }
+  .fulfillment-address-form__fields { grid-template-columns: 1fr 1fr; }
   .mypage-summary { align-items: center; gap: 38px; grid-template-columns: minmax(0, 1fr) minmax(260px, .72fr); padding: 32px; }
   .mypage-summary dl { border-left: 1px solid rgba(255,255,255,.16); border-top: 0; padding: 8px 0 8px 32px; }
   .mypage-shortcuts a { min-height: 124px; padding: 24px 28px; }

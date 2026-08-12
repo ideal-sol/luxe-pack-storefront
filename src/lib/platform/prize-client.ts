@@ -1,11 +1,17 @@
 import {
-  createStorefrontPrizeShippingClient,
+  FULFILLMENT_MUTATION_RETRY_SEMANTICS,
+  createIdempotencyKey,
+  isFulfillmentProblemError,
+  type BrowserStorefrontPrizeShippingClient,
+  type FulfillmentProblemCode,
   type PublicComponents,
-  type StorefrontPrizeShippingClient,
-  type StorefrontTransport,
 } from "@oripa/storefront-client";
-import { createBrowserPlatformTransport, type BrowserClientOverrides } from "./browser-client";
-import type { PlatformRuntimeConfiguration } from "./runtime-configuration";
+import { createBrowserStorefrontPrizeShippingClient } from "@oripa/storefront-client/browser";
+import type { BrowserClientOverrides } from "./browser-client";
+import {
+  readPlatformRuntimeConfiguration,
+  type PlatformRuntimeConfiguration,
+} from "./runtime-configuration";
 
 type Schemas = PublicComponents["schemas"];
 
@@ -16,20 +22,32 @@ export type UserPrizeCollection = Schemas["UserPrizeCollection"];
 export type UserPrizeDetail = Schemas["UserPrizeDetail"];
 export type UserPrizePresentation = Schemas["UserPrizePresentation"];
 export type UserPrizeStatus = Schemas["UserPrizeStatus"];
+export type ShippingAddress = Schemas["ShippingAddress"];
+export type ShippingAddressCollection = Schemas["ShippingAddressCollection"];
+export type ShippingAddressInput = Schemas["ShippingAddressInput"];
+export type ShippingRequestCollection = Schemas["ShippingRequestCollection"];
+export type ShippingRequestDetail = Schemas["ShippingRequestDetail"];
+export type ShippingRequestSummary = Schemas["ShippingRequestSummary"];
+export type PrizeExchangeResponse = Schemas["PrizeExchangeResponse"];
+export type StorefrontFulfillmentProblemCode = FulfillmentProblemCode;
 
-export type PrizeInventoryAdapter = Pick<StorefrontPrizeShippingClient, "getPrize" | "listPrizes">;
-
-export function createPrizeInventoryAdapter(transport: StorefrontTransport): PrizeInventoryAdapter {
-  const client = createStorefrontPrizeShippingClient(transport);
-  return {
-    getPrize: client.getPrize,
-    listPrizes: client.listPrizes,
-  };
-}
+export type PrizeFulfillmentAdapter = BrowserStorefrontPrizeShippingClient;
+export type PrizeInventoryAdapter = Pick<PrizeFulfillmentAdapter, "getPrize" | "listPrizes">;
 
 export function createBrowserPrizeInventoryClient(
-  configuration?: PlatformRuntimeConfiguration,
+  configuration: PlatformRuntimeConfiguration = readPlatformRuntimeConfiguration(),
   overrides: BrowserClientOverrides = {},
-): PrizeInventoryAdapter {
-  return createPrizeInventoryAdapter(createBrowserPlatformTransport(configuration, overrides));
+): PrizeFulfillmentAdapter {
+  return createBrowserStorefrontPrizeShippingClient({
+    base_url: configuration.baseUrl,
+    default_timeout_ms: configuration.defaultTimeoutMs,
+    site_version: configuration.siteVersion,
+    ...overrides,
+  });
 }
+
+export {
+  FULFILLMENT_MUTATION_RETRY_SEMANTICS,
+  createIdempotencyKey,
+  isFulfillmentProblemError,
+};

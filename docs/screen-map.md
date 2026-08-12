@@ -24,7 +24,7 @@
 | `/mypage` | Account hub | Session-connected member summary, centralized shortcuts/support navigation, and logout |
 | `/mypage/points` | Point history | Login-required placeholder |
 | `/mypage/draws` | Draw history | Login-required placeholder |
-| `/mypage/prizes` | Acquired item inventory and Backend-authoritative selection | MIG-062A Prize Client-connected; no mutation |
+| `/mypage/prizes` | Acquired item inventory, Backend-authoritative selection, address management, shipping, and point exchange | MIG-062E Browser Prize Fulfillment Client-connected |
 | `/mypage/line` | LINE connection | Session and External Identity Client-connected state/link UI; unlink deferred pending safe reauthentication journey |
 
 The Header now renders neutral, unauthenticated, and authenticated controls from

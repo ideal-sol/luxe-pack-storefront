@@ -10,7 +10,7 @@
 6. `src/components/auth` owns session orchestration and authentication presentation.
 7. `src/components/catalog` owns public catalog orchestration and contract-backed presentation.
 8. `src/components/content` owns public notices, static documents, and the single sanitized HTML boundary.
-9. `src/components/prizes` owns authenticated inventory orchestration and Backend-authoritative selection presentation.
+9. `src/components/prizes` owns authenticated inventory orchestration, Backend-authoritative selection presentation, and Browser-safe fulfillment journeys.
 10. `src/components/draw` owns confirmation, transient Idempotency operation state, typed Draw-error presentation, and GET-only result recovery.
 
 ## Preview runtime
@@ -75,6 +75,16 @@ Request ID and calls `getDrawRequest`; mounting, Back, and reload never call the
 mutation. Point, eligibility, sale, inventory, and awarded Prize state are never
 updated optimistically.
 
+SITE-012 extends the Prize boundary with the generated
+`createBrowserStorefrontPrizeShippingClient`. The Client owns Cookie/CSRF
+protocol details. Point exchange, address creation, and shipping request creation
+use one caller-owned in-memory Idempotency Key per operation and retain that key
+for a same-operation retry. Address update/delete are never automatically
+retried: an uncertain transport result is reconciled through
+`getShippingAddress` or `listShippingAddresses` before any next action. Every
+successful mutation is followed by canonical Prize, Shipping, and Address reads;
+the UI does not optimistically change Prize state or Point balance.
+
 ## State and data rules
 
 - No direct database or Platform request from a React Component.
@@ -108,7 +118,7 @@ Component tests cover the shared shell, session state transitions, forms, duplic
 submission protection, header state, and email verification. Contract tests inject
 the deterministic Storefront Testkit into the real browser client. Policy tests
 reject direct Platform paths, browser protocol details outside the boundary, and
-authentication persistence. Point purchase and Prize fulfillment mutations remain later Tasks.
+authentication persistence. Point purchase remains a later Task.
 
 SITE-003 adds deterministic Client/Testkit contract tests for banners, notices,
 categories, tags, gacha summaries, category queries, and cursor queries. Component
@@ -126,7 +136,10 @@ SITE-007 adds MIG-062A contract coverage for typed presentation, nullable assets
 cursor reads, and action states. Component tests cover login/configuration/read
 states, individual/select-all/reset behavior, Backend-only bulk actions, and the
 no-mutation boundary. Earlier Auth, Catalog, Content, Gacha Presentation, and Draw
-operations are checked for alpha.6 compatibility. SITE-005 additionally covers
+operations are checked for alpha.8 compatibility. SITE-005 additionally covers
 Browser-owned CSRF, same-key retry, new-operation keys, double-click suppression,
 generated Draw problems, public-ID result GET, reload recovery, and the absence
-of optimistic Point/Prize mutation.
+of optimistic Point/Prize mutation. SITE-012 adds Browser fulfillment Contract
+coverage plus Component tests for same-key retry, double-click suppression,
+typed rejection, successful read reconciliation, and uncertain address
+update/delete result reconciliation.

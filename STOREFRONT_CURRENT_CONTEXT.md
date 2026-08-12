@@ -13,6 +13,7 @@
 - SITE-011 LINE account link UI: implemented by this change
 - SITE-005 Gacha draw execution and result: implemented by this change
 - SITE-013 Storefront Preview deployment: implemented by this change
+- SITE-012 Prize shipping and point exchange: implemented by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -36,12 +37,12 @@ Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.6`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.6`
-- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.6`
-- Source Commit: `fedc176f06518edcf9dd57c0387a6d03eee7471b`
-- Artifact authority: `vendor/oripa/MIG-062C/artifact-manifest.json`
-- Public OpenAPI SHA-256: `6f4fc425718a57237fa89c0f6c75b196c0bf287022ce117dd916dd9b2cf457a1`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.8`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.8`
+- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.8`
+- Source Commit: `5c9053ca2434847032a51f8b4f09dd25c8ef8535`
+- Artifact authority: `vendor/oripa/MIG-062E/artifact-manifest.json`
+- Public OpenAPI SHA-256: `210692ca1fa89c7ae28fc942c07d2b740eac7e2230d6b8c255570ac6bc16d568`
 
 ## Available contracts
 
@@ -67,6 +68,11 @@ Platform response or Frontend business decision changed.
 - Browser-safe Draw mutation through `createBrowserStorefrontDrawClient`,
   caller-owned canonical Idempotency Keys, generated `DrawProblemCode`, and
   completed-result recovery through `getDrawRequest`
+- Browser-safe Prize fulfillment through
+  `createBrowserStorefrontPrizeShippingClient`: address read/create/update/delete,
+  point exchange, and shipping request creation/read. Generated fulfillment
+  problems and mutation retry semantics remain the authority; successful
+  mutations reconcile Prize, Shipping, and Address reads.
 
 ## Preview deployment
 
@@ -99,8 +105,7 @@ not exercised by deployment smoke.
 
 ## Next task
 
-SITE-013 makes the merged Storefront shell and read-only Public API paths
-available on the Preview Origin. SITE-012 remains blocked on a Browser-safe Prize
-fulfillment mutation and typed rejection contract. Later Prize mutation Tasks
-must revalidate actions in Backend; identity work must retain the canonical
+SITE-012 connects the existing Prize selection UI to the MIG-062E Browser-safe
+fulfillment boundary. A later task may add canonical Prize status grouping and
+expiry lifecycle presentation; identity work must retain the canonical
 post-reauthentication and friend-state boundaries.

@@ -76,7 +76,7 @@ export function createPublicClientTestHarness(): PublicClientTestHarness {
   return { client, mock };
 }
 
-export function createPrizeClientTestHarness(): PrizeClientTestHarness {
+export function createPrizeClientTestHarness(cookieValue?: string): PrizeClientTestHarness {
   const mock = createMockFetch();
   const client = createBrowserPrizeInventoryClient(
     {
@@ -84,7 +84,10 @@ export function createPrizeClientTestHarness(): PrizeClientTestHarness {
       defaultTimeoutMs: 1_000,
       siteVersion: STOREFRONT_SITE_VERSION,
     },
-    { fetch: mock.fetch },
+    {
+      cookie_reader: () => cookieValue,
+      fetch: mock.fetch,
+    },
   );
   return { client, mock };
 }
