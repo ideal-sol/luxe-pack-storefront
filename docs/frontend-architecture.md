@@ -36,6 +36,12 @@ unavailable/session expired/error states, and refreshes after successful identit
 mutations. It stores the typed session response only in memory and does not cache
 credentials or authentication material.
 
+Authenticated placeholder routes consume that same root Session state. They
+render Loading while the initial read is pending, Login Required only for an
+explicit unauthenticated／expired state, a neutral pending-content state for an
+authenticated member, and a separate Error state for configuration／transport
+failure. They do not infer missing Point or Draw-history data contracts.
+
 The root Public Client Provider constructs a separate read adapter from the same
 browser transport configuration. It does not depend on Session state. Home and
 catalog Client Components start public requests independently, while endpoint
