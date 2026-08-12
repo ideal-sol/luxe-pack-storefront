@@ -1,5 +1,36 @@
 # Storefront worklog
 
+## SITE-017 — Preview Browser runtime diagnosis
+
+- Issue: `#32`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `09407fe81b9de9205f2de1aab613cb891ce0569c`
+- Branch: `site/SITE-017-preview-browser-runtime-diagnosis`
+
+### Purpose
+
+Reproduce the user-observed Preview failure in a real Browser and explain why
+the SITE-016 Node Client diagnosis succeeded.
+
+### Result
+
+- Chromium reproduced every public route's transport failure at 1280x720 and
+  390x844 without issuing a Public API network request.
+- The native `window.fetch` receiver was not preserved by the generated Client's
+  stored-function call; Chrome rejected it with `Illegal invocation`.
+- The shared Storefront Browser transport now supplies a receiver-safe function,
+  preserving the canonical Client, same-Origin configuration, and adapters.
+- Added a receiver-sensitive regression test. No fixture, Platform, Nginx,
+  public data, or SITE-014 state changed.
+
+### Expected Browser state after deployment
+
+Home and Catalog render three cards, Notices renders its normal empty state, and
+Terms renders the known Platform 404 as not found. Hydration and page runtime
+errors remain absent. After deployment, one approved Preview test-user Login
+journey verifies that the shared receiver fix also restores Session／CSRF／Login
+transport; no credential or protocol value is retained.
+
 ## SITE-016 — Preview public data diagnosis
 
 - Issue: `#30`
