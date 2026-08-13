@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { accountNavigation, informationNavigation, primaryNavigation } from "@/lib/routes/navigation";
+import {
+  accountNavigation,
+  primaryNavigation,
+  temporaryFooterInformationNavigation,
+} from "@/lib/routes/navigation";
 
 export function SiteFooter() {
   return (
@@ -20,9 +24,13 @@ export function SiteFooter() {
           <h2>Account</h2>
           {accountNavigation.slice(0, 3).map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
         </div>
-        <div>
+        <div className="site-footer__information">
           <h2>Information</h2>
-          {informationNavigation.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+          {temporaryFooterInformationNavigation.map((item) => item.href ? (
+            <Link href={item.href} key={item.label}>{item.label}</Link>
+          ) : (
+            <span className="site-footer__unlinked" key={item.label}>{item.label}</span>
+          ))}
         </div>
       </div>
       <div className="page-container site-footer__bottom">

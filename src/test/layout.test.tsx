@@ -20,11 +20,26 @@ describe("shared layout", () => {
   });
 
   it("renders the footer", () => {
-    render(<SiteFooter />);
+    const view = render(<SiteFooter />);
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
     expect(screen.getByText("Information")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ご利用ガイド" })).toHaveAttribute("href", "/pages/guide");
     expect(screen.getByRole("link", { name: "利用規約" })).toHaveAttribute("href", "/pages/terms");
     expect(screen.getByRole("link", { name: "プライバシーポリシー" })).toHaveAttribute("href", "/pages/privacy");
+    expect(screen.queryByRole("link", { name: "古物営業法に基づく表示" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "特定商取引法に基づく表記" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "反社会的勢力に対する基本方針" })).not.toBeInTheDocument();
+
+    const labels = Array.from(view.container.querySelectorAll(".site-footer__information > :not(h2)"))
+      .map((item) => item.textContent);
+    expect(labels).toEqual([
+      "ご利用ガイド",
+      "利用規約",
+      "プライバシーポリシー",
+      "古物営業法に基づく表示",
+      "特定商取引法に基づく表記",
+      "反社会的勢力に対する基本方針",
+    ]);
   });
 
   it("renders mobile navigation", () => {
