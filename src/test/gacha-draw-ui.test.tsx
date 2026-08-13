@@ -176,4 +176,33 @@ describe("Gacha Draw execution UI", () => {
     expect(screen.getByRole("button", { name: "1回抽選する" })).toBeDisabled();
     expect(screen.getByText("この環境では抽選接続が設定されていません。")).toBeInTheDocument();
   });
+
+  it.each([
+    ["sold_out", "sold_out", "hidden", "SOLD OUT"],
+    ["ended", "sale_ended", "hidden", "販売終了"],
+    ["coming_soon", "sale_not_started", "disabled", "販売開始前"],
+    ["on_sale", "audience_not_eligible", "disabled", "対象外"],
+  ] as const)("keeps a disabled fixed tray for the canonical %s state", (saleState, reason, ctaState, label) => {
+    const createDraw = vi.fn();
+    const blocked = {
+      ...presentation,
+      allowed_draw_counts: [],
+      cta: { action: ctaState === "hidden" ? null : "draw", reason, state: ctaState },
+      eligible: false,
+      ineligible_reason: reason,
+      sale_state: saleState,
+    } satisfies GachaPresentationState;
+
+    render(
+      <DrawClientProvider client={client(createDraw)}>
+        <GachaDrawPanel detail={detail} presentation={blocked} />
+      </DrawClientProvider>,
+    );
+    const disabled = screen.getByRole("button", { name: label });
+    expect(screen.getByLabelText("抽選オプション")).toHaveAttribute("data-cta-state", ctaState);
+    expect(screen.queryByLabelText("抽選回数")).not.toBeInTheDocument();
+    expect(disabled).toBeDisabled();
+    fireEvent.click(disabled);
+    expect(createDraw).not.toHaveBeenCalled();
+  });
 });

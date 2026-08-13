@@ -88,9 +88,6 @@ function PrizeSections({ detail }: { readonly detail: GachaDetail }) {
     requestAnimationFrame(() => triggerRef.current?.focus());
   }
 
-  const currentStage = detail.probability_stages.find((stage) => stage.is_current);
-  const probabilityByRank = new Map(currentStage?.rank_probabilities.map((entry) => [entry.rank.id, entry.total_ppm]));
-
   return (
     <section aria-labelledby="gacha-prizes" className="gacha-prizes">
       <header className="gacha-section-heading">
@@ -103,9 +100,6 @@ function PrizeSections({ detail }: { readonly detail: GachaDetail }) {
         <section aria-labelledby={`rank-${rank.id}`} className="prize-rank" key={rank.id}>
           <header>
             <div><span>{rank.code}</span><h3 id={`rank-${rank.id}`}>{rank.name}</h3></div>
-            {probabilityByRank.has(rank.id) && (
-              <p>提供割合 {(probabilityByRank.get(rank.id)! / 10_000).toLocaleString("ja-JP", { maximumFractionDigits: 4 })}%</p>
-            )}
           </header>
           <div className="prize-grid">
             {rank.prizes.map((prize) => {
@@ -161,7 +155,6 @@ function DetailContent({ detail, presentation }: { readonly detail: GachaDetail;
           <div aria-label={`残り${detail.remaining_count}口、全${detail.total_count}口`} className="gacha-progress" role="progressbar" aria-valuemax={detail.total_count} aria-valuemin={0} aria-valuenow={detail.remaining_count}>
             <span style={{ width: `${remainingPercentage(detail)}%` }} />
           </div>
-          {detail.description && <p className="gacha-detail__description">{detail.description}</p>}
         </div>
       </section>
       {detail.notices && (
@@ -171,6 +164,15 @@ function DetailContent({ detail, presentation }: { readonly detail: GachaDetail;
         </details>
       )}
       <PrizeSections detail={detail} />
+      {detail.description && (
+        <section aria-labelledby="gacha-description" className="gacha-description">
+          <header className="gacha-section-heading">
+            <p>ABOUT THIS GACHA</p>
+            <h2 id="gacha-description">ガチャ説明</h2>
+          </header>
+          <p>{detail.description}</p>
+        </section>
+      )}
       <GachaDrawPanel detail={detail} presentation={presentation} />
     </article>
   );
