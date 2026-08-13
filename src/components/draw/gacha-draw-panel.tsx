@@ -8,7 +8,11 @@ import type { GachaDetail, GachaPresentationState, StorefrontDrawCount } from "@
 import { createIdempotencyKey, presentDrawProblem } from "@/lib/platform";
 import { drawResultRoute } from "@/lib/routes/navigation";
 import { useDrawClient } from "./draw-client-provider";
-import { gachaPresentationReasonLabels, gachaSaleStateLabels } from "@/components/catalog/gacha-presentation";
+import {
+  gachaPresentationReasonButtonLabels,
+  gachaPresentationReasonLabels,
+  gachaSaleStateLabels,
+} from "@/components/catalog/gacha-presentation";
 
 const number = new Intl.NumberFormat("ja-JP");
 const audienceLabels = {
@@ -35,6 +39,11 @@ function statusMessage(presentation: GachaPresentationState) {
   const reason = presentation.ineligible_reason ?? presentation.cta.reason;
   if (reason) return gachaPresentationReasonLabels[reason] ?? "現在は抽選を利用できません。";
   return presentation.eligible ? "このガチャの抽選対象です。" : "現在は抽選を利用できません。";
+}
+
+function disabledActionLabel(presentation: GachaPresentationState) {
+  const reason = presentation.cta.reason ?? presentation.ineligible_reason;
+  return reason ? gachaPresentationReasonButtonLabels[reason] : "現在は抽選できません";
 }
 
 function DailyLimit({ dailyLimit }: { readonly dailyLimit: GachaPresentationState["daily_limit"] }) {
@@ -77,8 +86,8 @@ export function GachaDrawPanel({
   const [recoveryId, setRecoveryId] = useState<string | null>(null);
   const pendingOperation = useRef<PendingOperation | null>(null);
   const submittingRef = useRef(false);
-  const visible = presentation.cta.state !== "hidden";
   const enabled = presentation.cta.state === "enabled";
+  const drawEnabled = enabled && presentation.cta.action === "draw";
 
   function selectCount(count: StorefrontDrawCount) {
     pendingOperation.current = null;
@@ -127,46 +136,50 @@ export function GachaDrawPanel({
         </div>
         <DailyLimit dailyLimit={presentation.daily_limit} />
       </section>
-      {visible && (
-        <aside aria-label="抽選オプション" className={`gacha-draw-tray gacha-draw-tray--${presentation.cta.state}`} data-cta-state={presentation.cta.state}>
-          <div className="gacha-draw-tray__inner">
-            <div className="gacha-draw-tray__summary">
-              <p><span>1回</span><strong>{number.format(detail.price_points)}pt</strong></p>
-              <p><span>残り</span><strong>{number.format(detail.remaining_count)}</strong><small>/ {number.format(detail.total_count)}</small></p>
-              <div aria-label={`残り${detail.remaining_count}口、全${detail.total_count}口`} className="gacha-progress gacha-progress--compact" role="progressbar" aria-valuemax={detail.total_count} aria-valuemin={0} aria-valuenow={detail.remaining_count}>
-                <span style={{ width: `${remainingPercentage(detail)}%` }} />
-              </div>
+      <aside aria-label="抽選オプション" className={`gacha-draw-tray gacha-draw-tray--${presentation.cta.state}`} data-cta-state={presentation.cta.state}>
+        <div className="gacha-draw-tray__inner">
+          <div className="gacha-draw-tray__summary">
+            <p><span>1回</span><strong>{number.format(detail.price_points)}pt</strong></p>
+            <p><span>残り</span><strong>{number.format(detail.remaining_count)}</strong><small>/ {number.format(detail.total_count)}</small></p>
+            <div aria-label={`残り${detail.remaining_count}口、全${detail.total_count}口`} className="gacha-progress gacha-progress--compact" role="progressbar" aria-valuemax={detail.total_count} aria-valuemin={0} aria-valuenow={detail.remaining_count}>
+              <span style={{ width: `${remainingPercentage(detail)}%` }} />
             </div>
+          </div>
+          {drawEnabled && (
             <div className="gacha-draw-tray__options" aria-label="抽選回数">
               {presentation.allowed_draw_counts.map((count) => (
-                <button aria-pressed={selectedCount === count} disabled={!enabled || submitting} key={count} onClick={() => selectCount(count)} type="button">
+                <button aria-pressed={selectedCount === count} disabled={submitting} key={count} onClick={() => selectCount(count)} type="button">
                   {number.format(count)}回
                 </button>
               ))}
             </div>
-            <div className="gacha-draw-tray__action">
-              {presentation.cta.action === "login" && enabled ? (
-                <Link className="button button--accent" href="/login">ログインして抽選する</Link>
-              ) : (
-                <button
-                  aria-describedby="draw-boundary-note"
-                  className="button button--accent"
-                  disabled={!enabled || !selectedCount || !configurationAvailable || submitting}
-                  onClick={() => setConfirming(true)}
-                  type="button"
-                >
-                  {submitting ? "抽選結果を確認中…" : selectedCount ? `${number.format(selectedCount)}回抽選する` : "抽選を利用できません"}
-                </button>
-              )}
-              <small id="draw-boundary-note">
-                {!configurationAvailable ? "この環境では抽選接続が設定されていません。" : "抽選条件と消費ポイントは実行時にPlatformが再検証します。"}
-              </small>
-              {problem && <p className="gacha-draw-tray__error" role="alert">{problem}</p>}
-              {recoveryId && <Link className="gacha-draw-tray__recovery" href={drawResultRoute(recoveryId)}>取得済みの結果を表示する</Link>}
-            </div>
+          )}
+          <div className="gacha-draw-tray__action">
+            {presentation.cta.action === "login" && enabled ? (
+              <Link className="button button--accent" href="/login">ログインして抽選する</Link>
+            ) : drawEnabled ? (
+              <button
+                aria-describedby="draw-boundary-note"
+                className="button button--accent"
+                disabled={!selectedCount || !configurationAvailable || submitting}
+                onClick={() => setConfirming(true)}
+                type="button"
+              >
+                {submitting ? "抽選結果を確認中…" : selectedCount ? `${number.format(selectedCount)}回抽選する` : "抽選を利用できません"}
+              </button>
+            ) : (
+              <button className="button button--accent" disabled type="button">
+                {disabledActionLabel(presentation)}
+              </button>
+            )}
+            <small id="draw-boundary-note">
+              {!configurationAvailable ? "この環境では抽選接続が設定されていません。" : "抽選条件と消費ポイントは実行時にPlatformが再検証します。"}
+            </small>
+            {problem && <p className="gacha-draw-tray__error" role="alert">{problem}</p>}
+            {recoveryId && <Link className="gacha-draw-tray__recovery" href={drawResultRoute(recoveryId)}>取得済みの結果を表示する</Link>}
           </div>
-        </aside>
-      )}
+        </div>
+      </aside>
       <ConfirmationDialog
         confirmDisabled={submitting}
         confirmLabel={submitting ? "処理中…" : "抽選を実行する"}

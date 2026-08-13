@@ -67,9 +67,33 @@ describe("gacha detail UI", () => {
     expect(screen.getByText(`#${detail.tags[0]!.name}`)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: detail.ranks[0]!.name })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: `${detail.ranks[0]!.prizes[0]!.name}の詳細を見る` })).toBeInTheDocument();
+    expect(screen.queryByText(/提供割合/)).not.toBeInTheDocument();
+    expect(screen.queryByText(detail.ranks[0]!.prizes[0]!.id)).not.toBeInTheDocument();
     expect(screen.getAllByText("販売中")).toHaveLength(2);
     expect(screen.getByText("対象: 初回ユーザー")).toBeInTheDocument();
     expect(getGachaPresentation).toHaveBeenCalledWith(detail.id);
+  });
+
+  it("moves the canonical description directly after the Prize lineup without duplication", async () => {
+    const view = renderDetail();
+    expect(await screen.findByRole("heading", { name: "ガチャ説明" })).toBeInTheDocument();
+    const summary = view.container.querySelector(".gacha-detail__summary");
+    const prizes = screen.getByRole("region", { name: "景品ラインナップ" });
+    const description = screen.getByRole("region", { name: "ガチャ説明" });
+
+    expect(summary).not.toHaveTextContent(detail.description!);
+    expect(description).toHaveTextContent(detail.description!);
+    expect(screen.getAllByText(detail.description!)).toHaveLength(1);
+    expect(prizes.compareDocumentPosition(description) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("does not add a description section when the canonical description is absent", async () => {
+    const withoutDescription = { ...detail, description: null } satisfies GachaDetail;
+    renderDetail(publicClient({
+      getGachaBySlug: vi.fn().mockResolvedValue(response({ data: withoutDescription })),
+    }));
+    expect(await screen.findByRole("heading", { level: 1, name: detail.title })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "ガチャ説明" })).not.toBeInTheDocument();
   });
 
   it("distinguishes loading, configuration, not found, and typed errors", async () => {
@@ -162,11 +186,11 @@ describe("gacha detail UI", () => {
   });
 
   it.each([
-    ["coming_soon", "sale_not_started", "販売開始前"],
-    ["on_sale", "audience_not_eligible", "販売中"],
-    ["sold_out", "sold_out", "完売"],
-    ["ended", "sale_ended", "販売終了"],
-  ] as const)("renders the %s Backend sale state without local derivation", async (saleState, reason, label) => {
+    ["coming_soon", "sale_not_started", "販売開始前", "販売開始前"],
+    ["on_sale", "audience_not_eligible", "販売中", "対象外"],
+    ["sold_out", "sold_out", "完売", "SOLD OUT"],
+    ["ended", "sale_ended", "販売終了", "販売終了"],
+  ] as const)("renders the %s Backend sale state and its fixed disabled tray", async (saleState, reason, label, actionLabel) => {
     const next: GachaPresentationState = {
       ...presentation,
       allowed_draw_counts: [],
@@ -177,7 +201,9 @@ describe("gacha detail UI", () => {
     };
     renderDetail(publicClient({ getGachaPresentation: presentationResponse(next) }));
     expect((await screen.findAllByText(label)).length).toBeGreaterThan(0);
-    expect(screen.queryByLabelText("抽選オプション")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("抽選オプション")).toHaveAttribute("data-cta-state", "hidden");
+    expect(screen.getByRole("button", { name: actionLabel })).toBeDisabled();
+    expect(screen.queryByLabelText("抽選回数")).not.toBeInTheDocument();
   });
 
   it("renders authenticated ineligibility and the returned daily count values", async () => {

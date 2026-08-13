@@ -17,3 +17,14 @@ export const gachaPresentationReasonLabels = {
 } as const satisfies Readonly<
   Record<NonNullable<GachaPresentationState["ineligible_reason"]>, string>
 >;
+
+export const gachaPresentationReasonButtonLabels = {
+  audience_not_eligible: "対象外",
+  authentication_required: "ログインが必要です",
+  daily_limit_reached: "本日の上限に到達",
+  sale_ended: "販売終了",
+  sale_not_started: "販売開始前",
+  sold_out: "SOLD OUT",
+} as const satisfies Readonly<
+  Record<NonNullable<GachaPresentationState["ineligible_reason"]>, string>
+>;

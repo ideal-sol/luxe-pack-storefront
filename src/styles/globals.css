@@ -308,7 +308,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .gacha-detail__facts dd { font-size: .8rem; font-weight: 800; margin: 0; text-align: right; }
 .gacha-progress { background: var(--paper-deep); border-radius: 999px; height: 10px; overflow: hidden; }
 .gacha-progress > span { background: linear-gradient(90deg, var(--bronze), var(--bronze-light)); display: block; height: 100%; }
-.gacha-detail__description { color: var(--muted); font-size: .82rem; line-height: 1.9; margin: 20px 0 0; white-space: pre-wrap; }
+.gacha-description { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-card); display: grid; gap: 20px; min-width: 0; padding: 24px 20px; }
+.gacha-description > p { color: var(--muted); font-size: .82rem; line-height: 1.9; margin: 0; min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 .gacha-notices { background: var(--white); border: 1px solid var(--line); border-radius: 12px; }
 .gacha-notices summary { cursor: pointer; font-size: .82rem; font-weight: 800; min-height: 58px; padding: 19px 20px; }
 .gacha-notices summary:focus-visible { outline: 3px solid rgba(185,133,66,.38); outline-offset: 3px; }
@@ -584,6 +585,7 @@ body:has(.gacha-draw-tray) .site-footer { padding-bottom: calc(370px + env(safe-
   .gacha-detail__hero { grid-template-columns: minmax(0, 1.06fr) minmax(0, .94fr); }
   .gacha-detail__visual { aspect-ratio: auto; min-height: 520px; }
   .gacha-detail__summary { padding: 40px 34px; }
+  .gacha-description { padding: 32px 34px; }
   .gacha-eligibility { align-items: start; grid-template-columns: 1fr minmax(250px, .8fr); padding: 28px; }
   .prize-grid { gap: 14px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .prize-card strong { font-size: .76rem; padding: 12px; }
