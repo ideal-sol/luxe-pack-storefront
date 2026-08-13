@@ -1,6 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
-import { PUBLIC_AUTH_FIXTURE, PUBLIC_DRAW_FIXTURE } from "@oripa/storefront-testkit";
+import {
+  PUBLIC_AUTH_FIXTURE,
+  PUBLIC_DRAW_FIXTURE,
+  PUBLIC_PARTIAL_REMAINING_DRAW_FIXTURE,
+} from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { DrawClientProvider } from "@/components/draw/draw-client-provider";
@@ -73,6 +77,26 @@ describe("Draw Result recovery UI", () => {
     renderResult(client);
     await screen.findByRole("heading", { level: 1, name: "抽選結果" });
     expect(getDrawRequest).toHaveBeenCalledTimes(2);
+    expect(createDraw).not.toHaveBeenCalled();
+  });
+
+  it("distinguishes the selected count from the canonical partial executed count", async () => {
+    const partial = PUBLIC_PARTIAL_REMAINING_DRAW_FIXTURE.response as DrawResponse;
+    const getDrawRequest = vi.fn().mockResolvedValue(response(partial));
+    const createDraw = vi.fn();
+    render(
+      <SessionProvider client={authClient()}>
+        <DrawClientProvider client={drawClient({ createDraw, getDrawRequest })}>
+          <DrawResultView drawRequestId={partial.id} />
+        </DrawClientProvider>
+      </SessionProvider>,
+    );
+
+    expect(await screen.findByRole("heading", { level: 1, name: "抽選結果" })).toBeInTheDocument();
+    expect(screen.getByText("選択回数").nextElementSibling).toHaveTextContent("1,000回");
+    expect(screen.getByText("実行回数").nextElementSibling).toHaveTextContent("900回");
+    expect(screen.getByText("900回の抽選が完了しました")).toBeInTheDocument();
+    expect(getDrawRequest).toHaveBeenCalledWith(partial.id);
     expect(createDraw).not.toHaveBeenCalled();
   });
 

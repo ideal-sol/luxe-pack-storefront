@@ -1,5 +1,37 @@
 # Storefront worklog
 
+## SITE-021 — 100／1000 Draw availability
+
+- Issue: `#41`
+- Risk: HIGH (`R3`)
+- Base SHA: `20759b799584ab7a3d95f098d23b97f087f86b6b`
+- Branch: `site/SITE-021-large-draw-availability`
+
+### Resolution
+
+MIG-062I／MIG-062J and Production Artifact `2.0.0-alpha.10` resolve the
+Backend-managed large Draw Count blocker. `allowed_draw_counts` remains the sole
+option source, and the Draw mutation remains authoritative for sale, audience,
+eligibility, daily-limit, inventory, remaining, and Point validation.
+
+### Changes
+
+- Pin current Production packages and Public OpenAPI to MIG-062J alpha.10 while
+  retaining every historical Artifact directory unchanged.
+- Keep configured 100／1000 buttons visible when returned, even when remaining
+  units are below the selected requested count.
+- Send requested count unchanged and present canonical executed count from
+  mutation/result recovery without local truncation.
+- Add generated partial-remaining fixture regression for requested 1000,
+  executed 900, sold-out completion, and same-key replay.
+- Preserve the original Platform Change Request and append its resolution.
+
+### Not changed
+
+Idempotency ownership, duplicate-submit protection, Draw Result public-ID
+recovery, Point/Prize calculations, Platform data, and unrelated Footer work are
+unchanged.
+
 ## SITE-014 — Gacha Catalog display contract alignment
 
 - Issue: `#27`
