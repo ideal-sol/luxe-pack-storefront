@@ -5,6 +5,7 @@ import {
   PUBLIC_DRAW_FIXTURE,
   PUBLIC_DRAW_PROBLEM_FIXTURES,
   PUBLIC_GACHA_PRESENTATION_FIXTURE,
+  PUBLIC_PARTIAL_REMAINING_DRAW_FIXTURE,
 } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { DrawClientProvider } from "@/components/draw/draw-client-provider";
@@ -77,6 +78,32 @@ describe("Gacha Draw execution UI", () => {
     expect(createDraw).toHaveBeenCalledTimes(1);
     resolveDraw?.(response(drawResponse));
     await waitFor(() => expect(push).toHaveBeenCalledTimes(1));
+  });
+
+  it("renders every Backend count even when remaining is below the selected 1000", async () => {
+    const partialPresentation = {
+      ...PUBLIC_PARTIAL_REMAINING_DRAW_FIXTURE.presentation,
+      allowed_draw_counts: [...PUBLIC_PARTIAL_REMAINING_DRAW_FIXTURE.presentation.allowed_draw_counts],
+    } satisfies GachaPresentationState;
+    const partialDetail = { ...detail, remaining_count: 900 } satisfies GachaDetail;
+    const createDraw = vi.fn().mockResolvedValue(response(PUBLIC_PARTIAL_REMAINING_DRAW_FIXTURE.response as DrawResponse));
+    render(
+      <DrawClientProvider client={client(createDraw)}>
+        <GachaDrawPanel detail={partialDetail} presentation={partialPresentation} />
+      </DrawClientProvider>,
+    );
+
+    expect(screen.getByRole("button", { name: "1回" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "100回" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "1,000回" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "5回" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "10回" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "1,000回" }));
+    fireEvent.click(screen.getByRole("button", { name: "1,000回抽選する" }));
+    fireEvent.click(screen.getByRole("button", { name: "抽選を実行する" }));
+    await waitFor(() => expect(createDraw).toHaveBeenCalledTimes(1));
+    expect(createDraw.mock.calls[0]?.[1]).toBe(1000);
   });
 
   it("reuses the same key after an uncertain network failure", async () => {

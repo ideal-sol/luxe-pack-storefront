@@ -1,7 +1,7 @@
 # API dependency map
 
-Storefront operations use the MIG-062G Public OpenAPI and `@oripa/storefront-client`
-`2.0.0-alpha.9`. This map does not invent absent
+Storefront operations use the MIG-062J Public OpenAPI and `@oripa/storefront-client`
+`2.0.0-alpha.10`. This map does not invent absent
 operations or response shapes.
 
 | Screen | Required capability | Contract state |
@@ -11,9 +11,9 @@ operations or response shapes.
 | Catalog filter/order | Public categories, tags, opaque cursor, and Backend-stable ordering | **Resolved — MIG-062G preserves existing query/cursor contract** |
 | Home notices | Public notice summary collection | **Resolved — MIG-061U content client** |
 | Pack detail | Public gacha detail by slug | **Resolved — MIG-061Y catalog client; SITE-004 implemented** |
-| Pack detail CTA | User-specific presentation state | **Resolved — MIG-061Y `getGachaPresentation`; SITE-004 implemented** |
-| Draw execution | Browser-owned CSRF, caller Idempotency Key, typed Backend rejection, and completed response | **Resolved — MIG-062C `createBrowserStorefrontDrawClient`; SITE-005 implemented** |
-| Draw result | Completed Draw Request read by public ID | **Resolved — alpha.6 `getDrawRequest`; reload-safe SITE-005 route** |
+| Pack detail CTA | User-specific presentation state and Backend-configured requested Draw counts | **Resolved — alpha.10 `getGachaPresentation`; SITE-021 preserves all returned counts** |
+| Draw execution | Browser-owned CSRF, caller Idempotency Key, typed Backend rejection, requested count, and completed response | **Resolved — alpha.10 `createBrowserStorefrontDrawClient`; partial remaining remains Backend-owned** |
+| Draw result | Completed Draw Request read by public ID with distinct requested/executed counts | **Resolved — alpha.10 `getDrawRequest`; reload-safe result uses canonical execution facts** |
 | Login | Password login and current browser session | **Resolved — MIG-061U identity client** |
 | Registration | Registration and pending email verification | **Resolved — MIG-061U identity client** |
 | Logout | Browser session invalidation | **Resolved — MIG-061U identity client** |

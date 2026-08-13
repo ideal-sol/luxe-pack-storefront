@@ -10,6 +10,7 @@ import {
   PUBLIC_CONTRACT_FIXTURE,
   PUBLIC_DRAW_FIXTURE,
   PUBLIC_DRAW_PROBLEM_FIXTURES,
+  PUBLIC_PARTIAL_REMAINING_DRAW_FIXTURE,
 } from "@oripa/storefront-testkit";
 import { createDrawClientTestHarness } from "@/lib/platform/testing";
 
@@ -23,13 +24,13 @@ function enqueueCsrf(harness: ReturnType<typeof createDrawClientTestHarness>) {
   );
 }
 
-describe("MIG-062G browser Draw contract regression", () => {
-  it("pins alpha.9 and retains every Storefront operation used before the upgrade", () => {
+describe("MIG-062J browser Draw contract regression", () => {
+  it("pins alpha.10 and retains every Storefront operation used before the upgrade", () => {
     for (const packageName of ["site-schema", "storefront-client", "storefront-testkit"]) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
-      expect(packageJson.version).toBe("2.0.0-alpha.9");
+      expect(packageJson.version).toBe("2.0.0-alpha.10");
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("98f9ad9334994d3ecd06961f25c8b58968b78f6f43d8a59952905bfc22d92508");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("e84d9f59c6e1daa9c4611e72bb588681c89354ee1eccef77dc42ccb15555c811");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getUserSession", "loginUser", "registerUser",
       "listGachas", "getGachaBySlug", "getGachaPresentation",
@@ -56,7 +57,35 @@ describe("MIG-062G browser Draw contract regression", () => {
     expect(harness.mock.requests[1]?.credentials).toBe("include");
     expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBe(key);
     expect(harness.mock.requests[1]?.headers["x-xsrf-token"]).toBe(csrf);
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.9", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.10", site_version: "0.1.0" });
+    harness.mock.assertExhausted();
+  });
+
+  it("keeps requested 1000 while the Backend executes and replays the canonical partial 900", async () => {
+    const fixture = PUBLIC_PARTIAL_REMAINING_DRAW_FIXTURE;
+    const harness = createDrawClientTestHarness(csrf);
+    const key = createIdempotencyKey();
+    enqueueCsrf(harness);
+    harness.mock.enqueueJson(
+      { method: "POST", url: `${origin}/gachas/${fixture.presentation.gacha_id}/draws` },
+      { body: fixture.response, status: 200 },
+    );
+    harness.mock.enqueueJson(
+      { method: "POST", url: `${origin}/gachas/${fixture.presentation.gacha_id}/draws` },
+      { body: { ...fixture.response, ...fixture.replay }, status: 200 },
+    );
+
+    const first = await harness.client.createDraw(fixture.presentation.gacha_id, fixture.request.requested_count, {
+      idempotency_key: key,
+    });
+    const replay = await harness.client.createDraw(fixture.presentation.gacha_id, fixture.request.requested_count, {
+      idempotency_key: key,
+    });
+
+    expect(first.data).toMatchObject({ executed_count: 900, requested_count: 1000 });
+    expect(replay.data).toMatchObject({ executed_count: 900, idempotent_replay: true, requested_count: 1000 });
+    expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBe(key);
+    expect(harness.mock.requests[2]?.headers["idempotency-key"]).toBe(key);
     harness.mock.assertExhausted();
   });
 

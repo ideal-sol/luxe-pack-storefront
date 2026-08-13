@@ -153,7 +153,7 @@ SITE-007 adds MIG-062A contract coverage for typed presentation, nullable assets
 cursor reads, and action states. Component tests cover login/configuration/read
 states, individual/select-all/reset behavior, Backend-only bulk actions, and the
 no-mutation boundary. Earlier Auth, Catalog, Content, Gacha Presentation, and Draw
-operations are checked for alpha.9 compatibility. SITE-005 additionally covers
+operations are checked for alpha.10 compatibility. SITE-005 additionally covers
 Browser-owned CSRF, same-key retry, new-operation keys, double-click suppression,
 generated Draw problems, public-ID result GET, reload recovery, and the absence
 of optimistic Point/Prize mutation. SITE-012 adds Browser fulfillment Contract
@@ -165,3 +165,10 @@ SITE-014 adds alpha.9 mixed-state Catalog Contract coverage for on-sale,
 coming-soon, ended, sold-out, anonymous, authenticated-eligible, and
 authenticated-ineligible presentation. Tests retain Backend order and verify
 that ended/sold-out cards obey display flags despite nonzero fixture counts.
+
+SITE-021 retains the existing Draw boundary while consuming MIG-062J alpha.10.
+Draw option buttons directly render generated `allowed_draw_counts`; remaining
+units never hide or reduce a requested option. The selected requested count is
+sent unchanged. Result recovery reads generated `requested_count` and
+`executed_count` independently, uses the latter for completed-count
+presentation, and never recalculates Point cost, Prize totals, or sold units.

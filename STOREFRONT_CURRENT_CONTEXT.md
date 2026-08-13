@@ -20,6 +20,7 @@
 - SITE-019 Prize Inventory Preview Read diagnosis: completed by this change
 - SITE-014 Gacha Catalog display contract alignment: completed by this change
 - SITE-020 Gacha Detail visual QA fix: implemented by this change
+- SITE-021 100／1000 Draw availability: implemented by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -43,12 +44,12 @@ Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.9`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.9`
-- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.9`
-- Source Commit: `36220b5c08820741b4763363a7e86c18274b9688`
-- Artifact authority: `vendor/oripa/MIG-062G/artifact-manifest.json`
-- Public OpenAPI SHA-256: `737c6e174f9e47a0543a6b39a0e778fb46c50b24c20564dd7a8636439010e702`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.10`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.10`
+- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.10`
+- Source Commit: `ed57eca709c9a49fc5bb5ffa9903a84573052077`
+- Artifact authority: `vendor/oripa/MIG-062J/artifact-manifest.json`
+- Public OpenAPI SHA-256: `e84d9f59c6e1daa9c4611e72bb588681c89354ee1eccef77dc42ccb15555c811`
 
 ## Available contracts
 
@@ -140,6 +141,13 @@ badges and adds Detail-only Footer clearance for the fixed Draw tray. Mobile
 clearance includes the existing Bottom Navigation and safe-area stack. This is
 presentation-only and does not alter Draw options, sale state, eligibility, or
 any Platform Contract.
+
+SITE-021 adopts MIG-062J alpha.10. Gacha Detail renders Backend-configured
+requested counts, including optional 100／1000, without filtering against
+remaining units. Draw submits the selected requested count unchanged, while
+result and reload recovery use canonical executed count independently. The
+partial-remaining Testkit fixture covers requested 1000, executed 900, sold-out,
+and same-key replay without Frontend Draw or Point calculation.
 
 ## Pending contracts
 

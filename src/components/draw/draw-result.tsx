@@ -55,7 +55,10 @@ function DrawResultContent({ result }: { readonly result: DrawResponse }) {
         <span>{number.format(result.executed_count)}回の抽選が完了しました</span>
       </header>
       <dl className="draw-result__summary">
-        <div><dt>抽選回数</dt><dd>{number.format(result.executed_count)}回</dd></div>
+        {result.requested_count !== result.executed_count && (
+          <div><dt>選択回数</dt><dd>{number.format(result.requested_count)}回</dd></div>
+        )}
+        <div><dt>実行回数</dt><dd>{number.format(result.executed_count)}回</dd></div>
         <div><dt>消費ポイント</dt><dd>{number.format(result.point_cost_total)}pt</dd></div>
         <div><dt>ポイント還元</dt><dd>{number.format(result.point_back_total)}pt</dd></div>
         <div><dt>実行日時</dt><dd>{formatDateTime(result.created_at)}</dd></div>
