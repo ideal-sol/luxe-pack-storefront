@@ -43,6 +43,15 @@ export const informationNavigation = [
   { href: "/pages/privacy", label: "プライバシーポリシー" },
 ] as const;
 
+export const temporaryFooterInformationNavigation = [
+  informationNavigation[0],
+  informationNavigation[1],
+  informationNavigation[2],
+  { href: null, label: "古物営業法に基づく表示" },
+  { href: null, label: "特定商取引法に基づく表記" },
+  { href: null, label: "反社会的勢力に対する基本方針" },
+] as const;
+
 export const myPageShortcutNavigation = [
   { ...accountNavigation[1], description: "ポイント情報を確認する", eyebrow: "POINTS" },
   { ...accountNavigation[2], description: "ガチャの利用履歴を確認する", eyebrow: "DRAW HISTORY" },
