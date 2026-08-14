@@ -1,5 +1,31 @@
 # Storefront worklog
 
+## SITE-026 — Point purchase page layout
+
+- Issue: `#51`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `c39f9d7e386997c05c797e68f1741482db85d3b6`
+- Branch: `site/SITE-026-point-purchase-layout`
+
+### Changes
+
+- Replace the `/points` placeholder with the shared narrow Page layout and a
+  responsive Point purchase presentation.
+- Keep the current balance at the established pending value `--` behind a
+  replaceable display component.
+- Add accessible `すべてのユーザー`／`初回ユーザー` presentation tabs without
+  implementing first-purchase, segment, eligibility, or purchase decisions.
+- Add a future product grid/card shell while rendering only a neutral preparing
+  state in Runtime; test-only fixtures verify one/multiple/long-content layout.
+- Reuse the shared Header, Footer, Mobile Bottom Navigation, state presentation,
+  content width, spacing, focus, and responsive tokens.
+
+### Not changed
+
+Production Artifact alpha.14, Platform/OpenAPI/DB, Point and Payment contracts,
+Header balance, purchase mutation, infrastructure, and unrelated routes are
+unchanged. No fictitious Runtime product or price is added.
+
 ## SITE-025 — Home top banner carousel
 
 - Issue: `#49`

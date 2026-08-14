@@ -135,7 +135,8 @@ Component tests cover the shared shell, session state transitions, forms, duplic
 submission protection, header state, and email verification. Contract tests inject
 the deterministic Storefront Testkit into the real browser client. Policy tests
 reject direct Platform paths, browser protocol details outside the boundary, and
-authentication persistence. Point purchase remains a later Task.
+authentication persistence. SITE-026 covers only the Point purchase presentation;
+Platform-backed balance, products, eligibility, purchase, and Payment remain later tasks.
 
 SITE-003 adds deterministic Client/Testkit contract tests for banners, notices,
 categories, tags, gacha summaries, category queries, and cursor queries. Component
@@ -186,3 +187,11 @@ or link filtering. A client-only native scroll-snap component supplies explicit
 pointer, touch, and keyboard controls for multiple returned items without an
 automatic interval or additional carousel dependency. Banner loading and errors
 are isolated from Category, Gacha, and Notice reads.
+
+SITE-026 separates the `/points` route shell from a client-side presentation
+component. `PointBalanceSummary` accepts only display content, the category tabs
+hold non-authoritative UI state, and `PointProductRegion`／`PointProductCardShell`
+provide layout slots without defining a Platform product response. Runtime passes
+no product content, so the page renders the canonical pending `--` balance and a
+neutral preparing state. No Adapter, endpoint, purchase action, Payment URL, or
+eligibility rule is introduced.

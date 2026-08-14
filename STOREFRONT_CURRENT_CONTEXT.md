@@ -23,6 +23,7 @@
 - SITE-021 100／1000 Draw availability: implemented by this change
 - SITE-022 Footer page navigation: implemented by this change
 - SITE-025 Home top banner carousel: implemented by this change
+- SITE-026 Point purchase page layout: implemented by this change; Platform Point contracts remain pending
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -166,6 +167,14 @@ collection retains the neutral existing state. The Storefront does not filter,
 sort, rebuild asset paths, or reinterpret returned link URLs. Banner read errors
 are contained within the Banner section so other public Home data can remain
 available.
+
+SITE-026 replaces the public `/points` placeholder with a responsive Point
+purchase layout. The balance boundary intentionally displays `--`; the two
+human-approved presentation categories are interactive UI state only; and the
+product region renders a neutral preparing state. Runtime code contains no
+product fixture, eligibility decision, purchase CTA, Platform request, Payment
+connection, or optimistic Point behavior. Balance, product, eligibility, and
+purchase contracts remain pending for a later integration task.
 
 ## Pending contracts
 
