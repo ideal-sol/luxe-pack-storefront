@@ -525,8 +525,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .site-footer__brand p { color: #817a70; font-size: .68rem; margin: 7px 0 0; }
 .site-footer h2 { color: var(--bronze-light); font-size: .6rem; letter-spacing: .17em; margin: 0 0 16px; text-transform: uppercase; }
 .site-footer__grid > div:not(.site-footer__brand) { display: flex; flex-direction: column; gap: 10px; }
-.site-footer__grid a, .site-footer__unlinked { font-size: .74rem; line-height: 1.55; overflow-wrap: anywhere; }
-.site-footer__unlinked { color: #817a70; }
+.site-footer__grid a { font-size: .74rem; line-height: 1.55; overflow-wrap: anywhere; }
 .site-footer__bottom { border-top: 1px solid rgba(255,255,255,.12); display: flex; font-size: .55rem; justify-content: space-between; letter-spacing: .1em; margin-top: 46px; padding-top: 22px; }
 body:has(.gacha-draw-tray) .site-footer { padding-bottom: calc(370px + env(safe-area-inset-bottom)); }
 .mobile-navigation { background: rgba(255,253,248,.97); border-top: 1px solid var(--line); bottom: 0; display: grid; grid-template-columns: repeat(5, 1fr); left: 0; padding-bottom: env(safe-area-inset-bottom); position: fixed; right: 0; z-index: 50; }

@@ -2,6 +2,7 @@ import {
   assertBrowserRequestBoundary,
   PUBLIC_CATALOG_FIXTURE,
   PUBLIC_CONTENT_FIXTURE,
+  PUBLIC_FOOTER_PAGES_FIXTURE,
   PUBLIC_GACHA_CATALOG_DISPLAY_FIXTURES,
   PUBLIC_GACHA_PRESENTATION_FIXTURE,
 } from "@oripa/storefront-testkit";
@@ -13,7 +14,7 @@ const gachaCollection = {
   meta: { has_more: false, next_cursor: null, page_size: 1 },
 };
 
-describe("MIG-062J public catalog contract regression", () => {
+describe("MIG-062O public catalog contract regression", () => {
   it("uses the canonical gacha list with category and cursor queries", async () => {
     const category = createPublicClientTestHarness();
     category.mock.enqueueJson(
@@ -22,7 +23,7 @@ describe("MIG-062J public catalog contract regression", () => {
     );
     await expect(category.client.listGachas({ limit: 20, category: PUBLIC_CATALOG_FIXTURE.data.category.slug }))
       .resolves.toMatchObject({ data: gachaCollection });
-    assertBrowserRequestBoundary(category.mock.requests[0]!, { client_version: "2.0.0-alpha.10", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(category.mock.requests[0]!, { client_version: "2.0.0-alpha.11", site_version: "0.1.0" });
     category.mock.assertExhausted();
 
     const cursor = createPublicClientTestHarness();
@@ -49,7 +50,7 @@ describe("MIG-062J public catalog contract regression", () => {
       .resolves.toMatchObject({ data: PUBLIC_CATALOG_FIXTURE });
     await expect(harness.client.getGachaPresentation(PUBLIC_CATALOG_FIXTURE.data.id))
       .resolves.toMatchObject({ data: PUBLIC_GACHA_PRESENTATION_FIXTURE });
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.10", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.11", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -106,6 +107,34 @@ describe("MIG-062J public catalog contract regression", () => {
     );
     await expect(harness.client.listBanners()).resolves.toMatchObject({ data: { items: [PUBLIC_CONTENT_FIXTURE.banner] } });
     await expect(harness.client.listNotices({ limit: 3 })).resolves.toMatchObject({ data: { items: [PUBLIC_CONTENT_FIXTURE.notice] } });
+    harness.mock.assertExhausted();
+  });
+
+  it("uses the canonical Backend-filtered Footer Page collection", async () => {
+    const harness = createPublicClientTestHarness();
+    harness.mock.enqueueJson(
+      { method: "GET", url: `${origin}/content/footer-pages` },
+      { body: PUBLIC_FOOTER_PAGES_FIXTURE.response, status: 200 },
+    );
+
+    await expect(harness.client.listFooterPages()).resolves.toMatchObject({
+      data: PUBLIC_FOOTER_PAGES_FIXTURE.response,
+    });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, {
+      client_version: "2.0.0-alpha.11",
+      site_version: "0.1.0",
+    });
+    harness.mock.assertExhausted();
+  });
+
+  it("accepts an empty canonical Footer Page collection", async () => {
+    const harness = createPublicClientTestHarness();
+    harness.mock.enqueueJson(
+      { method: "GET", url: `${origin}/content/footer-pages` },
+      { body: { items: [] }, status: 200 },
+    );
+
+    await expect(harness.client.listFooterPages()).resolves.toMatchObject({ data: { items: [] } });
     harness.mock.assertExhausted();
   });
 

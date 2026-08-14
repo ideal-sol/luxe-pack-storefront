@@ -37,19 +37,14 @@ export function drawResultRoute(drawRequestId: string) {
   return `/draws/${encodeURIComponent(drawRequestId)}/result`;
 }
 
+export function staticPageRoute(slug: string) {
+  return `/pages/${encodeURIComponent(slug)}`;
+}
+
 export const informationNavigation = [
   { href: "/pages/guide", label: "ご利用ガイド" },
   { href: "/pages/terms", label: "利用規約" },
   { href: "/pages/privacy", label: "プライバシーポリシー" },
-] as const;
-
-export const temporaryFooterInformationNavigation = [
-  informationNavigation[0],
-  informationNavigation[1],
-  informationNavigation[2],
-  { href: null, label: "古物営業法に基づく表示" },
-  { href: null, label: "特定商取引法に基づく表記" },
-  { href: null, label: "反社会的勢力に対する基本方針" },
 ] as const;
 
 export const myPageShortcutNavigation = [

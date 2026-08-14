@@ -21,6 +21,7 @@
 - SITE-014 Gacha Catalog display contract alignment: completed by this change
 - SITE-020 Gacha Detail visual QA fix: implemented by this change
 - SITE-021 100／1000 Draw availability: implemented by this change
+- SITE-022 Footer page navigation: implemented by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -44,12 +45,12 @@ Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.10`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.10`
-- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.10`
-- Source Commit: `ed57eca709c9a49fc5bb5ffa9903a84573052077`
-- Artifact authority: `vendor/oripa/MIG-062J/artifact-manifest.json`
-- Public OpenAPI SHA-256: `e84d9f59c6e1daa9c4611e72bb588681c89354ee1eccef77dc42ccb15555c811`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.11`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.11`
+- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.11`
+- Source Commit: `367b82bd4c21178a4e1d041c21b5967971d18a71`
+- Artifact authority: `vendor/oripa/MIG-062O/artifact-manifest.json`
+- Public OpenAPI SHA-256: `cb00709ad49fb11dd802530d41ac056845730dd3b96ff3613ec36feae1379816`
 
 ## Available contracts
 
@@ -62,6 +63,8 @@ Platform response or Frontend business decision changed.
 - Public notice summaries
 - Public notice list with cursor continuation and public notice detail
 - Public static pages by slug with sanitized canonical HTML presentation
+- Backend-filtered Footer Page navigation through `listFooterPages`, preserving
+  returned title, slug, and order; successful empty collections are supported
 - Public gacha detail by slug
 - User-specific gacha presentation through `getGachaPresentation`: sale state,
   audience, eligibility, ineligible reason, allowed draw counts, daily limit, and CTA state
@@ -148,6 +151,11 @@ remaining units. Draw submits the selected requested count unchanged, while
 result and reload recovery use canonical executed count independently. The
 partial-remaining Testkit fixture covers requested 1000, executed 900, sold-out,
 and same-key replay without Frontend Draw or Point calculation.
+
+SITE-022 adopts MIG-062O alpha.11. Footer `INFORMATION` navigation now consumes
+the anonymous `listFooterPages` read. Membership, publication state, order,
+title, and slug remain Backend-owned. The Storefront renders no invented links
+for an empty response and contains read failures within the Information region.
 
 ## Pending contracts
 

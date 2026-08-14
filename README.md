@@ -15,8 +15,8 @@ Required runtime versions are Node `22.22.3` and pnpm `10.12.1`.
 
 ## Platform client
 
-The current MIG-062J Production artifacts are vendored at
-`vendor/oripa/MIG-062J` and fixed to version `2.0.0-alpha.10` using
+The current MIG-062O Production artifacts are vendored at
+`vendor/oripa/MIG-062O` and fixed to version `2.0.0-alpha.11` using
 Repository-relative `file:` dependencies. Historical bundles remain immutable. Run
 `pnpm artifact:check` to verify the Manifest, SHA-256 values, package identities,
 archive paths, Lifecycle Script boundary, and absence of server-specific file
@@ -32,6 +32,12 @@ Without it, the build still succeeds and the UI reports that Platform
 configuration is unavailable. MIG-061Z established the Platform Public Origin
 and same-Origin API proxy; deploying the Storefront application at that Origin
 is handled by the separate Preview deployment runbook.
+
+Footer `INFORMATION` links use the generated public Content
+`listFooterPages()` contract. The Backend returns only currently public Pages
+enabled for the Footer in its canonical order; the Storefront uses returned
+titles and slugs without filtering, sorting, or maintaining a local Footer list.
+An empty collection or read failure leaves the rest of the Footer usable.
 
 ## Public catalog
 
