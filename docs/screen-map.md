@@ -20,7 +20,7 @@
 
 | Route | Purpose | Current state |
 | --- | --- | --- |
-| `/points` | Balance, products, and purchase entry | Login-required placeholder |
+| `/points` | Point purchase presentation with balance, category control, and future product grid boundary | Layout implemented; balance/products/eligibility/purchase Platform contracts pending |
 | `/mypage` | Account hub | Session-connected member summary, centralized shortcuts/support navigation, and logout |
 | `/mypage/points` | Point history | Session-aware authenticated placeholder; data Contract pending |
 | `/mypage/draws` | Draw history | Session-aware authenticated placeholder; data Contract pending |
