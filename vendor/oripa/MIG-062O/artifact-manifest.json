@@ -1,0 +1,46 @@
+{
+  "task_id": "MIG-062O",
+  "generated_at": "2026-08-14T01:44:09Z",
+  "source_commit": "367b82bd4c21178a4e1d041c21b5967971d18a71",
+  "public_openapi": {
+    "file": "public.openapi.json",
+    "sha256": "cb00709ad49fb11dd802530d41ac056845730dd3b96ff3613ec36feae1379816",
+    "compatibility_family": 2,
+    "breaking_change": false
+  },
+  "packages": [
+    {
+      "name": "@oripa/storefront-client",
+      "version": "2.0.0-alpha.11",
+      "file": "oripa-storefront-client-2.0.0-alpha.11.tgz",
+      "sha256": "56112482af70ff352b5661ac160ffb00225c8a218c16d7ebc472ffc3aac4aa1b",
+      "browser_compatible": true,
+      "change": "non-breaking additive"
+    },
+    {
+      "name": "@oripa/storefront-testkit",
+      "version": "2.0.0-alpha.11",
+      "file": "oripa-storefront-testkit-2.0.0-alpha.11.tgz",
+      "sha256": "82d8e41831a214d788f2a612e34dd88ca5e206ef477e6336d00b539267ba6e79",
+      "browser_compatible": true,
+      "change": "non-breaking additive"
+    },
+    {
+      "name": "@oripa/site-schema",
+      "version": "2.0.0-alpha.11",
+      "file": "oripa-site-schema-2.0.0-alpha.11.tgz",
+      "sha256": "9e0eaaafb4fe51fd9650cf274674f5cd557499453d574958be4f2af9f4b53e79",
+      "browser_compatible": true,
+      "change": "package release only; site manifest schema remains 2.0.0-alpha.1"
+    }
+  ],
+  "toolchain": {
+    "node": "22.22.3",
+    "pnpm": "10.12.1"
+  },
+  "installation": {
+    "registry_publish_performed": false,
+    "workspace_dependency_required": false,
+    "consumer_resolution": "pin all three private package versions to the supplied tarballs; pnpm consumers use overrides for storefront-testkit transitive resolution"
+  }
+}

@@ -153,7 +153,7 @@ SITE-007 adds MIG-062A contract coverage for typed presentation, nullable assets
 cursor reads, and action states. Component tests cover login/configuration/read
 states, individual/select-all/reset behavior, Backend-only bulk actions, and the
 no-mutation boundary. Earlier Auth, Catalog, Content, Gacha Presentation, and Draw
-operations are checked for alpha.10 compatibility. SITE-005 additionally covers
+operations are checked for alpha.11 compatibility. SITE-005 additionally covers
 Browser-owned CSRF, same-key retry, new-operation keys, double-click suppression,
 generated Draw problems, public-ID result GET, reload recovery, and the absence
 of optimistic Point/Prize mutation. SITE-012 adds Browser fulfillment Contract
@@ -172,3 +172,10 @@ units never hide or reduce a requested option. The selected requested count is
 sent unchanged. Result recovery reads generated `requested_count` and
 `executed_count` independently, uses the latter for completed-count
 presentation, and never recalculates Point cost, Prize totals, or sold units.
+
+SITE-022 extends the existing public Content adapter with MIG-062O alpha.11
+`listFooterPages`. A small client component inside the shared Footer renders the
+generated collection in returned order through the centralized Static Page
+route builder. It performs no Page membership, publication, label, slug, or
+ordering decision. Empty and failed reads affect only the Information links;
+Brand, Explore, Account, and the Footer shell remain available.

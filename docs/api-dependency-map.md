@@ -1,7 +1,7 @@
 # API dependency map
 
-Storefront operations use the MIG-062J Public OpenAPI and `@oripa/storefront-client`
-`2.0.0-alpha.10`. This map does not invent absent
+Storefront operations use the MIG-062O Public OpenAPI and `@oripa/storefront-client`
+`2.0.0-alpha.11`. This map does not invent absent
 operations or response shapes.
 
 | Screen | Required capability | Contract state |
@@ -33,6 +33,7 @@ operations or response shapes.
 | Notice list | Public notice summaries and cursor | **Resolved — MIG-061U content client** |
 | Notice detail | Public notice detail by opaque ID | **Resolved — MIG-061U content client** |
 | Static pages | Public canonical HTML page by slug | **Resolved — MIG-061U content client; sanitized renderer required** |
+| Footer Page navigation | Backend-filtered public Footer Pages in canonical order | **Resolved — MIG-062O alpha.11 `listFooterPages`; SITE-022 implemented** |
 | Platform API in Preview | Public route, Origin, HTTPS, and same-Origin proxy | **Resolved by MIG-061Z; Storefront application deployment remains pending** |
 | Catalog presentation | Sale state, anonymous/authenticated eligibility, reason, CTA, and display-fact flags | **Resolved — MIG-062G alpha.9 generated `GachaSummary.presentation`** |
 | Gacha detail Point insufficiency | Backend-authoritative Point affordability before Draw | **Presentation remains pending; SITE-005 uses only the typed Draw mutation rejection** |

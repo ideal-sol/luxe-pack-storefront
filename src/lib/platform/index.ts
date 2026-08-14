@@ -27,6 +27,8 @@ export {
   createBrowserPublicClient,
   createPublicCatalogAdapter,
   type ContentBanner,
+  type ContentFooterPage,
+  type ContentFooterPageCollection,
   type ContentNotice,
   type ContentNoticeCollection,
   type ContentNoticeSummary,

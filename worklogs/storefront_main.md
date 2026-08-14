@@ -1,5 +1,36 @@
 # Storefront worklog
 
+## SITE-022 — Footer page navigation
+
+- Issue: `#42`
+- Risk: MEDIUM (`R2`)
+- Original Base SHA: `20759b799584ab7a3d95f098d23b97f087f86b6b`
+- Resumed Base SHA: `834d094fc100783204c90a97d900efee8498f16f`
+- Branch: `site/SITE-022-footer-page-navigation`
+
+### Resolution
+
+MIG-062O Production Artifact `2.0.0-alpha.11` resolves the Public Footer Page
+navigation blocker with generated `listFooterPages` and a public-safe Testkit
+fixture. The response contains only currently public, Footer-enabled Pages in
+Backend order.
+
+### Changes
+
+- Add the immutable MIG-062O vendor bundle and pin all Production packages to
+  alpha.11 without changing historical Artifacts.
+- Replace SITE-024's temporary fixed Footer entries with returned Page titles and
+  `/pages/[slug]` links.
+- Preserve Backend membership and ordering without local filtering or sorting.
+- Treat an empty collection as normal and contain configuration/read failures in
+  the Information region.
+- Preserve the historical SITE-022 Change Request and append its resolution.
+
+### Not changed
+
+Static Page body rendering, Footer Brand／Explore／Account regions, Platform data,
+Content publication rules, and unrelated routes or Business Rules are unchanged.
+
 ## SITE-021 — 100／1000 Draw availability
 
 - Issue: `#41`
