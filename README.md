@@ -15,8 +15,8 @@ Required runtime versions are Node `22.22.3` and pnpm `10.12.1`.
 
 ## Platform client
 
-The current MIG-062O Production artifacts are vendored at
-`vendor/oripa/MIG-062O` and fixed to version `2.0.0-alpha.11` using
+The current MIG-062P Production artifacts are vendored at
+`vendor/oripa/MIG-062P` and fixed to version `2.0.0-alpha.14` using
 Repository-relative `file:` dependencies. Historical bundles remain immutable. Run
 `pnpm artifact:check` to verify the Manifest, SHA-256 values, package identities,
 archive paths, Lifecycle Script boundary, and absence of server-specific file

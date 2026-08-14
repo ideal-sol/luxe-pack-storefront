@@ -1,12 +1,12 @@
 # API dependency map
 
-Storefront operations use the MIG-062O Public OpenAPI and `@oripa/storefront-client`
-`2.0.0-alpha.11`. This map does not invent absent
+Storefront operations use the MIG-062P Public OpenAPI and `@oripa/storefront-client`
+`2.0.0-alpha.14`. This map does not invent absent
 operations or response shapes.
 
 | Screen | Required capability | Contract state |
 | --- | --- | --- |
-| Home banners | Public banner collection | **Resolved — MIG-061U content client** |
+| Home banners | Backend-filtered public top Banner collection in canonical order | **Resolved — MIG-062P alpha.14 `listBanners`; SITE-025 implemented** |
 | Home and pack list | Backend-visible mixed-state summary collection and cursor | **Resolved — MIG-062G alpha.9 Catalog presentation; SITE-014 implemented** |
 | Catalog filter/order | Public categories, tags, opaque cursor, and Backend-stable ordering | **Resolved — MIG-062G preserves existing query/cursor contract** |
 | Home notices | Public notice summary collection | **Resolved — MIG-061U content client** |

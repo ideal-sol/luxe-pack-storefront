@@ -22,6 +22,7 @@
 - SITE-020 Gacha Detail visual QA fix: implemented by this change
 - SITE-021 100／1000 Draw availability: implemented by this change
 - SITE-022 Footer page navigation: implemented by this change
+- SITE-025 Home top banner carousel: implemented by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -45,12 +46,12 @@ Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.11`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.11`
-- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.11`
-- Source Commit: `367b82bd4c21178a4e1d041c21b5967971d18a71`
-- Artifact authority: `vendor/oripa/MIG-062O/artifact-manifest.json`
-- Public OpenAPI SHA-256: `cb00709ad49fb11dd802530d41ac056845730dd3b96ff3613ec36feae1379816`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.14`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.14`
+- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.14`
+- Source Commit: `4c4fe03ead4b4b1d2f7d82df430db0bb4b9cfb21`
+- Artifact authority: `vendor/oripa/MIG-062P/artifact-manifest.json`
+- Public OpenAPI SHA-256: `cc50dbae2f0d55deca43afca7dd3457074a1edf9ae275c46f58f782b1790b393`
 
 ## Available contracts
 
@@ -59,7 +60,8 @@ Platform response or Frontend business decision changed.
   mixed sale states, anonymous/authenticated eligibility, reason, CTA, and
   display-fact policy
 - Public gacha categories and tags
-- Public banners
+- Backend-filtered top Banner navigation through `listBanners`, preserving
+  canonical title, public image URL, safe link URL, and returned order
 - Public notice summaries
 - Public notice list with cursor continuation and public notice detail
 - Public static pages by slug with sanitized canonical HTML presentation
@@ -156,6 +158,14 @@ SITE-022 adopts MIG-062O alpha.11. Footer `INFORMATION` navigation now consumes
 the anonymous `listFooterPages` read. Membership, publication state, order,
 title, and slug remain Backend-owned. The Storefront renders no invented links
 for an empty response and contains read failures within the Information region.
+
+SITE-025 adopts MIG-062P alpha.14. Home top Banners now consume the canonical
+`listBanners` collection. One item renders without redundant controls, multiple
+items use a native scroll-snap carousel with explicit controls, and an empty
+collection retains the neutral existing state. The Storefront does not filter,
+sort, rebuild asset paths, or reinterpret returned link URLs. Banner read errors
+are contained within the Banner section so other public Home data can remain
+available.
 
 ## Pending contracts
 
