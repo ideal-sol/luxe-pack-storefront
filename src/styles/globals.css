@@ -164,13 +164,25 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .public-home-state { padding-block: 64px 96px; }
 .home-content { max-width: calc(var(--content-reading) + 40px); }
 .home-banners { background: #e9e2d6; padding-block: 18px; }
-.home-banners__rail { display: grid; gap: 12px; grid-auto-columns: min(calc(100vw - 48px), var(--content-reading)); grid-auto-flow: column; margin-inline: -20px; overflow-x: auto; overscroll-behavior-inline: contain; padding: 2px 20px 12px; scroll-padding-inline: 20px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
-.home-banner { aspect-ratio: 16 / 8.2; background: var(--ink); border: 1px solid rgba(23,22,20,.12); border-radius: 18px; box-shadow: 0 12px 32px rgba(35,28,18,.14); display: block; overflow: hidden; position: relative; scroll-snap-align: start; }
+.home-banner-carousel { min-width: 0; }
+.home-banners__rail { display: grid; gap: 0; grid-auto-columns: 100%; grid-auto-flow: column; overflow-x: auto; overscroll-behavior-inline: contain; padding: 2px; scroll-behavior: smooth; scroll-padding-inline: 2px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.home-banners__rail::-webkit-scrollbar { display: none; }
+.home-banner-carousel__slide { min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; }
+.home-banner { aspect-ratio: 16 / 8.2; background: var(--ink); border: 1px solid rgba(23,22,20,.12); border-radius: 18px; box-shadow: 0 12px 32px rgba(35,28,18,.14); display: block; overflow: hidden; position: relative; }
 .home-banner::after { background: linear-gradient(180deg, transparent 42%, rgba(13,12,11,.78)); content: ""; inset: 0; pointer-events: none; position: absolute; }
 .home-banner .catalog-asset { height: 100%; }
 .home-banner__caption { bottom: 22px; color: var(--white); display: flex; flex-direction: column; gap: 5px; left: 22px; position: absolute; right: 22px; z-index: 2; }
 .home-banner__caption span { color: var(--bronze-light); font-size: .56rem; font-weight: 800; letter-spacing: .18em; }
 .home-banner__caption strong { font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.3rem, 5vw, 2.5rem); font-weight: 400; }
+.home-banner-carousel__controls { align-items: center; display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+.home-banner-carousel__controls > button { align-items: center; background: rgba(255,255,255,.68); border: 1px solid rgba(23,22,20,.18); border-radius: 50%; color: var(--ink); cursor: pointer; display: flex; font-size: .8rem; height: 44px; justify-content: center; width: 44px; }
+.home-banner-carousel__controls > button:disabled { cursor: default; opacity: .38; }
+.home-banner-carousel__indicators { align-items: center; display: flex; gap: 2px; justify-content: center; }
+.home-banner-carousel__indicators button { align-items: center; background: transparent; border: 0; cursor: pointer; display: flex; height: 44px; justify-content: center; padding: 0; width: 28px; }
+.home-banner-carousel__indicators button::before { background: rgba(23,22,20,.35); border-radius: 999px; content: ""; height: 6px; transition: background-color .2s ease, width .2s ease; width: 6px; }
+.home-banner-carousel__indicators button[aria-current="true"]::before { background: var(--bronze); width: 18px; }
+.home-banner-carousel:focus-visible, .home-banner-carousel__controls button:focus-visible { outline: 3px solid rgba(185,133,66,.45); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .home-banners__rail { scroll-behavior: auto; } }
 .home-categories, .home-gachas, .home-notices { padding-block: 62px; }
 .home-gachas { background: var(--white); border-block: 1px solid var(--line); }
 .home-notices { background: var(--paper-deep); }
@@ -562,7 +574,7 @@ body:has(.gacha-draw-tray) .site-footer { padding-bottom: calc(370px + env(safe-
   .mobile-navigation { display: none; }
   .auth-form { padding: 42px; }
   .home-banners { padding-block: 28px; }
-  .home-banners__rail { grid-auto-columns: min(calc(100vw - 128px), var(--content-reading)); margin-inline: 0; padding-inline: max(2px, calc((100% - min(calc(100vw - 128px), var(--content-reading))) / 2)); scroll-padding-inline: max(2px, calc((100% - min(calc(100vw - 128px), var(--content-reading))) / 2)); }
+  .home-banners__rail { padding: 2px; scroll-padding-inline: 2px; }
   .home-banner { aspect-ratio: 16 / 6.8; border-radius: 22px; }
   .home-categories, .home-gachas, .home-notices { padding-block: 88px; }
   .category-links { grid-auto-columns: minmax(180px, 1fr); margin-inline: 0; padding-inline: 0; }

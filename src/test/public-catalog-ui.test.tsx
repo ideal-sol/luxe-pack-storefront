@@ -5,6 +5,7 @@ import {
   PUBLIC_CATALOG_FIXTURE,
   PUBLIC_CONTENT_FIXTURE,
   PUBLIC_GACHA_CATALOG_DISPLAY_FIXTURES,
+  PUBLIC_TOP_BANNERS_FIXTURE,
 } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { SessionProvider } from "@/components/auth/session-provider";
@@ -36,7 +37,7 @@ function publicClient(overrides: Partial<PublicCatalogAdapter> = {}): PublicCata
   return {
     getNotice: vi.fn().mockResolvedValue(response(PUBLIC_CONTENT_FIXTURE.notice)),
     getStaticPage: vi.fn(),
-    listBanners: vi.fn().mockResolvedValue(response({ items: [PUBLIC_CONTENT_FIXTURE.banner] })),
+    listBanners: vi.fn().mockResolvedValue(response(PUBLIC_TOP_BANNERS_FIXTURE.response)),
     listGachaCategories: vi.fn().mockResolvedValue(response(categoryCollection)),
     listGachaTags: vi.fn().mockResolvedValue(response({ data: summary.tags })),
     listGachas: vi.fn().mockResolvedValue(response(gachaCollection)),
@@ -157,7 +158,8 @@ describe("public catalog UI", () => {
 
   it("renders home sections and links to the full catalog", async () => {
     renderPublic(<PublicHome />, publicClient());
-    await screen.findByText(PUBLIC_CONTENT_FIXTURE.banner.title);
+    await screen.findByText(PUBLIC_TOP_BANNERS_FIXTURE.response.items[0].title);
+    expect(screen.getByRole("link", { name: "トップ表示バナーを見る" })).toHaveAttribute("href", "/gachas");
     expect(screen.getByRole("heading", { name: "ガチャラインナップ" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /もっと見る/ })).toHaveAttribute("href", "/gachas");
     expect(screen.getByText(PUBLIC_CONTENT_FIXTURE.notice.title)).toBeInTheDocument();
@@ -168,7 +170,7 @@ describe("public catalog UI", () => {
 
   it("distinguishes home loading, empty, typed error, and configuration unavailable", async () => {
     const pending = new Promise<never>(() => undefined);
-    const loading = renderPublic(<PublicHome />, publicClient({ listBanners: vi.fn(() => pending) }));
+    const loading = renderPublic(<PublicHome />, publicClient({ listGachas: vi.fn(() => pending) }));
     expect(screen.getByRole("status")).toHaveTextContent("トップページを読み込み中");
     loading.unmount();
 
@@ -179,7 +181,7 @@ describe("public catalog UI", () => {
       listNotices: vi.fn().mockResolvedValue(response({ items: [], next_cursor: null })),
     });
     const empty = renderPublic(<PublicHome />, emptyClient);
-    await screen.findByText("新しいご案内を準備中です");
+    await screen.findByText("新しいご案内を準備中です。");
     expect(screen.getByText("ラインナップを準備中です")).toBeInTheDocument();
     expect(screen.getByText("お知らせはありません")).toBeInTheDocument();
     empty.unmount();
@@ -192,12 +194,71 @@ describe("public catalog UI", () => {
       title: "Catalog unavailable",
       type: "https://storefront.test/problems/catalog-unavailable",
     });
-    const error = renderPublic(<PublicHome />, publicClient({ listBanners: vi.fn().mockRejectedValue(problem) }));
+    const error = renderPublic(<PublicHome />, publicClient({ listGachas: vi.fn().mockRejectedValue(problem) }));
     await screen.findByText("公開情報を取得できませんでした");
     error.unmount();
 
     renderPublic(<PublicHome />, null);
     expect(screen.getByText("公開情報を表示できません")).toBeInTheDocument();
+  });
+
+  it("keeps home content available while the Banner request is loading or fails", async () => {
+    const pending = new Promise<never>(() => undefined);
+    const loading = renderPublic(<PublicHome />, publicClient({ listBanners: vi.fn(() => pending) }));
+    expect(await screen.findByRole("heading", { name: "ガチャラインナップ" })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("バナーを読み込み中");
+    loading.unmount();
+
+    const problem = new ApiProblemError({
+      code: "CONTENT_UNAVAILABLE",
+      request_id: "request-banner-error",
+      retryable: true,
+      status: 503,
+      title: "Content unavailable",
+      type: "https://storefront.test/problems/content-unavailable",
+    });
+    renderPublic(<PublicHome />, publicClient({ listBanners: vi.fn().mockRejectedValue(problem) }));
+    expect(await screen.findByText("バナーを取得できませんでした")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "ガチャラインナップ" })).toBeInTheDocument();
+  });
+
+  it("renders one canonical Banner without unnecessary Carousel controls", async () => {
+    const banner = PUBLIC_TOP_BANNERS_FIXTURE.response.items[0];
+    renderPublic(<PublicHome />, publicClient());
+    expect(await screen.findByRole("img", { name: banner.title })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: `${banner.title}を見る` })).toHaveAttribute("href", banner.link_url);
+    expect(screen.queryByRole("button", { name: "次のバナー" })).not.toBeInTheDocument();
+  });
+
+  it("renders every Backend-returned Banner and changes the active Carousel item", async () => {
+    const first = PUBLIC_TOP_BANNERS_FIXTURE.response.items[0];
+    const second = { ...first, id: "0198a001-0000-7000-8000-000000000315", link_url: "/notices", title: "お知らせバナー" };
+    const returnedDespiteFixtureExclusion = {
+      ...first,
+      id: PUBLIC_TOP_BANNERS_FIXTURE.excluded.top_off.id,
+      link_url: "https://example.com/banner",
+      title: PUBLIC_TOP_BANNERS_FIXTURE.excluded.top_off.title,
+    };
+    renderPublic(
+      <PublicHome />,
+      publicClient({ listBanners: vi.fn().mockResolvedValue(response({ items: [first, second, returnedDespiteFixtureExclusion] })) }),
+    );
+
+    expect(await screen.findByRole("link", { name: `${first.title}を見る` })).toHaveAttribute("href", first.link_url);
+    expect(screen.getByRole("link", { name: `${second.title}を見る` })).toHaveAttribute("href", second.link_url);
+    expect(screen.getByRole("link", { name: `${returnedDespiteFixtureExclusion.title}を見る` }))
+      .toHaveAttribute("href", returnedDespiteFixtureExclusion.link_url);
+    expect(screen.getByRole("button", { name: "1件目のバナーを表示" })).toHaveAttribute("aria-current", "true");
+    fireEvent.click(screen.getByRole("button", { name: "次のバナー" }));
+    expect(screen.getByRole("button", { name: "2件目のバナーを表示" })).toHaveAttribute("aria-current", "true");
+    fireEvent.keyDown(screen.getByRole("region", { name: "トップバナー" }), { key: "ArrowRight" });
+    expect(screen.getByRole("button", { name: "3件目のバナーを表示" })).toHaveAttribute("aria-current", "true");
+  });
+
+  it("uses the existing Banner image fallback without inventing an asset", async () => {
+    const banner = { ...PUBLIC_TOP_BANNERS_FIXTURE.response.items[0], image_url: undefined };
+    renderPublic(<PublicHome />, publicClient({ listBanners: vi.fn().mockResolvedValue(response({ items: [banner] })) }));
+    expect(await screen.findByText("BANNER PREPARING")).toBeInTheDocument();
   });
 
   it("renders the public catalog while Session is still loading", async () => {

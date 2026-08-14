@@ -153,7 +153,7 @@ SITE-007 adds MIG-062A contract coverage for typed presentation, nullable assets
 cursor reads, and action states. Component tests cover login/configuration/read
 states, individual/select-all/reset behavior, Backend-only bulk actions, and the
 no-mutation boundary. Earlier Auth, Catalog, Content, Gacha Presentation, and Draw
-operations are checked for alpha.11 compatibility. SITE-005 additionally covers
+operations are checked for alpha.14 compatibility. SITE-005 additionally covers
 Browser-owned CSRF, same-key retry, new-operation keys, double-click suppression,
 generated Draw problems, public-ID result GET, reload recovery, and the absence
 of optimistic Point/Prize mutation. SITE-012 adds Browser fulfillment Contract
@@ -179,3 +179,10 @@ generated collection in returned order through the centralized Static Page
 route builder. It performs no Page membership, publication, label, slug, or
 ordering decision. Empty and failed reads affect only the Information links;
 Brand, Explore, Account, and the Footer shell remain available.
+
+SITE-025 moves Home top-Banner presentation to MIG-062P alpha.14's canonical
+`listBanners` collection. The Home does not apply publication, placement, asset,
+or link filtering. A client-only native scroll-snap component supplies explicit
+pointer, touch, and keyboard controls for multiple returned items without an
+automatic interval or additional carousel dependency. Banner loading and errors
+are isolated from Category, Gacha, and Notice reads.

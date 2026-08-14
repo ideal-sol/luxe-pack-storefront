@@ -1,5 +1,31 @@
 # Storefront worklog
 
+## SITE-025 — Home top banner carousel
+
+- Issue: `#49`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `af7d49ed41e5c9512fe4233ef2eea28435420db7`
+- Branch: `site/SITE-025-home-banner-carousel`
+
+### Changes
+
+- Validate and vendor immutable MIG-062P Production Artifact `2.0.0-alpha.14`
+  while retaining every historical Artifact directory.
+- Replace the Home Banner placeholder with the Backend-authoritative
+  `listBanners` collection and preserve its returned membership and order.
+- Render one Banner without redundant navigation and multiple Banners with a
+  dependency-free scroll-snap carousel, explicit controls, indicators, and
+  keyboard navigation.
+- Keep the established empty state and isolate Banner read failures from other
+  Home public data.
+- Use canonical `image_url` and `link_url` values without inventing asset paths,
+  destination routes, or publication decisions.
+
+### Not changed
+
+Platform data and publication rules, Catalog/Notice/Footer contracts, routes,
+business decisions, infrastructure, and historical Artifacts are unchanged.
+
 ## SITE-022 — Footer page navigation
 
 - Issue: `#42`

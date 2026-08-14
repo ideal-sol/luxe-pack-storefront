@@ -5,6 +5,7 @@ import {
   PUBLIC_FOOTER_PAGES_FIXTURE,
   PUBLIC_GACHA_CATALOG_DISPLAY_FIXTURES,
   PUBLIC_GACHA_PRESENTATION_FIXTURE,
+  PUBLIC_TOP_BANNERS_FIXTURE,
 } from "@oripa/storefront-testkit";
 import { createPublicClientTestHarness } from "@/lib/platform/testing";
 
@@ -14,7 +15,7 @@ const gachaCollection = {
   meta: { has_more: false, next_cursor: null, page_size: 1 },
 };
 
-describe("MIG-062O public catalog contract regression", () => {
+describe("MIG-062P public catalog contract regression", () => {
   it("uses the canonical gacha list with category and cursor queries", async () => {
     const category = createPublicClientTestHarness();
     category.mock.enqueueJson(
@@ -23,7 +24,7 @@ describe("MIG-062O public catalog contract regression", () => {
     );
     await expect(category.client.listGachas({ limit: 20, category: PUBLIC_CATALOG_FIXTURE.data.category.slug }))
       .resolves.toMatchObject({ data: gachaCollection });
-    assertBrowserRequestBoundary(category.mock.requests[0]!, { client_version: "2.0.0-alpha.11", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(category.mock.requests[0]!, { client_version: "2.0.0-alpha.14", site_version: "0.1.0" });
     category.mock.assertExhausted();
 
     const cursor = createPublicClientTestHarness();
@@ -50,7 +51,7 @@ describe("MIG-062O public catalog contract regression", () => {
       .resolves.toMatchObject({ data: PUBLIC_CATALOG_FIXTURE });
     await expect(harness.client.getGachaPresentation(PUBLIC_CATALOG_FIXTURE.data.id))
       .resolves.toMatchObject({ data: PUBLIC_GACHA_PRESENTATION_FIXTURE });
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.11", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.14", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -99,13 +100,18 @@ describe("MIG-062O public catalog contract regression", () => {
     const harness = createPublicClientTestHarness();
     harness.mock.enqueueJson(
       { method: "GET", url: `${origin}/content/banners` },
-      { body: { items: [PUBLIC_CONTENT_FIXTURE.banner] }, status: 200 },
+      { body: PUBLIC_TOP_BANNERS_FIXTURE.response, status: 200 },
     );
     harness.mock.enqueueJson(
       { method: "GET", url: `${origin}/content/notices?limit=3` },
       { body: { items: [PUBLIC_CONTENT_FIXTURE.notice], next_cursor: null }, status: 200 },
     );
-    await expect(harness.client.listBanners()).resolves.toMatchObject({ data: { items: [PUBLIC_CONTENT_FIXTURE.banner] } });
+    await expect(harness.client.listBanners()).resolves.toMatchObject({ data: PUBLIC_TOP_BANNERS_FIXTURE.response });
+    expect(PUBLIC_TOP_BANNERS_FIXTURE.response.items[0]).toMatchObject({
+      image_url: expect.stringMatching(/^\//),
+      link_url: "/gachas",
+      title: "トップ表示バナー",
+    });
     await expect(harness.client.listNotices({ limit: 3 })).resolves.toMatchObject({ data: { items: [PUBLIC_CONTENT_FIXTURE.notice] } });
     harness.mock.assertExhausted();
   });
@@ -121,7 +127,7 @@ describe("MIG-062O public catalog contract regression", () => {
       data: PUBLIC_FOOTER_PAGES_FIXTURE.response,
     });
     assertBrowserRequestBoundary(harness.mock.requests[0]!, {
-      client_version: "2.0.0-alpha.11",
+      client_version: "2.0.0-alpha.14",
       site_version: "0.1.0",
     });
     harness.mock.assertExhausted();

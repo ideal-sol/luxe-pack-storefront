@@ -4,7 +4,7 @@
 
 | Route | Purpose | SITE-003 state |
 | --- | --- | --- |
-| `/` | Banners, categories, Backend-visible gacha summaries, and notice summaries | alpha.9 Catalog presentation-connected; mixed sale states retained |
+| `/` | Canonical top Banner carousel, categories, Backend-visible gacha summaries, and notice summaries | MIG-062P alpha.14 Banner collection; mixed Catalog sale states retained |
 | `/gachas` | Backend-ordered gacha cards, category filter, and cursor continuation | alpha.9 sale/eligibility/display flags; Testkit verified |
 | `/gachas/[slug]` | Public pack detail and Draw entry | Backend-configured alpha.10 requested counts, including optional 100／1000; no remaining-count inference |
 | `/draws/[drawRequestId]/result` | Completed Draw result | Authenticated `getDrawRequest` recovery; canonical executed count; reload performs GET only |
