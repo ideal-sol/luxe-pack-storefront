@@ -4,6 +4,7 @@ import { createBrowserExternalIdentityClient } from "./external-identity-client"
 import { createBrowserPublicClient } from "./public-client";
 import { createBrowserPrizeInventoryClient } from "./prize-client";
 import { createBrowserDrawClient } from "./draw-client";
+import { createBrowserPointClient } from "./point-client";
 import { STOREFRONT_SITE_VERSION } from "./runtime-configuration";
 
 export interface AuthClientTestHarness {
@@ -28,6 +29,11 @@ export interface PrizeClientTestHarness {
 
 export interface DrawClientTestHarness {
   readonly client: ReturnType<typeof createBrowserDrawClient>;
+  readonly mock: MockFetchController;
+}
+
+export interface PointClientTestHarness {
+  readonly client: ReturnType<typeof createBrowserPointClient>;
   readonly mock: MockFetchController;
 }
 
@@ -95,6 +101,22 @@ export function createPrizeClientTestHarness(cookieValue?: string): PrizeClientT
 export function createDrawClientTestHarness(cookieValue?: string): DrawClientTestHarness {
   const mock = createMockFetch();
   const client = createBrowserDrawClient(
+    {
+      baseUrl: "https://storefront.test/platform",
+      defaultTimeoutMs: 1_000,
+      siteVersion: STOREFRONT_SITE_VERSION,
+    },
+    {
+      cookie_reader: () => cookieValue,
+      fetch: mock.fetch,
+    },
+  );
+  return { client, mock };
+}
+
+export function createPointClientTestHarness(cookieValue?: string): PointClientTestHarness {
+  const mock = createMockFetch();
+  const client = createBrowserPointClient(
     {
       baseUrl: "https://storefront.test/platform",
       defaultTimeoutMs: 1_000,

@@ -7,6 +7,7 @@ import { SessionProvider, useSession } from "@/components/auth/session-provider"
 import { EmailVerificationCompletion, EmailVerificationNotice } from "@/components/auth/verification";
 import { ToastProvider } from "@/components/common/toast-provider";
 import { SiteHeader } from "@/components/layout/site-header";
+import { PointClientProvider } from "@/components/points/point-client-provider";
 import type { AuthClientAdapter, AuthSession } from "@/lib/platform";
 
 const replace = vi.fn();
@@ -55,7 +56,9 @@ function Probe() {
 function renderSession(ui: React.ReactNode, authClient: AuthClientAdapter | null) {
   return render(
     <ToastProvider>
-      <SessionProvider client={authClient}>{ui}</SessionProvider>
+      <SessionProvider client={authClient}>
+        <PointClientProvider client={null}>{ui}</PointClientProvider>
+      </SessionProvider>
     </ToastProvider>,
   );
 }
@@ -120,7 +123,8 @@ describe("authentication UI", () => {
     const authClient = client({ getCurrentSession: vi.fn().mockResolvedValue(response(authenticated)), logout });
     renderSession(<SiteHeader />, authClient);
     await screen.findAllByText("マイページ");
-    expect(screen.getByLabelText("ポイント残高")).toHaveTextContent("--");
+    expect(screen.getAllByLabelText("ポイント残高")).toHaveLength(2);
+    expect(screen.getAllByLabelText("ポイント残高")[0]).toHaveTextContent("--");
     const logoutButtons = screen.getAllByRole("button", { name: "ログアウト" });
     fireEvent.click(logoutButtons[0]!);
     fireEvent.click(logoutButtons[0]!);

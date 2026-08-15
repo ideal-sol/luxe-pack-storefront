@@ -6,10 +6,14 @@ import { useSession } from "@/components/auth/session-provider";
 import { useToast } from "@/components/common/toast-provider";
 import { presentAuthProblem } from "@/lib/platform";
 import { primaryNavigation } from "@/lib/routes/navigation";
+import { usePointClient } from "@/components/points/point-client-provider";
+
+const pointNumber = new Intl.NumberFormat("ja-JP");
 
 export function SiteHeader() {
   const { logout, state } = useSession();
   const { showToast } = useToast();
+  const { wallet } = usePointClient();
   const [loggingOut, setLoggingOut] = useState(false);
 
   async function handleLogout() {
@@ -46,7 +50,7 @@ export function SiteHeader() {
           {authenticated ? (
             <>
               <Link href="/mypage">マイページ</Link>
-              <span aria-label="ポイント残高" className="site-header__point">ポイント --</span>
+              <span aria-label="ポイント残高" className="site-header__point">ポイント {wallet.status === "ready" ? pointNumber.format(wallet.balance.total_points) : "--"}</span>
               <button className="button button--dark button--compact" disabled={loggingOut} onClick={handleLogout} type="button">
                 {loggingOut ? "処理中…" : "ログアウト"}
               </button>
@@ -64,6 +68,7 @@ export function SiteHeader() {
           {unauthenticated && <Link href="/register">新規登録</Link>}
           {unauthenticated && <Link className="site-header__login" href="/login">ログイン</Link>}
           {authenticated && <Link href="/mypage">マイページ</Link>}
+          {authenticated && <Link aria-label="ポイント残高" className="site-header__point site-header__point--mobile" href="/points">ポイント {wallet.status === "ready" ? pointNumber.format(wallet.balance.total_points) : "--"}</Link>}
           {authenticated && (
             <button disabled={loggingOut} onClick={handleLogout} type="button">
               {loggingOut ? "処理中…" : "ログアウト"}

@@ -36,11 +36,17 @@ unavailable/session expired/error states, and refreshes after successful identit
 mutations. It stores the typed session response only in memory and does not cache
 credentials or authentication material.
 
-Authenticated placeholder routes consume that same root Session state. They
+Authenticated routes consume that same root Session state. They
 render Loading while the initial read is pending, Login Required only for an
 explicit unauthenticated／expired state, a neutral pending-content state for an
 authenticated member, and a separate Error state for configuration／transport
-failure. They do not infer missing Point or Draw-history data contracts.
+failure. Draw history remains a pending-contract neutral state.
+
+The root Point Client Provider is nested under Session Provider and owns one
+canonical current-user Wallet read per authenticated Session. Header, `/points`,
+and `/mypage/points` consume the same in-memory Wallet state, so the Frontend
+never totals Ledger entries. Its adapter exposes only generated `getWallet`,
+`listPointLedgerEntries`, and `listPointProducts` reads.
 
 The root Public Client Provider constructs a separate read adapter from the same
 browser transport configuration. It does not depend on Session state. Home and
@@ -135,8 +141,9 @@ Component tests cover the shared shell, session state transitions, forms, duplic
 submission protection, header state, and email verification. Contract tests inject
 the deterministic Storefront Testkit into the real browser client. Policy tests
 reject direct Platform paths, browser protocol details outside the boundary, and
-authentication persistence. SITE-026 covers only the Point purchase presentation;
-Platform-backed balance, products, eligibility, purchase, and Payment remain later tasks.
+authentication persistence. SITE-027 adds Point wallet, product, eligibility,
+history, cursor, shared-balance, and zero-Payment-mutation coverage with the
+alpha.18 Testkit.
 
 SITE-003 adds deterministic Client/Testkit contract tests for banners, notices,
 categories, tags, gacha summaries, category queries, and cursor queries. Component
@@ -154,7 +161,7 @@ SITE-007 adds MIG-062A contract coverage for typed presentation, nullable assets
 cursor reads, and action states. Component tests cover login/configuration/read
 states, individual/select-all/reset behavior, Backend-only bulk actions, and the
 no-mutation boundary. Earlier Auth, Catalog, Content, Gacha Presentation, and Draw
-operations are checked for alpha.14 compatibility. SITE-005 additionally covers
+operations are checked for alpha.18 compatibility. SITE-005 additionally covers
 Browser-owned CSRF, same-key retry, new-operation keys, double-click suppression,
 generated Draw problems, public-ID result GET, reload recovery, and the absence
 of optimistic Point/Prize mutation. SITE-012 adds Browser fulfillment Contract
@@ -195,3 +202,12 @@ provide layout slots without defining a Platform product response. Runtime passe
 no product content, so the page renders the canonical pending `--` balance and a
 neutral preparing state. No Adapter, endpoint, purchase action, Payment URL, or
 eligibility rule is introduced.
+
+SITE-027 adopts MIG-062U alpha.18 and replaces SITE-026's pending Point content
+with generated reads. Product membership and relative ordering remain exactly as
+returned; the human-approved category tabs select returned audience codes but do
+not decide first-purchase status. Eligibility, reason, sale state, and CTA come
+from each product presentation. An enabled purchase CTA is displayed as
+available but cannot start a purchase. Point history appends canonical pages in
+returned order, passes the opaque cursor back unchanged, and displays signed
+deltas, occurred time, and `reason.label` without Ledger-code interpretation.

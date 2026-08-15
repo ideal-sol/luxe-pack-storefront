@@ -1,5 +1,12 @@
-import { PlaceholderPage } from "@/components/common/placeholder-page";
+import { PageTitle } from "@/components/common/page-title";
+import { PageContainer } from "@/components/layout/page-container";
+import { PointHistoryPage } from "@/components/points/point-history-page";
 
 export default function MyPointsPage() {
-  return <PlaceholderPage description="残高と履歴は確定Contractの接続後に表示します。" eyebrow="MY PAGE / POINTS" loginRequired title="ポイント履歴" />;
+  return (
+    <PageContainer className="route-page points-page" size="narrow">
+      <PageTitle eyebrow="MY PAGE / POINTS" title="ポイント履歴" />
+      <PointHistoryPage />
+    </PageContainer>
+  );
 }

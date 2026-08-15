@@ -63,6 +63,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .site-header__nav { align-items: center; display: none; gap: 20px; }
 .site-header__nav > a:not(.button) { font-size: .78rem; font-weight: 700; }
 .site-header__point { color: var(--muted); font-size: .7rem; white-space: nowrap; }
+.site-header__point--mobile { color: var(--bronze); }
 .site-header__auth-neutral { align-items: center; display: inline-flex; justify-content: center; min-width: 92px; }
 .site-header__mobile-account { align-items: center; display: flex; font-size: .66rem; font-weight: 750; gap: 8px; }
 .site-header__mobile-account a, .site-header__mobile-account button { align-items: center; display: inline-flex; min-height: 44px; }
@@ -501,11 +502,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .mypage-logout:disabled { cursor: wait; opacity: .55; }
 
 .points-page { max-width: calc(var(--content-reading) + 40px); }
-.point-purchase { display: grid; gap: 34px; }
+.point-purchase, .point-history-page { display: grid; gap: 34px; }
 .point-balance-summary { align-items: end; background: var(--ink); border: 1px solid rgba(255,255,255,.08); border-radius: var(--radius-card); box-shadow: var(--shadow); color: var(--white); display: flex; gap: 24px; justify-content: space-between; min-height: 138px; padding: 24px 20px; }
 .point-balance-summary p, .point-category-section > header p, .point-product-section > header p { color: var(--bronze-light); font-size: .55rem; font-weight: 800; letter-spacing: .18em; margin: 0 0 8px; }
 .point-balance-summary h2, .point-category-section h2, .point-product-section h2 { font-family: Georgia, "Yu Mincho", serif; font-size: 1.35rem; font-weight: 400; margin: 0; }
 .point-balance-summary output { color: var(--bronze-light); font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.4rem, 12vw, 4.4rem); line-height: .8; }
+.point-balance-summary small { color: #bdb4a7; display: block; font-size: .62rem; line-height: 1.55; margin-top: 10px; max-width: 280px; }
+.point-balance-summary__loading { color: #bdb4a7; font-family: var(--font-sans); font-size: .68rem; letter-spacing: .06em; }
 .point-category-section, .point-product-section { display: grid; gap: 18px; min-width: 0; }
 .point-category-section > header p, .point-product-section > header p { color: var(--bronze); }
 .point-category-tabs { background: var(--paper-deep); border: 1px solid var(--line); border-radius: var(--radius-control); display: grid; gap: 4px; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 4px; }
@@ -516,7 +519,36 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .point-product-card { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: 0 8px 24px rgba(35,28,18,.07); display: grid; gap: 16px; min-width: 0; padding: 20px; }
 .point-product-card__badge { color: var(--bronze); font-size: .58rem; font-weight: 800; letter-spacing: .1em; overflow-wrap: anywhere; }
 .point-product-card__body { min-width: 0; overflow-wrap: anywhere; }
+.point-product-card__heading { align-items: start; display: flex; gap: 12px; justify-content: space-between; }
+.point-product-card__heading h3 { font-family: Georgia, "Yu Mincho", serif; font-size: 1.15rem; font-weight: 500; line-height: 1.45; margin: 0; }
+.point-product-card__heading span { background: var(--paper-deep); border-radius: 999px; color: var(--muted); flex: 0 0 auto; font-size: .52rem; font-weight: 800; padding: 5px 8px; }
+.point-product-card__grant { align-items: baseline; color: var(--bronze); display: flex; gap: 6px; margin: 22px 0 18px; }
+.point-product-card__grant strong { font-family: Georgia, "Times New Roman", serif; font-size: 2.2rem; font-weight: 500; line-height: 1; }
+.point-product-card__grant span { font-size: .66rem; font-weight: 800; }
+.point-product-card__facts { border-block: 1px solid var(--line); margin: 0; padding-block: 10px; }
+.point-product-card__facts div { align-items: baseline; display: flex; gap: 16px; justify-content: space-between; padding: 5px 0; }
+.point-product-card__facts dt { color: var(--muted); font-size: .62rem; }
+.point-product-card__facts dd { font-size: .7rem; font-weight: 800; margin: 0; text-align: right; }
+.point-product-card__eligibility { color: var(--muted); font-size: .66rem; line-height: 1.6; margin: 14px 0 0; }
+.point-product-card__eligibility--eligible { color: #267249; font-weight: 800; }
 .point-product-card__action { align-items: end; display: flex; min-height: 48px; }
+.point-product-card__action > *, .point-product-card__purchase-pending, .point-product-card__purchase-pending .button { width: 100%; }
+.point-product-card__action .button:disabled { cursor: not-allowed; opacity: .58; }
+.point-product-card__purchase-pending { display: grid; gap: 8px; }
+.point-product-card__purchase-pending strong { color: #267249; font-size: .62rem; text-align: center; }
+.point-history { display: grid; gap: 18px; min-width: 0; }
+.point-history > header p { color: var(--bronze); font-size: .55rem; font-weight: 800; letter-spacing: .18em; margin: 0 0 8px; }
+.point-history > header h2 { font-family: Georgia, "Yu Mincho", serif; font-size: 1.35rem; font-weight: 400; margin: 0; }
+.point-history__list { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-card); list-style: none; margin: 0; overflow: hidden; padding: 0; }
+.point-history__list li { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) auto; min-height: 82px; padding: 16px; }
+.point-history__list li:last-child { border-bottom: 0; }
+.point-history__list li > div { display: grid; gap: 6px; min-width: 0; }
+.point-history__list strong { font-size: .76rem; line-height: 1.5; overflow-wrap: anywhere; }
+.point-history__list time { color: var(--muted); font-family: monospace; font-size: .6rem; }
+.point-history__delta { color: #267249; font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
+.point-history__delta--negative { color: var(--danger); }
+.point-history__continuation-error { background: #fff6f4; border: 1px solid rgba(145,65,54,.3); color: var(--danger); font-size: .68rem; line-height: 1.6; margin: 0; padding: 12px 14px; }
+.point-history__more { justify-self: center; min-width: 180px; }
 
 .line-account { display: grid; gap: 18px; }
 .line-account__back { align-items: center; color: var(--muted); display: inline-flex; font-size: .72rem; font-weight: 750; min-height: 44px; width: fit-content; }
@@ -640,7 +672,7 @@ body:has(.gacha-draw-tray) .site-footer { padding-bottom: calc(370px + env(safe-
   .mypage-summary { align-items: center; gap: 38px; grid-template-columns: minmax(0, 1fr) minmax(260px, .72fr); padding: 32px; }
   .mypage-summary dl { border-left: 1px solid rgba(255,255,255,.16); border-top: 0; padding: 8px 0 8px 32px; }
   .mypage-shortcuts a { min-height: 124px; padding: 24px 28px; }
-  .point-purchase { gap: 42px; }
+  .point-purchase, .point-history-page { gap: 42px; }
   .point-balance-summary { min-height: 164px; padding: 30px 32px; }
   .point-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .line-account__card { align-items: center; gap: 26px; grid-template-columns: auto minmax(0, 1fr) auto; padding: 32px; }

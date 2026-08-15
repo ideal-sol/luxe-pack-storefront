@@ -23,7 +23,8 @@
 - SITE-021 100／1000 Draw availability: implemented by this change
 - SITE-022 Footer page navigation: implemented by this change
 - SITE-025 Home top banner carousel: implemented by this change
-- SITE-026 Point purchase page layout: implemented by this change; Platform Point contracts remain pending
+- SITE-026 Point purchase page layout: completed
+- SITE-027 Point Read Integration: implemented by this change; purchase and Payment remain pending
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -47,12 +48,12 @@ Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.14`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.14`
-- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.14`
-- Source Commit: `4c4fe03ead4b4b1d2f7d82df430db0bb4b9cfb21`
-- Artifact authority: `vendor/oripa/MIG-062P/artifact-manifest.json`
-- Public OpenAPI SHA-256: `cc50dbae2f0d55deca43afca7dd3457074a1edf9ae275c46f58f782b1790b393`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.18`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.18`
+- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.18`
+- Source Commit: `83f2732ce9a7adac3573e6f3975e43a53467de07`
+- Artifact authority: `vendor/oripa/MIG-062U/artifact-manifest.json`
+- Public OpenAPI SHA-256: `391a8962710612478688a7479daa73f170b8e9093e0cfef380702a4f2d236860`
 
 ## Available contracts
 
@@ -88,6 +89,13 @@ Platform response or Frontend business decision changed.
   point exchange, and shipping request creation/read. Generated fulfillment
   problems and mutation retry semantics remain the authority; successful
   mutations reconcile Prize, Shipping, and Address reads.
+- Current-user Point wallet balance through generated `getWallet`; all balance
+  surfaces share this canonical read and never total Ledger entries
+- Point products through generated `listPointProducts`, preserving Backend
+  ordering, audience, sale, eligibility, reason, and CTA presentation
+- Current-user Point history through generated `listPointLedgerEntries`,
+  preserving signed deltas, occurred times, Backend reason labels, and opaque
+  cursor continuation
 
 ## Preview deployment
 
@@ -176,11 +184,17 @@ product fixture, eligibility decision, purchase CTA, Platform request, Payment
 connection, or optimistic Point behavior. Balance, product, eligibility, and
 purchase contracts remain pending for a later integration task.
 
+SITE-027 adopts the verified immutable MIG-062U alpha.18 Artifact and retains
+MIG-062R's Point Product Read／Eligibility contract. Header, `/points`, and
+`/mypage/points` share the generated current-user Wallet read. `/points` renders
+the canonical product collection and Backend presentation without deriving
+first-purchase or eligibility state. `/mypage/points` appends canonical history
+pages in returned order with the opaque cursor unchanged. Purchase-capable CTA
+presentation is visible but disabled; no Point purchase or Payment mutation is
+connected.
+
 ## Pending contracts
 
-- Point balance
-- Point history
-- Point products and purchase eligibility
 - Point purchase
 - Current user's gacha history list
 - Optional featured placement beyond the Backend-stable Catalog order
