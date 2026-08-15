@@ -1,23 +1,67 @@
 "use client";
 
-import { Children, useRef, useState } from "react";
-import { CatalogMessage } from "@/components/catalog/catalog-message";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSession } from "@/components/auth/session-provider";
+import { CatalogLoading, CatalogMessage } from "@/components/catalog/catalog-message";
+import {
+  presentPlatformProblem,
+  type PlatformProblemPresentation,
+  type PointProduct,
+  type PointProductAudienceCode,
+  type PointProductCollection,
+  type PointProductIneligibleReason,
+  type PointProductSaleState,
+} from "@/lib/platform";
+import { usePointClient, type PointWalletState } from "./point-client-provider";
 
-const pointProductCategories = [
-  { id: "all", label: "すべてのユーザー" },
-  { id: "first-time", label: "初回ユーザー" },
-] as const;
+const pointProductCategories: ReadonlyArray<{
+  readonly id: PointProductAudienceCode;
+  readonly label: string;
+}> = [
+  { id: "all_users", label: "すべてのユーザー" },
+  { id: "first_purchase_users", label: "初回ユーザー" },
+];
 
-type PointProductCategory = (typeof pointProductCategories)[number]["id"];
+const saleStateLabels: Readonly<Record<PointProductSaleState, string>> = {
+  available: "販売中",
+  coming_soon: "販売開始前",
+  ended: "販売終了",
+};
 
-export function PointBalanceSummary({ value }: { readonly value: React.ReactNode }) {
+const ineligibleReasonLabels: Readonly<Record<Exclude<PointProductIneligibleReason, null>, string>> = {
+  authentication_required: "購入するにはログインが必要です。",
+  audience_not_eligible: "この商品の対象条件を満たしていません。",
+  first_purchase_required: "過去にPoint購入があるため、初回ユーザー対象外です。",
+  sale_ended: "この商品の販売は終了しました。",
+  sale_not_started: "この商品の販売はまだ開始されていません。",
+};
+
+const number = new Intl.NumberFormat("ja-JP");
+const yen = new Intl.NumberFormat("ja-JP", { currency: "JPY", style: "currency" });
+
+type ProductState =
+  | { readonly status: "loading" }
+  | { readonly status: "configuration-unavailable" }
+  | { readonly status: "session-error" }
+  | { readonly status: "error"; readonly problem: PlatformProblemPresentation; readonly sessionKey: string }
+  | { readonly status: "ready"; readonly collection: PointProductCollection; readonly sessionKey: string };
+
+export function PointBalanceSummary({ wallet }: { readonly wallet: PointWalletState }) {
+  const value = wallet.status === "ready" ? number.format(wallet.balance.total_points) : "--";
   return (
     <section aria-labelledby="point-balance-title" className="point-balance-summary">
       <div>
         <p>POINT BALANCE</p>
         <h2 id="point-balance-title">現在のポイント</h2>
+        {wallet.status === "unauthenticated" && <small>ログイン後に残高を表示します。</small>}
+        {wallet.status === "error" && <small>{wallet.problem.message}</small>}
+        {wallet.status === "session-error" && <small>Sessionを確認できませんでした。</small>}
+        {wallet.status === "configuration-unavailable" && <small>Point接続が設定されていません。</small>}
       </div>
-      <output aria-label="現在のポイント残高">{value}</output>
+      <output aria-label="現在のポイント残高" aria-live="polite">
+        {wallet.status === "loading" ? <span className="point-balance-summary__loading">読み込み中</span> : value}
+      </output>
     </section>
   );
 }
@@ -40,30 +84,91 @@ export function PointProductCardShell({
   );
 }
 
-export function PointProductRegion({ children }: { readonly children?: React.ReactNode }) {
-  const hasProducts = Children.count(children) > 0;
+function ProductCta({ product }: { readonly product: PointProduct }) {
+  if (product.cta.state === "enabled" && product.cta.action === "login") {
+    return <Link className="button button--dark" href="/login">ログインして確認</Link>;
+  }
+  if (product.cta.state === "enabled" && product.cta.action === "purchase") {
+    return (
+      <div className="point-product-card__purchase-pending" data-platform-cta-state="enabled">
+        <strong>購入可能</strong>
+        <button className="button button--dark" disabled type="button">購入手続きは準備中</button>
+      </div>
+    );
+  }
+  return <button className="button button--ghost" data-platform-cta-state={product.cta.state} disabled type="button">現在購入できません</button>;
+}
+
+function PointProductCard({ product }: { readonly product: PointProduct }) {
+  const reason = product.ineligible_reason ? ineligibleReasonLabels[product.ineligible_reason] : null;
+  return (
+    <PointProductCardShell action={<ProductCta product={product} />} badge={product.audience.label}>
+      <div className="point-product-card__heading">
+        <h3>{product.title}</h3>
+        <span data-sale-state={product.sale_state}>{saleStateLabels[product.sale_state]}</span>
+      </div>
+      <p className="point-product-card__grant"><strong>{number.format(product.grant.total_points)}</strong><span>ポイント</span></p>
+      <dl className="point-product-card__facts">
+        <div><dt>販売価格</dt><dd>{yen.format(product.price.amount)}</dd></div>
+        <div><dt>通常ポイント</dt><dd>{number.format(product.grant.paid_points)}</dd></div>
+        <div><dt>ボーナス</dt><dd>+{number.format(product.grant.bonus_points)}</dd></div>
+      </dl>
+      <p className={`point-product-card__eligibility point-product-card__eligibility--${product.eligible ? "eligible" : "ineligible"}`}>
+        {product.eligible ? "購入対象です。" : reason ?? "現在購入できません。"}
+      </p>
+    </PointProductCardShell>
+  );
+}
+
+export function PointProductRegion({ products }: { readonly products: readonly PointProduct[] }) {
   return (
     <section aria-labelledby="point-products-title" className="point-product-section">
       <header>
         <p>POINT PRODUCTS</p>
         <h2 id="point-products-title">ポイント商品</h2>
       </header>
-      {hasProducts ? (
-        <div className="point-product-grid">{children}</div>
+      {products.length > 0 ? (
+        <div className="point-product-grid">{products.map((product) => <PointProductCard key={product.id} product={product} />)}</div>
       ) : (
-        <CatalogMessage
-          description="現在、ポイント商品の提供準備を進めています。"
-          eyebrow="EMPTY"
-          title="ポイント商品を準備中です。"
-        />
+        <CatalogMessage description="現在、このカテゴリーで表示できるポイント商品はありません。" eyebrow="EMPTY" title="ポイント商品はありません" />
       )}
     </section>
   );
 }
 
-export function PointPurchasePage({ productContent }: { readonly productContent?: React.ReactNode }) {
-  const [category, setCategory] = useState<PointProductCategory>("all");
+export function PointPurchasePage() {
+  const { state: session } = useSession();
+  const { client, wallet } = usePointClient();
+  const [category, setCategory] = useState<PointProductAudienceCode>("all_users");
+  const [requestKey, setRequestKey] = useState(0);
+  const [state, setState] = useState<ProductState>(client ? { status: "loading" } : { status: "configuration-unavailable" });
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const sessionKey = session.status === "authenticated"
+    ? session.session.user?.id ?? null
+    : session.status === "unauthenticated" || session.status === "session-expired"
+      ? "anonymous"
+      : null;
+
+  useEffect(() => {
+    if (!client || !sessionKey) return;
+    let active = true;
+    void client.listPointProducts()
+      .then(({ data }) => { if (active) setState({ collection: data, sessionKey, status: "ready" }); })
+      .catch((error: unknown) => { if (active) setState({ problem: presentPlatformProblem(error), sessionKey, status: "error" }); });
+    return () => { active = false; };
+  }, [client, requestKey, sessionKey]);
+
+  const displayState = useMemo<ProductState>(() => !client
+    ? { status: "configuration-unavailable" }
+    : session.status === "error"
+      ? { status: "session-error" }
+      : !sessionKey || (state.status === "ready" || state.status === "error") && state.sessionKey !== sessionKey
+        ? { status: "loading" }
+        : state, [client, session.status, sessionKey, state]);
+
+  const products = useMemo(() => displayState.status === "ready"
+    ? displayState.collection.data.filter((product) => product.audience.code === category)
+    : [], [category, displayState]);
 
   function selectCategory(index: number) {
     const item = pointProductCategories[index];
@@ -85,13 +190,9 @@ export function PointPurchasePage({ productContent }: { readonly productContent?
 
   return (
     <div className="point-purchase">
-      <PointBalanceSummary value="--" />
-
+      <PointBalanceSummary wallet={wallet} />
       <section aria-labelledby="point-category-title" className="point-category-section">
-        <header>
-          <p>PRODUCT CATEGORY</p>
-          <h2 id="point-category-title">商品カテゴリー</h2>
-        </header>
+        <header><p>PRODUCT CATEGORY</p><h2 id="point-category-title">商品カテゴリー</h2></header>
         <div aria-label="ポイント商品カテゴリー" className="point-category-tabs" role="tablist">
           {pointProductCategories.map((item, index) => (
             <button
@@ -111,14 +212,12 @@ export function PointPurchasePage({ productContent }: { readonly productContent?
           ))}
         </div>
       </section>
-
-      <div
-        aria-labelledby={`point-category-${category}`}
-        data-category={category}
-        id="point-product-panel"
-        role="tabpanel"
-      >
-        <PointProductRegion>{productContent}</PointProductRegion>
+      <div aria-labelledby={`point-category-${category}`} id="point-product-panel" role="tabpanel">
+        {displayState.status === "loading" && <CatalogLoading label="ポイント商品を読み込み中" />}
+        {displayState.status === "configuration-unavailable" && <CatalogMessage description="この環境ではPoint商品への接続が設定されていません。" eyebrow="CONFIGURATION" title="ポイント商品を表示できません" />}
+        {displayState.status === "session-error" && <CatalogMessage description="Sessionを確認できませんでした。時間をおいて再度お試しください。" eyebrow="ERROR" title="ポイント商品を表示できません" tone="error" />}
+        {displayState.status === "error" && <CatalogMessage action={() => { setState({ status: "loading" }); setRequestKey((value) => value + 1); }} description={displayState.problem.message} eyebrow="ERROR" title="ポイント商品を取得できませんでした" tone="error" />}
+        {displayState.status === "ready" && <PointProductRegion products={products} />}
       </div>
     </div>
   );

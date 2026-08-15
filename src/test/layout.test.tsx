@@ -9,17 +9,19 @@ import { ToastProvider } from "@/components/common/toast-provider";
 import { PublicClientProvider } from "@/components/catalog/public-client-provider";
 import type { AuthClientAdapter } from "@/lib/platform";
 import type { PublicCatalogAdapter } from "@/lib/platform";
+import { PointClientProvider } from "@/components/points/point-client-provider";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
 
 describe("shared layout", () => {
-  it("renders the public header", () => {
+  it("renders the public header", async () => {
     const client = {
       getCurrentSession: vi.fn().mockResolvedValue({ data: { authenticated: false, user: null }, metadata: { status: 200, idempotency_replayed: false } }),
     } as unknown as AuthClientAdapter;
-    render(<ToastProvider><SessionProvider client={client}><SiteHeader /></SessionProvider></ToastProvider>);
+    render(<ToastProvider><SessionProvider client={client}><PointClientProvider client={null}><SiteHeader /></PointClientProvider></SessionProvider></ToastProvider>);
     expect(screen.getByRole("banner")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Luxe Pack ホーム" })).toBeInTheDocument();
+    expect((await screen.findAllByRole("link", { name: "新規登録" })).length).toBeGreaterThan(0);
   });
 
   it("renders Backend-ordered Footer pages without excluded pages", async () => {

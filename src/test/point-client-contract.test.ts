@@ -1,0 +1,84 @@
+import { readFileSync } from "node:fs";
+import { ApiProblemError } from "@oripa/storefront-client";
+import {
+  assertBrowserRequestBoundary,
+  PUBLIC_CONTRACT_FIXTURE,
+  PUBLIC_POINT_BALANCE_FIXTURES,
+  PUBLIC_POINT_HISTORY_FIXTURES,
+  PUBLIC_POINT_PRODUCT_FIXTURES,
+  PUBLIC_POINT_READ_PROBLEM_FIXTURES,
+} from "@oripa/storefront-testkit";
+import { createPointClientTestHarness } from "@/lib/platform/testing";
+
+const origin = "https://storefront.test/platform";
+
+describe("MIG-062U current-user Point read contract", () => {
+  it("pins all Production packages and generated operations to alpha.18", () => {
+    for (const packageName of ["site-schema", "storefront-client", "storefront-testkit"]) {
+      const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
+      expect(packageJson.version).toBe("2.0.0-alpha.18");
+    }
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("391a8962710612478688a7479daa73f170b8e9093e0cfef380702a4f2d236860");
+    expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
+      "getWallet",
+      "listPointLedgerEntries",
+      "listPointProducts",
+    ]));
+  });
+
+  it.each([PUBLIC_POINT_BALANCE_FIXTURES.positive, PUBLIC_POINT_BALANCE_FIXTURES.zero])("reads canonical wallet balance %#", async (balance) => {
+    const harness = createPointClientTestHarness();
+    harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/wallet` }, { body: balance, status: 200 });
+    await expect(harness.client.getWallet()).resolves.toMatchObject({ data: balance });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.18", site_version: "0.1.0" });
+    harness.mock.assertExhausted();
+  });
+
+  it("retains Point Product ordering, audience, eligibility, and CTA", async () => {
+    const harness = createPointClientTestHarness();
+    harness.mock.enqueueJson({ method: "GET", url: `${origin}/point-products` }, { body: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_after_first_purchase, status: 200 });
+    const { data } = await harness.client.listPointProducts();
+    expect(data.data.map((product) => product.audience.code)).toEqual(["all_users", "first_purchase_users"]);
+    expect(data.data.map((product) => product.eligible)).toEqual([true, false]);
+    expect(data.data[1]?.ineligible_reason).toBe("first_purchase_required");
+    expect(data.data[1]?.cta).toEqual({ action: "purchase", reason: "first_purchase_required", state: "disabled" });
+    harness.mock.assertExhausted();
+  });
+
+  it("passes the opaque cursor unchanged and preserves history order and signed deltas", async () => {
+    const harness = createPointClientTestHarness();
+    const cursor = PUBLIC_POINT_HISTORY_FIXTURES.first_page.next_cursor;
+    harness.mock.enqueueJson(
+      { method: "GET", url: `${origin}/me/point-ledgers?limit=10&cursor=${cursor}` },
+      { body: PUBLIC_POINT_HISTORY_FIXTURES.multiple, status: 200 },
+    );
+    const { data } = await harness.client.listPointLedgerEntries({ cursor, limit: 10 });
+    expect(data.items.map((entry) => entry.amount_delta)).toEqual([-300, 50, 1000]);
+    expect(data.items.map((entry) => entry.reason.label)).toEqual(["ガチャ利用", "景品のポイント交換", "ポイント購入"]);
+    harness.mock.assertExhausted();
+  });
+
+  it.each([
+    PUBLIC_POINT_READ_PROBLEM_FIXTURES.unauthenticated,
+    PUBLIC_POINT_READ_PROBLEM_FIXTURES.session_expired,
+  ])("preserves generated Point problem $code", async (problem) => {
+    const harness = createPointClientTestHarness();
+    harness.mock.enqueueProblem({ method: "GET", url: `${origin}/me/wallet` }, problem);
+    const error = await harness.client.getWallet().catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ApiProblemError);
+    expect((error as ApiProblemError).code).toBe(problem.code);
+  });
+
+  it("performs read-only GET requests and no Payment mutation", async () => {
+    const harness = createPointClientTestHarness();
+    harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/wallet` }, { body: PUBLIC_POINT_BALANCE_FIXTURES.positive, status: 200 });
+    harness.mock.enqueueJson({ method: "GET", url: `${origin}/point-products` }, { body: PUBLIC_POINT_PRODUCT_FIXTURES.anonymous_empty, status: 200 });
+    harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/point-ledgers?limit=10` }, { body: PUBLIC_POINT_HISTORY_FIXTURES.empty, status: 200 });
+    await harness.client.getWallet();
+    await harness.client.listPointProducts();
+    await harness.client.listPointLedgerEntries({ limit: 10 });
+    expect(harness.mock.requests.map((request) => request.method)).toEqual(["GET", "GET", "GET"]);
+    expect(harness.mock.requests.filter((request) => /payment|purchase/i.test(request.url))).toHaveLength(0);
+    harness.mock.assertExhausted();
+  });
+});

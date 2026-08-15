@@ -83,3 +83,16 @@ export {
   presentFulfillmentProblem,
   type FulfillmentProblemPresentation,
 } from "./fulfillment-problem";
+export {
+  createBrowserPointClient,
+  createPointClientAdapter,
+  type PointClientAdapter,
+  type PointHistoryCollection,
+  type PointHistoryEntry,
+  type PointProduct,
+  type PointProductAudienceCode,
+  type PointProductCollection,
+  type PointProductIneligibleReason,
+  type PointProductSaleState,
+  type PointWalletBalance,
+} from "./point-client";

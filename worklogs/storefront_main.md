@@ -1,5 +1,32 @@
 # Storefront worklog
 
+## SITE-027 — Point Read Integration
+
+- Issue: `#53`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `b3c6fbb1e487388d337894003a82883d28948aab`
+- Branch: `site/SITE-027-point-read-integration`
+
+### Changes
+
+- Verify and vendor immutable MIG-062U Production Artifact `2.0.0-alpha.18`,
+  retaining all historical Artifact directories and confirming the retained
+  MIG-062R product/eligibility contract.
+- Share the generated canonical Wallet read across Header, `/points`, and
+  `/mypage/points`; never calculate balance from Ledger entries.
+- Render the canonical Point product collection with Backend order, audience,
+  sale, eligibility, reason, and CTA presentation unchanged.
+- Connect canonical Point history with signed deltas, occurred time, Backend
+  reason labels, and opaque-cursor append in returned order.
+- Add alpha.18 Testkit coverage for balances, products, eligibility, history,
+  ordering, cursor, Session failures, cross-surface synchronization, and zero
+  Payment mutations.
+
+### Not changed
+
+Point purchase, Point grant/debit, Payment, Platform/DB, Nginx, production domain,
+V1, wrappers, token broker, and historical Artifacts are unchanged.
+
 ## SITE-026 — Point purchase page layout
 
 - Issue: `#51`

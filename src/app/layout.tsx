@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { ToastProvider } from "@/components/common/toast-provider";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { PublicClientProvider } from "@/components/catalog/public-client-provider";
+import { PointClientProvider } from "@/components/points/point-client-provider";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -26,12 +27,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <ToastProvider>
           <SessionProvider>
-            <PublicClientProvider>
-              <SiteHeader />
-              <main className="site-main">{children}</main>
-              <SiteFooter />
-              <MobileBottomNavigation />
-            </PublicClientProvider>
+            <PointClientProvider>
+              <PublicClientProvider>
+                <SiteHeader />
+                <main className="site-main">{children}</main>
+                <SiteFooter />
+                <MobileBottomNavigation />
+              </PublicClientProvider>
+            </PointClientProvider>
           </SessionProvider>
         </ToastProvider>
       </body>
