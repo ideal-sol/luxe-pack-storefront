@@ -2,8 +2,9 @@ import { readFileSync } from "node:fs";
 
 const panel = readFileSync("src/components/draw/gacha-draw-panel.tsx", "utf8");
 const result = readFileSync("src/components/draw/draw-result.tsx", "utf8");
+const history = readFileSync("src/components/draw/draw-history-page.tsx", "utf8");
 const adapter = readFileSync("src/lib/platform/draw-client.ts", "utf8");
-const combined = `${panel}\n${result}`;
+const combined = `${panel}\n${result}\n${history}`;
 const directApi = "/api" + "/v2";
 const violations = [];
 
@@ -19,6 +20,9 @@ const forbidden = new Map([
   ["optimistic-wallet", /set[A-Za-z]*(?:Point|Wallet|Inventory|Prize)/.test(combined)],
   ["result-resubmits-draw", /\bcreateDraw\b/.test(result)],
   ["component-browser-client-factory", /createBrowserStorefrontDrawClient/.test(combined)],
+  ["history-sorts", /\.sort\s*\(/.test(history)],
+  ["history-current-gacha-read", /(?:getGacha|listGachas|getGachaPresentation)/.test(history)],
+  ["history-count-comparison", /(?:requested_count|executed_count)[^\n]*(?:===|!==|<=|>=|<|>)[^\n]*(?:requested_count|executed_count)/.test(history)],
 ]);
 
 for (const [name, present] of forbidden) {
@@ -27,11 +31,17 @@ for (const [name, present] of forbidden) {
 
 for (const required of [
   ["browser-draw-client", adapter.includes("createBrowserStorefrontDrawClient")],
+  ["runtime-global-fetch", adapter.includes("fetch: overrides.fetch ?? callGlobalFetch")],
   ["canonical-key", panel.includes("createIdempotencyKey")],
   ["canonical-problem", panel.includes("presentDrawProblem")],
   ["backend-counts", panel.includes("allowed_draw_counts")],
   ["draw-mutation", panel.includes("client.createDraw")],
   ["result-recovery", result.includes("client.getDrawRequest")],
+  ["history-read", history.includes("client.listDrawHistory")],
+  ["history-presentation", history.includes("entry.gacha.presentation_asset")],
+  ["history-status-label", history.includes("entry.status.label")],
+  ["history-requested-count", history.includes("entry.requested_count")],
+  ["history-executed-count", history.includes("entry.executed_count")],
 ]) {
   if (!required[1]) violations.push(`missing:${required[0]}`);
 }

@@ -12,13 +12,13 @@ import { createPointClientTestHarness } from "@/lib/platform/testing";
 
 const origin = "https://storefront.test/platform";
 
-describe("MIG-062U current-user Point read contract", () => {
-  it("pins all Production packages and generated operations to alpha.18", () => {
+describe("MIG-062V retained current-user Point read contract", () => {
+  it("pins all Production packages to alpha.19 and retains generated Point operations", () => {
     for (const packageName of ["site-schema", "storefront-client", "storefront-testkit"]) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
-      expect(packageJson.version).toBe("2.0.0-alpha.18");
+      expect(packageJson.version).toBe("2.0.0-alpha.19");
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("391a8962710612478688a7479daa73f170b8e9093e0cfef380702a4f2d236860");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("2b6883e8e51eebe6414f401553e866112b56d6e400b34ca17436433666fa0211");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getWallet",
       "listPointLedgerEntries",
@@ -30,7 +30,7 @@ describe("MIG-062U current-user Point read contract", () => {
     const harness = createPointClientTestHarness();
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/wallet` }, { body: balance, status: 200 });
     await expect(harness.client.getWallet()).resolves.toMatchObject({ data: balance });
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.18", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.19", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 

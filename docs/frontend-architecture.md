@@ -161,7 +161,7 @@ SITE-007 adds MIG-062A contract coverage for typed presentation, nullable assets
 cursor reads, and action states. Component tests cover login/configuration/read
 states, individual/select-all/reset behavior, Backend-only bulk actions, and the
 no-mutation boundary. Earlier Auth, Catalog, Content, Gacha Presentation, and Draw
-operations are checked for alpha.18 compatibility. SITE-005 additionally covers
+operations are checked for alpha.19 compatibility. SITE-005 additionally covers
 Browser-owned CSRF, same-key retry, new-operation keys, double-click suppression,
 generated Draw problems, public-ID result GET, reload recovery, and the absence
 of optimistic Point/Prize mutation. SITE-012 adds Browser fulfillment Contract
@@ -211,3 +211,12 @@ from each product presentation. An enabled purchase CTA is displayed as
 available but cannot start a purchase. Point history appends canonical pages in
 returned order, passes the opaque cursor back unchanged, and displays signed
 deltas, occurred time, and `reason.label` without Ledger-code interpretation.
+
+SITE-028 adopts MIG-062V alpha.19 after verifying the formal Artifact and
+byte-identical retention of alpha.18's Point Client files. `/mypage/draws` calls
+the generated `listDrawHistory` read through the existing Draw boundary. The UI
+maps returned entries without sorting, status/lifecycle interpretation, count
+comparison, or Current Gacha lookup. Historical title／image, occurred time,
+requested／executed counts, and `status.label` are displayed directly; cursor
+continuation appends the next returned page and passes the opaque value back
+unchanged.

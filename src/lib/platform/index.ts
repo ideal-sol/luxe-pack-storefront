@@ -51,6 +51,8 @@ export {
   createIdempotencyKey,
   isDrawProblemError,
   type DrawClientAdapter,
+  type DrawHistoryCollection,
+  type DrawHistoryEntry,
   type DrawResponse,
   type StorefrontDrawCount,
   type StorefrontDrawProblemCode,
