@@ -15,8 +15,8 @@ Required runtime versions are Node `22.22.3` and pnpm `10.12.1`.
 
 ## Platform client
 
-The current MIG-062P Production artifacts are vendored at
-`vendor/oripa/MIG-062P` and fixed to version `2.0.0-alpha.14` using
+The current MIG-062V Production artifacts are vendored at
+`vendor/oripa/MIG-062V` and fixed to version `2.0.0-alpha.19` using
 Repository-relative `file:` dependencies. Historical bundles remain immutable. Run
 `pnpm artifact:check` to verify the Manifest, SHA-256 values, package identities,
 archive paths, Lifecycle Script boundary, and absence of server-specific file
@@ -64,6 +64,13 @@ The Client owns Cookie/CSRF protocol handling, while the UI owns only a transien
 canonical Idempotency Key for one operation. `/draws/[drawRequestId]/result`
 always reloads the completed response with `getDrawRequest`; it does not resubmit
 the mutation or optimistically update Point and Prize state.
+
+`/mypage/draws` uses the same generated Draw Client for the read-only Current
+User Gacha History contract. Each row renders the returned Historical Gacha
+title／presentation image, occurred time, requested／executed counts, and
+Backend status label. Pages are appended in returned order and the opaque
+cursor is passed back unchanged; Current Gacha data is never used to rewrite a
+historical row.
 
 MIG-062J keeps large Draw options fully Backend-authoritative. The detail UI
 renders every returned `allowed_draw_counts` entry, including optional 100／1000,

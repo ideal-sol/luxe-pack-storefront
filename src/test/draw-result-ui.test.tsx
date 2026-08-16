@@ -36,6 +36,7 @@ function drawClient(overrides: Partial<DrawClientAdapter> = {}): DrawClientAdapt
   return {
     createDraw: vi.fn(),
     getDrawRequest: vi.fn().mockResolvedValue(response(result)),
+    listDrawHistory: vi.fn(),
     ...overrides,
   } as DrawClientAdapter;
 }

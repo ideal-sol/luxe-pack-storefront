@@ -1,7 +1,7 @@
 # API dependency map
 
-Storefront operations use the MIG-062U Public OpenAPI and `@oripa/storefront-client`
-`2.0.0-alpha.18`. This map does not invent absent
+Storefront operations use the MIG-062V Public OpenAPI and `@oripa/storefront-client`
+`2.0.0-alpha.19`. This map does not invent absent
 operations or response shapes.
 
 | Screen | Required capability | Contract state |
@@ -25,11 +25,11 @@ operations or response shapes.
 | LINE friend state | Official Account friend/addition presentation | **Pending Contract — not inferred from identity presence** |
 | LINE unlink UI | Recent reauthentication completion and safe post-return continuation | **Pending journey contract — mutation exists but no fake CTA is exposed** |
 | Member Profile enrichment | Nickname, Avatar, Rank, or Profile showcase | **Not available and not required by SITE-006 — not displayed** |
-| Points | Canonical current-user wallet balance | **Resolved — MIG-062U alpha.18 `getWallet`; SITE-027 implemented** |
-| Point history | Canonical signed ledger history and opaque cursor | **Resolved — MIG-062U alpha.18 `listPointLedgerEntries`; SITE-027 implemented** |
-| Points | Backend-ordered product collection, eligibility, reason, and CTA | **Resolved — MIG-062R retained by MIG-062U alpha.18 `listPointProducts`; SITE-027 implemented** |
+| Points | Canonical current-user wallet balance | **Resolved — MIG-062V alpha.19 retains `getWallet`; SITE-027 implemented** |
+| Point history | Canonical signed ledger history and opaque cursor | **Resolved — MIG-062V alpha.19 retains `listPointLedgerEntries`; SITE-027 implemented** |
+| Points | Backend-ordered product collection, eligibility, reason, and CTA | **Resolved — MIG-062V alpha.19 retains `listPointProducts`; SITE-027 implemented** |
 | Points | Point purchase mutation | **Pending Contract** |
-| Draw history | Current user's draw history list | **Pending Contract** |
+| Draw history | Historical Gacha presentation, occurred time, requested/executed counts, Backend status, stable order, and opaque cursor | **Resolved — MIG-062V alpha.19 `listDrawHistory`; SITE-028 implemented** |
 | Notice list | Public notice summaries and cursor | **Resolved — MIG-061U content client** |
 | Notice detail | Public notice detail by opaque ID | **Resolved — MIG-061U content client** |
 | Static pages | Public canonical HTML page by slug | **Resolved — MIG-061U content client; sanitized renderer required** |

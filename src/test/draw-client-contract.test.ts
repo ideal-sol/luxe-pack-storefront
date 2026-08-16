@@ -9,6 +9,8 @@ import {
   PUBLIC_AUTH_FIXTURE,
   PUBLIC_CONTRACT_FIXTURE,
   PUBLIC_DRAW_FIXTURE,
+  PUBLIC_DRAW_HISTORY_FIXTURES,
+  PUBLIC_DRAW_HISTORY_PROBLEM_FIXTURES,
   PUBLIC_DRAW_PROBLEM_FIXTURES,
   PUBLIC_PARTIAL_REMAINING_DRAW_FIXTURE,
 } from "@oripa/storefront-testkit";
@@ -24,20 +26,20 @@ function enqueueCsrf(harness: ReturnType<typeof createDrawClientTestHarness>) {
   );
 }
 
-describe("MIG-062U browser Draw contract regression", () => {
-  it("pins alpha.11 and retains every Storefront operation used before the upgrade", () => {
+describe("MIG-062V browser Draw and current-user history contract", () => {
+  it("pins alpha.19 and retains every Storefront operation used before the upgrade", () => {
     for (const packageName of ["site-schema", "storefront-client", "storefront-testkit"]) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
-      expect(packageJson.version).toBe("2.0.0-alpha.18");
+      expect(packageJson.version).toBe("2.0.0-alpha.19");
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("391a8962710612478688a7479daa73f170b8e9093e0cfef380702a4f2d236860");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("2b6883e8e51eebe6414f401553e866112b56d6e400b34ca17436433666fa0211");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getUserSession", "loginUser", "registerUser",
       "listGachas", "getGachaBySlug", "getGachaPresentation",
       "listContentBanners", "listContentNotices", "getContentNotice", "getContentStaticPage",
       "listUserPrizes", "getUserPrize",
       "listExternalIdentities", "startLineIdentityLink", "unlinkLineIdentity",
-      "createDraw", "getDrawRequest",
+      "createDraw", "getDrawRequest", "listDrawHistory",
       "createShippingRequest", "exchangeUserPrizes",
     ]));
   });
@@ -57,7 +59,7 @@ describe("MIG-062U browser Draw contract regression", () => {
     expect(harness.mock.requests[1]?.credentials).toBe("include");
     expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBe(key);
     expect(harness.mock.requests[1]?.headers["x-xsrf-token"]).toBe(csrf);
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.18", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.19", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -100,6 +102,43 @@ describe("MIG-062U browser Draw contract regression", () => {
     });
     expect(harness.mock.requests).toHaveLength(1);
     harness.mock.assertExhausted();
+  });
+
+  it("passes the opaque history cursor unchanged and preserves stable Backend ordering", async () => {
+    const harness = createDrawClientTestHarness();
+    const cursor = PUBLIC_DRAW_HISTORY_FIXTURES.first_page.next_cursor;
+    harness.mock.enqueueJson(
+      { method: "GET", url: `${origin}/me/draws?limit=10&cursor=${cursor}` },
+      { body: PUBLIC_DRAW_HISTORY_FIXTURES.multiple, status: 200 },
+    );
+
+    const { data } = await harness.client.listDrawHistory({ cursor, limit: 10 });
+    expect(data.items.map((entry) => entry.id)).toEqual(
+      PUBLIC_DRAW_HISTORY_FIXTURES.multiple.items.map((entry) => entry.id),
+    );
+    expect(data.items.map((entry) => [entry.requested_count, entry.executed_count])).toEqual([[5, 2], [5, 5], [1, 1]]);
+    expect(data.items.map((entry) => entry.status)).toEqual([
+      { code: "completed", label: "完了" },
+      { code: "completed", label: "完了" },
+      { code: "completed", label: "完了" },
+    ]);
+    expect(harness.mock.requests[0]?.method).toBe("GET");
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.19", site_version: "0.1.0" });
+    harness.mock.assertExhausted();
+  });
+
+  it.each([
+    PUBLIC_DRAW_HISTORY_PROBLEM_FIXTURES.unauthenticated,
+    PUBLIC_DRAW_HISTORY_PROBLEM_FIXTURES.invalid_cursor,
+    PUBLIC_DRAW_HISTORY_PROBLEM_FIXTURES.rate_limited,
+  ])("preserves generated Draw History problem $code", async (problem) => {
+    const harness = createDrawClientTestHarness();
+    harness.mock.enqueueProblem({ method: "GET", url: `${origin}/me/draws?limit=10` }, problem);
+    await expect(harness.client.listDrawHistory({ limit: 10 })).rejects.toMatchObject({
+      code: problem.code,
+      status: problem.status,
+    });
+    expect(harness.mock.requests[0]?.method).toBe("GET");
   });
 
   it.each(PUBLIC_DRAW_PROBLEM_FIXTURES)("preserves the generated typed Draw problem $code", async (problem) => {

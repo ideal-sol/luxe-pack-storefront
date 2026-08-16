@@ -1,5 +1,33 @@
 # Storefront worklog
 
+## SITE-028 — Current User Gacha History Integration
+
+- Issue: `#55`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `f5cd2c34de76434815fcd19ddb154bbf07d350d9`
+- Branch: `site/SITE-028-current-user-gacha-history-integration`
+
+### Changes
+
+- Verify and vendor immutable MIG-062V Production Artifact `2.0.0-alpha.19`,
+  retaining all historical Artifact directories and confirming byte-identical
+  retention of the alpha.18 Point Client contract.
+- Connect `/mypage/draws` to generated `listDrawHistory` through the canonical
+  Browser Draw Client boundary.
+- Render Historical Gacha title／presentation image, occurred time,
+  requested／executed counts, and Backend-authoritative status label without
+  inferring partial execution, lifecycle, or current presentation.
+- Preserve returned stable order and append opaque-cursor continuation without
+  sorting, decoding, or exposing the cursor.
+- Cover loading, empty, error, authentication/session, equal/unequal counts,
+  cursor, ordering, and desktop/mobile presentation with alpha.19 Testkit.
+
+### Not changed
+
+Draw Mutation, Point Mutation, Prize／Inventory Mutation, Payment, Platform/DB,
+Nginx, production domain, V1, and historical Artifacts are unchanged. Preview
+verification remains read-only.
+
 ## SITE-027 — Point Read Integration
 
 - Issue: `#53`

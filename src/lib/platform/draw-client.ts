@@ -7,7 +7,7 @@ import {
   type PublicComponents,
 } from "@oripa/storefront-client";
 import { createBrowserStorefrontDrawClient } from "@oripa/storefront-client/browser";
-import type { BrowserClientOverrides } from "./browser-client";
+import { callGlobalFetch, type BrowserClientOverrides } from "./browser-client";
 import {
   readPlatformRuntimeConfiguration,
   type PlatformRuntimeConfiguration,
@@ -16,6 +16,8 @@ import {
 type Schemas = PublicComponents["schemas"];
 
 export type DrawResponse = Schemas["DrawResponse"];
+export type DrawHistoryCollection = Schemas["DrawHistoryCollection"];
+export type DrawHistoryEntry = Schemas["DrawHistoryEntry"];
 export type StorefrontDrawCount = DrawCount;
 export type StorefrontDrawProblemCode = DrawProblemCode;
 export type DrawClientAdapter = BrowserStorefrontDrawClient;
@@ -29,6 +31,7 @@ export function createBrowserDrawClient(
     default_timeout_ms: configuration.defaultTimeoutMs,
     site_version: configuration.siteVersion,
     ...overrides,
+    fetch: overrides.fetch ?? callGlobalFetch,
   });
 }
 

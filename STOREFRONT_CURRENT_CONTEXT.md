@@ -25,6 +25,7 @@
 - SITE-025 Home top banner carousel: implemented by this change
 - SITE-026 Point purchase page layout: completed
 - SITE-027 Point Read Integration: implemented by this change; purchase and Payment remain pending
+- SITE-028 Current User Gacha History Integration: implemented by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -48,12 +49,12 @@ Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.18`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.18`
-- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.18`
-- Source Commit: `83f2732ce9a7adac3573e6f3975e43a53467de07`
-- Artifact authority: `vendor/oripa/MIG-062U/artifact-manifest.json`
-- Public OpenAPI SHA-256: `391a8962710612478688a7479daa73f170b8e9093e0cfef380702a4f2d236860`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.19`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.19`
+- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.19`
+- Source Commit: `2b58e308693fa6e642023e2778274e789da75c09`
+- Artifact authority: `vendor/oripa/MIG-062V/artifact-manifest.json`
+- Public OpenAPI SHA-256: `2b6883e8e51eebe6414f401553e866112b56d6e400b34ca17436433666fa0211`
 
 ## Available contracts
 
@@ -96,6 +97,10 @@ Platform response or Frontend business decision changed.
 - Current-user Point history through generated `listPointLedgerEntries`,
   preserving signed deltas, occurred times, Backend reason labels, and opaque
   cursor continuation
+- Current-user Gacha history through generated `listDrawHistory`, preserving
+  Historical Gacha title／presentation image, occurred time, requested／executed
+  counts, Backend status／label, stable returned order, and opaque cursor
+  continuation
 
 ## Preview deployment
 
@@ -193,10 +198,16 @@ pages in returned order with the opaque cursor unchanged. Purchase-capable CTA
 presentation is visible but disabled; no Point purchase or Payment mutation is
 connected.
 
+SITE-028 adopts the verified immutable MIG-062V alpha.19 Artifact after checking
+Manifest／`SHA256SUMS`／formal files and confirming that alpha.19 retains the
+alpha.18 Point contract. `/mypage/draws` renders only MIG-062V Historical Gacha
+presentation and Backend facts in returned order. Cursor continuation is passed
+through unchanged. No Draw status, Gacha lifecycle, partial execution, ordering,
+or historical presentation rule is implemented in the Frontend.
+
 ## Pending contracts
 
 - Point purchase
-- Current user's gacha history list
 - Optional featured placement beyond the Backend-stable Catalog order
 - Point-insufficient presentation at gacha-detail time (Draw execution uses the
   canonical Backend typed error and does not depend on this presentation)

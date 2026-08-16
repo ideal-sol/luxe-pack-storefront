@@ -30,7 +30,7 @@ function response(data: DrawResponse) {
 }
 
 function client(createDraw = vi.fn().mockResolvedValue(response(drawResponse))): DrawClientAdapter {
-  return { createDraw, getDrawRequest: vi.fn() } as DrawClientAdapter;
+  return { createDraw, getDrawRequest: vi.fn(), listDrawHistory: vi.fn() } as DrawClientAdapter;
 }
 
 function renderPanel(drawClient: DrawClientAdapter | null = client()) {

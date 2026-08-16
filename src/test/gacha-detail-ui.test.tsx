@@ -41,6 +41,7 @@ function renderDetail(client: PublicCatalogAdapter | null = publicClient()) {
   const drawClient = {
     createDraw: vi.fn(),
     getDrawRequest: vi.fn(),
+    listDrawHistory: vi.fn(),
   } as DrawClientAdapter;
   return render(
     <PublicClientProvider client={client}>
