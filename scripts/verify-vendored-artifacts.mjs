@@ -4,20 +4,20 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const vendor = path.join(root, "vendor/oripa/MIG-062V");
-const version = "2.0.0-alpha.19";
-const sourceCommit = "2b58e308693fa6e642023e2778274e789da75c09";
+const vendor = path.join(root, "vendor/oripa/MIG-062W");
+const version = "2.0.0-alpha.20";
+const sourceCommit = "dfefa07e1a905bba07a56079d02ebfbaabfafc94";
 const expected = new Map([
-  ["artifact-manifest.json", "7014f84ec38c742d2586a148700489bbdad069c78a02173ae4cf80bb11fd3448"],
-  ["oripa-site-schema-2.0.0-alpha.19.tgz", "963b8f65f5ed296bf7e5eba9901e282f8400e40643ef73b36fb0b160d753ad43"],
-  ["oripa-storefront-client-2.0.0-alpha.19.tgz", "25cffd3e571eaa3df8e6cc19b50d591605c8dbb8783cca03ee83b0d82c79fe95"],
-  ["oripa-storefront-testkit-2.0.0-alpha.19.tgz", "cb7f19df5802f56fdc692ad8bead5c8f5e2638961b00fe2c85250b08f4978a36"],
-  ["public.openapi.json", "2b6883e8e51eebe6414f401553e866112b56d6e400b34ca17436433666fa0211"],
+  ["artifact-manifest.json", "ae598940be23c6ca7a9bcb244100d4815c5e7e836b10c4e840236acff1a60240"],
+  ["oripa-site-schema-2.0.0-alpha.20.tgz", "4381b2ea9d6e8611643e3aade6aa439ac26c0e7d999f4886aeb5190e578b3856"],
+  ["oripa-storefront-client-2.0.0-alpha.20.tgz", "8f0db985566066aaa14830c5df0bb837ed620a0c218050da4d71c87c8e042835"],
+  ["oripa-storefront-testkit-2.0.0-alpha.20.tgz", "3085459dc255079fb1c9f79a51fdb183cea4c701bfb5fb619dd505d627f6d158"],
+  ["public.openapi.json", "9e14fb6ee0a7e09be2a024ef1089a20ddf2ccc5614aa46d29adeeaff6d00fe51"],
 ]);
 const packageNames = new Map([
-  ["oripa-site-schema-2.0.0-alpha.19.tgz", "@oripa/site-schema"],
-  ["oripa-storefront-client-2.0.0-alpha.19.tgz", "@oripa/storefront-client"],
-  ["oripa-storefront-testkit-2.0.0-alpha.19.tgz", "@oripa/storefront-testkit"],
+  ["oripa-site-schema-2.0.0-alpha.20.tgz", "@oripa/site-schema"],
+  ["oripa-storefront-client-2.0.0-alpha.20.tgz", "@oripa/storefront-client"],
+  ["oripa-storefront-testkit-2.0.0-alpha.20.tgz", "@oripa/storefront-testkit"],
 ]);
 
 function sha256(file) {
@@ -45,7 +45,7 @@ for (const [file, digest] of expected) {
 if (sums.size !== expected.size - 1) throw new Error("SHA256SUMS entry set is invalid");
 
 const manifest = JSON.parse(readFileSync(path.join(vendor, "artifact-manifest.json"), "utf8"));
-if (manifest.task_id !== "MIG-062V" || manifest.source_commit !== sourceCommit) {
+if (manifest.task_id !== "MIG-062W" || manifest.source_commit !== sourceCommit) {
   throw new Error("Artifact provenance mismatch");
 }
 if (manifest.public_openapi?.file !== "public.openapi.json" || manifest.public_openapi.sha256 !== expected.get("public.openapi.json")) {
@@ -91,8 +91,8 @@ for (const [archive, packageName] of packageNames) {
   }
 }
 
-const clientArchive = path.join(vendor, "oripa-storefront-client-2.0.0-alpha.19.tgz");
-const previousClientArchive = path.join(root, "vendor/oripa/MIG-062U/oripa-storefront-client-2.0.0-alpha.18.tgz");
+const clientArchive = path.join(vendor, "oripa-storefront-client-2.0.0-alpha.20.tgz");
+const previousClientArchive = path.join(root, "vendor/oripa/MIG-062V/oripa-storefront-client-2.0.0-alpha.19.tgz");
 const productContract = execFileSync("tar", ["-xOf", clientArchive, "package/dist/point-products.d.ts"], { encoding: "utf8" });
 const currentUserPointContract = execFileSync("tar", ["-xOf", clientArchive, "package/dist/points.d.ts"], { encoding: "utf8" });
 if (!productContract.includes("createStorefrontPointProductClient") ||
@@ -102,16 +102,74 @@ if (!productContract.includes("createStorefrontPointProductClient") ||
     !currentUserPointContract.includes("listPointLedgerEntries")) {
   throw new Error("Generated Point Client contract is incomplete");
 }
-for (const contractFile of ["points.d.ts", "points.js", "point-products.d.ts", "point-products.js"]) {
+for (const contractFile of [
+  "browser.d.ts", "browser.js",
+  "catalog.d.ts", "catalog.js",
+  "content-contact.d.ts", "content-contact.js",
+  "draw.d.ts", "draw.js",
+  "errors.d.ts", "errors.js",
+  "point-products.d.ts", "point-products.js",
+  "points.d.ts", "points.js",
+  "prize-shipping.d.ts", "prize-shipping.js",
+  "server.d.ts", "server.js",
+  "transport.d.ts", "transport.js",
+  "types.d.ts", "types.js",
+]) {
   const previous = execFileSync("tar", ["-xOf", previousClientArchive, `package/dist/${contractFile}`]);
   const current = execFileSync("tar", ["-xOf", clientArchive, `package/dist/${contractFile}`]);
-  if (!previous.equals(current)) throw new Error(`alpha.18 Point contract changed: ${contractFile}`);
+  if (!previous.equals(current)) throw new Error(`alpha.19 Client contract changed: ${contractFile}`);
+}
+for (const contractFile of ["identity.d.ts", "identity.js"]) {
+  const previous = execFileSync("tar", ["-xOf", previousClientArchive, `package/dist/${contractFile}`], { encoding: "utf8" });
+  const current = execFileSync("tar", ["-xOf", clientArchive, `package/dist/${contractFile}`], { encoding: "utf8" });
+  const addition = contractFile.endsWith(".d.ts")
+    ? "    getLineFriendState(): Promise<StorefrontResponse<Schemas[\"LineFriendStatePresentation\"]>>;\n"
+    : "        getLineFriendState: () => transport.request({ path: \"/me/line-friend-state\" }),\n";
+  if (!current.includes(addition) || current.replace(addition, "") !== previous) {
+    throw new Error(`Identity Client change is not additive: ${contractFile}`);
+  }
 }
 const drawContract = execFileSync("tar", ["-xOf", clientArchive, "package/dist/draw.d.ts"], { encoding: "utf8" });
 for (const declaration of ["listDrawHistory", "DrawHistoryQuery", "DrawHistoryReadProblemCode"]) {
   if (!drawContract.includes(declaration)) throw new Error(`Draw History Client contract is missing: ${declaration}`);
 }
-const testkitArchive = path.join(vendor, "oripa-storefront-testkit-2.0.0-alpha.19.tgz");
+const identityContract = execFileSync("tar", ["-xOf", clientArchive, "package/dist/identity.d.ts"], { encoding: "utf8" });
+for (const declaration of ["listExternalIdentities", "getLineFriendState", "startLineIdentityLink"]) {
+  if (!identityContract.includes(declaration)) throw new Error(`Identity Client contract is missing: ${declaration}`);
+}
+
+const previousOpenApi = JSON.parse(readFileSync(path.join(root, "vendor/oripa/MIG-062V/public.openapi.json"), "utf8"));
+const currentOpenApi = JSON.parse(readFileSync(path.join(vendor, "public.openapi.json"), "utf8"));
+for (const [section, previousEntries, currentEntries] of [
+  ["paths", previousOpenApi.paths, currentOpenApi.paths],
+  ...Object.keys(previousOpenApi.components ?? {}).map((section) => [
+    `components.${section}`,
+    previousOpenApi.components?.[section],
+    currentOpenApi.components?.[section],
+  ]),
+]) {
+  for (const [key, value] of Object.entries(previousEntries ?? {})) {
+    if (JSON.stringify(currentEntries?.[key]) !== JSON.stringify(value)) {
+      throw new Error(`alpha.19 OpenAPI ${section} entry changed or was removed: ${key}`);
+    }
+  }
+}
+if (currentOpenApi.paths?.["/me/line-friend-state"]?.get?.operationId !== "getLineFriendState" ||
+    currentOpenApi.components?.schemas?.LineFriendStatePresentation === undefined) {
+  throw new Error("LINE Friend State OpenAPI contract is missing");
+}
+
+const testkitArchive = path.join(vendor, "oripa-storefront-testkit-2.0.0-alpha.20.tgz");
+const previousTestkitArchive = path.join(root, "vendor/oripa/MIG-062V/oripa-storefront-testkit-2.0.0-alpha.19.tgz");
+for (const contractFile of [
+  "assertions.d.ts", "assertions.js",
+  "errors.d.ts", "errors.js",
+  "mock.d.ts", "mock.js",
+]) {
+  const previous = execFileSync("tar", ["-xOf", previousTestkitArchive, `package/dist/${contractFile}`]);
+  const current = execFileSync("tar", ["-xOf", testkitArchive, `package/dist/${contractFile}`]);
+  if (!previous.equals(current)) throw new Error(`alpha.19 Testkit contract changed: ${contractFile}`);
+}
 const testkitFixtures = execFileSync("tar", ["-xOf", testkitArchive, "package/dist/fixtures.d.ts"], { encoding: "utf8" });
 for (const fixture of [
   "PUBLIC_POINT_PRODUCT_FIXTURES",
@@ -120,8 +178,22 @@ for (const fixture of [
   "PUBLIC_POINT_READ_PROBLEM_FIXTURES",
   "PUBLIC_DRAW_HISTORY_FIXTURES",
   "PUBLIC_DRAW_HISTORY_PROBLEM_FIXTURES",
+  "PUBLIC_LINE_FRIEND_STATE_FIXTURES",
+  "PUBLIC_LINE_FRIEND_STATE_PROBLEM_FIXTURES",
 ]) {
   if (!testkitFixtures.includes(fixture)) throw new Error(`Required Testkit fixture is missing: ${fixture}`);
+}
+
+const siteSchemaArchive = path.join(vendor, "oripa-site-schema-2.0.0-alpha.20.tgz");
+const previousSiteSchemaArchive = path.join(root, "vendor/oripa/MIG-062V/oripa-site-schema-2.0.0-alpha.19.tgz");
+const siteSchemaEntries = execFileSync("tar", ["-tzf", previousSiteSchemaArchive], { encoding: "utf8" })
+  .trim()
+  .split("\n")
+  .filter((entry) => entry !== "package/package.json" && entry !== "package/README.md");
+for (const entry of siteSchemaEntries) {
+  const previous = execFileSync("tar", ["-xOf", previousSiteSchemaArchive, entry]);
+  const current = execFileSync("tar", ["-xOf", siteSchemaArchive, entry]);
+  if (!previous.equals(current)) throw new Error(`alpha.19 Site Schema contract changed: ${entry}`);
 }
 
 for (const file of ["package.json", "pnpm-lock.yaml"]) {
@@ -129,8 +201,8 @@ for (const file of ["package.json", "pnpm-lock.yaml"]) {
   if (/file:(?:\/var\/|\/home\/|[A-Za-z]:\\)/.test(content)) {
     throw new Error(`Server-specific file dependency: ${file}`);
   }
-  if (!content.includes("vendor/oripa/MIG-062V") || content.includes("file:vendor/oripa/MIG-062U")) {
-    throw new Error(`Production Artifact dependency is not pinned to MIG-062V: ${file}`);
+  if (!content.includes("vendor/oripa/MIG-062W") || content.includes("file:vendor/oripa/MIG-062V")) {
+    throw new Error(`Production Artifact dependency is not pinned to MIG-062W: ${file}`);
   }
 }
 

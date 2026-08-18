@@ -12,11 +12,14 @@ export { presentAuthProblem, type AuthProblemPresentation } from "./problem-deta
 export {
   createBrowserExternalIdentityClient,
   createExternalIdentityAdapter,
+  presentExternalIdentityProblem,
   type ExternalIdentity,
   type ExternalIdentityAdapter,
   type ExternalIdentityCollection,
+  type ExternalIdentityProblemPresentation,
   type ExternalIdentitySession,
   type ExternalIdentityStart,
+  type LineFriendState,
 } from "./external-identity-client";
 export {
   isPlatformNotFound,
