@@ -863,3 +863,23 @@ or aggregate buckets, rebuild total from paid/free values, or total Ledger
 entries. Product cards use only canonical `grant.total_points` and omit the
 paid/bonus breakdown. Backend title/reason strings receive a currency-word-only
 presentation transform without mutating the canonical response.
+
+## SITE-031 — Coin Terminology Completion — Prize UI
+
+- Issue: `#61`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `2e1a4a31516b7669536092334729efa293239444`
+- Branch: `site/SITE-031-coin-terminology-prize-ui`
+
+### Purpose and boundary
+
+Complete the Coin terminology migration in Prize inventory and fulfillment.
+Fixed user-facing status, unavailable reason, exchange value/unit, action,
+confirmation, success, and typed-error text now uses Coin terminology. Backend
+Prize names pass through a presentation-only currency-word transform; canonical
+response objects and technical Point identifiers remain unchanged.
+
+MIG-062Z `2.0.0-alpha.21` remains pinned without Artifact changes. The task does
+not change or recompute Prize allowed actions, exchange values, status,
+lifecycle, expiry, or mutation behavior. Shipping, idempotency, reconciliation,
+Auth, and Session behavior are retained.

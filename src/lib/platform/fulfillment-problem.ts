@@ -14,7 +14,7 @@ export function presentFulfillmentProblem(error: unknown): FulfillmentProblemPre
   if (isFulfillmentProblemError(error, "PRIZE_ON_PAYMENT_HOLD")) {
     message = "お支払い状況の確認中のため、この景品を操作できません。";
   } else if (isFulfillmentProblemError(error, "PRIZE_NOT_EXCHANGEABLE")) {
-    message = "選択した景品はポイント交換できません。最新の景品状態を確認してください。";
+    message = "選択した景品はコイン交換できません。最新の景品状態を確認してください。";
   } else if (isFulfillmentProblemError(error, "PRIZE_NOT_SHIPPABLE")) {
     message = "選択した景品は発送できません。最新の景品状態を確認してください。";
   } else if (isFulfillmentProblemError(error, "INVALID_PRIZE_SELECTION")) {

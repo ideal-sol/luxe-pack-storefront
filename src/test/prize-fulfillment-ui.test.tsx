@@ -112,10 +112,13 @@ describe("prize fulfillment UI", () => {
     const fulfillmentClient = client({ exchangePrizes });
     const { onReconcile } = renderDialog("point_exchange", fulfillmentClient);
 
-    fireEvent.click(screen.getByRole("button", { name: "ポイントに交換する" }));
+    expect(screen.getByRole("heading", { name: "コイン交換を確認" })).toBeInTheDocument();
+    expect(screen.getByText(`${prize.exchange_points.toLocaleString()} コイン`)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "コインに交換する" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("同じ操作のまま再試行");
-    fireEvent.click(screen.getByRole("button", { name: "ポイントに交換する" }));
+    fireEvent.click(screen.getByRole("button", { name: "コインに交換する" }));
     expect(await screen.findByText("手続きが完了しました")).toBeInTheDocument();
+    expect(screen.getByText(`${prize.exchange_points.toLocaleString()} コインへ交換しました。`, { exact: false })).toBeInTheDocument();
 
     expect(exchangePrizes).toHaveBeenCalledTimes(2);
     expect(exchangePrizes.mock.calls[0]?.[1].idempotency_key).toBe(exchangePrizes.mock.calls[1]?.[1].idempotency_key);
@@ -130,7 +133,7 @@ describe("prize fulfillment UI", () => {
     const fulfillmentClient = client({ exchangePrizes: exchangePrizes as PrizeFulfillmentAdapter["exchangePrizes"] });
     renderDialog("point_exchange", fulfillmentClient);
 
-    const submit = screen.getByRole("button", { name: "ポイントに交換する" });
+    const submit = screen.getByRole("button", { name: "コインに交換する" });
     fireEvent.click(submit);
     fireEvent.click(submit);
     expect(exchangePrizes).toHaveBeenCalledOnce();
@@ -150,9 +153,20 @@ describe("prize fulfillment UI", () => {
       exchangePrizes: vi.fn().mockRejectedValue(fulfillmentProblem("PRIZE_ON_PAYMENT_HOLD", false)),
     });
     renderDialog("point_exchange", fulfillmentClient);
-    fireEvent.click(screen.getByRole("button", { name: "ポイントに交換する" }));
+    fireEvent.click(screen.getByRole("button", { name: "コインに交換する" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("お支払い状況の確認中");
     expect(screen.queryByText(/このdetail/)).not.toBeInTheDocument();
+  });
+
+  it("presents a typed non-exchangeable problem with Coin terminology", async () => {
+    const fulfillmentClient = client({
+      exchangePrizes: vi.fn().mockRejectedValue(fulfillmentProblem("PRIZE_NOT_EXCHANGEABLE", false)),
+    });
+    const view = renderDialog("point_exchange", fulfillmentClient);
+    fireEvent.click(screen.getByRole("button", { name: "コインに交換する" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("選択した景品はコイン交換できません。");
+    expect(document.body).not.toHaveTextContent(/ポイント|\bpt\b/i);
+    expect(view.onReconcile).not.toHaveBeenCalled();
   });
 
   it("creates a shipping request and re-fetches shipping, prize, and address state", async () => {

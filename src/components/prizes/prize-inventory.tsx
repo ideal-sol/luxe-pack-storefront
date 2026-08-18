@@ -12,6 +12,7 @@ import {
   type UserPrizeActionUnavailableReason,
   type UserPrizeStatus,
 } from "@/lib/platform";
+import { presentCoinTerminology } from "@/lib/presentation/coin-terminology";
 import { usePrizeClient } from "./prize-client-provider";
 import { PrizeFulfillmentDialog, type FulfillmentAction } from "./prize-fulfillment";
 
@@ -33,9 +34,9 @@ type BulkAction = FulfillmentAction;
 const number = new Intl.NumberFormat("ja-JP");
 const statusLabels: Readonly<Record<UserPrizeStatus, string>> = {
   canceled: "取消",
-  converted: "ポイント交換済み",
+  converted: "コイン交換済み",
   delivered: "配送完了",
-  exchange_processing: "ポイント交換処理中",
+  exchange_processing: "コイン交換処理中",
   expired: "保管期限終了",
   hold: "保留",
   packing: "梱包中",
@@ -46,7 +47,7 @@ const statusLabels: Readonly<Record<UserPrizeStatus, string>> = {
   stored: "保管中",
 };
 const reasonLabels: Readonly<Record<UserPrizeActionUnavailableReason, string>> = {
-  exchange_points_unavailable: "ポイント交換額を確認できません。",
+  exchange_points_unavailable: "コイン交換額を確認できません。",
   payment_hold: "お支払い状況の確認中です。",
   status_not_actionable: "現在の状態では選択できません。",
   storage_expired: "保管期限を過ぎています。",
@@ -76,7 +77,7 @@ function PrizeCard({
   const presentation = prize.presentation;
   const image = presentation?.image?.media_type === "image" ? presentation.image : null;
   const selectable = prize.allowed_actions?.selection.allowed === true;
-  const name = presentation?.name ?? "景品情報を表示できません";
+  const name = presentCoinTerminology(presentation?.name ?? "景品情報を表示できません");
 
   return (
     <article className={`inventory-card${checked ? " inventory-card--selected" : ""}`}>
@@ -106,7 +107,7 @@ function PrizeCard({
         <dl>
           <div><dt>獲得日</dt><dd><time dateTime={prize.acquired_at}>{formatDateTime(prize.acquired_at)}</time></dd></div>
           <div><dt>保管期限</dt><dd><time dateTime={prize.storage_expires_at}>{formatDateTime(prize.storage_expires_at)}</time></dd></div>
-          <div><dt>交換ポイント</dt><dd>{number.format(prize.exchange_points)}pt</dd></div>
+          <div><dt>交換コイン</dt><dd>{number.format(prize.exchange_points)} コイン</dd></div>
         </dl>
         {!selectable && <p className="inventory-card__reason">{selectionReason(prize)}</p>}
       </div>
@@ -129,7 +130,7 @@ function BulkActionTray({ actions, count, onAction }: { readonly actions: readon
       <div className="inventory-action-tray__inner">
         <p><strong>{number.format(count)}</strong>件を選択中</p>
         <div>
-          {actions.includes("point_exchange") && <button onClick={() => onAction("point_exchange")} type="button">ポイントに交換</button>}
+          {actions.includes("point_exchange") && <button onClick={() => onAction("point_exchange")} type="button">コインに交換</button>}
           {actions.includes("shipping") && <button onClick={() => onAction("shipping")} type="button">発送を依頼</button>}
           {actions.length === 0 && <span>選択中の景品に共通して利用できる操作はありません。</span>}
         </div>
