@@ -330,7 +330,7 @@ export function PrizeFulfillmentDialog({
     <div className="dialog-backdrop fulfillment-dialog" role="presentation">
       <section aria-labelledby={titleId} aria-modal="true" className="dialog-card fulfillment-dialog__card" role="dialog">
         <p className="dialog-card__eyebrow">FULFILLMENT</p>
-        <h2 id={titleId}>{action === "shipping" ? "発送内容を確認" : "ポイント交換を確認"}</h2>
+        <h2 id={titleId}>{action === "shipping" ? "発送内容を確認" : "コイン交換を確認"}</h2>
         <p>選択した景品: {number.format(selectedItems.length)}件</p>
 
         {success ? (
@@ -353,8 +353,8 @@ export function PrizeFulfillmentDialog({
             {action === "point_exchange" ? (
               <div className="fulfillment-dialog__summary">
                 <span>表示上の交換予定</span>
-                <strong>{number.format(exchangeEstimate)}pt</strong>
-                <small>実際の付与ポイントはPlatformの完了応答を正本とします。</small>
+                <strong>{number.format(exchangeEstimate)} コイン</strong>
+                <small>実際の付与コインはPlatformの完了応答を正本とします。</small>
               </div>
             ) : (
               <div className="fulfillment-addresses">
@@ -384,7 +384,7 @@ export function PrizeFulfillmentDialog({
             <div className="dialog-card__actions">
               <button className="button button--ghost" disabled={submitting} onClick={closeDialog} type="button">キャンセル</button>
               <button className="button button--dark" disabled={submitting || action === "shipping" && !selectedAddressId} onClick={() => void (action === "shipping" ? ship() : exchange())} type="button">
-                {submitting ? "Platformへ確認中…" : action === "shipping" ? "発送を依頼する" : "ポイントに交換する"}
+                {submitting ? "Platformへ確認中…" : action === "shipping" ? "発送を依頼する" : "コインに交換する"}
               </button>
             </div>
           </>
@@ -396,5 +396,5 @@ export function PrizeFulfillmentDialog({
 }
 
 function exchangeSuccess(data: PrizeExchangeResponse) {
-  return `${number.format(data.exchanged_count)}件を${number.format(data.exchange_point_total)}ptへ交換しました。`;
+  return `${number.format(data.exchanged_count)}件を${number.format(data.exchange_point_total)} コインへ交換しました。`;
 }

@@ -241,3 +241,11 @@ reconstruction. Product grant presentation reads only `grant.total_points` and
 hides paid/bonus fields. A small presentation-only terminology function converts
 the currency word in Backend title/label strings without mutating response
 objects or renaming Point Domain identifiers.
+
+SITE-031 applies the same non-mutating currency-word presentation boundary to
+Prize inventory names and completes fixed Coin terminology across Prize status,
+reason, value, action, confirmation, success, and typed-error text. The shared
+helper returns a derived display string and never modifies the generated Prize
+object. Existing `point_exchange`, `exchange_points`, response fields, allowed
+actions, exchange values, statuses, lifecycle, and mutation/reconciliation flow
+remain canonical and unchanged.

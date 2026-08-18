@@ -97,15 +97,58 @@ function renderInventory(prizeClient: PrizeFulfillmentAdapter | null = client(),
 }
 
 describe("prize inventory UI", () => {
-  it("renders generated presentation, status, rank, dates, points, and image fallback", async () => {
-    renderInventory();
+  it("renders generated presentation, status, rank, dates, Coin values, and image fallback", async () => {
+    const view = renderInventory();
     expect(await screen.findByRole("heading", { name: "両方可能な景品" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "発送のみ可能な景品" })).toBeInTheDocument();
     expect(screen.getAllByText("保管中")).toHaveLength(3);
     expect(screen.getAllByText(base.presentation!.rank.name)).toHaveLength(3);
-    expect(screen.getAllByText(`${base.exchange_points.toLocaleString()}pt`)).toHaveLength(3);
+    expect(screen.getAllByText(`${base.exchange_points.toLocaleString()} コイン`)).toHaveLength(3);
     expect(screen.getAllByText("PRIZE IMAGE")).toHaveLength(3);
     expect(screen.getByText("お支払い状況の確認中です。")).toBeInTheDocument();
+    expect(view.container).not.toHaveTextContent(/ポイント|\bpt\b/i);
+  });
+
+  it("converts only Backend Prize currency terminology without mutating the canonical response", async () => {
+    const canonicalName = pointOnly.presentation!.name;
+    const view = renderInventory(client({
+      listPrizes: vi.fn().mockResolvedValue(response({ items: [pointOnly], next_cursor: null })),
+    }));
+
+    expect(await screen.findByRole("heading", { name: "コイン交換のみ可能な景品" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "コイン交換のみ可能な景品を選択" })).toBeInTheDocument();
+    expect(pointOnly.presentation!.name).toBe(canonicalName);
+    expect(canonicalName).toBe("ポイント交換のみ可能な景品");
+    expect(view.container).not.toHaveTextContent(/ポイント|\bpt\b/i);
+  });
+
+  it("uses Coin terminology for canonical exchange statuses and unavailable reasons", async () => {
+    const converted = prize({
+      id: "0198a001-0000-7000-8000-000000000205",
+      name: "交換済み景品",
+      status: "converted",
+    });
+    const processing = prize({
+      id: "0198a001-0000-7000-8000-000000000206",
+      name: "交換処理中景品",
+      status: "exchange_processing",
+    });
+    const unavailable = prize({
+      allowed_actions: {
+        ...base.allowed_actions!,
+        selection: { allowed: false, unavailable_reason: "exchange_points_unavailable" },
+      },
+      id: "0198a001-0000-7000-8000-000000000207",
+      name: "交換額未確定景品",
+    });
+    const view = renderInventory(client({
+      listPrizes: vi.fn().mockResolvedValue(response({ items: [converted, processing, unavailable], next_cursor: null })),
+    }));
+
+    expect(await screen.findByText("コイン交換済み")).toBeInTheDocument();
+    expect(screen.getByText("コイン交換処理中")).toBeInTheDocument();
+    expect(screen.getByText("コイン交換額を確認できません。")).toBeInTheDocument();
+    expect(view.container).not.toHaveTextContent(/ポイント|\bpt\b/i);
   });
 
   it("selects only selection.allowed items and resets selection", async () => {
@@ -115,13 +158,13 @@ describe("prize inventory UI", () => {
     expect(deniedCheckbox).toBeDisabled();
     fireEvent.click(bothCheckbox);
     expect(bothCheckbox).toBeChecked();
-    expect(screen.getByRole("button", { name: "ポイントに交換" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "コインに交換" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "発送を依頼" })).toBeEnabled();
 
     fireEvent.click(screen.getByRole("button", { name: "全て選択" }));
     expect(screen.getByRole("checkbox", { name: "発送のみ可能な景品を選択" })).toBeChecked();
     expect(deniedCheckbox).not.toBeChecked();
-    expect(screen.queryByRole("button", { name: "ポイントに交換" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "コインに交換" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "発送を依頼" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "リセット" }));
     expect(screen.queryByLabelText("選択した景品の操作")).not.toBeInTheDocument();

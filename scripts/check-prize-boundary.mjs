@@ -4,6 +4,7 @@ const inventory = readFileSync("src/components/prizes/prize-inventory.tsx", "utf
 const adapter = readFileSync("src/lib/platform/prize-client.ts", "utf8");
 const fulfillment = readFileSync("src/components/prizes/prize-fulfillment.tsx", "utf8");
 const problem = readFileSync("src/lib/platform/fulfillment-problem.ts", "utf8");
+const terminology = readFileSync("src/lib/presentation/coin-terminology.ts", "utf8");
 const combined = `${inventory}\n${adapter}\n${fulfillment}\n${problem}`;
 
 for (const forbidden of [
@@ -30,6 +31,17 @@ for (const required of [
   "listShippingAddresses",
 ]) {
   if (!combined.includes(required)) throw new Error(`Prize boundary is missing canonical usage: ${required}`);
+}
+
+if (!inventory.includes("presentCoinTerminology(presentation?.name")) {
+  throw new Error("Prize presentation does not convert Backend currency terminology at render time");
+}
+if (!terminology.includes('value.split("ポイント").join("コイン")')) {
+  throw new Error("Coin terminology helper must preserve the canonical input and derive display text only");
+}
+const userFacingSource = `${inventory}\n${fulfillment}\n${problem}`;
+if (/ポイント|\bPOINTS?\b|\d\s*pt\b/i.test(userFacingSource)) {
+  throw new Error("Legacy user-facing Point terminology remains in Prize presentation");
 }
 
 console.log("prize-boundary-check: passed");

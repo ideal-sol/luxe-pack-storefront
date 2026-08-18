@@ -28,6 +28,7 @@
 - SITE-028 Current User Gacha History Integration: implemented by this change
 - SITE-029 LINE Friend State Integration: implemented by this change
 - SITE-030 Coin Display / Expiring Balance Integration: implemented by this change
+- SITE-031 Coin Terminology Completion — Prize UI: implemented by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -228,6 +229,14 @@ in JST. User-facing currency words are presented as Coin, including Backend
 Product titles and History reason labels, while canonical response objects and
 technical Point identifiers remain unchanged. Paid/bonus product breakdown is
 not displayed, and no mutation is connected.
+
+SITE-031 completes the approved user-facing Coin terminology migration in Prize
+inventory and fulfillment while retaining MIG-062Z alpha.21 unchanged. Fixed
+status, reason, value, action, confirmation, success, and typed-error text use
+Coin terminology. A presentation-only helper derives display text for Backend
+Prize names without mutating the canonical response. Prize allowed actions,
+exchange values, statuses, lifecycle, expiry, and mutation behavior remain
+unchanged and Backend-authoritative.
 
 ## Pending contracts
 
