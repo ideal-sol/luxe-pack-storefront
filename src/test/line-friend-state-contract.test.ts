@@ -8,7 +8,7 @@ import { createExternalIdentityClientTestHarness } from "@/lib/platform/testing"
 
 const origin = "https://storefront.test/platform";
 
-describe("MIG-062W LINE Friend State contract", () => {
+describe("MIG-062Z retained LINE Friend State contract", () => {
   it("publishes getLineFriendState through the generated canonical Client", () => {
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toContain("getLineFriendState");
   });
@@ -27,7 +27,7 @@ describe("MIG-062W LINE Friend State contract", () => {
       expect(result.data).toEqual(fixture);
       expect(result.metadata.status).toBe(200);
       assertBrowserRequestBoundary(harness.mock.requests[0]!, {
-        client_version: "2.0.0-alpha.20",
+        client_version: "2.0.0-alpha.21",
         site_version: "0.1.0",
       });
       expect(JSON.stringify(result.data)).not.toMatch(/provider_subject|access_token|refresh_token|client_secret/i);

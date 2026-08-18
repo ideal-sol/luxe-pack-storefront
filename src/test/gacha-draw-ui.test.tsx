@@ -125,7 +125,7 @@ describe("Gacha Draw execution UI", () => {
       .mockResolvedValueOnce(response(drawResponse));
     renderPanel(client(createDraw));
     confirmOneDraw();
-    expect(await screen.findByText("ポイントが不足しているため抽選できません。")).toBeInTheDocument();
+    expect(await screen.findByText("コインが不足しているため抽選できません。")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "5回" }));
     fireEvent.click(screen.getByRole("button", { name: "5回抽選する" }));
     fireEvent.click(screen.getByRole("button", { name: "抽選を実行する" }));

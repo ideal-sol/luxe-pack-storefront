@@ -59,8 +59,8 @@ function DrawResultContent({ result }: { readonly result: DrawResponse }) {
           <div><dt>選択回数</dt><dd>{number.format(result.requested_count)}回</dd></div>
         )}
         <div><dt>実行回数</dt><dd>{number.format(result.executed_count)}回</dd></div>
-        <div><dt>消費ポイント</dt><dd>{number.format(result.point_cost_total)}pt</dd></div>
-        <div><dt>ポイント還元</dt><dd>{number.format(result.point_back_total)}pt</dd></div>
+        <div><dt>消費コイン</dt><dd>{number.format(result.point_cost_total)} コイン</dd></div>
+        <div><dt>コイン還元</dt><dd>{number.format(result.point_back_total)} コイン</dd></div>
         <div><dt>実行日時</dt><dd>{formatDateTime(result.created_at)}</dd></div>
       </dl>
       <section aria-labelledby="draw-prizes" className="draw-result__prizes">
@@ -69,7 +69,7 @@ function DrawResultContent({ result }: { readonly result: DrawResponse }) {
           <h2 id="draw-prizes">獲得景品</h2>
         </div>
         {result.prize_counts.length === 0 ? (
-          <p className="draw-result__empty">獲得景品はありません。Platformが確定したポイント還元をご確認ください。</p>
+          <p className="draw-result__empty">獲得景品はありません。Platformが確定したコイン還元をご確認ください。</p>
         ) : (
           <div className="draw-result__grid">
             {result.prize_counts.map(({ count, prize, rank }) => {

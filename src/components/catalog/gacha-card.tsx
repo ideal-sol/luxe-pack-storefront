@@ -43,7 +43,7 @@ export function GachaCard({ gacha, priority = false }: { readonly gacha: GachaSu
           </div>
         )}
         <div className="gacha-card__meta">
-          {showPricePoints && <p><strong>{points.format(gacha.price_points)}</strong><span>pt / 1回</span></p>}
+          {showPricePoints && <p><strong>{points.format(gacha.price_points)}</strong><span>コイン / 1回</span></p>}
           <p aria-label={showTotalCount ? `残り${gacha.remaining_count}口、全${gacha.total_count}口` : `残り${gacha.remaining_count}口`}>
             <span>残り</span><strong>{points.format(gacha.remaining_count)}</strong>
             {showTotalCount && <small>/ {points.format(gacha.total_count)}</small>}

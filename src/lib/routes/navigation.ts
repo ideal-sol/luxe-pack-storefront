@@ -13,7 +13,7 @@ export interface NavigationItem {
 
 export const primaryNavigation = [
   { href: "/gachas", icon: "pack", label: "パック" },
-  { href: "/points", icon: "points", label: "ポイント" },
+  { href: "/points", icon: "points", label: "コイン" },
   { href: "/notices", icon: "notice", label: "お知らせ" },
 ] as const satisfies readonly NavigationItem[];
 
@@ -25,7 +25,7 @@ export const mobileNavigation = [
 
 export const accountNavigation = [
   { href: "/mypage", label: "マイページ" },
-  { href: "/mypage/points", label: "ポイント履歴" },
+  { href: "/mypage/points", label: "コイン履歴" },
   { href: "/mypage/draws", label: "ガチャ履歴" },
   { href: "/mypage/prizes", label: "獲得アイテム" },
   { href: "/mypage/line", label: "LINE連携" },
@@ -48,7 +48,7 @@ export const informationNavigation = [
 ] as const;
 
 export const myPageShortcutNavigation = [
-  { ...accountNavigation[1], description: "ポイント情報を確認する", eyebrow: "POINTS" },
+  { ...accountNavigation[1], description: "コイン情報を確認する", eyebrow: "COINS" },
   { ...accountNavigation[2], description: "ガチャの利用履歴を確認する", eyebrow: "DRAW HISTORY" },
   { ...accountNavigation[3], description: "獲得した景品を確認する", eyebrow: "PRIZES" },
 ] as const;

@@ -840,3 +840,26 @@ tray obscuring Footer navigation and terminal content.
   stack.
 - Retain every existing Draw option, CTA, sale, eligibility, and Platform
   boundary without modification.
+
+## SITE-030 — Coin Display / Expiring Balance Integration
+
+- Issue: `#59`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `9f42acd56dcfd3087ddc26d2abdc1699dd7e14f8`
+- Branch: `site/SITE-030-coin-display-expiring-balance`
+
+### Purpose and boundary
+
+Adopt the immutable MIG-062Z `2.0.0-alpha.21` Artifact and expose its canonical
+current-user Wallet total and expiry presentation. Header, Navigation, Point
+pages, Gacha, and Draw use Coin terminology for users while `/points`, Point
+TypeScript identifiers, generated operations, and response fields remain
+unchanged.
+
+The shared balance summary renders every Backend-returned
+`expiring_within_7_days` bucket in order and formats `expires_at` in
+`Asia/Tokyo`. It does not compare the current time, calculate seven days, filter
+or aggregate buckets, rebuild total from paid/free values, or total Ledger
+entries. Product cards use only canonical `grant.total_points` and omit the
+paid/bonus breakdown. Backend title/reason strings receive a currency-word-only
+presentation transform without mutating the canonical response.

@@ -50,7 +50,7 @@ export function SiteHeader() {
           {authenticated ? (
             <>
               <Link href="/mypage">マイページ</Link>
-              <span aria-label="ポイント残高" className="site-header__point">ポイント {wallet.status === "ready" ? pointNumber.format(wallet.balance.total_points) : "--"}</span>
+              <span aria-label="コイン残高" className="site-header__point">コイン {wallet.status === "ready" ? pointNumber.format(wallet.balance.total_points) : "--"}</span>
               <button className="button button--dark button--compact" disabled={loggingOut} onClick={handleLogout} type="button">
                 {loggingOut ? "処理中…" : "ログアウト"}
               </button>
@@ -68,7 +68,7 @@ export function SiteHeader() {
           {unauthenticated && <Link href="/register">新規登録</Link>}
           {unauthenticated && <Link className="site-header__login" href="/login">ログイン</Link>}
           {authenticated && <Link href="/mypage">マイページ</Link>}
-          {authenticated && <Link aria-label="ポイント残高" className="site-header__point site-header__point--mobile" href="/points">ポイント {wallet.status === "ready" ? pointNumber.format(wallet.balance.total_points) : "--"}</Link>}
+          {authenticated && <Link aria-label="コイン残高" className="site-header__point site-header__point--mobile" href="/points">コイン {wallet.status === "ready" ? pointNumber.format(wallet.balance.total_points) : "--"}</Link>}
           {authenticated && (
             <button disabled={loggingOut} onClick={handleLogout} type="button">
               {loggingOut ? "処理中…" : "ログアウト"}

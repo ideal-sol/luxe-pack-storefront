@@ -81,5 +81,6 @@ describe("shared layout", () => {
     render(<MobileBottomNavigation />);
     expect(screen.getByRole("navigation", { name: "モバイルナビゲーション" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /ホーム/ })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: /コイン/ })).toHaveAttribute("href", "/points");
   });
 });

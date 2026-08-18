@@ -123,7 +123,7 @@ export function GachaDrawPanel({
   }
 
   const confirmation = selectedCount
-    ? `${detail.title}を${number.format(selectedCount)}回抽選します。表示上の合計は${number.format(detail.price_points * selectedCount)}ptです。実際の消費額と結果はPlatformの応答を正本とします。`
+    ? `${detail.title}を${number.format(selectedCount)}回抽選します。表示上の合計は${number.format(detail.price_points * selectedCount)}コインです。実際の消費額と結果はPlatformの応答を正本とします。`
     : "抽選回数を選択してください。";
 
   return (
@@ -139,7 +139,7 @@ export function GachaDrawPanel({
       <aside aria-label="抽選オプション" className={`gacha-draw-tray gacha-draw-tray--${presentation.cta.state}`} data-cta-state={presentation.cta.state}>
         <div className="gacha-draw-tray__inner">
           <div className="gacha-draw-tray__summary">
-            <p><span>1回</span><strong>{number.format(detail.price_points)}pt</strong></p>
+            <p><span>1回</span><strong>{number.format(detail.price_points)} コイン</strong></p>
             <p><span>残り</span><strong>{number.format(detail.remaining_count)}</strong><small>/ {number.format(detail.total_count)}</small></p>
             <div aria-label={`残り${detail.remaining_count}口、全${detail.total_count}口`} className="gacha-progress gacha-progress--compact" role="progressbar" aria-valuemax={detail.total_count} aria-valuemin={0} aria-valuenow={detail.remaining_count}>
               <span style={{ width: `${remainingPercentage(detail)}%` }} />
@@ -173,7 +173,7 @@ export function GachaDrawPanel({
               </button>
             )}
             <small id="draw-boundary-note">
-              {!configurationAvailable ? "この環境では抽選接続が設定されていません。" : "抽選条件と消費ポイントは実行時にPlatformが再検証します。"}
+              {!configurationAvailable ? "この環境では抽選接続が設定されていません。" : "抽選条件と消費コインは実行時にPlatformが再検証します。"}
             </small>
             {problem && <p className="gacha-draw-tray__error" role="alert">{problem}</p>}
             {recoveryId && <Link className="gacha-draw-tray__recovery" href={drawResultRoute(recoveryId)}>取得済みの結果を表示する</Link>}

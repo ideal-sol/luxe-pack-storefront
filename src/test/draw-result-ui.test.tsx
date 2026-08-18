@@ -61,7 +61,7 @@ describe("Draw Result recovery UI", () => {
     renderResult(drawClient({ createDraw, getDrawRequest }));
     expect(await screen.findByRole("heading", { level: 1, name: "抽選結果" })).toBeInTheDocument();
     expect(screen.getByText(`${result.executed_count.toLocaleString()}回`)).toBeInTheDocument();
-    expect(screen.getByText(`${result.point_cost_total.toLocaleString()}pt`)).toBeInTheDocument();
+    expect(screen.getByText(`${result.point_cost_total.toLocaleString()} コイン`)).toBeInTheDocument();
     expect(screen.getByText(result.prize_counts[0]!.prize.name)).toBeInTheDocument();
     expect(screen.getByText("PRIZE IMAGE")).toBeInTheDocument();
     expect(getDrawRequest).toHaveBeenCalledWith(result.id);

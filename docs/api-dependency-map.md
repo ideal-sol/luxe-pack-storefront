@@ -1,7 +1,7 @@
 # API dependency map
 
-Storefront operations use the MIG-062W Public OpenAPI and `@oripa/storefront-client`
-`2.0.0-alpha.20`. This map does not invent absent
+Storefront operations use the MIG-062Z Public OpenAPI and `@oripa/storefront-client`
+`2.0.0-alpha.21`. This map does not invent absent
 operations or response shapes.
 
 | Screen | Required capability | Contract state |
@@ -25,9 +25,9 @@ operations or response shapes.
 | LINE friend state | Official Account friend/addition presentation | **Resolved — MIG-062W alpha.20 `getLineFriendState`; SITE-029 implemented without inference from identity presence** |
 | LINE unlink UI | Recent reauthentication completion and safe post-return continuation | **Pending journey contract — mutation exists but no fake CTA is exposed** |
 | Member Profile enrichment | Nickname, Avatar, Rank, or Profile showcase | **Not available and not required by SITE-006 — not displayed** |
-| Points | Canonical current-user wallet balance | **Resolved — MIG-062W alpha.20 retains `getWallet`; SITE-027 implemented** |
-| Point history | Canonical signed ledger history and opaque cursor | **Resolved — MIG-062W alpha.20 retains `listPointLedgerEntries`; SITE-027 implemented** |
-| Points | Backend-ordered product collection, eligibility, reason, and CTA | **Resolved — MIG-062W alpha.20 retains `listPointProducts`; SITE-027 implemented** |
+| Points | Canonical current-user wallet total and expiry buckets | **Resolved — MIG-062Z alpha.21 `getWallet`; SITE-030 renders `expiring_within_7_days` without Frontend expiry decisions** |
+| Point history | Canonical signed ledger history and opaque cursor | **Resolved — MIG-062Z alpha.21 retains `listPointLedgerEntries`; SITE-030 applies Coin terminology only at presentation time** |
+| Points | Backend-ordered product collection, eligibility, reason, and CTA | **Resolved — MIG-062Z alpha.21 retains `listPointProducts`; SITE-030 displays canonical total grant without paid/bonus breakdown** |
 | Points | Point purchase mutation | **Pending Contract** |
 | Draw history | Historical Gacha presentation, occurred time, requested/executed counts, Backend status, stable order, and opaque cursor | **Resolved — MIG-062W alpha.20 retains `listDrawHistory`; SITE-028 implemented** |
 | Notice list | Public notice summaries and cursor | **Resolved — MIG-061U content client** |

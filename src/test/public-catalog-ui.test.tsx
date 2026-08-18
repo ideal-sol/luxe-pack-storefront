@@ -88,6 +88,7 @@ describe("public catalog UI", () => {
     const fixture = displayFixtures.on_sale;
     render(<GachaCard gacha={fixture} />);
     expect(screen.getByText(new Intl.NumberFormat("ja-JP").format(fixture.price_points))).toBeInTheDocument();
+    expect(screen.getByText("コイン / 1回")).toBeInTheDocument();
     expect(screen.getByLabelText(`残り${fixture.remaining_count}口、全${fixture.total_count}口`)).toBeInTheDocument();
     expect(screen.getByLabelText(`抽選済み${fixture.drawn_count}回`)).toBeInTheDocument();
     expect(screen.getByLabelText("販売・対象状態")).toHaveAttribute("data-cta-state", "enabled");

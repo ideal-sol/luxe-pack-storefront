@@ -230,3 +230,14 @@ The UI displays `status.label`, the returned LINE-user decision, and only the
 returned primary action code／label／href. It does not recompute LINE-user status
 or infer actions from flags. Unknown action codes, unsafe external schemes, and
 Identity/Friend-State contradictions suppress actions and fail closed.
+
+SITE-030 adopts MIG-062Z alpha.21's additive current-user Wallet presentation.
+The generated `StorefrontWalletBalance` remains the Point Client boundary and
+supplies canonical `total_points`, `as_of`, and ordered
+`expiring_within_7_days` buckets. `PointBalanceSummary` displays each returned
+`amount` and formats only `expires_at` in `Asia/Tokyo`; it performs no clock
+comparison, seven-day calculation, filtering, sorting, aggregation, or balance
+reconstruction. Product grant presentation reads only `grant.total_points` and
+hides paid/bonus fields. A small presentation-only terminology function converts
+the currency word in Backend title/label strings without mutating response
+objects or renaming Point Domain identifiers.

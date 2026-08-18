@@ -10,7 +10,7 @@ export function presentDrawProblem(error: unknown): DrawProblemPresentation {
   let message: string | null = null;
 
   if (isDrawProblemError(error, "INSUFFICIENT_POINTS")) {
-    message = "ポイントが不足しているため抽選できません。";
+    message = "コインが不足しているため抽選できません。";
   } else if (isDrawProblemError(error, "AUTHENTICATION_REQUIRED")) {
     message = "セッションを確認できません。ログインしてから、もう一度お試しください。";
   } else if (isDrawProblemError(error, "DAILY_DRAW_LIMIT_EXCEEDED")) {

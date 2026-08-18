@@ -5,7 +5,7 @@ import { PointPurchasePage } from "@/components/points/point-purchase-page";
 export default function PointsPage() {
   return (
     <PageContainer className="route-page points-page" size="narrow">
-      <PageTitle eyebrow="POINTS" title="ポイント購入" />
+      <PageTitle eyebrow="COINS" title="コイン購入" />
       <PointPurchasePage />
     </PageContainer>
   );
