@@ -220,3 +220,13 @@ comparison, or Current Gacha lookup. Historical title／image, occurred time,
 requested／executed counts, and `status.label` are displayed directly; cursor
 continuation appends the next returned page and passes the opaque value back
 unchanged.
+
+SITE-029 adopts MIG-062W alpha.20 after verifying that the Public OpenAPI adds
+only the LINE Friend State read path and schemas, existing non-Identity Client
+modules remain unchanged, and Identity changes only by the additive read.
+`/mypage/line` reads `listExternalIdentities` and
+`getLineFriendState` through the same receiver-safe generated Identity Client.
+The UI displays `status.label`, the returned LINE-user decision, and only the
+returned primary action code／label／href. It does not recompute LINE-user status
+or infer actions from flags. Unknown action codes, unsafe external schemes, and
+Identity/Friend-State contradictions suppress actions and fail closed.

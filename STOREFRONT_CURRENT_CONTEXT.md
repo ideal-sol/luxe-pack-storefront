@@ -26,6 +26,7 @@
 - SITE-026 Point purchase page layout: completed
 - SITE-027 Point Read Integration: implemented by this change; purchase and Payment remain pending
 - SITE-028 Current User Gacha History Integration: implemented by this change
+- SITE-029 LINE Friend State Integration: implemented by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -49,12 +50,12 @@ Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.19`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.19`
-- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.19`
-- Source Commit: `2b58e308693fa6e642023e2778274e789da75c09`
-- Artifact authority: `vendor/oripa/MIG-062V/artifact-manifest.json`
-- Public OpenAPI SHA-256: `2b6883e8e51eebe6414f401553e866112b56d6e400b34ca17436433666fa0211`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.20`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.20`
+- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.20`
+- Source Commit: `dfefa07e1a905bba07a56079d02ebfbaabfafc94`
+- Artifact authority: `vendor/oripa/MIG-062W/artifact-manifest.json`
+- Public OpenAPI SHA-256: `9e14fb6ee0a7e09be2a024ef1089a20ddf2ccc5614aa46d29adeeaff6d00fe51`
 
 ## Available contracts
 
@@ -82,6 +83,9 @@ Platform response or Frontend business decision changed.
 - Current external identities and LINE link transaction start through
   `listExternalIdentities` and `startLineIdentityLink`; authorization URL,
   callback validation, and return path remain owned by the generated identity contract
+- Current-user LINE Friend State through generated `getLineFriendState`, preserving
+  Backend status, LINE-user decision, and primary action presentation without
+  deriving eligibility or action state from Identity/Friendship flags
 - Browser-safe Draw mutation through `createBrowserStorefrontDrawClient`,
   caller-owned canonical Idempotency Keys, generated `DrawProblemCode`, and
   completed-result recovery through `getDrawRequest`
@@ -205,6 +209,14 @@ presentation and Backend facts in returned order. Cursor continuation is passed
 through unchanged. No Draw status, Gacha lifecycle, partial execution, ordering,
 or historical presentation rule is implemented in the Frontend.
 
+SITE-029 adopts the verified immutable MIG-062W alpha.20 Artifact and confirms
+that its Public OpenAPI change is additive to alpha.19. `/mypage/line` preserves
+the existing LINE Identity display and link-start transaction while rendering
+the canonical Friend State status and action presentation. `is_line_user` is
+never recomputed; unknown actions, unsafe external schemes, and cross-contract
+inconsistency produce no fallback action. No unlink, friend mutation, Provider,
+OAuth callback, Platform, Payment, or infrastructure change is included.
+
 ## Pending contracts
 
 - Point purchase
@@ -213,7 +225,6 @@ or historical presentation rule is implemented in the Frontend.
   canonical Backend typed error and does not depend on this presentation)
 - Prize inventory canonical status grouping/filter contract
 - Prize expiry lifecycle, grace-period, and automatic-conversion semantics
-- LINE Official Account friend/addition state
 - LINE unlink UI orchestration after recent reauthentication
 - Storefront responsive Browser review and authenticated state-changing Preview journeys
 - Canonical Preview static content for `terms` (and any other required Footer slugs)
@@ -223,4 +234,4 @@ or historical presentation rule is implemented in the Frontend.
 Platform content operations should publish the required canonical static pages
 before a content-complete Preview review. A later task may add canonical Prize
 status grouping and expiry lifecycle presentation; identity work must retain the
-canonical post-reauthentication and friend-state boundaries.
+canonical post-reauthentication boundary.

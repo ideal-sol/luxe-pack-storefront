@@ -5,8 +5,8 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@oripa/site-schema@2.0.0-alpha.19': file:vendor/oripa/MIG-062V/oripa-site-schema-2.0.0-alpha.19.tgz
-  '@oripa/storefront-client@2.0.0-alpha.19': file:vendor/oripa/MIG-062V/oripa-storefront-client-2.0.0-alpha.19.tgz
+  '@oripa/site-schema@2.0.0-alpha.20': file:vendor/oripa/MIG-062W/oripa-site-schema-2.0.0-alpha.20.tgz
+  '@oripa/storefront-client@2.0.0-alpha.20': file:vendor/oripa/MIG-062W/oripa-storefront-client-2.0.0-alpha.20.tgz
   nanoid@<3.3.18: 3.3.18
 
 importers:
@@ -14,8 +14,8 @@ importers:
   .:
     dependencies:
       '@oripa/storefront-client':
-        specifier: file:vendor/oripa/MIG-062V/oripa-storefront-client-2.0.0-alpha.19.tgz
-        version: file:vendor/oripa/MIG-062V/oripa-storefront-client-2.0.0-alpha.19.tgz
+        specifier: file:vendor/oripa/MIG-062W/oripa-storefront-client-2.0.0-alpha.20.tgz
+        version: file:vendor/oripa/MIG-062W/oripa-storefront-client-2.0.0-alpha.20.tgz
       next:
         specifier: 16.3.0
         version: 16.3.0(@babel/core@7.29.7)(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -30,11 +30,11 @@ importers:
         version: 2.17.6
     devDependencies:
       '@oripa/site-schema':
-        specifier: file:vendor/oripa/MIG-062V/oripa-site-schema-2.0.0-alpha.19.tgz
-        version: file:vendor/oripa/MIG-062V/oripa-site-schema-2.0.0-alpha.19.tgz
+        specifier: file:vendor/oripa/MIG-062W/oripa-site-schema-2.0.0-alpha.20.tgz
+        version: file:vendor/oripa/MIG-062W/oripa-site-schema-2.0.0-alpha.20.tgz
       '@oripa/storefront-testkit':
-        specifier: file:vendor/oripa/MIG-062V/oripa-storefront-testkit-2.0.0-alpha.19.tgz
-        version: file:vendor/oripa/MIG-062V/oripa-storefront-testkit-2.0.0-alpha.19.tgz
+        specifier: file:vendor/oripa/MIG-062W/oripa-storefront-testkit-2.0.0-alpha.20.tgz
+        version: file:vendor/oripa/MIG-062W/oripa-storefront-testkit-2.0.0-alpha.20.tgz
       '@tailwindcss/postcss':
         specifier: 4.3.3
         version: 4.3.3
@@ -530,19 +530,19 @@ packages:
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
 
-  '@oripa/site-schema@file:vendor/oripa/MIG-062V/oripa-site-schema-2.0.0-alpha.19.tgz':
-    resolution: {integrity: sha512-QolxvGhgcb1Qt9z4u/PE70IzKjsLtpiU+cmwKZnWBfmwt1oddIZM6TjozI7bHEL2me+C+FWAV3TZeLHx0Fd1DA==, tarball: file:vendor/oripa/MIG-062V/oripa-site-schema-2.0.0-alpha.19.tgz}
-    version: 2.0.0-alpha.19
+  '@oripa/site-schema@file:vendor/oripa/MIG-062W/oripa-site-schema-2.0.0-alpha.20.tgz':
+    resolution: {integrity: sha512-4uJM428cgsp2O3WrD0qAdFEfciCfpdQaEP3ATpU1ZyO0zCPixq+6EJS5KUhCZv4IVrtMW1ERCnHPTdFFQP1baA==, tarball: file:vendor/oripa/MIG-062W/oripa-site-schema-2.0.0-alpha.20.tgz}
+    version: 2.0.0-alpha.20
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-client@file:vendor/oripa/MIG-062V/oripa-storefront-client-2.0.0-alpha.19.tgz':
-    resolution: {integrity: sha512-x1DHUhMBXIFXkxKvTpTe9cCl3FWu94aJ7uoGt4Wg+Om++zLDN2hwuTfcgA8e8i6CprfnjoinfAsEeJfLFuZmzw==, tarball: file:vendor/oripa/MIG-062V/oripa-storefront-client-2.0.0-alpha.19.tgz}
-    version: 2.0.0-alpha.19
+  '@oripa/storefront-client@file:vendor/oripa/MIG-062W/oripa-storefront-client-2.0.0-alpha.20.tgz':
+    resolution: {integrity: sha512-k4vGDLZZXaswp0i1TQYEF7Xu4KelFR+pTgx0ZCRfmCqRYjmYQmYK+WT5sW57R6wFxgfk/JvXs6j/DFH1YSYGpw==, tarball: file:vendor/oripa/MIG-062W/oripa-storefront-client-2.0.0-alpha.20.tgz}
+    version: 2.0.0-alpha.20
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/MIG-062V/oripa-storefront-testkit-2.0.0-alpha.19.tgz':
-    resolution: {integrity: sha512-yUhn/3HcesGuAGXVmOfKafiwr4A4x7ZnJ4qsaIBrqwuMgJfE4dVNtDPU3ydVFfBIUii26rdklqk/eL2wjuuyMA==, tarball: file:vendor/oripa/MIG-062V/oripa-storefront-testkit-2.0.0-alpha.19.tgz}
-    version: 2.0.0-alpha.19
+  '@oripa/storefront-testkit@file:vendor/oripa/MIG-062W/oripa-storefront-testkit-2.0.0-alpha.20.tgz':
+    resolution: {integrity: sha512-wJnC/uemJDxqs4vRTqSifuKmjFlzForNTTq5cnDUdYSvbsZ2KnbFQ5wRMKaYjeaJoWX0ovqKcHV2lCdso7Cqsw==, tarball: file:vendor/oripa/MIG-062W/oripa-storefront-testkit-2.0.0-alpha.20.tgz}
+    version: 2.0.0-alpha.20
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
   '@oxc-project/types@0.143.0':
@@ -3103,17 +3103,17 @@ snapshots:
 
   '@nolyfill/is-core-module@1.0.39': {}
 
-  '@oripa/site-schema@file:vendor/oripa/MIG-062V/oripa-site-schema-2.0.0-alpha.19.tgz':
+  '@oripa/site-schema@file:vendor/oripa/MIG-062W/oripa-site-schema-2.0.0-alpha.20.tgz':
     dependencies:
       ajv: 8.20.0
       semver: 7.8.5
 
-  '@oripa/storefront-client@file:vendor/oripa/MIG-062V/oripa-storefront-client-2.0.0-alpha.19.tgz': {}
+  '@oripa/storefront-client@file:vendor/oripa/MIG-062W/oripa-storefront-client-2.0.0-alpha.20.tgz': {}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/MIG-062V/oripa-storefront-testkit-2.0.0-alpha.19.tgz':
+  '@oripa/storefront-testkit@file:vendor/oripa/MIG-062W/oripa-storefront-testkit-2.0.0-alpha.20.tgz':
     dependencies:
-      '@oripa/site-schema': file:vendor/oripa/MIG-062V/oripa-site-schema-2.0.0-alpha.19.tgz
-      '@oripa/storefront-client': file:vendor/oripa/MIG-062V/oripa-storefront-client-2.0.0-alpha.19.tgz
+      '@oripa/site-schema': file:vendor/oripa/MIG-062W/oripa-site-schema-2.0.0-alpha.20.tgz
+      '@oripa/storefront-client': file:vendor/oripa/MIG-062W/oripa-storefront-client-2.0.0-alpha.20.tgz
 
   '@oxc-project/types@0.143.0': {}
 

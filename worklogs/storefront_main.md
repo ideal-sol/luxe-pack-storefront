@@ -1,5 +1,30 @@
 # Storefront worklog
 
+## SITE-029 — LINE Friend State Integration
+
+- Issue: `#57`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `ff490da5ebaaefd748bba7f320688a99c19b0ec3`
+- Branch: `site/SITE-029-line-friend-state-integration`
+
+### Changes
+
+- Verify and vendor immutable MIG-062W Production Artifact `2.0.0-alpha.20`,
+  retaining historical Artifacts and confirming additive alpha.19 compatibility.
+- Connect `/mypage/line` to generated `getLineFriendState` through the canonical,
+  receiver-safe Identity Client boundary while preserving `listExternalIdentities`
+  and `startLineIdentityLink`.
+- Render Backend-authoritative status, LINE-user decision, and primary action
+  presentation without deriving labels, eligibility, or actions from flags.
+- Fail closed for unknown action codes, unsafe external schemes, and inconsistent
+  Identity/Friend-State reads; no fallback action is invented.
+
+### Not changed
+
+LINE unlink, follow/unfollow, OAuth/callback/webhook/Provider configuration,
+Platform/DB/Migration, Payment, Nginx/DNS/TLS/systemd, and historical Artifacts are
+unchanged. Preview deployment remains separately authorized and read-only.
+
 ## SITE-028 — Current User Gacha History Integration
 
 - Issue: `#55`

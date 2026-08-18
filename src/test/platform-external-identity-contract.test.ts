@@ -15,6 +15,7 @@ describe("MIG-062A LINE external identity contract", () => {
   it("publishes the state, start, callback, reauthentication, and unlink operations", () => {
     for (const operation of [
       "completeLineLogin",
+      "getLineFriendState",
       "listExternalIdentities",
       "startLineIdentityLink",
       "startLineReauthentication",
