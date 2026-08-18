@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import {
   PUBLIC_AUTH_FIXTURE,
   PUBLIC_POINT_BALANCE_FIXTURES,
@@ -78,7 +78,7 @@ describe("SITE-030 Coin Product read presentation", () => {
     renderPoints(pointClient({ products }));
     await screen.findByRole("heading", { name: "スタンダード1000コイン" });
     fireEvent.click(screen.getByRole("tab", { name: "初回ユーザー" }));
-    const headings = screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent);
+    const headings = screen.getAllByRole("article").map((card) => within(card).getByRole("heading", { level: 3 }).textContent);
     expect(headings).toEqual(["先に返された初回商品", "初回限定1000コイン"]);
     expect(screen.getAllByText("購入対象です。")).toHaveLength(2);
   });

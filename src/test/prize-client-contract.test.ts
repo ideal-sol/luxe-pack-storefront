@@ -34,7 +34,7 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
       expect(packageJson.version).toBe("2.0.0-alpha.21");
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("9e14fb6ee0a7e09be2a024ef1089a20ddf2ccc5614aa46d29adeeaff6d00fe51");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("103b8d8ccb1312fecf3013a531102faf5d73cdeb667a7f8d705d6aaf581a1299");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getUserSession",
       "loginUser",

@@ -103,7 +103,7 @@ describe("SITE-030 Coin history and canonical Wallet presentation", () => {
     const wallet = PUBLIC_POINT_BALANCE_FIXTURES.canonical_expiry;
     const getWallet = vi.fn().mockResolvedValue({ data: wallet, metadata });
     const view = renderPointUi(<PointsPage />, pointClient({ getWallet }));
-    expect(await screen.findByLabelText("現在のコイン残高")).toHaveTextContent(wallet.total_points.toString());
+    await waitFor(() => expect(screen.getByLabelText("現在のコイン残高")).toHaveTextContent(wallet.total_points.toString()));
     const expiryList = screen.getByRole("list", { name: "7日以内に失効するコイン一覧" });
     const expiryRows = within(expiryList).getAllByRole("listitem");
     expect(expiryRows).toHaveLength(3);
