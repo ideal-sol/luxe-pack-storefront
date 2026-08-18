@@ -32,13 +32,22 @@ const saleStateLabels: Readonly<Record<PointProductSaleState, string>> = {
 const ineligibleReasonLabels: Readonly<Record<Exclude<PointProductIneligibleReason, null>, string>> = {
   authentication_required: "購入するにはログインが必要です。",
   audience_not_eligible: "この商品の対象条件を満たしていません。",
-  first_purchase_required: "過去にPoint購入があるため、初回ユーザー対象外です。",
+  first_purchase_required: "過去にコイン購入があるため、初回ユーザー対象外です。",
   sale_ended: "この商品の販売は終了しました。",
   sale_not_started: "この商品の販売はまだ開始されていません。",
 };
 
 const number = new Intl.NumberFormat("ja-JP");
 const yen = new Intl.NumberFormat("ja-JP", { currency: "JPY", style: "currency" });
+const jstDateTime = new Intl.DateTimeFormat("ja-JP", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "Asia/Tokyo",
+});
+
+export function presentCoinTerminology(value: string) {
+  return value.split("ポイント").join("コイン");
+}
 
 type ProductState =
   | { readonly status: "loading" }
@@ -52,16 +61,33 @@ export function PointBalanceSummary({ wallet }: { readonly wallet: PointWalletSt
   return (
     <section aria-labelledby="point-balance-title" className="point-balance-summary">
       <div>
-        <p>POINT BALANCE</p>
-        <h2 id="point-balance-title">現在のポイント</h2>
+        <p>COIN BALANCE</p>
+        <h2 id="point-balance-title">現在のコイン</h2>
         {wallet.status === "unauthenticated" && <small>ログイン後に残高を表示します。</small>}
         {wallet.status === "error" && <small>{wallet.problem.message}</small>}
         {wallet.status === "session-error" && <small>Sessionを確認できませんでした。</small>}
-        {wallet.status === "configuration-unavailable" && <small>Point接続が設定されていません。</small>}
+        {wallet.status === "configuration-unavailable" && <small>コイン情報への接続が設定されていません。</small>}
       </div>
-      <output aria-label="現在のポイント残高" aria-live="polite">
+      <output aria-label="現在のコイン残高" aria-live="polite">
         {wallet.status === "loading" ? <span className="point-balance-summary__loading">読み込み中</span> : value}
       </output>
+      {wallet.status === "ready" && (
+        <div className="point-balance-summary__expiry">
+          <h3>7日以内に失効するコイン</h3>
+          {wallet.balance.expiring_within_7_days.length === 0 ? (
+            <p>7日以内に失効するコインはありません。</p>
+          ) : (
+            <ul aria-label="7日以内に失効するコイン一覧">
+              {wallet.balance.expiring_within_7_days.map((bucket, index) => (
+                <li key={`${bucket.expires_at}-${index}`}>
+                  <strong>{number.format(bucket.amount)} コイン</strong>
+                  <time dateTime={bucket.expires_at}>{jstDateTime.format(new Date(bucket.expires_at))}</time>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -104,14 +130,12 @@ function PointProductCard({ product }: { readonly product: PointProduct }) {
   return (
     <PointProductCardShell action={<ProductCta product={product} />} badge={product.audience.label}>
       <div className="point-product-card__heading">
-        <h3>{product.title}</h3>
+        <h3>{presentCoinTerminology(product.title)}</h3>
         <span data-sale-state={product.sale_state}>{saleStateLabels[product.sale_state]}</span>
       </div>
-      <p className="point-product-card__grant"><strong>{number.format(product.grant.total_points)}</strong><span>ポイント</span></p>
+      <p className="point-product-card__grant"><strong>{number.format(product.grant.total_points)}</strong><span>コイン</span></p>
       <dl className="point-product-card__facts">
         <div><dt>販売価格</dt><dd>{yen.format(product.price.amount)}</dd></div>
-        <div><dt>通常ポイント</dt><dd>{number.format(product.grant.paid_points)}</dd></div>
-        <div><dt>ボーナス</dt><dd>+{number.format(product.grant.bonus_points)}</dd></div>
       </dl>
       <p className={`point-product-card__eligibility point-product-card__eligibility--${product.eligible ? "eligible" : "ineligible"}`}>
         {product.eligible ? "購入対象です。" : reason ?? "現在購入できません。"}
@@ -124,13 +148,13 @@ export function PointProductRegion({ products }: { readonly products: readonly P
   return (
     <section aria-labelledby="point-products-title" className="point-product-section">
       <header>
-        <p>POINT PRODUCTS</p>
-        <h2 id="point-products-title">ポイント商品</h2>
+        <p>COIN PRODUCTS</p>
+        <h2 id="point-products-title">コイン商品</h2>
       </header>
       {products.length > 0 ? (
         <div className="point-product-grid">{products.map((product) => <PointProductCard key={product.id} product={product} />)}</div>
       ) : (
-        <CatalogMessage description="現在、このカテゴリーで表示できるポイント商品はありません。" eyebrow="EMPTY" title="ポイント商品はありません" />
+        <CatalogMessage description="現在、このカテゴリーで表示できるコイン商品はありません。" eyebrow="EMPTY" title="コイン商品はありません" />
       )}
     </section>
   );
@@ -193,7 +217,7 @@ export function PointPurchasePage() {
       <PointBalanceSummary wallet={wallet} />
       <section aria-labelledby="point-category-title" className="point-category-section">
         <header><p>PRODUCT CATEGORY</p><h2 id="point-category-title">商品カテゴリー</h2></header>
-        <div aria-label="ポイント商品カテゴリー" className="point-category-tabs" role="tablist">
+        <div aria-label="コイン商品カテゴリー" className="point-category-tabs" role="tablist">
           {pointProductCategories.map((item, index) => (
             <button
               aria-controls="point-product-panel"
@@ -213,10 +237,10 @@ export function PointPurchasePage() {
         </div>
       </section>
       <div aria-labelledby={`point-category-${category}`} id="point-product-panel" role="tabpanel">
-        {displayState.status === "loading" && <CatalogLoading label="ポイント商品を読み込み中" />}
-        {displayState.status === "configuration-unavailable" && <CatalogMessage description="この環境ではPoint商品への接続が設定されていません。" eyebrow="CONFIGURATION" title="ポイント商品を表示できません" />}
-        {displayState.status === "session-error" && <CatalogMessage description="Sessionを確認できませんでした。時間をおいて再度お試しください。" eyebrow="ERROR" title="ポイント商品を表示できません" tone="error" />}
-        {displayState.status === "error" && <CatalogMessage action={() => { setState({ status: "loading" }); setRequestKey((value) => value + 1); }} description={displayState.problem.message} eyebrow="ERROR" title="ポイント商品を取得できませんでした" tone="error" />}
+        {displayState.status === "loading" && <CatalogLoading label="コイン商品を読み込み中" />}
+        {displayState.status === "configuration-unavailable" && <CatalogMessage description="この環境ではコイン商品への接続が設定されていません。" eyebrow="CONFIGURATION" title="コイン商品を表示できません" />}
+        {displayState.status === "session-error" && <CatalogMessage description="Sessionを確認できませんでした。時間をおいて再度お試しください。" eyebrow="ERROR" title="コイン商品を表示できません" tone="error" />}
+        {displayState.status === "error" && <CatalogMessage action={() => { setState({ status: "loading" }); setRequestKey((value) => value + 1); }} description={displayState.problem.message} eyebrow="ERROR" title="コイン商品を取得できませんでした" tone="error" />}
         {displayState.status === "ready" && <PointProductRegion products={products} />}
       </div>
     </div>

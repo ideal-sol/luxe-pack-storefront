@@ -67,7 +67,7 @@ describe("my page top", () => {
     for (const item of [...myPageShortcutNavigation, ...myPageAccountNavigation, ...myPageSupportNavigation]) {
       expect(screen.getByRole("link", { name: new RegExp(item.label) })).toHaveAttribute("href", item.href);
     }
-    expect(screen.getByRole("link", { name: /ポイント履歴/ })).toHaveAttribute("href", "/mypage/points");
+    expect(screen.getByRole("link", { name: /コイン履歴/ })).toHaveAttribute("href", "/mypage/points");
     expect(screen.getByRole("link", { name: /ガチャ履歴/ })).toHaveAttribute("href", "/mypage/draws");
     expect(screen.getByRole("link", { name: /獲得アイテム/ })).toHaveAttribute("href", "/mypage/prizes");
     expect(screen.getByRole("link", { name: /LINE連携/ })).toHaveAttribute("href", "/mypage/line");

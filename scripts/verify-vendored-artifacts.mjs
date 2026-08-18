@@ -4,20 +4,20 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const vendor = path.join(root, "vendor/oripa/MIG-062W");
-const version = "2.0.0-alpha.20";
-const sourceCommit = "dfefa07e1a905bba07a56079d02ebfbaabfafc94";
+const vendor = path.join(root, "vendor/oripa/MIG-062Z");
+const version = "2.0.0-alpha.21";
+const sourceCommit = "1a53ba630264258291cb72e84707e488782cbc08";
 const expected = new Map([
-  ["artifact-manifest.json", "ae598940be23c6ca7a9bcb244100d4815c5e7e836b10c4e840236acff1a60240"],
-  ["oripa-site-schema-2.0.0-alpha.20.tgz", "4381b2ea9d6e8611643e3aade6aa439ac26c0e7d999f4886aeb5190e578b3856"],
-  ["oripa-storefront-client-2.0.0-alpha.20.tgz", "8f0db985566066aaa14830c5df0bb837ed620a0c218050da4d71c87c8e042835"],
-  ["oripa-storefront-testkit-2.0.0-alpha.20.tgz", "3085459dc255079fb1c9f79a51fdb183cea4c701bfb5fb619dd505d627f6d158"],
-  ["public.openapi.json", "9e14fb6ee0a7e09be2a024ef1089a20ddf2ccc5614aa46d29adeeaff6d00fe51"],
+  ["artifact-manifest.json", "ac5f051c6171d40f5ed1a0039b7103a8e5917dd90da871fead91b9f8b1aed115"],
+  ["oripa-site-schema-2.0.0-alpha.21.tgz", "03f78cd1d090e1cc99ae8af9d8b9c381b720c0eab27b8beee34c5567dcc8018b"],
+  ["oripa-storefront-client-2.0.0-alpha.21.tgz", "39622cdfaea2c80f72595396359e67aac7f1de34582ae23ef2de2831d31b594d"],
+  ["oripa-storefront-testkit-2.0.0-alpha.21.tgz", "170d2fbb3b9f12cc4e906120c3d23714d612104c544b44498c81641563376263"],
+  ["public.openapi.json", "103b8d8ccb1312fecf3013a531102faf5d73cdeb667a7f8d705d6aaf581a1299"],
 ]);
 const packageNames = new Map([
-  ["oripa-site-schema-2.0.0-alpha.20.tgz", "@oripa/site-schema"],
-  ["oripa-storefront-client-2.0.0-alpha.20.tgz", "@oripa/storefront-client"],
-  ["oripa-storefront-testkit-2.0.0-alpha.20.tgz", "@oripa/storefront-testkit"],
+  ["oripa-site-schema-2.0.0-alpha.21.tgz", "@oripa/site-schema"],
+  ["oripa-storefront-client-2.0.0-alpha.21.tgz", "@oripa/storefront-client"],
+  ["oripa-storefront-testkit-2.0.0-alpha.21.tgz", "@oripa/storefront-testkit"],
 ]);
 
 function sha256(file) {
@@ -45,7 +45,7 @@ for (const [file, digest] of expected) {
 if (sums.size !== expected.size - 1) throw new Error("SHA256SUMS entry set is invalid");
 
 const manifest = JSON.parse(readFileSync(path.join(vendor, "artifact-manifest.json"), "utf8"));
-if (manifest.task_id !== "MIG-062W" || manifest.source_commit !== sourceCommit) {
+if (manifest.task_id !== "MIG-062Z" || manifest.source_commit !== sourceCommit) {
   throw new Error("Artifact provenance mismatch");
 }
 if (manifest.public_openapi?.file !== "public.openapi.json" || manifest.public_openapi.sha256 !== expected.get("public.openapi.json")) {
@@ -91,13 +91,14 @@ for (const [archive, packageName] of packageNames) {
   }
 }
 
-const clientArchive = path.join(vendor, "oripa-storefront-client-2.0.0-alpha.20.tgz");
-const previousClientArchive = path.join(root, "vendor/oripa/MIG-062V/oripa-storefront-client-2.0.0-alpha.19.tgz");
+const clientArchive = path.join(vendor, "oripa-storefront-client-2.0.0-alpha.21.tgz");
+const previousClientArchive = path.join(root, "vendor/oripa/MIG-062W/oripa-storefront-client-2.0.0-alpha.20.tgz");
 const productContract = execFileSync("tar", ["-xOf", clientArchive, "package/dist/point-products.d.ts"], { encoding: "utf8" });
 const currentUserPointContract = execFileSync("tar", ["-xOf", clientArchive, "package/dist/points.d.ts"], { encoding: "utf8" });
 if (!productContract.includes("createStorefrontPointProductClient") ||
     !productContract.includes("listPointProducts") ||
     !currentUserPointContract.includes("createStorefrontCurrentUserPointClient") ||
+    !currentUserPointContract.includes('StorefrontWalletBalance = Schemas["CurrentUserWalletBalance"]') ||
     !currentUserPointContract.includes("getWallet") ||
     !currentUserPointContract.includes("listPointLedgerEntries")) {
   throw new Error("Generated Point Client contract is incomplete");
@@ -108,8 +109,9 @@ for (const contractFile of [
   "content-contact.d.ts", "content-contact.js",
   "draw.d.ts", "draw.js",
   "errors.d.ts", "errors.js",
+  "identity.d.ts", "identity.js",
   "point-products.d.ts", "point-products.js",
-  "points.d.ts", "points.js",
+  "points.js",
   "prize-shipping.d.ts", "prize-shipping.js",
   "server.d.ts", "server.js",
   "transport.d.ts", "transport.js",
@@ -117,17 +119,18 @@ for (const contractFile of [
 ]) {
   const previous = execFileSync("tar", ["-xOf", previousClientArchive, `package/dist/${contractFile}`]);
   const current = execFileSync("tar", ["-xOf", clientArchive, `package/dist/${contractFile}`]);
-  if (!previous.equals(current)) throw new Error(`alpha.19 Client contract changed: ${contractFile}`);
+  if (!previous.equals(current)) throw new Error(`alpha.20 Client contract changed: ${contractFile}`);
 }
-for (const contractFile of ["identity.d.ts", "identity.js"]) {
-  const previous = execFileSync("tar", ["-xOf", previousClientArchive, `package/dist/${contractFile}`], { encoding: "utf8" });
-  const current = execFileSync("tar", ["-xOf", clientArchive, `package/dist/${contractFile}`], { encoding: "utf8" });
-  const addition = contractFile.endsWith(".d.ts")
-    ? "    getLineFriendState(): Promise<StorefrontResponse<Schemas[\"LineFriendStatePresentation\"]>>;\n"
-    : "        getLineFriendState: () => transport.request({ path: \"/me/line-friend-state\" }),\n";
-  if (!current.includes(addition) || current.replace(addition, "") !== previous) {
-    throw new Error(`Identity Client change is not additive: ${contractFile}`);
-  }
+const previousPointContract = execFileSync("tar", ["-xOf", previousClientArchive, "package/dist/points.d.ts"], { encoding: "utf8" });
+const normalizedPointContract = currentUserPointContract
+  .replace('export type StorefrontWalletBalance = Schemas["CurrentUserWalletBalance"];\n', "")
+  .replace("Promise<StorefrontResponse<StorefrontWalletBalance>>", 'Promise<StorefrontResponse<Schemas["WalletBalance"]>>');
+if (normalizedPointContract !== previousPointContract) {
+  throw new Error("alpha.21 Point Client change is not the declared additive Wallet presentation");
+}
+const constants = execFileSync("tar", ["-xOf", clientArchive, "package/dist/constants.js"], { encoding: "utf8" });
+if (!constants.includes(`STOREFRONT_CLIENT_VERSION = "${version}"`)) {
+  throw new Error("Storefront Client runtime version mismatch");
 }
 const drawContract = execFileSync("tar", ["-xOf", clientArchive, "package/dist/draw.d.ts"], { encoding: "utf8" });
 for (const declaration of ["listDrawHistory", "DrawHistoryQuery", "DrawHistoryReadProblemCode"]) {
@@ -138,7 +141,7 @@ for (const declaration of ["listExternalIdentities", "getLineFriendState", "star
   if (!identityContract.includes(declaration)) throw new Error(`Identity Client contract is missing: ${declaration}`);
 }
 
-const previousOpenApi = JSON.parse(readFileSync(path.join(root, "vendor/oripa/MIG-062V/public.openapi.json"), "utf8"));
+const previousOpenApi = JSON.parse(readFileSync(path.join(root, "vendor/oripa/MIG-062W/public.openapi.json"), "utf8"));
 const currentOpenApi = JSON.parse(readFileSync(path.join(vendor, "public.openapi.json"), "utf8"));
 for (const [section, previousEntries, currentEntries] of [
   ["paths", previousOpenApi.paths, currentOpenApi.paths],
@@ -147,20 +150,38 @@ for (const [section, previousEntries, currentEntries] of [
     previousOpenApi.components?.[section],
     currentOpenApi.components?.[section],
   ]),
-]) {
+  ]) {
   for (const [key, value] of Object.entries(previousEntries ?? {})) {
+    if (section === "paths" && key === "/me/wallet") continue;
     if (JSON.stringify(currentEntries?.[key]) !== JSON.stringify(value)) {
-      throw new Error(`alpha.19 OpenAPI ${section} entry changed or was removed: ${key}`);
+      throw new Error(`alpha.20 OpenAPI ${section} entry changed or was removed: ${key}`);
     }
   }
 }
-if (currentOpenApi.paths?.["/me/line-friend-state"]?.get?.operationId !== "getLineFriendState" ||
-    currentOpenApi.components?.schemas?.LineFriendStatePresentation === undefined) {
-  throw new Error("LINE Friend State OpenAPI contract is missing");
+const walletOperation = structuredClone(previousOpenApi.paths?.["/me/wallet"]);
+walletOperation.get.responses["200"].content["application/json"].schema.$ref = "#/components/schemas/CurrentUserWalletBalance";
+if (JSON.stringify(currentOpenApi.paths?.["/me/wallet"]) !== JSON.stringify(walletOperation)) {
+  throw new Error("getWallet OpenAPI change is not limited to its canonical response schema");
+}
+const newSchemaNames = Object.keys(currentOpenApi.components?.schemas ?? {})
+  .filter((name) => previousOpenApi.components?.schemas?.[name] === undefined)
+  .sort();
+if (JSON.stringify(newSchemaNames) !== JSON.stringify(["CurrentUserWalletBalance", "WalletExpiryBucket"])) {
+  throw new Error("alpha.21 OpenAPI contains unexpected schema additions");
+}
+const walletSchema = currentOpenApi.components.schemas.CurrentUserWalletBalance;
+const expirySchema = currentOpenApi.components.schemas.WalletExpiryBucket;
+if (JSON.stringify(walletSchema.required) !== JSON.stringify(["paid_points", "free_points", "total_points", "as_of", "expiring_within_7_days"]) ||
+    walletSchema.properties?.expiring_within_7_days?.type !== "array" ||
+    walletSchema.properties?.expiring_within_7_days?.items?.$ref !== "#/components/schemas/WalletExpiryBucket" ||
+    JSON.stringify(expirySchema.required) !== JSON.stringify(["expires_at", "amount"]) ||
+    expirySchema.properties?.expires_at?.format !== "date-time" ||
+    expirySchema.properties?.amount?.type !== "integer") {
+  throw new Error("Canonical Wallet expiry schema mismatch");
 }
 
-const testkitArchive = path.join(vendor, "oripa-storefront-testkit-2.0.0-alpha.20.tgz");
-const previousTestkitArchive = path.join(root, "vendor/oripa/MIG-062V/oripa-storefront-testkit-2.0.0-alpha.19.tgz");
+const testkitArchive = path.join(vendor, "oripa-storefront-testkit-2.0.0-alpha.21.tgz");
+const previousTestkitArchive = path.join(root, "vendor/oripa/MIG-062W/oripa-storefront-testkit-2.0.0-alpha.20.tgz");
 for (const contractFile of [
   "assertions.d.ts", "assertions.js",
   "errors.d.ts", "errors.js",
@@ -168,7 +189,7 @@ for (const contractFile of [
 ]) {
   const previous = execFileSync("tar", ["-xOf", previousTestkitArchive, `package/dist/${contractFile}`]);
   const current = execFileSync("tar", ["-xOf", testkitArchive, `package/dist/${contractFile}`]);
-  if (!previous.equals(current)) throw new Error(`alpha.19 Testkit contract changed: ${contractFile}`);
+  if (!previous.equals(current)) throw new Error(`alpha.20 Testkit contract changed: ${contractFile}`);
 }
 const testkitFixtures = execFileSync("tar", ["-xOf", testkitArchive, "package/dist/fixtures.d.ts"], { encoding: "utf8" });
 for (const fixture of [
@@ -183,9 +204,17 @@ for (const fixture of [
 ]) {
   if (!testkitFixtures.includes(fixture)) throw new Error(`Required Testkit fixture is missing: ${fixture}`);
 }
+for (const fixture of ["canonical_expiry", "seven_day_boundary", "timestamp_separation", "zero"]) {
+  if (!testkitFixtures.includes(`readonly ${fixture}:`)) throw new Error(`Wallet expiry Testkit fixture is missing: ${fixture}`);
+}
+if (!testkitFixtures.includes("readonly expiring_within_7_days: []") ||
+    !testkitFixtures.includes('readonly expires_at: "2026-08-21T00:00:00Z"') ||
+    !testkitFixtures.includes("readonly amount: 60")) {
+  throw new Error("Wallet expiry Testkit shape is incomplete");
+}
 
-const siteSchemaArchive = path.join(vendor, "oripa-site-schema-2.0.0-alpha.20.tgz");
-const previousSiteSchemaArchive = path.join(root, "vendor/oripa/MIG-062V/oripa-site-schema-2.0.0-alpha.19.tgz");
+const siteSchemaArchive = path.join(vendor, "oripa-site-schema-2.0.0-alpha.21.tgz");
+const previousSiteSchemaArchive = path.join(root, "vendor/oripa/MIG-062W/oripa-site-schema-2.0.0-alpha.20.tgz");
 const siteSchemaEntries = execFileSync("tar", ["-tzf", previousSiteSchemaArchive], { encoding: "utf8" })
   .trim()
   .split("\n")
@@ -193,7 +222,7 @@ const siteSchemaEntries = execFileSync("tar", ["-tzf", previousSiteSchemaArchive
 for (const entry of siteSchemaEntries) {
   const previous = execFileSync("tar", ["-xOf", previousSiteSchemaArchive, entry]);
   const current = execFileSync("tar", ["-xOf", siteSchemaArchive, entry]);
-  if (!previous.equals(current)) throw new Error(`alpha.19 Site Schema contract changed: ${entry}`);
+  if (!previous.equals(current)) throw new Error(`alpha.20 Site Schema contract changed: ${entry}`);
 }
 
 for (const file of ["package.json", "pnpm-lock.yaml"]) {
@@ -201,8 +230,8 @@ for (const file of ["package.json", "pnpm-lock.yaml"]) {
   if (/file:(?:\/var\/|\/home\/|[A-Za-z]:\\)/.test(content)) {
     throw new Error(`Server-specific file dependency: ${file}`);
   }
-  if (!content.includes("vendor/oripa/MIG-062W") || content.includes("file:vendor/oripa/MIG-062V")) {
-    throw new Error(`Production Artifact dependency is not pinned to MIG-062W: ${file}`);
+  if (!content.includes("vendor/oripa/MIG-062Z") || content.includes("file:vendor/oripa/MIG-062W")) {
+    throw new Error(`Production Artifact dependency is not pinned to MIG-062Z: ${file}`);
   }
 }
 

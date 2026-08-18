@@ -62,7 +62,7 @@ describe("gacha detail UI", () => {
     renderDetail(publicClient({ getGachaPresentation }));
 
     expect(await screen.findByRole("heading", { level: 1, name: detail.title })).toBeInTheDocument();
-    expect(screen.getAllByText(`${detail.price_points}pt`)).toHaveLength(2);
+    expect(screen.getAllByText(`${detail.price_points} コイン`)).toHaveLength(2);
     expect(screen.getByText(`${detail.remaining_count.toLocaleString()} / ${detail.total_count.toLocaleString()}`)).toBeInTheDocument();
     expect(screen.getByText(detail.category.name)).toBeInTheDocument();
     expect(screen.getByText(`#${detail.tags[0]!.name}`)).toBeInTheDocument();

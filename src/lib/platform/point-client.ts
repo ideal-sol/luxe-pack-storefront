@@ -7,6 +7,7 @@ import type {
   StorefrontCurrentUserPointClient,
   StorefrontPointProductClient,
   StorefrontTransport,
+  StorefrontWalletBalance,
 } from "@oripa/storefront-client";
 import { createBrowserPlatformTransport, type BrowserClientOverrides } from "./browser-client";
 import type { PlatformRuntimeConfiguration } from "./runtime-configuration";
@@ -20,7 +21,7 @@ export type PointProductAudienceCode = Schemas["PointProductAudienceCode"];
 export type PointProductCollection = Schemas["PointProductCollection"];
 export type PointProductIneligibleReason = Schemas["PointProductIneligibleReason"];
 export type PointProductSaleState = Schemas["PointProductSaleState"];
-export type PointWalletBalance = Schemas["WalletBalance"];
+export type PointWalletBalance = StorefrontWalletBalance;
 
 export type PointClientAdapter = Pick<
   StorefrontCurrentUserPointClient,

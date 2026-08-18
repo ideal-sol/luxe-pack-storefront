@@ -27,6 +27,7 @@
 - SITE-027 Point Read Integration: implemented by this change; purchase and Payment remain pending
 - SITE-028 Current User Gacha History Integration: implemented by this change
 - SITE-029 LINE Friend State Integration: implemented by this change
+- SITE-030 Coin Display / Expiring Balance Integration: implemented by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -50,12 +51,12 @@ Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.20`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.20`
-- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.20`
-- Source Commit: `dfefa07e1a905bba07a56079d02ebfbaabfafc94`
-- Artifact authority: `vendor/oripa/MIG-062W/artifact-manifest.json`
-- Public OpenAPI SHA-256: `9e14fb6ee0a7e09be2a024ef1089a20ddf2ccc5614aa46d29adeeaff6d00fe51`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.21`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.21`
+- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.21`
+- Source Commit: `1a53ba630264258291cb72e84707e488782cbc08`
+- Artifact authority: `vendor/oripa/MIG-062Z/artifact-manifest.json`
+- Public OpenAPI SHA-256: `103b8d8ccb1312fecf3013a531102faf5d73cdeb667a7f8d705d6aaf581a1299`
 
 ## Available contracts
 
@@ -95,7 +96,8 @@ Platform response or Frontend business decision changed.
   problems and mutation retry semantics remain the authority; successful
   mutations reconcile Prize, Shipping, and Address reads.
 - Current-user Point wallet balance through generated `getWallet`; all balance
-  surfaces share this canonical read and never total Ledger entries
+  surfaces share its canonical total, `/points` and `/mypage/points` render each
+  Backend expiry bucket, and no surface totals Ledger entries or derives expiry
 - Point products through generated `listPointProducts`, preserving Backend
   ordering, audience, sale, eligibility, reason, and CTA presentation
 - Current-user Point history through generated `listPointLedgerEntries`,
@@ -216,6 +218,16 @@ the canonical Friend State status and action presentation. `is_line_user` is
 never recomputed; unknown actions, unsafe external schemes, and cross-contract
 inconsistency produce no fallback action. No unlink, friend mutation, Provider,
 OAuth callback, Platform, Payment, or infrastructure change is included.
+
+SITE-030 adopts the verified immutable MIG-062Z alpha.21 Artifact after confirming
+that alpha.20's Auth／Session／Catalog／Content／Gacha／Draw／Prize／Point Product／
+Point History／LINE contracts remain present. Header and shared balance surfaces
+use canonical `total_points`; the two Point pages render the returned
+`expiring_within_7_days` array without expiry decisions and format `expires_at`
+in JST. User-facing currency words are presented as Coin, including Backend
+Product titles and History reason labels, while canonical response objects and
+technical Point identifiers remain unchanged. Paid/bonus product breakdown is
+not displayed, and no mutation is connected.
 
 ## Pending contracts
 

@@ -12,13 +12,13 @@ import { createPointClientTestHarness } from "@/lib/platform/testing";
 
 const origin = "https://storefront.test/platform";
 
-describe("MIG-062W retained current-user Point read contract", () => {
-  it("pins all Production packages to alpha.20 and retains generated Point operations", () => {
+describe("MIG-062Z canonical current-user Wallet contract", () => {
+  it("pins all Production packages to alpha.21 and retains generated Point operations", () => {
     for (const packageName of ["site-schema", "storefront-client", "storefront-testkit"]) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
-      expect(packageJson.version).toBe("2.0.0-alpha.20");
+      expect(packageJson.version).toBe("2.0.0-alpha.21");
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("9e14fb6ee0a7e09be2a024ef1089a20ddf2ccc5614aa46d29adeeaff6d00fe51");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("103b8d8ccb1312fecf3013a531102faf5d73cdeb667a7f8d705d6aaf581a1299");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getWallet",
       "listPointLedgerEntries",
@@ -26,11 +26,22 @@ describe("MIG-062W retained current-user Point read contract", () => {
     ]));
   });
 
+  it("preserves the canonical total and every Backend expiry bucket", async () => {
+    const harness = createPointClientTestHarness();
+    const wallet = PUBLIC_POINT_BALANCE_FIXTURES.canonical_expiry;
+    harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/wallet` }, { body: wallet, status: 200 });
+    const { data } = await harness.client.getWallet();
+    expect(data.total_points).toBe(wallet.total_points);
+    expect(data.expiring_within_7_days).toEqual(wallet.expiring_within_7_days);
+    expect(data.expiring_within_7_days).toHaveLength(3);
+    harness.mock.assertExhausted();
+  });
+
   it.each([PUBLIC_POINT_BALANCE_FIXTURES.positive, PUBLIC_POINT_BALANCE_FIXTURES.zero])("reads canonical wallet balance %#", async (balance) => {
     const harness = createPointClientTestHarness();
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/wallet` }, { body: balance, status: 200 });
     await expect(harness.client.getWallet()).resolves.toMatchObject({ data: balance });
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.20", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.21", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 

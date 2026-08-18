@@ -147,7 +147,7 @@ function DetailContent({ detail, presentation }: { readonly detail: GachaDetail;
           <h1>{detail.title}</h1>
           <div className="gacha-detail__tags">{detail.tags.map((tag) => <span key={tag.id}>#{tag.name}</span>)}</div>
           <dl className="gacha-detail__facts">
-            <div><dt>1回</dt><dd>{number.format(detail.price_points)}pt</dd></div>
+            <div><dt>1回</dt><dd>{number.format(detail.price_points)} コイン</dd></div>
             <div><dt>残り口数</dt><dd>{number.format(detail.remaining_count)} / {number.format(detail.total_count)}</dd></div>
             <div><dt>販売開始</dt><dd>{formatDateTime(detail.publish_start_at)}</dd></div>
             {publishEnd && <div><dt>販売終了予定</dt><dd>{publishEnd}</dd></div>}

@@ -38,25 +38,31 @@ function renderPoints(client: PointClientAdapter, session: AuthSession = PUBLIC_
   );
 }
 
-describe("SITE-027 Point purchase read presentation", () => {
-  it("renders the canonical positive balance and Backend product presentation", async () => {
+describe("SITE-030 Coin Product read presentation", () => {
+  it("renders canonical totals and converts only the Backend Product currency terminology", async () => {
     const client = pointClient();
-    renderPoints(client);
+    const originalTitle = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0].title;
+    const view = renderPoints(client);
 
-    await waitFor(() => expect(screen.getByLabelText("現在のポイント残高")).toHaveTextContent("1,000"));
-    expect(await screen.findByRole("heading", { name: "スタンダード1000ポイント" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText("現在のコイン残高")).toHaveTextContent("1,000"));
+    expect(await screen.findByRole("heading", { name: "スタンダード1000コイン" })).toBeInTheDocument();
     expect(screen.getByText("1,100")).toBeInTheDocument();
+    expect(screen.getByText("コイン", { selector: ".point-product-card__grant span" })).toBeInTheDocument();
+    expect(screen.queryByText("通常ポイント")).not.toBeInTheDocument();
+    expect(screen.queryByText("ボーナス")).not.toBeInTheDocument();
     expect(screen.getByText("購入対象です。")).toBeInTheDocument();
     expect(screen.getByText("購入可能")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "購入手続きは準備中" })).toBeDisabled();
     expect(client.getWallet).toHaveBeenCalledOnce();
     expect(client.listPointProducts).toHaveBeenCalledOnce();
+    expect(PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0].title).toBe(originalTitle);
+    expect(view.container).not.toHaveTextContent(/ポイント|\bpt\b/i);
   });
 
   it("renders zero balance and a canonical empty product collection", async () => {
     renderPoints(pointClient({ balance: PUBLIC_POINT_BALANCE_FIXTURES.zero, products: PUBLIC_POINT_PRODUCT_FIXTURES.anonymous_empty }));
-    await waitFor(() => expect(screen.getByLabelText("現在のポイント残高")).toHaveTextContent("0"));
-    expect(await screen.findByText("ポイント商品はありません")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText("現在のコイン残高")).toHaveTextContent("0"));
+    expect(await screen.findByText("コイン商品はありません")).toBeInTheDocument();
     expect(screen.queryByRole("article")).not.toBeInTheDocument();
   });
 
@@ -70,17 +76,17 @@ describe("SITE-027 Point purchase read presentation", () => {
       ],
     } as unknown as typeof PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible;
     renderPoints(pointClient({ products }));
-    await screen.findByRole("heading", { name: "スタンダード1000ポイント" });
+    await screen.findByRole("heading", { name: "スタンダード1000コイン" });
     fireEvent.click(screen.getByRole("tab", { name: "初回ユーザー" }));
     const headings = screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent);
-    expect(headings).toEqual(["先に返された初回商品", "初回限定1000ポイント"]);
+    expect(headings).toEqual(["先に返された初回商品", "初回限定1000コイン"]);
     expect(screen.getAllByText("購入対象です。")).toHaveLength(2);
   });
 
   it("shows the Backend first-purchase ineligible reason without enabling purchase", async () => {
     renderPoints(pointClient({ products: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_after_first_purchase }));
     fireEvent.click(await screen.findByRole("tab", { name: "初回ユーザー" }));
-    expect(await screen.findByText("過去にPoint購入があるため、初回ユーザー対象外です。")).toBeInTheDocument();
+    expect(await screen.findByText("過去にコイン購入があるため、初回ユーザー対象外です。")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "現在購入できません" })).toBeDisabled();
   });
 
@@ -89,7 +95,7 @@ describe("SITE-027 Point purchase read presentation", () => {
     client.listPointProducts = vi.fn().mockResolvedValue({ data: PUBLIC_POINT_PRODUCT_FIXTURES.anonymous, metadata });
     renderPoints(client, PUBLIC_AUTH_FIXTURE.anonymous_session);
     expect(await screen.findByRole("link", { name: "ログインして確認" })).toHaveAttribute("href", "/login");
-    expect(screen.getByLabelText("現在のポイント残高")).toHaveTextContent("--");
+    expect(screen.getByLabelText("現在のコイン残高")).toHaveTextContent("--");
     await waitFor(() => expect(client.getWallet).not.toHaveBeenCalled());
   });
 });

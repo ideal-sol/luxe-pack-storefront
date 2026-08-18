@@ -123,8 +123,8 @@ describe("authentication UI", () => {
     const authClient = client({ getCurrentSession: vi.fn().mockResolvedValue(response(authenticated)), logout });
     renderSession(<SiteHeader />, authClient);
     await screen.findAllByText("マイページ");
-    expect(screen.getAllByLabelText("ポイント残高")).toHaveLength(2);
-    expect(screen.getAllByLabelText("ポイント残高")[0]).toHaveTextContent("--");
+    expect(screen.getAllByLabelText("コイン残高")).toHaveLength(2);
+    expect(screen.getAllByLabelText("コイン残高")[0]).toHaveTextContent("--");
     const logoutButtons = screen.getAllByRole("button", { name: "ログアウト" });
     fireEvent.click(logoutButtons[0]!);
     fireEvent.click(logoutButtons[0]!);

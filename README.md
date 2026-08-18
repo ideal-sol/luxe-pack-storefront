@@ -15,8 +15,8 @@ Required runtime versions are Node `22.22.3` and pnpm `10.12.1`.
 
 ## Platform client
 
-The current MIG-062W Production artifacts are vendored at
-`vendor/oripa/MIG-062W` and fixed to version `2.0.0-alpha.20` using
+The current MIG-062Z Production artifacts are vendored at
+`vendor/oripa/MIG-062Z` and fixed to version `2.0.0-alpha.21` using
 Repository-relative `file:` dependencies. Historical bundles remain immutable. Run
 `pnpm artifact:check` to verify the Manifest, SHA-256 values, package identities,
 archive paths, Lifecycle Script boundary, and absence of server-specific file
@@ -78,6 +78,15 @@ and primary action presentation remain authoritative. The Storefront does not
 derive eligibility, status labels, or actions from identity or friendship flags;
 unknown actions and cross-contract inconsistencies fail closed without a fallback
 journey.
+
+MIG-062Z extends the generated current-user Wallet read with the Backend-owned
+`expiring_within_7_days` presentation. Header, `/points`, and `/mypage/points`
+use the canonical `total_points`; the two pages also render every returned
+expiry bucket and format its `expires_at` in `Asia/Tokyo`. The Storefront does
+not rebuild totals, compare expiry timestamps, apply a seven-day window, filter
+or aggregate buckets, or derive a balance from Ledger entries. User-facing
+currency terminology is presented as Coin while canonical Point identifiers,
+routes, operations, and response fields remain unchanged.
 
 MIG-062J keeps large Draw options fully Backend-authoritative. The detail UI
 renders every returned `allowed_draw_counts` entry, including optional 100／1000,
