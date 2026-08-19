@@ -60,8 +60,31 @@ if (!purchase.includes("wallet.balance.total_points") || !purchase.includes("pro
 if (purchase.includes("product.grant.paid_points") || purchase.includes("product.grant.bonus_points")) {
   throw new Error("Point Product paid/bonus breakdown entered user presentation");
 }
+for (const required of [
+  "product.limited_bonus",
+  "limitedBonus?.presentation.is_visible",
+  "limitedBonus.presentation.label",
+  "limitedBonus.presentation.amount_text",
+  "limitedBonus.state",
+  "limitedBonus.starts_at",
+  "limitedBonus.ends_at",
+  "data-limited-bonus-state",
+]) {
+  if (!purchase.includes(required)) throw new Error(`Canonical Limited Bonus presentation is missing: ${required}`);
+}
+for (const forbidden of [
+  "limitedBonus.amount",
+  "limitedBonus.as_of",
+  "limitedBonus.state ===",
+  "switch (limitedBonus.state)",
+  "product.grant.total_points +",
+  "+ product.grant.total_points",
+]) {
+  if (purchase.includes(forbidden)) throw new Error(`Frontend Limited Bonus decision or calculation detected: ${forbidden}`);
+}
 for (const forbidden of [
   "Date.now(",
+  ".getTime(",
   "setDate(",
   "setUTCDate(",
   "expiring_within_7_days.filter",

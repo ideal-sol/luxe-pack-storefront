@@ -125,8 +125,31 @@ function ProductCta({ product }: { readonly product: PointProduct }) {
   return <button className="button button--ghost" data-platform-cta-state={product.cta.state} disabled type="button">現在購入できません</button>;
 }
 
+function LimitedBonusPresentation({ limitedBonus }: { readonly limitedBonus: NonNullable<PointProduct["limited_bonus"]> }) {
+  if (!limitedBonus.presentation.is_visible) return null;
+  return (
+    <section
+      aria-label={presentCoinTerminology(limitedBonus.presentation.label)}
+      className="point-product-card__limited-bonus"
+      data-limited-bonus-state={limitedBonus.state}
+    >
+      <p>
+        <span>{presentCoinTerminology(limitedBonus.presentation.label)}</span>
+        {limitedBonus.presentation.amount_text ? <strong>{presentCoinTerminology(limitedBonus.presentation.amount_text)}</strong> : null}
+      </p>
+      {(limitedBonus.starts_at || limitedBonus.ends_at) && (
+        <dl aria-label={`${presentCoinTerminology(limitedBonus.presentation.label)}の期間`}>
+          {limitedBonus.starts_at && <div><dt>開始</dt><dd><time dateTime={limitedBonus.starts_at}>{jstDateTime.format(new Date(limitedBonus.starts_at))}</time></dd></div>}
+          {limitedBonus.ends_at && <div><dt>終了</dt><dd><time dateTime={limitedBonus.ends_at}>{jstDateTime.format(new Date(limitedBonus.ends_at))}</time></dd></div>}
+        </dl>
+      )}
+    </section>
+  );
+}
+
 function PointProductCard({ product }: { readonly product: PointProduct }) {
   const reason = product.ineligible_reason ? ineligibleReasonLabels[product.ineligible_reason] : null;
+  const limitedBonus = product.limited_bonus;
   return (
     <PointProductCardShell action={<ProductCta product={product} />} badge={product.audience.label}>
       <div className="point-product-card__heading">
@@ -134,6 +157,7 @@ function PointProductCard({ product }: { readonly product: PointProduct }) {
         <span data-sale-state={product.sale_state}>{saleStateLabels[product.sale_state]}</span>
       </div>
       <p className="point-product-card__grant"><strong>{number.format(product.grant.total_points)}</strong><span>コイン</span></p>
+      {limitedBonus?.presentation.is_visible ? <LimitedBonusPresentation limitedBonus={limitedBonus} /> : null}
       <dl className="point-product-card__facts">
         <div><dt>販売価格</dt><dd>{yen.format(product.price.amount)}</dd></div>
       </dl>
