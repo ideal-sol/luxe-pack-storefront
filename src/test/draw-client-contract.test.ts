@@ -27,12 +27,12 @@ function enqueueCsrf(harness: ReturnType<typeof createDrawClientTestHarness>) {
 }
 
 describe("MIG-062Z retained browser Draw and current-user history contract", () => {
-  it("pins alpha.21 and retains every Storefront operation used before the upgrade", () => {
+  it("pins alpha.23 and retains every Storefront operation used before the upgrade", () => {
     for (const packageName of ["site-schema", "storefront-client", "storefront-testkit"]) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
-      expect(packageJson.version).toBe("2.0.0-alpha.21");
+      expect(packageJson.version).toBe("2.0.0-alpha.23");
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("103b8d8ccb1312fecf3013a531102faf5d73cdeb667a7f8d705d6aaf581a1299");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("5c735fe26514d5bfb47b3515ead108bf473fd5e1f81e0936b7e1986290904043");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getUserSession", "loginUser", "registerUser",
       "listGachas", "getGachaBySlug", "getGachaPresentation",
@@ -59,7 +59,7 @@ describe("MIG-062Z retained browser Draw and current-user history contract", () 
     expect(harness.mock.requests[1]?.credentials).toBe("include");
     expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBe(key);
     expect(harness.mock.requests[1]?.headers["x-xsrf-token"]).toBe(csrf);
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.21", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.23", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -123,7 +123,7 @@ describe("MIG-062Z retained browser Draw and current-user history contract", () 
       { code: "completed", label: "完了" },
     ]);
     expect(harness.mock.requests[0]?.method).toBe("GET");
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.21", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.23", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 

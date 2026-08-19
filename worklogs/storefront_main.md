@@ -883,3 +883,26 @@ MIG-062Z `2.0.0-alpha.21` remains pinned without Artifact changes. The task does
 not change or recompute Prize allowed actions, exchange values, status,
 lifecycle, expiry, or mutation behavior. Shipping, idempotency, reconciliation,
 Auth, and Session behavior are retained.
+
+## SITE-032 — Limited Bonus Coin Presentation
+
+- Issue: `#63`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `8f0990bcf364d75d25f06c76b048fb06c79ddca6`
+- Branch: `site/SITE-032-limited-bonus-coin-presentation`
+
+### Purpose and boundary
+
+Adopt the immutable MIG-063B `2.0.0-alpha.23` Artifact and add its optional,
+non-nullable `limited_bonus` presentation to the existing `/points` Product
+cards. Visible Backend presentations render the canonical label and amount text,
+carry the returned active／upcoming state unchanged, and format returned start／
+end timestamps in `Asia/Tokyo`. Inactive `is_visible: false`, an omitted field,
+and a Contract-external nullish Runtime value leave no Limited Bonus element or
+spacing.
+
+The existing canonical `grant.total_points` remains the primary Product amount.
+The Storefront neither adds Limited Bonus to it nor introduces paid／normal Bonus
+breakdown. It does not compare campaign timestamps with the current time,
+derive state or visibility, calculate amount／stacking, mutate canonical Product
+objects, or add Point Purchase／Payment mutations.

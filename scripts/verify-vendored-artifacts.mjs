@@ -4,29 +4,40 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const vendor = path.join(root, "vendor/oripa/MIG-062Z");
-const version = "2.0.0-alpha.21";
-const sourceCommit = "1a53ba630264258291cb72e84707e488782cbc08";
+const vendor = path.join(root, "vendor/oripa/MIG-063B");
+const previousVendor = path.join(root, "vendor/oripa/MIG-062Z");
+const version = "2.0.0-alpha.23";
+const previousVersion = "2.0.0-alpha.21";
+const sourceCommit = "633b41f347083c82028229d6e238842118635feb";
 const expected = new Map([
-  ["artifact-manifest.json", "ac5f051c6171d40f5ed1a0039b7103a8e5917dd90da871fead91b9f8b1aed115"],
-  ["oripa-site-schema-2.0.0-alpha.21.tgz", "03f78cd1d090e1cc99ae8af9d8b9c381b720c0eab27b8beee34c5567dcc8018b"],
-  ["oripa-storefront-client-2.0.0-alpha.21.tgz", "39622cdfaea2c80f72595396359e67aac7f1de34582ae23ef2de2831d31b594d"],
-  ["oripa-storefront-testkit-2.0.0-alpha.21.tgz", "170d2fbb3b9f12cc4e906120c3d23714d612104c544b44498c81641563376263"],
-  ["public.openapi.json", "103b8d8ccb1312fecf3013a531102faf5d73cdeb667a7f8d705d6aaf581a1299"],
+  ["artifact-manifest.json", "556eaf59e9c5128cb9b93cf9000a5aee3ff4eb56f86ee8bc549c392d55bd77fe"],
+  ["oripa-site-schema-2.0.0-alpha.23.tgz", "b4ca0ddb0ec8a6f4bda6dfec40fb5f3f5098a837160310be64de97cab36740c2"],
+  ["oripa-storefront-client-2.0.0-alpha.23.tgz", "28a7b3558329eed9c608f828948befe2034e86c0add1511bd48db1ed437f58d9"],
+  ["oripa-storefront-testkit-2.0.0-alpha.23.tgz", "dc0bf6c16af439bf5a364955e8add936e8842096ca295a136a0f15a86e4102b0"],
+  ["public.openapi.json", "5c735fe26514d5bfb47b3515ead108bf473fd5e1f81e0936b7e1986290904043"],
 ]);
 const packageNames = new Map([
-  ["oripa-site-schema-2.0.0-alpha.21.tgz", "@oripa/site-schema"],
-  ["oripa-storefront-client-2.0.0-alpha.21.tgz", "@oripa/storefront-client"],
-  ["oripa-storefront-testkit-2.0.0-alpha.21.tgz", "@oripa/storefront-testkit"],
+  ["oripa-site-schema-2.0.0-alpha.23.tgz", "@oripa/site-schema"],
+  ["oripa-storefront-client-2.0.0-alpha.23.tgz", "@oripa/storefront-client"],
+  ["oripa-storefront-testkit-2.0.0-alpha.23.tgz", "@oripa/storefront-testkit"],
 ]);
 
 function sha256(file) {
-  return createHash("sha256").update(readFileSync(path.join(vendor, file))).digest("hex");
+  return createHash("sha256").update(readFileSync(file)).digest("hex");
+}
+
+function archiveText(archive, entry) {
+  return execFileSync("tar", ["-xOf", archive, entry], { encoding: "utf8" });
+}
+
+function archiveJson(archive, entry) {
+  return JSON.parse(archiveText(archive, entry));
 }
 
 for (const [file, digest] of expected) {
-  if (sha256(file) !== digest) throw new Error(`Artifact digest mismatch: ${file}`);
+  if (sha256(path.join(vendor, file)) !== digest) throw new Error(`Artifact digest mismatch: ${file}`);
 }
+
 const sums = new Map(
   readFileSync(path.join(vendor, "SHA256SUMS"), "utf8")
     .trim()
@@ -45,7 +56,7 @@ for (const [file, digest] of expected) {
 if (sums.size !== expected.size - 1) throw new Error("SHA256SUMS entry set is invalid");
 
 const manifest = JSON.parse(readFileSync(path.join(vendor, "artifact-manifest.json"), "utf8"));
-if (manifest.task_id !== "MIG-062Z" || manifest.source_commit !== sourceCommit) {
+if (manifest.task_id !== "MIG-063B" || manifest.source_commit !== sourceCommit) {
   throw new Error("Artifact provenance mismatch");
 }
 if (manifest.public_openapi?.file !== "public.openapi.json" || manifest.public_openapi.sha256 !== expected.get("public.openapi.json")) {
@@ -61,12 +72,18 @@ if (manifest.public_openapi?.breaking_change !== false || manifest.packages.some
   throw new Error("Artifact compatibility declaration mismatch");
 }
 
+const provenance = readFileSync(path.join(vendor, "PROVENANCE.md"), "utf8");
+for (const value of [version, sourceCommit, "MIG-063B", "SITE-032", ...expected.values()]) {
+  if (!provenance.includes(value)) throw new Error(`Artifact provenance is incomplete: ${value}`);
+}
+if (/\/(?:var\/(?:www|lib)|home)\//.test(provenance)) {
+  throw new Error("Artifact provenance contains a server-specific path");
+}
+
 const sensitivePath = /(?:^|\/)(?:node_modules|\.env[^/]*|[^/]+\.(?:pem|key|p12|pfx))$/i;
 for (const [archive, packageName] of packageNames) {
   const archivePath = path.join(vendor, archive);
-  const entries = execFileSync("tar", ["-tzf", archivePath], { encoding: "utf8" })
-    .trim()
-    .split("\n");
+  const entries = execFileSync("tar", ["-tzf", archivePath], { encoding: "utf8" }).trim().split("\n");
   const verboseEntries = execFileSync("tar", ["-tvzf", archivePath], { encoding: "utf8" }).split("\n");
   if (verboseEntries.some((entry) => /^[lh]/.test(entry))) throw new Error(`Archive links are not allowed: ${archive}`);
   for (const entry of entries) {
@@ -74,155 +91,111 @@ for (const [archive, packageName] of packageNames) {
     if (!entry.startsWith("package/") || entry.startsWith("/") || parts.includes("..") || sensitivePath.test(entry)) {
       throw new Error(`Unsafe archive path: ${archive}`);
     }
-    const content = execFileSync("tar", ["-xOf", archivePath, entry]);
-    const text = content.toString("utf8");
+    const text = execFileSync("tar", ["-xOf", archivePath, entry]).toString("utf8");
     if (/\/(?:var\/(?:www|lib)|home)\//.test(text) ||
         /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/.test(text) ||
         /(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16})/.test(text)) {
       throw new Error(`Unsafe archive content: ${archive}`);
     }
   }
-  const packageJson = JSON.parse(execFileSync("tar", ["-xOf", archivePath, "package/package.json"], { encoding: "utf8" }));
+  const packageJson = archiveJson(archivePath, "package/package.json");
   if (packageJson.name !== packageName || packageJson.version !== version) {
     throw new Error(`Package identity mismatch: ${archive}`);
   }
   for (const lifecycle of ["preinstall", "install", "postinstall", "prepare"]) {
     if (packageJson.scripts?.[lifecycle]) throw new Error(`Lifecycle script is not allowed: ${archive}`);
   }
+  if (packageName === "@oripa/storefront-testkit" &&
+      (packageJson.dependencies?.["@oripa/storefront-client"] !== version || packageJson.dependencies?.["@oripa/site-schema"] !== version)) {
+    throw new Error("Testkit dependency versions are not pinned to the handoff Artifact");
+  }
 }
 
-const clientArchive = path.join(vendor, "oripa-storefront-client-2.0.0-alpha.21.tgz");
-const previousClientArchive = path.join(root, "vendor/oripa/MIG-062W/oripa-storefront-client-2.0.0-alpha.20.tgz");
-const productContract = execFileSync("tar", ["-xOf", clientArchive, "package/dist/point-products.d.ts"], { encoding: "utf8" });
-const currentUserPointContract = execFileSync("tar", ["-xOf", clientArchive, "package/dist/points.d.ts"], { encoding: "utf8" });
-if (!productContract.includes("createStorefrontPointProductClient") ||
-    !productContract.includes("listPointProducts") ||
-    !currentUserPointContract.includes("createStorefrontCurrentUserPointClient") ||
-    !currentUserPointContract.includes('StorefrontWalletBalance = Schemas["CurrentUserWalletBalance"]') ||
-    !currentUserPointContract.includes("getWallet") ||
-    !currentUserPointContract.includes("listPointLedgerEntries")) {
-  throw new Error("Generated Point Client contract is incomplete");
-}
-for (const contractFile of [
-  "browser.d.ts", "browser.js",
-  "catalog.d.ts", "catalog.js",
-  "content-contact.d.ts", "content-contact.js",
-  "draw.d.ts", "draw.js",
-  "errors.d.ts", "errors.js",
-  "identity.d.ts", "identity.js",
-  "point-products.d.ts", "point-products.js",
-  "points.js",
-  "prize-shipping.d.ts", "prize-shipping.js",
-  "server.d.ts", "server.js",
-  "transport.d.ts", "transport.js",
-  "types.d.ts", "types.js",
+const clientArchive = path.join(vendor, `oripa-storefront-client-${version}.tgz`);
+const generatedTypes = archiveText(clientArchive, "package/dist/generated/public.d.ts");
+for (const declaration of [
+  'PointProductLimitedBonusState: "active" | "upcoming" | "inactive";',
+  'label: "期間限定ボーナスコイン";',
+  "amount_text: string | null;",
+  'limited_bonus?: components["schemas"]["PointProductLimitedBonus"];',
 ]) {
-  const previous = execFileSync("tar", ["-xOf", previousClientArchive, `package/dist/${contractFile}`]);
-  const current = execFileSync("tar", ["-xOf", clientArchive, `package/dist/${contractFile}`]);
-  if (!previous.equals(current)) throw new Error(`alpha.20 Client contract changed: ${contractFile}`);
+  if (!generatedTypes.includes(declaration)) throw new Error(`Limited Bonus Client type is missing: ${declaration}`);
 }
-const previousPointContract = execFileSync("tar", ["-xOf", previousClientArchive, "package/dist/points.d.ts"], { encoding: "utf8" });
-const normalizedPointContract = currentUserPointContract
-  .replace('export type StorefrontWalletBalance = Schemas["CurrentUserWalletBalance"];\n', "")
-  .replace("Promise<StorefrontResponse<StorefrontWalletBalance>>", 'Promise<StorefrontResponse<Schemas["WalletBalance"]>>');
-if (normalizedPointContract !== previousPointContract) {
-  throw new Error("alpha.21 Point Client change is not the declared additive Wallet presentation");
+if (/limited_bonus\??:\s*[^;]*\|\s*null/.test(generatedTypes)) {
+  throw new Error("Limited Bonus Client type must remain optional and non-nullable");
 }
-const constants = execFileSync("tar", ["-xOf", clientArchive, "package/dist/constants.js"], { encoding: "utf8" });
+const constants = archiveText(clientArchive, "package/dist/constants.js");
 if (!constants.includes(`STOREFRONT_CLIENT_VERSION = "${version}"`)) {
   throw new Error("Storefront Client runtime version mismatch");
 }
-const drawContract = execFileSync("tar", ["-xOf", clientArchive, "package/dist/draw.d.ts"], { encoding: "utf8" });
-for (const declaration of ["listDrawHistory", "DrawHistoryQuery", "DrawHistoryReadProblemCode"]) {
-  if (!drawContract.includes(declaration)) throw new Error(`Draw History Client contract is missing: ${declaration}`);
-}
-const identityContract = execFileSync("tar", ["-xOf", clientArchive, "package/dist/identity.d.ts"], { encoding: "utf8" });
-for (const declaration of ["listExternalIdentities", "getLineFriendState", "startLineIdentityLink"]) {
-  if (!identityContract.includes(declaration)) throw new Error(`Identity Client contract is missing: ${declaration}`);
+const pointProductClient = archiveText(clientArchive, "package/dist/point-products.d.ts");
+if (!pointProductClient.includes("createStorefrontPointProductClient") || !pointProductClient.includes("listPointProducts")) {
+  throw new Error("Generated Point Product Client contract is incomplete");
 }
 
-const previousOpenApi = JSON.parse(readFileSync(path.join(root, "vendor/oripa/MIG-062W/public.openapi.json"), "utf8"));
+const previousOpenApi = JSON.parse(readFileSync(path.join(previousVendor, "public.openapi.json"), "utf8"));
 const currentOpenApi = JSON.parse(readFileSync(path.join(vendor, "public.openapi.json"), "utf8"));
-for (const [section, previousEntries, currentEntries] of [
-  ["paths", previousOpenApi.paths, currentOpenApi.paths],
-  ...Object.keys(previousOpenApi.components ?? {}).map((section) => [
-    `components.${section}`,
-    previousOpenApi.components?.[section],
-    currentOpenApi.components?.[section],
-  ]),
-  ]) {
-  for (const [key, value] of Object.entries(previousEntries ?? {})) {
-    if (section === "paths" && key === "/me/wallet") continue;
-    if (JSON.stringify(currentEntries?.[key]) !== JSON.stringify(value)) {
-      throw new Error(`alpha.20 OpenAPI ${section} entry changed or was removed: ${key}`);
-    }
-  }
+if (currentOpenApi.info?.version !== version) throw new Error("Public OpenAPI version mismatch");
+const schemas = currentOpenApi.components?.schemas ?? {};
+const pointProduct = schemas.PointProduct;
+const limitedBonus = schemas.PointProductLimitedBonus;
+const limitedBonusPresentation = schemas.PointProductLimitedBonusPresentation;
+if (pointProduct?.required?.includes("limited_bonus") ||
+    JSON.stringify(pointProduct?.properties?.limited_bonus) !== JSON.stringify({ $ref: "#/components/schemas/PointProductLimitedBonus" })) {
+  throw new Error("Point Product limited_bonus must remain optional and non-nullable");
 }
-const walletOperation = structuredClone(previousOpenApi.paths?.["/me/wallet"]);
-walletOperation.get.responses["200"].content["application/json"].schema.$ref = "#/components/schemas/CurrentUserWalletBalance";
-if (JSON.stringify(currentOpenApi.paths?.["/me/wallet"]) !== JSON.stringify(walletOperation)) {
-  throw new Error("getWallet OpenAPI change is not limited to its canonical response schema");
+if (JSON.stringify(schemas.PointProductLimitedBonusState?.enum) !== JSON.stringify(["active", "upcoming", "inactive"]) ||
+    JSON.stringify(limitedBonus?.required) !== JSON.stringify(["amount", "starts_at", "ends_at", "state", "as_of", "presentation"]) ||
+    limitedBonus?.properties?.starts_at?.format !== "date-time" ||
+    limitedBonus?.properties?.ends_at?.format !== "date-time" ||
+    limitedBonus?.properties?.presentation?.$ref !== "#/components/schemas/PointProductLimitedBonusPresentation") {
+  throw new Error("Canonical Limited Bonus schema is incomplete");
 }
-const newSchemaNames = Object.keys(currentOpenApi.components?.schemas ?? {})
-  .filter((name) => previousOpenApi.components?.schemas?.[name] === undefined)
-  .sort();
-if (JSON.stringify(newSchemaNames) !== JSON.stringify(["CurrentUserWalletBalance", "WalletExpiryBucket"])) {
-  throw new Error("alpha.21 OpenAPI contains unexpected schema additions");
-}
-const walletSchema = currentOpenApi.components.schemas.CurrentUserWalletBalance;
-const expirySchema = currentOpenApi.components.schemas.WalletExpiryBucket;
-if (JSON.stringify(walletSchema.required) !== JSON.stringify(["paid_points", "free_points", "total_points", "as_of", "expiring_within_7_days"]) ||
-    walletSchema.properties?.expiring_within_7_days?.type !== "array" ||
-    walletSchema.properties?.expiring_within_7_days?.items?.$ref !== "#/components/schemas/WalletExpiryBucket" ||
-    JSON.stringify(expirySchema.required) !== JSON.stringify(["expires_at", "amount"]) ||
-    expirySchema.properties?.expires_at?.format !== "date-time" ||
-    expirySchema.properties?.amount?.type !== "integer") {
-  throw new Error("Canonical Wallet expiry schema mismatch");
+if (JSON.stringify(limitedBonusPresentation?.required) !== JSON.stringify(["is_visible", "label", "amount_text"]) ||
+    limitedBonusPresentation?.properties?.is_visible?.type !== "boolean" ||
+    limitedBonusPresentation?.properties?.label?.const !== "期間限定ボーナスコイン" ||
+    JSON.stringify(limitedBonusPresentation?.properties?.amount_text?.type) !== JSON.stringify(["string", "null"])) {
+  throw new Error("Canonical Limited Bonus presentation schema is incomplete");
 }
 
-const testkitArchive = path.join(vendor, "oripa-storefront-testkit-2.0.0-alpha.21.tgz");
-const previousTestkitArchive = path.join(root, "vendor/oripa/MIG-062W/oripa-storefront-testkit-2.0.0-alpha.20.tgz");
-for (const contractFile of [
-  "assertions.d.ts", "assertions.js",
-  "errors.d.ts", "errors.js",
-  "mock.d.ts", "mock.js",
-]) {
-  const previous = execFileSync("tar", ["-xOf", previousTestkitArchive, `package/dist/${contractFile}`]);
-  const current = execFileSync("tar", ["-xOf", testkitArchive, `package/dist/${contractFile}`]);
-  if (!previous.equals(current)) throw new Error(`alpha.20 Testkit contract changed: ${contractFile}`);
+const normalizedOpenApi = structuredClone(currentOpenApi);
+normalizedOpenApi.info.version = previousOpenApi.info.version;
+delete normalizedOpenApi.components.schemas.PointProductLimitedBonusState;
+delete normalizedOpenApi.components.schemas.PointProductLimitedBonusPresentation;
+delete normalizedOpenApi.components.schemas.PointProductLimitedBonus;
+delete normalizedOpenApi.components.schemas.PointProduct.properties.limited_bonus;
+if (JSON.stringify(normalizedOpenApi) !== JSON.stringify(previousOpenApi)) {
+  throw new Error(`Public OpenAPI change is not the declared additive Limited Bonus contract from ${previousVersion}`);
 }
-const testkitFixtures = execFileSync("tar", ["-xOf", testkitArchive, "package/dist/fixtures.d.ts"], { encoding: "utf8" });
+
+const testkitArchive = path.join(vendor, `oripa-storefront-testkit-${version}.tgz`);
+const testkitFixtures = archiveText(testkitArchive, "package/dist/fixtures.d.ts");
 for (const fixture of [
   "PUBLIC_POINT_PRODUCT_FIXTURES",
-  "PUBLIC_POINT_BALANCE_FIXTURES",
-  "PUBLIC_POINT_HISTORY_FIXTURES",
-  "PUBLIC_POINT_READ_PROBLEM_FIXTURES",
-  "PUBLIC_DRAW_HISTORY_FIXTURES",
-  "PUBLIC_DRAW_HISTORY_PROBLEM_FIXTURES",
-  "PUBLIC_LINE_FRIEND_STATE_FIXTURES",
-  "PUBLIC_LINE_FRIEND_STATE_PROBLEM_FIXTURES",
+  'readonly state: "active";',
+  'readonly state: "upcoming";',
+  'readonly state: "inactive";',
+  "readonly is_visible: true;",
+  "readonly is_visible: false;",
+  'readonly label: "期間限定ボーナスコイン";',
+  "readonly amount_text: null;",
 ]) {
-  if (!testkitFixtures.includes(fixture)) throw new Error(`Required Testkit fixture is missing: ${fixture}`);
+  if (!testkitFixtures.includes(fixture)) throw new Error(`Canonical Limited Bonus Testkit fixture is missing: ${fixture}`);
 }
-for (const fixture of ["canonical_expiry", "seven_day_boundary", "timestamp_separation", "zero"]) {
-  if (!testkitFixtures.includes(`readonly ${fixture}:`)) throw new Error(`Wallet expiry Testkit fixture is missing: ${fixture}`);
-}
-if (!testkitFixtures.includes("readonly expiring_within_7_days: []") ||
-    !testkitFixtures.includes('readonly expires_at: "2026-08-21T00:00:00Z"') ||
-    !testkitFixtures.includes("readonly amount: 60")) {
-  throw new Error("Wallet expiry Testkit shape is incomplete");
+if (testkitFixtures.includes("readonly limited_bonus: null")) {
+  throw new Error("Testkit must not publish a non-canonical null Limited Bonus fixture");
 }
 
-const siteSchemaArchive = path.join(vendor, "oripa-site-schema-2.0.0-alpha.21.tgz");
-const previousSiteSchemaArchive = path.join(root, "vendor/oripa/MIG-062W/oripa-site-schema-2.0.0-alpha.20.tgz");
-const siteSchemaEntries = execFileSync("tar", ["-tzf", previousSiteSchemaArchive], { encoding: "utf8" })
+const siteSchemaArchive = path.join(vendor, `oripa-site-schema-${version}.tgz`);
+const previousSiteSchemaArchive = path.join(previousVendor, `oripa-site-schema-${previousVersion}.tgz`);
+const previousSiteSchemaEntries = execFileSync("tar", ["-tzf", previousSiteSchemaArchive], { encoding: "utf8" })
   .trim()
   .split("\n")
   .filter((entry) => entry !== "package/package.json" && entry !== "package/README.md");
-for (const entry of siteSchemaEntries) {
+for (const entry of previousSiteSchemaEntries) {
   const previous = execFileSync("tar", ["-xOf", previousSiteSchemaArchive, entry]);
   const current = execFileSync("tar", ["-xOf", siteSchemaArchive, entry]);
-  if (!previous.equals(current)) throw new Error(`alpha.20 Site Schema contract changed: ${entry}`);
+  if (!previous.equals(current)) throw new Error(`Site Schema contract changed unexpectedly: ${entry}`);
 }
 
 for (const file of ["package.json", "pnpm-lock.yaml"]) {
@@ -230,8 +203,8 @@ for (const file of ["package.json", "pnpm-lock.yaml"]) {
   if (/file:(?:\/var\/|\/home\/|[A-Za-z]:\\)/.test(content)) {
     throw new Error(`Server-specific file dependency: ${file}`);
   }
-  if (!content.includes("vendor/oripa/MIG-062Z") || content.includes("file:vendor/oripa/MIG-062W")) {
-    throw new Error(`Production Artifact dependency is not pinned to MIG-062Z: ${file}`);
+  if (!content.includes("vendor/oripa/MIG-063B") || content.includes("file:vendor/oripa/MIG-062Z") || content.includes("2.0.0-alpha.22")) {
+    throw new Error(`Production Artifact dependency is not pinned exclusively to MIG-063B alpha.23: ${file}`);
   }
 }
 

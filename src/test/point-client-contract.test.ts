@@ -12,13 +12,13 @@ import { createPointClientTestHarness } from "@/lib/platform/testing";
 
 const origin = "https://storefront.test/platform";
 
-describe("MIG-062Z canonical current-user Wallet contract", () => {
-  it("pins all Production packages to alpha.21 and retains generated Point operations", () => {
+describe("MIG-063B canonical Point contract", () => {
+  it("pins all Production packages to alpha.23 and retains generated Point operations", () => {
     for (const packageName of ["site-schema", "storefront-client", "storefront-testkit"]) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
-      expect(packageJson.version).toBe("2.0.0-alpha.21");
+      expect(packageJson.version).toBe("2.0.0-alpha.23");
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("103b8d8ccb1312fecf3013a531102faf5d73cdeb667a7f8d705d6aaf581a1299");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("5c735fe26514d5bfb47b3515ead108bf473fd5e1f81e0936b7e1986290904043");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getWallet",
       "listPointLedgerEntries",
@@ -41,7 +41,7 @@ describe("MIG-062Z canonical current-user Wallet contract", () => {
     const harness = createPointClientTestHarness();
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/wallet` }, { body: balance, status: 200 });
     await expect(harness.client.getWallet()).resolves.toMatchObject({ data: balance });
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.21", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.23", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -53,6 +53,31 @@ describe("MIG-062Z canonical current-user Wallet contract", () => {
     expect(data.data.map((product) => product.eligible)).toEqual([true, false]);
     expect(data.data[1]?.ineligible_reason).toBe("first_purchase_required");
     expect(data.data[1]?.cta).toEqual({ action: "purchase", reason: "first_purchase_required", state: "disabled" });
+    harness.mock.assertExhausted();
+  });
+
+  it.each([
+    ["active", PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0]],
+    ["upcoming", PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[1]],
+    ["inactive", PUBLIC_POINT_PRODUCT_FIXTURES.unavailable.data[0]],
+  ] as const)("preserves the canonical %s Limited Bonus object without deriving presentation", async (state, product) => {
+    const harness = createPointClientTestHarness();
+    harness.mock.enqueueJson({ method: "GET", url: `${origin}/point-products` }, { body: { data: [product] }, status: 200 });
+    const { data } = await harness.client.listPointProducts();
+    expect(data.data[0]?.limited_bonus).toEqual(product.limited_bonus);
+    expect(data.data[0]?.limited_bonus?.state).toBe(state);
+    expect(data.data[0]?.limited_bonus?.presentation).toEqual(product.limited_bonus.presentation);
+    harness.mock.assertExhausted();
+  });
+
+  it("preserves the additive optional Point Product shape when limited_bonus is omitted", async () => {
+    const harness = createPointClientTestHarness();
+    const { limited_bonus: omittedLimitedBonus, ...product } = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0];
+    expect(omittedLimitedBonus).toBeDefined();
+    harness.mock.enqueueJson({ method: "GET", url: `${origin}/point-products` }, { body: { data: [product] }, status: 200 });
+    const { data } = await harness.client.listPointProducts();
+    expect(data.data[0]).not.toHaveProperty("limited_bonus");
+    expect(data.data[0]?.grant).toEqual(product.grant);
     harness.mock.assertExhausted();
   });
 

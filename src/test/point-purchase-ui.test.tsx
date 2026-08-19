@@ -8,9 +8,14 @@ import { vi } from "vitest";
 import PointsPage from "@/app/points/page";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { PointClientProvider } from "@/components/points/point-client-provider";
-import type { AuthClientAdapter, AuthSession, PointClientAdapter } from "@/lib/platform";
+import type { AuthClientAdapter, AuthSession, PointClientAdapter, PointProductCollection } from "@/lib/platform";
 
 const metadata = { idempotency_replayed: false, status: 200 } as const;
+const jstDateTime = new Intl.DateTimeFormat("ja-JP", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "Asia/Tokyo",
+});
 
 function authClient(session: AuthSession = PUBLIC_AUTH_FIXTURE.authenticated_session) {
   return { getCurrentSession: vi.fn().mockResolvedValue({ data: session, metadata }) } as unknown as AuthClientAdapter;
@@ -21,10 +26,18 @@ function pointClient({
   products = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible,
 }: {
   readonly balance?: typeof PUBLIC_POINT_BALANCE_FIXTURES.positive | typeof PUBLIC_POINT_BALANCE_FIXTURES.zero;
-  readonly products?: typeof PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible | typeof PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_after_first_purchase | typeof PUBLIC_POINT_PRODUCT_FIXTURES.anonymous_empty;
+  readonly products?: PointProductCollection;
 } = {}) {
   return {
     getWallet: vi.fn().mockResolvedValue({ data: balance, metadata }),
+    listPointLedgerEntries: vi.fn(),
+    listPointProducts: vi.fn().mockResolvedValue({ data: products, metadata }),
+  } as unknown as PointClientAdapter;
+}
+
+function pointClientWithNonCanonicalProducts(products: unknown) {
+  return {
+    getWallet: vi.fn().mockResolvedValue({ data: PUBLIC_POINT_BALANCE_FIXTURES.positive, metadata }),
     listPointLedgerEntries: vi.fn(),
     listPointProducts: vi.fn().mockResolvedValue({ data: products, metadata }),
   } as unknown as PointClientAdapter;
@@ -38,8 +51,83 @@ function renderPoints(client: PointClientAdapter, session: AuthSession = PUBLIC_
   );
 }
 
-describe("SITE-030 Coin Product read presentation", () => {
-  it("renders canonical totals and converts only the Backend Product currency terminology", async () => {
+describe("SITE-032 Limited Bonus Coin presentation", () => {
+  it("preserves the existing Product presentation when limited_bonus is omitted", async () => {
+    const { limited_bonus: omittedLimitedBonus, ...product } = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0];
+    renderPoints(pointClient({ products: { data: [product] } }));
+
+    expect(omittedLimitedBonus).toBeDefined();
+    expect(await screen.findByRole("heading", { name: "スタンダード1000コイン" })).toBeInTheDocument();
+    expect(screen.getByText("1,100")).toBeInTheDocument();
+    expect(screen.getByText("￥1,000")).toBeInTheDocument();
+    expect(screen.getByText("購入対象です。")).toBeInTheDocument();
+    expect(screen.getByText("購入可能")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "期間限定ボーナスコイン" })).not.toBeInTheDocument();
+    expect(screen.queryByText("通常ボーナス")).not.toBeInTheDocument();
+  });
+
+  it("safely omits a Contract-external nullish Limited Bonus without treating it as a canonical fixture", async () => {
+    const nonCanonicalTransportPayload = {
+      data: [{ ...PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0], limited_bonus: null }],
+    };
+    renderPoints(pointClientWithNonCanonicalProducts(nonCanonicalTransportPayload));
+
+    expect(await screen.findByText("1,100")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "期間限定ボーナスコイン" })).not.toBeInTheDocument();
+  });
+
+  it("renders the active Backend state, canonical presentation, amount, and JST period", async () => {
+    const canonical = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0].limited_bonus;
+    const original = structuredClone(canonical);
+    renderPoints(pointClient());
+
+    const presentation = await screen.findByRole("region", { name: canonical.presentation.label });
+    expect(presentation).toHaveAttribute("data-limited-bonus-state", canonical.state);
+    expect(within(presentation).getByText(canonical.presentation.label)).toBeInTheDocument();
+    expect(within(presentation).getByText(canonical.presentation.amount_text)).toBeInTheDocument();
+    expect(within(presentation).getByText(jstDateTime.format(new Date(canonical.starts_at)))).toHaveAttribute("datetime", canonical.starts_at);
+    expect(within(presentation).getByText(jstDateTime.format(new Date(canonical.ends_at)))).toHaveAttribute("datetime", canonical.ends_at);
+    expect(canonical).toEqual(original);
+  });
+
+  it("renders the upcoming Backend state without deriving it from the current time", async () => {
+    const canonical = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[1].limited_bonus;
+    renderPoints(pointClient());
+    fireEvent.click(await screen.findByRole("tab", { name: "初回ユーザー" }));
+
+    const presentation = await screen.findByRole("region", { name: canonical.presentation.label });
+    expect(presentation).toHaveAttribute("data-limited-bonus-state", "upcoming");
+    expect(within(presentation).getByText(canonical.presentation.amount_text)).toBeInTheDocument();
+    expect(within(presentation).getByText(jstDateTime.format(new Date(canonical.starts_at)))).toHaveAttribute("datetime", canonical.starts_at);
+    expect(within(presentation).getByText(jstDateTime.format(new Date(canonical.ends_at)))).toHaveAttribute("datetime", canonical.ends_at);
+  });
+
+  it("omits the canonical inactive presentation when Backend is_visible is false", async () => {
+    const canonical = PUBLIC_POINT_PRODUCT_FIXTURES.unavailable.data[0].limited_bonus;
+    renderPoints(pointClient({ products: PUBLIC_POINT_PRODUCT_FIXTURES.unavailable }));
+
+    expect(await screen.findByRole("heading", { name: "スタンダード1000コイン" })).toBeInTheDocument();
+    expect(canonical.state).toBe("inactive");
+    expect(canonical.presentation.is_visible).toBe(false);
+    expect(screen.queryByRole("region", { name: canonical.presentation.label })).not.toBeInTheDocument();
+    expect(screen.queryByText(canonical.presentation.amount_text ?? "non-rendered-inactive-amount")).not.toBeInTheDocument();
+  });
+
+  it("keeps grant.total_points and Limited Bonus separate without adding a normal Bonus row", async () => {
+    const product = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0];
+    renderPoints(pointClient());
+
+    const card = await screen.findByRole("article");
+    expect(within(card).getByText(new Intl.NumberFormat("ja-JP").format(product.grant.total_points))).toBeInTheDocument();
+    expect(within(card).getByText(product.limited_bonus.presentation.amount_text)).toBeInTheDocument();
+    expect(card).not.toHaveTextContent(new Intl.NumberFormat("ja-JP").format(product.grant.total_points + product.limited_bonus.amount));
+    expect(card.querySelector(".point-product-card__standard-bonus")).not.toBeInTheDocument();
+    expect(within(card).queryByText("通常ボーナス")).not.toBeInTheDocument();
+  });
+});
+
+describe("SITE-030 Coin Product read regression", () => {
+  it("renders canonical totals and converts only Backend currency terminology", async () => {
     const client = pointClient();
     const originalTitle = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0].title;
     const view = renderPoints(client);
@@ -48,8 +136,6 @@ describe("SITE-030 Coin Product read presentation", () => {
     expect(await screen.findByRole("heading", { name: "スタンダード1000コイン" })).toBeInTheDocument();
     expect(screen.getByText("1,100")).toBeInTheDocument();
     expect(screen.getByText("コイン", { selector: ".point-product-card__grant span" })).toBeInTheDocument();
-    expect(screen.queryByText("通常ポイント")).not.toBeInTheDocument();
-    expect(screen.queryByText("ボーナス")).not.toBeInTheDocument();
     expect(screen.getByText("購入対象です。")).toBeInTheDocument();
     expect(screen.getByText("購入可能")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "購入手続きは準備中" })).toBeDisabled();
@@ -68,13 +154,13 @@ describe("SITE-030 Coin Product read presentation", () => {
 
   it("preserves category-relative Backend order and first-user eligibility", async () => {
     const first = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[1];
-    const products = {
+    const products: PointProductCollection = {
       data: [
         { ...first, id: "0198a001-0000-7000-8000-000000000399", title: "先に返された初回商品" },
         first,
         PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0],
       ],
-    } as unknown as typeof PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible;
+    };
     renderPoints(pointClient({ products }));
     await screen.findByRole("heading", { name: "スタンダード1000コイン" });
     fireEvent.click(screen.getByRole("tab", { name: "初回ユーザー" }));
@@ -91,7 +177,7 @@ describe("SITE-030 Coin Product read presentation", () => {
   });
 
   it("uses the canonical anonymous login CTA", async () => {
-    const client = pointClient({ products: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible });
+    const client = pointClient();
     client.listPointProducts = vi.fn().mockResolvedValue({ data: PUBLIC_POINT_PRODUCT_FIXTURES.anonymous, metadata });
     renderPoints(client, PUBLIC_AUTH_FIXTURE.anonymous_session);
     expect(await screen.findByRole("link", { name: "ログインして確認" })).toHaveAttribute("href", "/login");

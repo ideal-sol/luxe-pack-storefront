@@ -36,4 +36,14 @@ describe("visual and responsive convergence", () => {
     expect(css).toMatch(/body:has\(\.gacha-draw-tray\) \.site-footer \{[^}]*padding-bottom: calc\(370px \+ env\(safe-area-inset-bottom\)\)/);
     expect(css).toMatch(/@media \(min-width: 720px\)[\s\S]*body:has\(\.gacha-draw-tray\) \.site-footer \{[^}]*padding-bottom: 194px/);
   });
+
+  it("keeps Point Products responsive while containing the optional Limited Bonus presentation", () => {
+    expect(css).toMatch(/\.point-product-grid \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
+    expect(css).toMatch(/@media \(min-width: 720px\)[\s\S]*\.point-product-grid \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+    expect(css).toMatch(/\.point-product-card \{[^}]*min-width: 0/);
+    expect(css).toMatch(/\.point-product-card__limited-bonus \{[^}]*display: grid[^}]*min-width: 0/);
+    expect(css).toMatch(/\.point-product-card__limited-bonus > p \{[^}]*flex-wrap: wrap/);
+    expect(css).toMatch(/\.point-product-card__limited-bonus > p span \{[^}]*overflow-wrap: anywhere/);
+    expect(css).not.toMatch(/\.point-product-card__limited-bonus\[data-limited-bonus-state=/);
+  });
 });
