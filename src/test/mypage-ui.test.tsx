@@ -72,6 +72,7 @@ describe("my page top", () => {
     expect(screen.getByRole("link", { name: /獲得アイテム/ })).toHaveAttribute("href", "/mypage/prizes");
     expect(screen.getByRole("link", { name: /LINE連携/ })).toHaveAttribute("href", "/mypage/line");
     expect(screen.getByRole("link", { name: /お知らせ/ })).toHaveAttribute("href", "/notices");
+    expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("href", "/contact");
   });
 
   it("distinguishes Session loading and unauthenticated states", async () => {

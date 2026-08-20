@@ -2,15 +2,31 @@
 
 ## Status
 
-**Blocking SITE-034 as of 2026-08-20.** MIG-063B
-`@oripa/storefront-client` `2.0.0-alpha.23` publishes the Contact endpoint,
-generated request and receipt types, and `StorefrontContentContactClient`, but it
-does not publish a Browser-safe Contact mutation boundary.
+**Resolved on 2026-08-20 by STORE-SITE-034 package-only Artifact
+`2.0.0-alpha.24`.** The Artifact publishes
+`createBrowserStorefrontContentContactClient()`, which owns the Contact Browser
+CSRF／Cookie ceremony and preserves no automatic retry or Idempotency behavior.
 
 This record does not propose an endpoint, Cookie name, token format, Backend
 rule, or retry policy. The Storefront will not work around the missing boundary.
 
-## Verified task context
+## Resolution
+
+- Platform Issue: `#324` (Closed)
+- Platform PR: `#326` (Squash merged)
+- Final Platform main: `411ea6593fa67cae618ed8a16ec3b8fa2253aaba`
+- Artifact source Commit: `209252d9fcbad42090677f5a7bece52c5a5d3597`
+- Storefront Client／Testkit: `2.0.0-alpha.24`
+- Referenced Site Schema／Public OpenAPI: `2.0.0-alpha.23`
+- Artifact Manifest SHA-256:
+  `f71edc9e1c9e9215381d01b00ca066ff8bd2678e8cad92d28fce5981145aad94`
+
+The formal Manifest, `SHA256SUMS`, actual files, package identities, mixed-version
+dependencies, and retained alpha.23 references pass the Storefront Artifact
+Gate. SITE-034 uses the exported Browser-safe factory without handling a token,
+Cookie name, Header name, bootstrap request, retry, or Idempotency mechanism.
+
+## Original verified task context
 
 - Storefront Task: `SITE-034`
 - Issue: `#67`
@@ -47,7 +63,7 @@ The generated `StorefrontContentContactClient` defines
 `submitContact(input, options)`. It maps the canonical body and marks the POST
 request as `csrf: "required"` without adding Idempotency or retry behavior.
 
-## Blocker: Browser CSRF ownership gap
+## Original blocker: Browser CSRF ownership gap
 
 `submitContact()` requires a non-optional `options.csrf_token`. Its generated
 facade validates that token and constructs `X-XSRF-TOKEN` before delegating to
@@ -91,12 +107,10 @@ An additive `createBrowserStorefrontContentContactClient()` or another
 Client-owned documented mechanism can satisfy this request; SITE-034 does not
 prescribe the Platform implementation.
 
-## Resume criteria
+## Resume criteria (satisfied)
 
-SITE-034 can resume when the adopted, integrity-verifiable Artifact provides the
-Browser-safe capability above and the active Platform Runtime implements the
-same Contact Contract without version skew.
-
-Until then, `/contact`, the My Page link, form, adapter, and mutation tests remain
-unimplemented. No Platform, Runtime, infrastructure, database, Admin, mail,
-Outbox, or deployment change was made by this checkpoint.
+The adopted Artifact provides the requested Browser-safe capability while
+retaining the active Contact HTTP Contract. `/contact`, the My Page link, form,
+adapter, and focused mutation tests are implemented by SITE-034. Platform,
+Runtime, infrastructure, database, Admin, mail, Outbox, and deployment remain
+unchanged by the Storefront Task.

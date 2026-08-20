@@ -5,6 +5,7 @@ import { createBrowserPublicClient } from "./public-client";
 import { createBrowserPrizeInventoryClient } from "./prize-client";
 import { createBrowserDrawClient } from "./draw-client";
 import { createBrowserPointClient } from "./point-client";
+import { createBrowserContactClient } from "./contact-client";
 import { STOREFRONT_SITE_VERSION } from "./runtime-configuration";
 
 export interface AuthClientTestHarness {
@@ -34,6 +35,11 @@ export interface DrawClientTestHarness {
 
 export interface PointClientTestHarness {
   readonly client: ReturnType<typeof createBrowserPointClient>;
+  readonly mock: MockFetchController;
+}
+
+export interface ContactClientTestHarness {
+  readonly client: ReturnType<typeof createBrowserContactClient>;
   readonly mock: MockFetchController;
 }
 
@@ -117,6 +123,22 @@ export function createDrawClientTestHarness(cookieValue?: string): DrawClientTes
 export function createPointClientTestHarness(cookieValue?: string): PointClientTestHarness {
   const mock = createMockFetch();
   const client = createBrowserPointClient(
+    {
+      baseUrl: "https://storefront.test/platform",
+      defaultTimeoutMs: 1_000,
+      siteVersion: STOREFRONT_SITE_VERSION,
+    },
+    {
+      cookie_reader: () => cookieValue,
+      fetch: mock.fetch,
+    },
+  );
+  return { client, mock };
+}
+
+export function createContactClientTestHarness(cookieValue?: string): ContactClientTestHarness {
+  const mock = createMockFetch();
+  const client = createBrowserContactClient(
     {
       baseUrl: "https://storefront.test/platform",
       defaultTimeoutMs: 1_000,

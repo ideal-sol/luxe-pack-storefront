@@ -27,7 +27,7 @@ describe("MIG-062Z retained LINE Friend State contract", () => {
       expect(result.data).toEqual(fixture);
       expect(result.metadata.status).toBe(200);
       assertBrowserRequestBoundary(harness.mock.requests[0]!, {
-        client_version: "2.0.0-alpha.23",
+        client_version: "2.0.0-alpha.24",
         site_version: "0.1.0",
       });
       expect(JSON.stringify(result.data)).not.toMatch(/provider_subject|access_token|refresh_token|client_secret/i);

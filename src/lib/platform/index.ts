@@ -101,3 +101,13 @@ export {
   type PointProductSaleState,
   type PointWalletBalance,
 } from "./point-client";
+export {
+  createBrowserContactClient,
+  type ContactClientAdapter,
+  type ContactInquiryInput,
+  type ContactInquiryReceipt,
+} from "./contact-client";
+export {
+  presentContactProblem,
+  type ContactProblemPresentation,
+} from "./contact-problem";
