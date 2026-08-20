@@ -159,6 +159,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .verification-card > span { align-items: center; border: 1px solid var(--bronze); border-radius: 50%; color: var(--bronze); display: flex; font-size: 1.3rem; height: 54px; justify-content: center; width: 54px; }
 .verification-card h2 { font-family: Georgia, serif; font-size: 1.75rem; font-weight: 400; margin: 22px 0 8px; }
 .verification-card > p { color: var(--muted); font-size: .82rem; line-height: 1.75; margin: 0 0 22px; }
+.verification-card--error > p { margin-top: 22px; }
 .verification-card .auth-problem { margin-block: 16px; text-align: left; width: 100%; }
 .verification-card .button { margin: 6px 0 22px; }
 .verification-card__success { color: #326747 !important; font-weight: 700; }

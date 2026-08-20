@@ -250,6 +250,14 @@ anonymous and authenticated first-submit Browser ceremony to
 with an undisplayed empty `website`, and displays the returned `receipt_code`.
 The Storefront does not own CSRF／Cookie protocol, Idempotency, or retry behavior.
 
+SITE-035 adds the public `/verify-email/error` destination for a later Platform
+Browser 303 failure redirect. Presentation reads only the canonical query
+`code`; `EMAIL_ALREADY_CLAIMED` has its approved message and every other value,
+including missing or repeated `code`, falls back to the generic message. Raw
+Problem Details and unrelated query fields are never rendered. The page adds no
+API request, Session requirement, verification-token handling, or Register／
+successful `/mypage` redirect change.
+
 ## Pending contracts
 
 - Point purchase
