@@ -240,6 +240,10 @@ unchanged and Backend-authoritative.
 
 ## Pending contracts
 
+- Browser-safe Contact submission orchestration. MIG-063B alpha.23 exposes
+  `StorefrontContentContactClient.submitContact()`, but requires the Storefront
+  caller to supply a CSRF token before the Browser transport can initialize and
+  read it. SITE-034 is blocked on a Client-owned Contact Browser boundary.
 - Point purchase
 - Optional featured placement beyond the Backend-stable Catalog order
 - Point-insufficient presentation at gacha-detail time (Draw execution uses the
@@ -252,7 +256,9 @@ unchanged and Backend-authoritative.
 
 ## Next task
 
-Platform content operations should publish the required canonical static pages
-before a content-complete Preview review. A later task may add canonical Prize
-status grouping and expiry lifecycle presentation; identity work must retain the
-canonical post-reauthentication boundary.
+Platform should resolve the SITE-034 Browser-safe Contact CSRF Change Request
+before Contact UI work resumes. Platform content operations should also publish
+the required canonical static pages before a content-complete Preview review.
+A later task may add canonical Prize status grouping and expiry lifecycle
+presentation; identity work must retain the canonical post-reauthentication
+boundary.

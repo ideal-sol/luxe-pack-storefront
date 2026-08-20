@@ -931,3 +931,35 @@ The existing Client transport, CSRF, Cookie, Session, verification API, Login,
 Email Verification Notice, Register error handling, and My Page authenticated／
 unauthenticated behavior remain unchanged. Platform, Artifact, Runtime,
 infrastructure, and Deployment changes are outside this Task and remain zero.
+
+## SITE-034 — Contact Page / My Page Contact Link (blocked)
+
+- Issue: `#67`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `4098ffbb08018b132e8b14344400c1461c797873`
+- Branch: `site/SITE-034-contact-page`
+
+### Contract gate
+
+MIG-063B `2.0.0-alpha.23` provides `POST /contact-inquiries`, operation
+`createContactInquiry`, generated request／receipt types, and
+`StorefrontContentContactClient.submitContact()`. The active healthy OPS-011 API
+Runtime exposes the same route, and its Contact Contract／implementation files
+are byte-identical to the Artifact source.
+
+The generated `submitContact()` nevertheless requires the Storefront caller to
+supply `csrf_token` and builds the Header before the Browser transport performs
+Client-owned CSRF initialization and Cookie reading. No Browser-safe Contact
+facade exists. A first anonymous Browser submission therefore cannot be
+implemented while delegating CSRF／Cookie protocol to the canonical Client.
+
+### Blocked boundary
+
+The Storefront does not parse Cookies, initialize CSRF directly, fabricate a
+token, intercept the generated request, call `/api/v2` directly, or reimplement
+the Contact operation. The missing capability is recorded in
+`docs/platform-change-requests/SITE-034-contact-browser-csrf.md`.
+
+`/contact`, the My Page link, form, mutation adapter, and requested UI tests are
+not implemented at this checkpoint. Platform／DB／Migration／Admin／Mail／Outbox／
+Runtime／Infrastructure／Deployment changes remain zero.
