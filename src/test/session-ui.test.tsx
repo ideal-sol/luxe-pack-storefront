@@ -144,6 +144,11 @@ describe("authentication UI", () => {
     fireEvent.submit(form);
     fireEvent.submit(form);
     expect(register).toHaveBeenCalledTimes(1);
+    expect(register).toHaveBeenCalledWith({
+      email: "fixture@example.test",
+      password: "fixture-password",
+      redirect_path: "/mypage",
+    });
     rejectRegistration?.(new ApiProblemError({
       code: "INVALID_REQUEST",
       errors: { email: ["メールアドレスを確認してください。"] },

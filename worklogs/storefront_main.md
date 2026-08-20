@@ -906,3 +906,28 @@ The Storefront neither adds Limited Bonus to it nor introduces paid／normal Bon
 breakdown. It does not compare campaign timestamps with the current time,
 derive state or visibility, calculate amount／stacking, mutate canonical Product
 objects, or add Point Purchase／Payment mutations.
+
+## SITE-033 — Email Verification Redirect to My Page
+
+- Issue: `#65`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `78f3ebb47e55370fe6679f616c3b762bc0d03749`
+- Branch: `site/SITE-033-email-verification-redirect-mypage`
+
+### Purpose and boundary
+
+The existing Register flow now passes `redirect_path: "/mypage"` to the pinned
+canonical Platform Client so a newly registered member reaches My Page after the
+Platform completes Email Verification, creates the Session, and returns its
+Browser HTTP 303 redirect.
+
+Before the Storefront change, the active OPS-011 Platform Runtime was verified
+read-only to generate an absolute HTTPS verification URL, return Browser 303,
+and retain the exact safe redirect allowlist `["/", "/mypage"]` for both
+`luxe-pack.biz` and `test.luxe-pack.biz`. No registration, real mail,
+verification, or Session mutation was used for this gate.
+
+The existing Client transport, CSRF, Cookie, Session, verification API, Login,
+Email Verification Notice, Register error handling, and My Page authenticated／
+unauthenticated behavior remain unchanged. Platform, Artifact, Runtime,
+infrastructure, and Deployment changes are outside this Task and remain zero.

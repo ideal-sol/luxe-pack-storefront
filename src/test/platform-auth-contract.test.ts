@@ -63,7 +63,7 @@ describe("MIG-062Z retained authentication contract", () => {
       { method: "POST", url: `${origin}/auth/register` },
       { body: PUBLIC_AUTH_FIXTURE.pending_registration, status: 202 },
     );
-    await expect(registration.client.register({ email: "fixture@example.test", password: "fixture-password", redirect_path: "/" }))
+    await expect(registration.client.register({ email: "fixture@example.test", password: "fixture-password", redirect_path: "/mypage" }))
       .resolves.toMatchObject({ data: PUBLIC_AUTH_FIXTURE.pending_registration });
     registration.mock.assertExhausted();
 

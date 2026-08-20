@@ -24,7 +24,7 @@ export function RegisterForm() {
       const pending = await register({
         email: String(data.get("email") ?? ""),
         password: String(data.get("password") ?? ""),
-        redirect_path: "/",
+        redirect_path: "/mypage",
       });
       form.reset();
       setPendingUserId(pending.user_id);
