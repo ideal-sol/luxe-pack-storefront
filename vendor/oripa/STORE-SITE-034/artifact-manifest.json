@@ -1,0 +1,60 @@
+{
+  "bundle": {
+    "immutable": true,
+    "predecessor": "2.0.0-alpha.23",
+    "release_mode": "package-only",
+    "version": "2.0.0-alpha.24"
+  },
+  "generated_at": "2026-08-20T12:24:49Z",
+  "installation": {
+    "consumer_resolution": "pin published tarballs and retain referenced package digests from the predecessor bundle",
+    "registry_publish_performed": false,
+    "workspace_dependency_required": false
+  },
+  "packages": [
+    {
+      "browser_compatible": true,
+      "disposition": "published",
+      "file": "oripa-storefront-client-2.0.0-alpha.24.tgz",
+      "name": "@oripa/storefront-client",
+      "sha256": "fbe156fbbc9f27a07e4017cc9bea3a9cdcd71aa2943e03fb48236bb48bbda259",
+      "version": "2.0.0-alpha.24"
+    },
+    {
+      "disposition": "referenced",
+      "name": "@oripa/site-schema",
+      "sha256": "b4ca0ddb0ec8a6f4bda6dfec40fb5f3f5098a837160310be64de97cab36740c2",
+      "source_bundle_version": "2.0.0-alpha.23",
+      "version": "2.0.0-alpha.23"
+    },
+    {
+      "browser_compatible": true,
+      "disposition": "published",
+      "file": "oripa-storefront-testkit-2.0.0-alpha.24.tgz",
+      "name": "@oripa/storefront-testkit",
+      "sha256": "3dc1c3488342846580a2a75372f5d9fff8a510b29d1fad2db468e7276b9efc78",
+      "version": "2.0.0-alpha.24"
+    }
+  ],
+  "platform": {
+    "application_versions": {
+      "admin": "2.0.0-alpha.23",
+      "workspace": "2.0.0-alpha.23"
+    },
+    "version": "2.0.0-alpha.23"
+  },
+  "public_openapi": {
+    "breaking_change": false,
+    "compatibility_family": 2,
+    "file": "public.openapi.json",
+    "sha256": "5c735fe26514d5bfb47b3515ead108bf473fd5e1f81e0936b7e1986290904043",
+    "version": "2.0.0-alpha.23"
+  },
+  "schema_version": "2.0",
+  "source_commit": "209252d9fcbad42090677f5a7bece52c5a5d3597",
+  "task_id": "STORE-SITE-034",
+  "toolchain": {
+    "node": "22.22.3",
+    "pnpm": "10.12.1"
+  }
+}

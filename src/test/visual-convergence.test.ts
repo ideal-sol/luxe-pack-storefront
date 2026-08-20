@@ -46,4 +46,12 @@ describe("visual and responsive convergence", () => {
     expect(css).toMatch(/\.point-product-card__limited-bonus > p span \{[^}]*overflow-wrap: anywhere/);
     expect(css).not.toMatch(/\.point-product-card__limited-bonus\[data-limited-bonus-state=/);
   });
+
+  it("keeps the Contact form single-column on mobile and two-column on desktop", () => {
+    expect(css).toMatch(/\.contact-form__fields \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
+    expect(css).toMatch(/@media \(min-width: 720px\)[\s\S]*\.contact-form__fields \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+    expect(css).toMatch(/\.contact-field--wide \{[^}]*grid-column: 1 \/ -1/);
+    expect(css).toMatch(/\.contact-panel \{[^}]*padding: 24px 20px/);
+    expect(css).toMatch(/@media \(min-width: 720px\)[\s\S]*\.contact-panel \{[^}]*padding: 38px 42px/);
+  });
 });

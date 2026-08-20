@@ -4,9 +4,10 @@ import { readFileSync } from "node:fs";
 const tracked = execFileSync("git", ["ls-files", "--cached", "-z"], { encoding: "utf8" })
   .split("\0")
   .filter(Boolean);
-const contentFiles = tracked.filter((file) => file.startsWith("src/components/content/") && /\.tsx?$/.test(file));
+const contentFiles = tracked.filter((file) =>
+  (file.startsWith("src/components/content/") || file.startsWith("src/components/contact/")) && /\.tsx?$/.test(file));
 const directApi = "/api" + "/v2";
-const protocolDetails = ["X-XSRF-TOKEN", "localStorage", "sessionStorage"];
+const protocolDetails = ["csrf_token", "X-XSRF-TOKEN", "XSRF-TOKEN", "localStorage", "sessionStorage"];
 const failures = [];
 
 for (const file of contentFiles) {
@@ -16,6 +17,17 @@ for (const file of contentFiles) {
   if (protocolDetails.some((marker) => content.includes(marker))) failures.push(`${file}:protocol-or-storage`);
   if (content.includes("dangerouslySetInnerHTML") && file !== "src/components/content/safe-content.tsx") {
     failures.push(`${file}:unsafe-html-boundary`);
+  }
+}
+
+const contactAdapter = "src/lib/platform/contact-client.ts";
+if (tracked.includes(contactAdapter)) {
+  const content = readFileSync(contactAdapter, "utf8");
+  if (!content.includes("createBrowserStorefrontContentContactClient") ||
+      content.includes("createStorefrontContentContactClient") ||
+      content.includes("createIdempotencyKey") ||
+      content.includes(directApi)) {
+    failures.push(`${contactAdapter}:browser-contact-boundary`);
   }
 }
 

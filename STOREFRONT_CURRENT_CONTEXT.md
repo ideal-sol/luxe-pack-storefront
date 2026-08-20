@@ -52,12 +52,13 @@ Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.21`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.21`
-- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.21`
-- Source Commit: `1a53ba630264258291cb72e84707e488782cbc08`
-- Artifact authority: `vendor/oripa/MIG-062Z/artifact-manifest.json`
-- Public OpenAPI SHA-256: `103b8d8ccb1312fecf3013a531102faf5d73cdeb667a7f8d705d6aaf581a1299`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.24`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.24`
+- Site Schema package: `@oripa/site-schema` `2.0.0-alpha.23`
+- Source Commit: `209252d9fcbad42090677f5a7bece52c5a5d3597`
+- Artifact authority: `vendor/oripa/STORE-SITE-034/artifact-manifest.json`
+- Public OpenAPI version: `2.0.0-alpha.23`
+- Public OpenAPI SHA-256: `5c735fe26514d5bfb47b3515ead108bf473fd5e1f81e0936b7e1986290904043`
 
 ## Available contracts
 
@@ -73,6 +74,9 @@ Platform response or Frontend business decision changed.
 - Public static pages by slug with sanitized canonical HTML presentation
 - Backend-filtered Footer Page navigation through `listFooterPages`, preserving
   returned title, slug, and order; successful empty collections are supported
+- Browser-safe anonymous／authenticated Contact submission with Client-owned
+  CSRF／Cookie orchestration, canonical `202` receipt, typed validation and
+  rate-limit errors, and no automatic mutation retry
 - Public gacha detail by slug
 - User-specific gacha presentation through `getGachaPresentation`: sale state,
   audience, eligibility, ineligible reason, allowed draw counts, daily limit, and CTA state
@@ -238,6 +242,14 @@ Prize names without mutating the canonical response. Prize allowed actions,
 exchange values, statuses, lifecycle, expiry, and mutation behavior remain
 unchanged and Backend-authoritative.
 
+SITE-034 adopts the verified immutable STORE-SITE-034 package-only Artifact.
+Only the Storefront Client and Testkit advance to alpha.24; Site Schema and
+Public OpenAPI remain the referenced alpha.23 assets. `/contact` delegates the
+anonymous and authenticated first-submit Browser ceremony to
+`createBrowserStorefrontContentContactClient()`, maps the canonical Contact body
+with an undisplayed empty `website`, and displays the returned `receipt_code`.
+The Storefront does not own CSRF／Cookie protocol, Idempotency, or retry behavior.
+
 ## Pending contracts
 
 - Point purchase
@@ -253,6 +265,7 @@ unchanged and Backend-authoritative.
 ## Next task
 
 Platform content operations should publish the required canonical static pages
-before a content-complete Preview review. A later task may add canonical Prize
-status grouping and expiry lifecycle presentation; identity work must retain the
-canonical post-reauthentication boundary.
+before a content-complete Preview review.
+A later task may add canonical Prize status grouping and expiry lifecycle
+presentation; identity work must retain the canonical post-reauthentication
+boundary.

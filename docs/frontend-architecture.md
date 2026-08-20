@@ -249,3 +249,12 @@ helper returns a derived display string and never modifies the generated Prize
 object. Existing `point_exchange`, `exchange_points`, response fields, allowed
 actions, exchange values, statuses, lifecycle, and mutation/reconciliation flow
 remain canonical and unchanged.
+
+SITE-034 adopts the STORE-SITE-034 package-only Artifact. Client and Testkit are
+alpha.24 while Site Schema and Public OpenAPI remain alpha.23 references. The
+Contact adapter is constructed only with
+`createBrowserStorefrontContentContactClient()`, leaving CSRF initialization,
+Cookie reading, credentials, and Header construction inside the generated
+Client. The form owns only presentation state, canonical field mapping,
+duplicate-submit prevention, and receipt／typed-error display; it does not add
+retry or Idempotency behavior.
