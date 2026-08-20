@@ -73,6 +73,7 @@ export const publicRoutes = [
   "/login",
   "/register",
   "/verify-email",
+  "/verify-email/error",
   "/verify-email/[userId]/[hash]",
   "/points",
   "/notices",

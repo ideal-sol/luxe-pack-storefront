@@ -54,4 +54,12 @@ describe("visual and responsive convergence", () => {
     expect(css).toMatch(/\.contact-panel \{[^}]*padding: 24px 20px/);
     expect(css).toMatch(/@media \(min-width: 720px\)[\s\S]*\.contact-panel \{[^}]*padding: 38px 42px/);
   });
+
+  it("reuses the narrow Authentication card at mobile and desktop widths for verification errors", () => {
+    expect(css).toMatch(/\.page-container--narrow \{[^}]*max-width: calc\(var\(--content-reading\) \+ 40px\)/);
+    expect(css).toMatch(/\.auth-page \.page-title, \.auth-form, \.verification-card \{[^}]*max-width: 560px/);
+    expect(css).toMatch(/\.auth-form, \.verification-card \{[^}]*border-radius: var\(--radius-card\)[^}]*box-shadow: var\(--shadow\)/);
+    expect(css).toMatch(/\.verification-card \{[^}]*padding: 46px 24px[^}]*text-align: center/);
+    expect(css).toMatch(/\.verification-card--error > p \{[^}]*margin-top: 22px/);
+  });
 });

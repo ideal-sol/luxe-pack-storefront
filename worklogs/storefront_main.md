@@ -984,3 +984,25 @@ Canonical `202` receipts display `お問い合わせを受け付けました` an
 `receipt_code`. Typed `422`, `429`, transport／network, and unknown failures use
 Storefront-safe presentation without exposing Backend detail. Platform／API／DB／
 Migration／Admin／Payment／Runtime／Nginx／systemd／Deployment changes remain zero.
+
+## SITE-035 — Email Verification Error Page
+
+- Issue: `#69`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `919df909471ce71a6a5fac9ffab2b461fdbc1a63`
+- Branch: `site/SITE-035-email-verification-error-page`
+
+### Purpose and boundary
+
+The public `/verify-email/error` route provides the approved user-facing target
+for a later Platform Browser 303 redirect after Email Verification failure. It
+uses only canonical query `code` for presentation: `EMAIL_ALREADY_CLAIMED`
+receives its explicit message, while unknown, missing, and repeated values use
+the generic fallback. Query `title`, `detail`, `type`, `stack`, raw Problem
+Details, and unrecognized codes are never rendered.
+
+The page reuses the existing narrow Authentication layout, Email Verification
+card, typography, buttons, spacing, and responsive behavior. It adds no API
+request, protected-route or Session requirement, CSRF／verification-token logic,
+Platform error inference, Register change, `/mypage` change, or modification to
+SITE-033's successful `redirect_path: "/mypage"`.
