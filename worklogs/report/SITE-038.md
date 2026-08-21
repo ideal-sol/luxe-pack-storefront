@@ -5,6 +5,7 @@ The Storefront now supports the read-only journey from `/points` to
 
 - Task: `SITE-038`
 - Issue: [#75](https://github.com/ideal-sol/luxe-pack-storefront/issues/75)
+- PR: [#76](https://github.com/ideal-sol/luxe-pack-storefront/pull/76) — Draft
 - Base SHA: `4fb439429a3edc2e3bc909015d6c69d58f5205d5`
 - Branch: `site/SITE-038-coin-purchase-detail`
 - Risk: `R2`
@@ -55,6 +56,7 @@ Application-only Deployment: `NOT RUN`.
 - TypeScript/Next route generation: PASS
 - Full Vitest: PASS (`32` files, `270` tests)
 - Production build: PASS; dynamic `/points/purchase/[productId]` emitted
+- Desktop/Mobile responsive contract: PASS; long title and large value containment covered
 - Artifact／Policy／Auth／LINE／Catalog／Content／Gacha／Draw／Prize／Point gates: PASS
 - Secret/PII scan and dependency audit at `high`: PASS; no known vulnerabilities
 - `git diff --check`: PASS
