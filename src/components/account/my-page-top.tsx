@@ -85,10 +85,17 @@ function MenuSection({
       <h2>{label}</h2>
       <nav aria-label={label}>
         {items.map((item) => (
-          <Link href={item.href} key={item.href}>
-            <span><strong>{item.label}</strong><small>{item.description}</small></span>
-            <span aria-hidden="true" className="mypage-chevron">›</span>
-          </Link>
+          item.href.startsWith("https://") ? (
+            <a href={item.href} key={item.href} rel="noopener noreferrer" target="_blank">
+              <span><strong>{item.label}</strong><small>{item.description}</small></span>
+              <span aria-hidden="true" className="mypage-chevron">›</span>
+            </a>
+          ) : (
+            <Link href={item.href} key={item.href}>
+              <span><strong>{item.label}</strong><small>{item.description}</small></span>
+              <span aria-hidden="true" className="mypage-chevron">›</span>
+            </Link>
+          )
         ))}
       </nav>
     </section>

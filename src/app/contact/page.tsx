@@ -1,4 +1,5 @@
 import { ContactClientProvider } from "@/components/contact/contact-client-provider";
+import { ContactAccessBoundary } from "@/components/contact/contact-access-boundary";
 import { ContactForm } from "@/components/contact/contact-form";
 import { PageTitle } from "@/components/common/page-title";
 import { PageContainer } from "@/components/layout/page-container";
@@ -11,9 +12,11 @@ export default function ContactPage() {
         eyebrow="CONTACT"
         title="お問い合わせ"
       />
-      <ContactClientProvider>
-        <ContactForm />
-      </ContactClientProvider>
+      <ContactAccessBoundary>
+        <ContactClientProvider>
+          <ContactForm />
+        </ContactClientProvider>
+      </ContactAccessBoundary>
     </PageContainer>
   );
 }

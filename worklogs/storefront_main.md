@@ -1057,3 +1057,30 @@ reconciliation, and successful canonical refetch are unchanged.
 Platform／API／DB／Migration／Artifact／LINE／Payment／Nginx／systemd／Runtime／
 Deployment changes remain zero. Application-only Deployment is NOT RUN and
 requires later explicit Human Operator approval.
+
+## SITE-037 — Authenticated Contact and Support Link
+
+- Issue: `#73`
+- Risk: HIGH (`R3`)
+- Base SHA: `39fa0df8dda67d8da4b6489faf9515ef3bc3f709`
+- Branch: `site/SITE-037-authenticated-contact-support-link`
+- Worktree: `/var/www/luxe-pack-v2-storefront-worktrees/SITE-037`
+
+### Purpose and boundary
+
+`/contact` now waits for the canonical root Session and renders its existing
+form only for an authenticated user. Loading, confirmed unauthenticated, and
+expired states never mount the form; confirmed unauthenticated／expired states
+replace the route with exact `/login`. No Return URL query or new redirect
+contract is introduced.
+
+My Page `お知らせ・サポート` keeps its five-row order and changes only the
+`お問い合わせ` destination to exact `https://support.luxe-pack.biz/`, reusing
+the existing external HTTPS link behavior. The Browser-safe Contact Client,
+202 receipt, 422／429／network presentation, honeypot, and duplicate-submit
+prevention remain unchanged. SITE-036 address navigation and Prize Shipping
+behavior remain unchanged.
+
+Platform／Contact API／OpenAPI／Artifact／DB／Migration／Payment／Admin／Nginx／DNS／
+TLS／systemd unit／runtime env changes remain zero. Application-only Deployment
+is a separate post-closeout operation under the existing Fresh Deployment Gate.
