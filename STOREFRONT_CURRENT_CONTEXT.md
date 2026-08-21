@@ -29,6 +29,7 @@
 - SITE-029 LINE Friend State Integration: implemented by this change
 - SITE-030 Coin Display / Expiring Balance Integration: implemented by this change
 - SITE-031 Coin Terminology Completion — Prize UI: implemented by this change
+- SITE-036 Shipping Address Management Page: implemented by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -257,6 +258,18 @@ including missing or repeated `code`, falls back to the generic message. Raw
 Problem Details and unrelated query fields are never rendered. The page adds no
 API request, Session requirement, verification-token handling, or Register／
 successful `/mypage` redirect change.
+
+SITE-036 reuses SITE-012's existing Browser-safe Prize Shipping Client and
+generated `ShippingAddressInput` on the login-required `/mypage/address` route.
+The My Page Account section places `お届け先登録` immediately above `LINE連携`.
+The page lists only Platform-returned masked presentations and supports canonical
+list/detail/create/update/delete behavior with the existing in-memory create
+Idempotency Key and update/delete reconciliation rules. Prize Shipping retains
+registered-address selection and its existing shipping mutation; it removes the
+new-address CTA and, only when `listShippingAddresses` returns an empty
+collection, blocks shipping and links normally to `/mypage/address`. The pinned
+Artifact, Platform Contract, Prize eligibility, Point/Coin Exchange, and
+successful canonical refetch behavior remain unchanged.
 
 ## Pending contracts
 

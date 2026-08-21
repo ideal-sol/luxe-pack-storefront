@@ -97,6 +97,15 @@ retried: an uncertain transport result is reconciled through
 successful mutation is followed by canonical Prize, Shipping, and Address reads;
 the UI does not optimistically change Prize state or Point balance.
 
+SITE-036 exposes the same address boundary on the authenticated
+`/mypage/address` route. Shared address fields use only generated
+`ShippingAddressInput`; list cards use only the masked collection presentation.
+Create retains one in-memory Idempotency Key for a same-operation retry, while
+update/delete preserve canonical reconciliation before any retry. The Prize
+Shipping dialog no longer creates an address. Its empty state comes only from
+`listShippingAddresses` and links to `/mypage/address` without starting a
+mutation; non-empty selection and shipping confirmation remain unchanged.
+
 The Prize Browser factory supplies the shared receiver-safe fetch function to the
 generated Browser Client. This preserves native Browser invocation semantics while
 leaving credentials, Cookie/CSRF handling, paths, decoding, typed problems, and

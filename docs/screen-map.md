@@ -24,7 +24,8 @@
 | `/mypage` | Account hub | Session-connected member summary, centralized shortcuts/support navigation, and logout |
 | `/mypage/points` | Point history | Session-aware authenticated placeholder; data Contract pending |
 | `/mypage/draws` | Draw history | Session-aware authenticated placeholder; data Contract pending |
-| `/mypage/prizes` | Acquired item inventory, Backend-authoritative selection, address management, shipping, and point exchange | MIG-062E Browser Prize Fulfillment Client-connected |
+| `/mypage/prizes` | Acquired item inventory, Backend-authoritative selection, registered-address shipping, and point exchange | MIG-062E Browser Prize Fulfillment Client-connected; empty address collection links to `/mypage/address` |
+| `/mypage/address` | Login-required shipping-address list, registration, edit, and delete | SITE-012 Browser-safe address Contract reused; masked list presentation is canonical |
 | `/mypage/line` | LINE connection | Session and External Identity Client-connected state/link UI; unlink deferred pending safe reauthentication journey |
 
 The Header now renders neutral, unauthenticated, and authenticated controls from

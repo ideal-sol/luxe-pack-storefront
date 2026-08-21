@@ -1,12 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  isSameShippingAddress,
+  ShippingAddressFields,
+  ShippingAddressMaskedPresentation,
+  toShippingAddressInput,
+} from "@/components/address/shipping-address-fields";
 import {
   createFulfillmentIdempotencyKey,
   presentFulfillmentProblem,
   type PrizeExchangeResponse,
   type PrizeFulfillmentAdapter,
-  type ShippingAddress,
   type ShippingAddressCollection,
   type ShippingAddressInput,
   type ShippingRequestSummary,
@@ -24,81 +30,8 @@ interface FulfillmentDialogProps {
 }
 
 type AddressSummary = ShippingAddressCollection["items"][number];
-type AddressFormMode = { readonly kind: "create" } | { readonly kind: "edit"; readonly id: string };
 
-const emptyAddress: ShippingAddressInput = {
-  city: "",
-  building: null,
-  phone_number: "",
-  postal_code: "",
-  prefecture: "",
-  recipient_name: "",
-  street: "",
-};
 const number = new Intl.NumberFormat("ja-JP");
-
-function addressFingerprint(input: ShippingAddressInput) {
-  return JSON.stringify([
-    input.recipient_name,
-    input.postal_code,
-    input.prefecture,
-    input.city,
-    input.street,
-    input.building ?? null,
-    input.phone_number,
-  ]);
-}
-
-function sameAddress(actual: ShippingAddress, expected: ShippingAddressInput) {
-  return addressFingerprint(actual) === addressFingerprint(expected);
-}
-
-function AddressFields({
-  disabled,
-  fieldErrors,
-  onChange,
-  value,
-}: {
-  readonly disabled: boolean;
-  readonly fieldErrors: Readonly<Record<string, readonly string[]>>;
-  readonly onChange: (value: ShippingAddressInput) => void;
-  readonly value: ShippingAddressInput;
-}) {
-  function field(
-    name: keyof ShippingAddressInput,
-    label: string,
-    maximum: number,
-    inputMode?: "numeric" | "tel",
-  ) {
-    const current = value[name] ?? "";
-    return (
-      <label className="form-field">
-        <span>{label}</span>
-        <input
-          disabled={disabled}
-          inputMode={inputMode}
-          maxLength={maximum}
-          onChange={(event) => onChange({ ...value, [name]: event.currentTarget.value || (name === "building" ? null : "") })}
-          required={name !== "building"}
-          value={current}
-        />
-        {fieldErrors[name]?.map((message) => <span className="form-field__error" key={message}>{message}</span>)}
-      </label>
-    );
-  }
-
-  return (
-    <div className="fulfillment-address-form__fields">
-      {field("recipient_name", "お名前", 120)}
-      {field("postal_code", "郵便番号", 16, "numeric")}
-      {field("prefecture", "都道府県", 32)}
-      {field("city", "市区町村", 120)}
-      {field("street", "番地", 191)}
-      {field("building", "建物名・部屋番号（任意）", 191)}
-      {field("phone_number", "電話番号", 32, "tel")}
-    </div>
-  );
-}
 
 export function PrizeFulfillmentDialog({
   action,
@@ -108,11 +41,11 @@ export function PrizeFulfillmentDialog({
   selectedItems,
 }: FulfillmentDialogProps) {
   const titleId = useId();
-  const [addresses, setAddresses] = useState<readonly AddressSummary[]>([]);
+  const [addresses, setAddresses] = useState<readonly AddressSummary[] | null>(null);
   const [addressesLoading, setAddressesLoading] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-  const [addressMode, setAddressMode] = useState<AddressFormMode | null>(null);
-  const [addressInput, setAddressInput] = useState<ShippingAddressInput>(emptyAddress);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const [addressInput, setAddressInput] = useState<ShippingAddressInput | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Readonly<Record<string, readonly string[]>>>({});
   const [problem, setProblem] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -120,7 +53,6 @@ export function PrizeFulfillmentDialog({
   const submittingRef = useRef(false);
   const pendingExchange = useRef<string | null>(null);
   const pendingShipping = useRef<string | null>(null);
-  const pendingAddressCreate = useRef<{ readonly fingerprint: string; readonly key: string } | null>(null);
 
   const prizeIds = useMemo(() => selectedItems.map((item) => item.id), [selectedItems]);
   const exchangeEstimate = useMemo(
@@ -145,6 +77,7 @@ export function PrizeFulfillmentDialog({
       .then(() => {
         if (!active) return null;
         setAddressesLoading(true);
+        setAddresses(null);
         setProblem(null);
         return client.listShippingAddresses();
       })
@@ -163,12 +96,11 @@ export function PrizeFulfillmentDialog({
   }, [action, client]);
 
   function closeDialog() {
-    pendingAddressCreate.current = null;
     pendingExchange.current = null;
     pendingShipping.current = null;
     submittingRef.current = false;
-    setAddressMode(null);
-    setAddressInput(emptyAddress);
+    setEditingAddressId(null);
+    setAddressInput(null);
     setFieldErrors({});
     setProblem(null);
     setSuccess(null);
@@ -239,16 +171,8 @@ export function PrizeFulfillmentDialog({
     setProblem(null);
     try {
       const { data } = await client.getShippingAddress(addressId);
-      setAddressInput({
-        building: data.building ?? null,
-        city: data.city,
-        phone_number: data.phone_number,
-        postal_code: data.postal_code,
-        prefecture: data.prefecture,
-        recipient_name: data.recipient_name,
-        street: data.street,
-      });
-      setAddressMode({ id: addressId, kind: "edit" });
+      setAddressInput(toShippingAddressInput(data));
+      setEditingAddressId(addressId);
     } catch (error) {
       setProblem(presentFulfillmentProblem(error).message);
     } finally {
@@ -257,42 +181,30 @@ export function PrizeFulfillmentDialog({
   }
 
   async function saveAddress() {
-    if (!addressMode || submittingRef.current) return;
+    if (!editingAddressId || !addressInput || submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
     setProblem(null);
     setFieldErrors({});
     try {
-      if (addressMode.kind === "create") {
-        const fingerprint = addressFingerprint(addressInput);
-        const pending = pendingAddressCreate.current?.fingerprint === fingerprint
-          ? pendingAddressCreate.current
-          : { fingerprint, key: createFulfillmentIdempotencyKey() };
-        pendingAddressCreate.current = pending;
-        const { data } = await client.createShippingAddress(addressInput, { idempotency_key: pending.key });
-        pendingAddressCreate.current = null;
-        await refreshAddresses(data.id);
-      } else {
-        try {
-          await client.updateShippingAddress(addressMode.id, addressInput);
-        } catch (error) {
-          const presented = presentFulfillmentProblem(error);
-          if (!presented.uncertain) throw error;
-          const { data } = await client.getShippingAddress(addressMode.id);
-          if (!sameAddress(data, addressInput)) {
-            setProblem("更新結果を確認できません。最新のお届け先を確認してから次の操作を行ってください。");
-            return;
-          }
+      try {
+        await client.updateShippingAddress(editingAddressId, addressInput);
+      } catch (error) {
+        const presented = presentFulfillmentProblem(error);
+        if (!presented.uncertain) throw error;
+        const { data } = await client.getShippingAddress(editingAddressId);
+        if (!isSameShippingAddress(data, addressInput)) {
+          setProblem("更新結果を確認できません。最新のお届け先を確認してから次の操作を行ってください。");
+          return;
         }
-        await refreshAddresses(addressMode.id);
       }
-      setAddressMode(null);
-      setAddressInput(emptyAddress);
+      setEditingAddressId(null);
+      setAddressInput(null);
+      await refreshAddresses(editingAddressId);
     } catch (error) {
       const presented = presentFulfillmentProblem(error);
       setFieldErrors(presented.fieldErrors);
       setProblem(presented.message);
-      if (!presented.retryable) pendingAddressCreate.current = null;
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
@@ -317,6 +229,8 @@ export function PrizeFulfillmentDialog({
           return;
         }
       }
+      setAddresses(null);
+      setSelectedAddressId(null);
       await refreshAddresses();
     } catch (error) {
       setProblem(presentFulfillmentProblem(error).message);
@@ -339,12 +253,12 @@ export function PrizeFulfillmentDialog({
             <p>{success}</p>
             <p>景品・発送・お届け先はPlatformから再取得済みです。</p>
           </div>
-        ) : addressMode ? (
+        ) : editingAddressId && addressInput ? (
           <form onSubmit={(event) => { event.preventDefault(); void saveAddress(); }}>
-            <AddressFields disabled={submitting} fieldErrors={fieldErrors} onChange={setAddressInput} value={addressInput} />
+            <ShippingAddressFields disabled={submitting} fieldErrors={fieldErrors} onChange={setAddressInput} value={addressInput} />
             {problem && <p className="fulfillment-dialog__error" role="alert">{problem}</p>}
             <div className="dialog-card__actions">
-              <button className="button button--ghost" disabled={submitting} onClick={() => setAddressMode(null)} type="button">戻る</button>
+              <button className="button button--ghost" disabled={submitting} onClick={() => { setEditingAddressId(null); setAddressInput(null); }} type="button">戻る</button>
               <button className="button button--dark" disabled={submitting} type="submit">{submitting ? "確認中…" : "お届け先を保存"}</button>
             </div>
           </form>
@@ -360,15 +274,20 @@ export function PrizeFulfillmentDialog({
               <div className="fulfillment-addresses">
                 <div className="fulfillment-addresses__heading">
                   <strong>お届け先</strong>
-                  <button className="button button--ghost button--compact" disabled={submitting} onClick={() => { setAddressInput(emptyAddress); setFieldErrors({}); setProblem(null); setAddressMode({ kind: "create" }); }} type="button">新しいお届け先</button>
                 </div>
-                {addressesLoading ? <p role="status">お届け先を読み込み中…</p> : addresses.length === 0 ? <p>登録済みのお届け先はありません。</p> : (
+                {addressesLoading ? <p role="status">お届け先を読み込み中…</p> : addresses === null ? null : addresses.length === 0 ? (
+                  <div className="fulfillment-addresses__empty">
+                    <strong>登録済みのお届け先はありません</strong>
+                    <p>発送を依頼する前に、お届け先を登録してください。</p>
+                    <Link className="button button--dark" href="/mypage/address">お届け先を登録する</Link>
+                  </div>
+                ) : (
                   <div className="fulfillment-addresses__list">
                     {addresses.map((address) => (
                       <div className="fulfillment-address" key={address.id}>
                         <label>
                           <input checked={selectedAddressId === address.id} disabled={submitting} name="shipping-address" onChange={() => setSelectedAddressId(address.id)} type="radio" />
-                          <span><strong>{address.recipient_name_masked}</strong><small>{address.postal_code_masked}／{address.phone_number_masked}</small></span>
+                          <ShippingAddressMaskedPresentation address={address} />
                         </label>
                         <div>
                           <button disabled={submitting} onClick={() => void startEdit(address.id)} type="button">編集</button>

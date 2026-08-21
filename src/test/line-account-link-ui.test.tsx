@@ -195,7 +195,7 @@ describe("LINE account link UI", () => {
   it("keeps the SITE-006 route definition and session boundary", async () => {
     renderLine();
     expect(await screen.findByRole("link", { name: "← マイページへ戻る" })).toHaveAttribute("href", "/mypage");
-    expect(myPageAccountNavigation[0].href).toBe(lineAccountRoute);
+    expect(myPageAccountNavigation[1].href).toBe(lineAccountRoute);
     expect(lineAccountRoute).toBe("/mypage/line");
   });
 

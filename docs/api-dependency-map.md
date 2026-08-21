@@ -40,7 +40,7 @@ response shapes.
 | Catalog presentation | Sale state, anonymous/authenticated eligibility, reason, CTA, and display-fact flags | **Resolved — MIG-062G alpha.9 generated `GachaSummary.presentation`** |
 | Gacha detail Point insufficiency | Backend-authoritative Point affordability before Draw | **Presentation remains pending; SITE-005 uses only the typed Draw mutation rejection** |
 | Prize inventory | User-prize presentation, cursor, and Backend-authoritative allowed actions | **Resolved — MIG-062A `listPrizes` / `getPrize`; SITE-007 implemented** |
-| Prize address | Browser-safe address list/detail/create/update/delete, typed validation, and uncertain-result reconciliation | **Resolved — MIG-062E Prize Shipping Client; SITE-012 implemented** |
+| Prize address | Browser-safe address list/detail/create/update/delete, typed validation, and uncertain-result reconciliation | **Resolved — MIG-062E Prize Shipping Client; SITE-012 implemented; SITE-036 reuses it at `/mypage/address`** |
 | Prize shipping | Caller-keyed shipping mutation, typed Backend revalidation, and Shipping/Prize/Address reads | **Resolved — MIG-062E `createShippingRequest`; SITE-012 implemented** |
 | Prize point exchange | Caller-keyed exchange mutation, typed Backend revalidation, and canonical read reconciliation | **Resolved — MIG-062E `exchangePrizes`; SITE-012 implemented** |
 | Prize status tabs | Canonical grouping or status filter | **Pending Contract — SITE-007 does not infer grouping** |
