@@ -1006,3 +1006,54 @@ card, typography, buttons, spacing, and responsive behavior. It adds no API
 request, protected-route or Session requirement, CSRF／verification-token logic,
 Platform error inference, Register change, `/mypage` change, or modification to
 SITE-033's successful `redirect_path: "/mypage"`.
+
+## SITE-036 — Shipping Address Management Page
+
+- Issue: `#71`
+- Risk: HIGH (`R3`)
+- Base SHA: `2de3abbd1434e5df0f87872a9264c427682fa88d`
+- Branch: `site/SITE-036-shipping-address-management`
+- Worktree: `/var/www/luxe-pack-v2-storefront-worktrees/SITE-036`
+
+### Preflight and Contract gate
+
+Local／origin／GitHub Storefront `main` matched the Base SHA. Storefront lane was
+idle, Open Issue／PR was empty, all Shared Locks were `none`, and SITE-036 was
+unused across GitHub Issue history, Task Policies, and remote refs. Resource Gate
+passed with 21 GiB disk, 2.1 GiB available memory, and 5.3 GiB swap. The active
+Storefront was exact SITE-035 `main` with restart 0; active Platform API／Admin
+containers were healthy with restart 0. The Preview OS lock was free.
+
+The verified immutable STORE-SITE-034 alpha.24 Artifact retains SITE-012's
+`createBrowserStorefrontPrizeShippingClient`, address list/detail/create/update/
+delete methods, generated `ShippingAddressInput`, masked address collection, and
+formal create idempotency／update-delete reconciliation semantics. No Platform
+Change Request or Artifact upgrade is required.
+
+### Implementation and boundary
+
+My Page Account navigation adds `お届け先登録` immediately above `LINE連携` and
+routes to login-required `/mypage/address`. The page reuses the existing Prize
+Client Provider and extracted SITE-012 address fields／masked presentation. It
+supports loading, canonical empty／one／multiple lists, create, detail-backed edit,
+delete, generated field errors, safe typed errors, and synchronous duplicate-
+submit prevention.
+
+Create keeps one generated in-memory Idempotency Key for a same-input retry.
+Update and delete are not automatically resent after an uncertain result; they
+read the canonical address detail／collection first. List presentation uses only
+Platform-returned masked fields. Components add no direct `/api/v2`, Cookie／CSRF
+logic, URL PII, persistent Storage, console／analytics PII, or optimistic address
+authority.
+
+Prize Shipping retains canonical registered-address selection and the existing
+shipping confirmation/mutation. The `新しいお届け先` CTA is removed. When the
+canonical address collection is empty, shipping stays disabled and
+`お届け先を登録する` navigates normally to `/mypage/address` without an address or
+shipping mutation. Prize selection, `allowed_actions`, fulfillment eligibility,
+Payment Hold, typed fulfillment errors, Point／Coin Exchange, Idempotency,
+reconciliation, and successful canonical refetch are unchanged.
+
+Platform／API／DB／Migration／Artifact／LINE／Payment／Nginx／systemd／Runtime／
+Deployment changes remain zero. Application-only Deployment is NOT RUN and
+requires later explicit Human Operator approval.

@@ -17,7 +17,7 @@ describe("navigation definitions", () => {
     expect(publicRoutes).toEqual(expect.arrayContaining([
       "/", "/gachas", "/gachas/[slug]", "/draws/[drawRequestId]/result", "/login", "/register", "/points",
       "/verify-email/error", "/notices", "/notices/[noticeId]", "/pages/[slug]", "/contact", "/mypage",
-      "/mypage/points", "/mypage/draws", "/mypage/prizes", "/mypage/line",
+      "/mypage/points", "/mypage/draws", "/mypage/prizes", "/mypage/address", "/mypage/line",
     ]));
   });
 });

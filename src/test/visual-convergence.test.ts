@@ -62,4 +62,12 @@ describe("visual and responsive convergence", () => {
     expect(css).toMatch(/\.verification-card \{[^}]*padding: 46px 24px[^}]*text-align: center/);
     expect(css).toMatch(/\.verification-card--error > p \{[^}]*margin-top: 22px/);
   });
+
+  it("keeps shipping address management single-column on mobile and two-column on desktop", () => {
+    expect(css).toMatch(/\.shipping-address-form__fields \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
+    expect(css).toMatch(/@media \(min-width: 720px\)[\s\S]*\.shipping-address-form__fields \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+    expect(css).toMatch(/\.shipping-address-list, \.shipping-address-form \{[^}]*padding: 24px 20px/);
+    expect(css).toMatch(/@media \(min-width: 720px\)[\s\S]*\.shipping-address-list, \.shipping-address-form \{[^}]*padding: 32px/);
+    expect(css).toMatch(/\.shipping-address-card \{[^}]*flex-wrap: wrap/);
+  });
 });

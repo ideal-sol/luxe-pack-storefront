@@ -173,6 +173,7 @@ describe("prize fulfillment UI", () => {
     const fulfillmentClient = client();
     const { onReconcile } = renderDialog("shipping", fulfillmentClient);
     expect(await screen.findByText("テスト***")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "新しいお届け先" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
     expect(await screen.findByText("手続きが完了しました")).toBeInTheDocument();
     expect(fulfillmentClient.createShippingRequest).toHaveBeenCalledWith(
@@ -184,6 +185,33 @@ describe("prize fulfillment UI", () => {
     expect(fulfillmentClient.listShippingRequests).toHaveBeenCalled();
     expect(fulfillmentClient.listShippingAddresses).toHaveBeenCalled();
     expect(onReconcile).toHaveBeenCalledOnce();
+  });
+
+  it("blocks shipping for the canonical empty address collection and navigates to registration", async () => {
+    const createShippingRequest = vi.fn();
+    const fulfillmentClient = client({
+      createShippingRequest,
+      listShippingAddresses: vi.fn().mockResolvedValue(response({ items: [] })),
+    });
+    renderDialog("shipping", fulfillmentClient);
+    expect(await screen.findByText("登録済みのお届け先はありません")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "新しいお届け先" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "お届け先を登録する" })).toHaveAttribute("href", "/mypage/address");
+    expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
+    expect(createShippingRequest).not.toHaveBeenCalled();
+    expect(fulfillmentClient.createShippingAddress).not.toHaveBeenCalled();
+  });
+
+  it("does not infer an empty address state when the canonical list fails", async () => {
+    const fulfillmentClient = client({
+      listShippingAddresses: vi.fn().mockRejectedValue(fulfillmentProblem("AUTHENTICATION_REQUIRED", false)),
+    });
+    renderDialog("shipping", fulfillmentClient);
+    expect(await screen.findByRole("alert")).toHaveTextContent("セッションを確認できません");
+    expect(screen.queryByText("登録済みのお届け先はありません")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "お届け先を登録する" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeDisabled();
   });
 
   it("reconciles an uncertain address update before deciding whether to retry", async () => {

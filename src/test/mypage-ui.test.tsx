@@ -70,9 +70,21 @@ describe("my page top", () => {
     expect(screen.getByRole("link", { name: /コイン履歴/ })).toHaveAttribute("href", "/mypage/points");
     expect(screen.getByRole("link", { name: /ガチャ履歴/ })).toHaveAttribute("href", "/mypage/draws");
     expect(screen.getByRole("link", { name: /獲得アイテム/ })).toHaveAttribute("href", "/mypage/prizes");
+    expect(screen.getByRole("link", { name: /お届け先登録/ })).toHaveAttribute("href", "/mypage/address");
     expect(screen.getByRole("link", { name: /LINE連携/ })).toHaveAttribute("href", "/mypage/line");
     expect(screen.getByRole("link", { name: /お知らせ/ })).toHaveAttribute("href", "/notices");
     expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("href", "/contact");
+  });
+
+  it("places shipping address registration immediately above LINE in Account", async () => {
+    renderMyPage(client());
+    const account = await screen.findByRole("navigation", { name: "アカウント" });
+    const links = Array.from(account.querySelectorAll("a"));
+    expect(links.map((link) => link.getAttribute("href"))).toEqual(["/mypage/address", "/mypage/line"]);
+    expect(links.map((link) => link.textContent)).toEqual(expect.arrayContaining([
+      expect.stringContaining("お届け先登録"),
+      expect.stringContaining("LINE連携"),
+    ]));
   });
 
   it("distinguishes Session loading and unauthenticated states", async () => {
