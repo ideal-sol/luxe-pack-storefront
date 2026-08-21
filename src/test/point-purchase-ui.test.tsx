@@ -139,10 +139,28 @@ describe("SITE-030 Coin Product read regression", () => {
     expect(screen.getByText("購入対象です。")).toBeInTheDocument();
     expect(screen.getByText("購入可能")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "購入手続きは準備中" })).toBeDisabled();
+    const detailLink = screen.getByRole("link", { name: "詳細を見る" });
+    expect(detailLink).toHaveAttribute(
+      "href",
+      `/points/purchase/${PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0].id}`,
+    );
+    expect(detailLink.querySelector("button")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "購入手続きは準備中" }).closest("a")).toBeNull();
     expect(client.getWallet).toHaveBeenCalledOnce();
     expect(client.listPointProducts).toHaveBeenCalledOnce();
     expect(PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0].title).toBe(originalTitle);
     expect(view.container).not.toHaveTextContent(/ポイント|\bpt\b/i);
+  });
+
+  it("encodes only the canonical public Product identifier in the detail Route", async () => {
+    const canonical = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0];
+    const productId = "public/product?review=true";
+    renderPoints(pointClient({ products: { data: [{ ...canonical, id: productId }] } }));
+
+    expect(await screen.findByRole("link", { name: "詳細を見る" })).toHaveAttribute(
+      "href",
+      "/points/purchase/public%2Fproduct%3Freview%3Dtrue",
+    );
   });
 
   it("renders zero balance and a canonical empty product collection", async () => {

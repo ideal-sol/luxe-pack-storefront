@@ -20,7 +20,8 @@
 
 | Route | Purpose | Current state |
 | --- | --- | --- |
-| `/points` | Point purchase presentation with balance, category control, and future product grid boundary | Layout implemented; balance/products/eligibility/purchase Platform contracts pending |
+| `/points` | Coin balance and Backend-ordered Point Product collection with category presentation and read-only detail navigation | `getWallet`／`listPointProducts` connected; canonical eligibility／CTA retained; Payment remains absent |
+| `/points/purchase/[productId]` | Display-only Coin Purchase Detail resolved from the canonical Product collection | Public opaque Product ID exact-match; canonical price／grant／eligibility／Limited Bonus; no Purchase action |
 | `/mypage` | Account hub | Session-connected member summary, centralized shortcuts/support navigation, and logout |
 | `/mypage/points` | Point history | Session-aware authenticated placeholder; data Contract pending |
 | `/mypage/draws` | Draw history | Session-aware authenticated placeholder; data Contract pending |

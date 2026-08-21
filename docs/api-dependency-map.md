@@ -29,6 +29,7 @@ response shapes.
 | Points | Canonical current-user wallet total and expiry buckets | **Resolved — MIG-062Z alpha.21 `getWallet`; SITE-030 renders `expiring_within_7_days` without Frontend expiry decisions** |
 | Point history | Canonical signed ledger history and opaque cursor | **Resolved — MIG-062Z alpha.21 retains `listPointLedgerEntries`; SITE-030 applies Coin terminology only at presentation time** |
 | Points | Backend-ordered product collection, eligibility, reason, and CTA | **Resolved — MIG-062Z alpha.21 retains `listPointProducts`; SITE-030 displays canonical total grant without paid/bonus breakdown** |
+| Points | Display-only Product detail by public identifier | **Resolved — SITE-038 exact-matches encoded `PointProduct.id` against `listPointProducts`; no single-product endpoint or mutation required** |
 | Points | Point purchase mutation | **Pending Contract** |
 | Draw history | Historical Gacha presentation, occurred time, requested/executed counts, Backend status, stable order, and opaque cursor | **Resolved — MIG-062W alpha.20 retains `listDrawHistory`; SITE-028 implemented** |
 | Notice list | Public notice summaries and cursor | **Resolved — MIG-061U content client** |

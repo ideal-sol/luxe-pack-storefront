@@ -31,6 +31,7 @@
 - SITE-031 Coin Terminology Completion — Prize UI: implemented by this change
 - SITE-036 Shipping Address Management Page: implemented by this change
 - SITE-037 Authenticated Contact and Support Link: implemented by this change
+- SITE-038 Coin Purchase Detail Page: implemented by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -282,6 +283,16 @@ Client and its canonical receipt／typed-error／no-retry behavior. My Page keep
 the established support order while changing `お問い合わせ` to exact
 `https://support.luxe-pack.biz/` with the existing external-link treatment.
 SITE-036 address navigation and Prize Shipping behavior remain unchanged.
+
+SITE-038 adds display-only `/points/purchase/[productId]` using the retained
+generated `listPointProducts` collection. The Contract Gate confirms `id` is a
+public opaque identifier and that canonical title, JPY price, total grant,
+audience, sale／availability／eligibility／reason／CTA, and Limited Bonus
+Presentation are sufficient. `/points` percent-encodes that exact `id` in an
+independent `詳細を見る` Link while preserving the existing Backend CTA. The
+detail exact-matches the successful collection, renders no invented Product on
+unknown IDs or read errors, and contains no Purchase／Payment button or call.
+Platform／Artifact／Runtime／Payment remain unchanged.
 
 ## Pending contracts
 

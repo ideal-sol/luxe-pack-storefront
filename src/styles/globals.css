@@ -588,9 +588,32 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .point-product-card__eligibility--eligible { color: #267249; font-weight: 800; }
 .point-product-card__action { align-items: end; display: flex; min-height: 48px; }
 .point-product-card__action > *, .point-product-card__purchase-pending, .point-product-card__purchase-pending .button { width: 100%; }
+.point-product-card__actions { display: grid; gap: 8px; min-width: 0; width: 100%; }
 .point-product-card__action .button:disabled { cursor: not-allowed; opacity: .58; }
 .point-product-card__purchase-pending { display: grid; gap: 8px; }
 .point-product-card__purchase-pending strong { color: #267249; font-size: .62rem; text-align: center; }
+.point-purchase-detail-page { max-width: calc(var(--content-reading) + 40px); }
+.point-purchase-detail__back { align-items: center; color: var(--muted); display: inline-flex; font-size: .72rem; font-weight: 800; margin-bottom: 24px; min-height: 44px; text-decoration: none; }
+.point-purchase-detail { display: grid; gap: 20px; min-width: 0; }
+.point-purchase-detail__header { min-width: 0; padding-block: 8px 4px; }
+.point-purchase-detail__header > p, .point-purchase-detail__summary > header p, .point-purchase-detail__conditions > header p { color: var(--bronze); font-size: .56rem; font-weight: 800; letter-spacing: .18em; margin: 0 0 10px; }
+.point-purchase-detail__header h1 { font-family: Georgia, "Yu Mincho", serif; font-size: clamp(2rem, 9vw, 3.8rem); font-weight: 400; letter-spacing: -.04em; line-height: 1.18; margin: 0; overflow-wrap: anywhere; }
+.point-purchase-detail__summary, .point-purchase-detail__conditions { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow); min-width: 0; padding: 24px 20px; }
+.point-purchase-detail__summary > header h2, .point-purchase-detail__conditions > header h2 { font-family: Georgia, "Yu Mincho", serif; font-size: 1.35rem; font-weight: 400; margin: 0; }
+.point-purchase-detail__facts { display: grid; gap: 0; margin: 22px 0 18px; min-width: 0; }
+.point-purchase-detail__facts > div { align-items: baseline; border-top: 1px solid var(--line); display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) minmax(0, auto); min-width: 0; padding: 18px 0; }
+.point-purchase-detail__facts > div:last-child { border-bottom: 1px solid var(--line); }
+.point-purchase-detail__facts dt { color: var(--muted); font-size: .68rem; font-weight: 800; }
+.point-purchase-detail__facts dd { font-size: 1rem; font-weight: 800; margin: 0; min-width: 0; overflow-wrap: anywhere; text-align: right; }
+.point-purchase-detail__facts dd strong { color: var(--bronze); font-family: Georgia, "Times New Roman", serif; font-size: clamp(2rem, 10vw, 3.4rem); font-weight: 500; line-height: 1; overflow-wrap: anywhere; }
+.point-purchase-detail__facts dd span { font-size: .68rem; margin-left: 6px; }
+.point-purchase-detail__summary .point-product-card__limited-bonus { margin-bottom: 0; }
+.point-purchase-detail__conditions dl { display: grid; margin: 22px 0 0; }
+.point-purchase-detail__conditions dl > div { align-items: baseline; border-top: 1px solid var(--line); display: grid; gap: 10px; grid-template-columns: minmax(0, 8rem) minmax(0, 1fr); min-width: 0; padding: 14px 0; }
+.point-purchase-detail__conditions dl > div:last-child { border-bottom: 1px solid var(--line); }
+.point-purchase-detail__conditions dt { color: var(--muted); font-size: .66rem; font-weight: 800; }
+.point-purchase-detail__conditions dd { font-size: .72rem; line-height: 1.7; margin: 0; min-width: 0; overflow-wrap: anywhere; text-align: right; }
+.point-purchase-detail__conditions dd[data-eligible="true"] { color: #267249; font-weight: 800; }
 .point-history { display: grid; gap: 18px; min-width: 0; }
 .point-history > header p { color: var(--bronze); font-size: .55rem; font-weight: 800; letter-spacing: .18em; margin: 0 0 8px; }
 .point-history > header h2 { font-family: Georgia, "Yu Mincho", serif; font-size: 1.35rem; font-weight: 400; margin: 0; }
@@ -678,7 +701,7 @@ body:has(.gacha-draw-tray) .site-footer { padding-bottom: calc(370px + env(safe-
 @media (min-width: 720px) {
   .page-container { padding-inline: 32px; }
   .route-page { padding-block: 76px 110px; }
-  .page-container--narrow, .catalog-page, .inventory-page, .mypage-page, .points-page, .draw-history-page, .contact-page { max-width: calc(var(--content-reading) + 64px); }
+  .page-container--narrow, .catalog-page, .inventory-page, .mypage-page, .points-page, .point-purchase-detail-page, .draw-history-page, .contact-page { max-width: calc(var(--content-reading) + 64px); }
   .home-content { max-width: calc(var(--content-reading) + 64px); }
   .site-header__main { height: 60px; }
   .site-header__nav { display: flex; }
@@ -759,6 +782,7 @@ body:has(.gacha-draw-tray) .site-footer { padding-bottom: calc(370px + env(safe-
   .point-purchase, .point-history-page { gap: 42px; }
   .point-balance-summary { min-height: 164px; padding: 30px 32px; }
   .point-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .point-purchase-detail__summary, .point-purchase-detail__conditions { padding: 32px; }
   .draw-history-card { align-items: stretch; gap: 20px; grid-template-columns: 220px minmax(0, 1fr); padding: 16px; }
   .draw-history-card__image { aspect-ratio: 4 / 3; }
   .draw-history-card__body { align-content: center; }

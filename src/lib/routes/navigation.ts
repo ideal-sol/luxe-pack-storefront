@@ -38,6 +38,10 @@ export function drawResultRoute(drawRequestId: string) {
   return `/draws/${encodeURIComponent(drawRequestId)}/result`;
 }
 
+export function pointPurchaseDetailRoute(productId: string) {
+  return `/points/purchase/${encodeURIComponent(productId)}`;
+}
+
 export function staticPageRoute(slug: string) {
   return `/pages/${encodeURIComponent(slug)}`;
 }
@@ -78,6 +82,7 @@ export const publicRoutes = [
   "/verify-email/error",
   "/verify-email/[userId]/[hash]",
   "/points",
+  "/points/purchase/[productId]",
   "/notices",
   "/notices/[noticeId]",
   "/pages/[slug]",

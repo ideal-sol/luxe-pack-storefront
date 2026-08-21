@@ -48,6 +48,15 @@ and `/mypage/points` consume the same in-memory Wallet state, so the Frontend
 never totals Ledger entries. Its adapter exposes only generated `getWallet`,
 `listPointLedgerEntries`, and `listPointProducts` reads.
 
+`/points/purchase/[productId]` reuses `listPointProducts` as its only Product
+authority. The route helper percent-encodes the canonical public opaque `id` as
+one path segment, and the Client Component resolves it only by exact equality
+against the successful collection response. A successful collection without a
+match is Not Found; a failed read remains Error. The detail renders returned
+price/currency, `grant.total_points`, audience, sale/eligibility presentation,
+and the established SITE-032 Limited Bonus presentation without calculation.
+It contains no Purchase or Payment action.
+
 The root Public Client Provider constructs a separate read adapter from the same
 browser transport configuration. It does not depend on Session state. Home and
 catalog Client Components start public requests independently, while endpoint
