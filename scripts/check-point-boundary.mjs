@@ -33,6 +33,7 @@ const applicationFiles = [
   ...filesUnder("src/components/points"),
   "src/components/layout/site-header.tsx",
   "src/app/points/page.tsx",
+  "src/app/points/purchase/[productId]/page.tsx",
   "src/app/mypage/points/page.tsx",
 ];
 for (const file of applicationFiles) {
@@ -100,6 +101,49 @@ if (!purchase.includes("wallet.balance.expiring_within_7_days.map") ||
   throw new Error("Canonical Wallet expiry presentation is incomplete");
 }
 
+const purchaseDetail = readFileSync("src/components/points/point-purchase-detail.tsx", "utf8");
+for (const required of [
+  "client.listPointProducts()",
+  "candidate.id === productId",
+  "product.price.amount",
+  "product.price.currency",
+  "product.grant.total_points",
+  "product.audience.label",
+  "product.sale_state",
+  "product.eligible",
+  "product.ineligible_reason",
+  "limitedBonus?.presentation.is_visible",
+  "LimitedBonusPresentation",
+]) {
+  if (!purchaseDetail.includes(required)) throw new Error(`Coin Purchase Detail canonical presentation is missing: ${required}`);
+}
+for (const forbidden of [
+  "product.grant.paid_points",
+  "product.grant.bonus_points",
+  "limitedBonus.amount",
+  "limitedBonus.as_of",
+  "limitedBonus.state ===",
+  "product.grant.total_points +",
+  "createPointPurchase",
+  "createPayment",
+  "paymentSession",
+  "paymentIntent",
+  "providerRedirect",
+  "purchaseMutation",
+  "fetch(",
+  "/api" + "/v2",
+]) {
+  if (purchaseDetail.includes(forbidden)) throw new Error(`Coin Purchase Detail inference or mutation detected: ${forbidden}`);
+}
+if (/<button\b/.test(purchaseDetail) || /購入する|決済へ進む|購入手続きは準備中/.test(purchaseDetail)) {
+  throw new Error("Coin Purchase Detail contains a Purchase or Payment action");
+}
+
+const routes = readFileSync("src/lib/routes/navigation.ts", "utf8");
+if (!routes.includes("encodeURIComponent(productId)") || !routes.includes("/points/purchase/${encodeURIComponent(productId)}")) {
+  throw new Error("Point Product public identifier is not encoded as one detail Route segment");
+}
+
 const header = readFileSync("src/components/layout/site-header.tsx", "utf8");
 if (!header.includes("wallet.balance.total_points") || header.includes("expiring_within_7_days")) {
   throw new Error("Header must show only the canonical total Coin balance");
@@ -111,6 +155,7 @@ const terminologyFiles = [
   "src/components/layout/site-header.tsx",
   "src/lib/routes/navigation.ts",
   "src/components/points/point-purchase-page.tsx",
+  "src/components/points/point-purchase-detail.tsx",
   "src/components/points/point-history-page.tsx",
   "src/components/catalog/gacha-card.tsx",
   "src/components/catalog/gacha-detail.tsx",

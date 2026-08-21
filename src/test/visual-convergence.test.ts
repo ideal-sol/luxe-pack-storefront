@@ -47,6 +47,16 @@ describe("visual and responsive convergence", () => {
     expect(css).not.toMatch(/\.point-product-card__limited-bonus\[data-limited-bonus-state=/);
   });
 
+  it("contains long and large Coin Purchase Detail values on mobile and desktop", () => {
+    expect(css).toMatch(/\.point-purchase-detail \{[^}]*min-width: 0/);
+    expect(css).toMatch(/\.point-purchase-detail__header h1 \{[^}]*overflow-wrap: anywhere/);
+    expect(css).toMatch(/\.point-purchase-detail__facts dd \{[^}]*min-width: 0[^}]*overflow-wrap: anywhere/);
+    expect(css).toMatch(/\.point-purchase-detail__facts dd strong \{[^}]*font-size: clamp\([^}]*overflow-wrap: anywhere/);
+    expect(css).toMatch(/\.point-purchase-detail__conditions dd \{[^}]*min-width: 0[^}]*overflow-wrap: anywhere/);
+    expect(css).toMatch(/\.point-purchase-detail__summary, \.point-purchase-detail__conditions \{[^}]*padding: 24px 20px/);
+    expect(css).toMatch(/@media \(min-width: 720px\)[\s\S]*\.point-purchase-detail__summary, \.point-purchase-detail__conditions \{[^}]*padding: 32px/);
+  });
+
   it("keeps the Contact form single-column on mobile and two-column on desktop", () => {
     expect(css).toMatch(/\.contact-form__fields \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
     expect(css).toMatch(/@media \(min-width: 720px\)[\s\S]*\.contact-form__fields \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);

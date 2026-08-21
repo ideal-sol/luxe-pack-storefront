@@ -1084,3 +1084,37 @@ behavior remain unchanged.
 Platform／Contact API／OpenAPI／Artifact／DB／Migration／Payment／Admin／Nginx／DNS／
 TLS／systemd unit／runtime env changes remain zero. Application-only Deployment
 is a separate post-closeout operation under the existing Fresh Deployment Gate.
+
+## SITE-038 — Coin Purchase Detail Page
+
+- Issue: `#75`
+- Risk: MEDIUM (`R2`)
+- Base SHA: `4fb439429a3edc2e3bc909015d6c69d58f5205d5`
+- Branch: `site/SITE-038-coin-purchase-detail`
+- Worktree: `/var/www/luxe-pack-v2-storefront-worktrees/SITE-038`
+
+### Contract Gate and implementation
+
+The adopted STORE-SITE-034 Artifact retains Public OpenAPI alpha.23 and the
+generated `listPointProducts` read. Canonical `PointProduct.id` is explicitly a
+public opaque identifier; exact collection matching supplies title, JPY price,
+`grant.total_points`, audience, sale／availability／eligibility／reason／CTA, and
+optional Limited Bonus Presentation. The Contract Gate therefore passed without
+a single-product endpoint, private identifier, guessed response, or Artifact
+change.
+
+`/points` adds a separately focusable `詳細を見る` Link using the percent-encoded
+canonical `id`. The existing Login／disabled Purchase CTA presentation remains
+unchanged and is not nested inside the new Link. Direct
+`/points/purchase/[productId]` reads the same collection after Session resolution
+and accepts only an exact `id` match. It distinguishes loading, configuration,
+Session error, collection error, successful Not Found, and ready presentation
+without inventing Product data.
+
+The detail displays title, Backend amount/currency, canonical total Coin grant,
+audience, sale state, eligibility/reason, and visible SITE-032 Limited Bonus.
+It does not calculate paid plus bonus, add Limited Bonus to total, compare
+Campaign time, or infer availability. Purchase Button／Payment CTA／Provider／
+mutation／redirect／polling／callback／webhook／Coin grant／DB write are absent.
+Platform／OpenAPI／Artifact／Runtime／Infrastructure changes remain zero, and
+Application-only Deployment is NOT RUN.

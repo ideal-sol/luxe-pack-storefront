@@ -13,6 +13,7 @@ import {
   type PointProductIneligibleReason,
   type PointProductSaleState,
 } from "@/lib/platform";
+import { pointPurchaseDetailRoute } from "@/lib/routes/navigation";
 import { usePointClient, type PointWalletState } from "./point-client-provider";
 
 const pointProductCategories: ReadonlyArray<{
@@ -23,13 +24,13 @@ const pointProductCategories: ReadonlyArray<{
   { id: "first_purchase_users", label: "初回ユーザー" },
 ];
 
-const saleStateLabels: Readonly<Record<PointProductSaleState, string>> = {
+export const pointProductSaleStateLabels: Readonly<Record<PointProductSaleState, string>> = {
   available: "販売中",
   coming_soon: "販売開始前",
   ended: "販売終了",
 };
 
-const ineligibleReasonLabels: Readonly<Record<Exclude<PointProductIneligibleReason, null>, string>> = {
+export const pointProductIneligibleReasonLabels: Readonly<Record<Exclude<PointProductIneligibleReason, null>, string>> = {
   authentication_required: "購入するにはログインが必要です。",
   audience_not_eligible: "この商品の対象条件を満たしていません。",
   first_purchase_required: "過去にコイン購入があるため、初回ユーザー対象外です。",
@@ -37,7 +38,7 @@ const ineligibleReasonLabels: Readonly<Record<Exclude<PointProductIneligibleReas
   sale_not_started: "この商品の販売はまだ開始されていません。",
 };
 
-const number = new Intl.NumberFormat("ja-JP");
+export const pointProductNumber = new Intl.NumberFormat("ja-JP");
 const yen = new Intl.NumberFormat("ja-JP", { currency: "JPY", style: "currency" });
 const jstDateTime = new Intl.DateTimeFormat("ja-JP", {
   dateStyle: "medium",
@@ -57,7 +58,7 @@ type ProductState =
   | { readonly status: "ready"; readonly collection: PointProductCollection; readonly sessionKey: string };
 
 export function PointBalanceSummary({ wallet }: { readonly wallet: PointWalletState }) {
-  const value = wallet.status === "ready" ? number.format(wallet.balance.total_points) : "--";
+  const value = wallet.status === "ready" ? pointProductNumber.format(wallet.balance.total_points) : "--";
   return (
     <section aria-labelledby="point-balance-title" className="point-balance-summary">
       <div>
@@ -80,7 +81,7 @@ export function PointBalanceSummary({ wallet }: { readonly wallet: PointWalletSt
             <ul aria-label="7日以内に失効するコイン一覧">
               {wallet.balance.expiring_within_7_days.map((bucket, index) => (
                 <li key={`${bucket.expires_at}-${index}`}>
-                  <strong>{number.format(bucket.amount)} コイン</strong>
+                  <strong>{pointProductNumber.format(bucket.amount)} コイン</strong>
                   <time dateTime={bucket.expires_at}>{jstDateTime.format(new Date(bucket.expires_at))}</time>
                 </li>
               ))}
@@ -125,7 +126,7 @@ function ProductCta({ product }: { readonly product: PointProduct }) {
   return <button className="button button--ghost" data-platform-cta-state={product.cta.state} disabled type="button">現在購入できません</button>;
 }
 
-function LimitedBonusPresentation({ limitedBonus }: { readonly limitedBonus: NonNullable<PointProduct["limited_bonus"]> }) {
+export function LimitedBonusPresentation({ limitedBonus }: { readonly limitedBonus: NonNullable<PointProduct["limited_bonus"]> }) {
   if (!limitedBonus.presentation.is_visible) return null;
   return (
     <section
@@ -148,15 +149,23 @@ function LimitedBonusPresentation({ limitedBonus }: { readonly limitedBonus: Non
 }
 
 function PointProductCard({ product }: { readonly product: PointProduct }) {
-  const reason = product.ineligible_reason ? ineligibleReasonLabels[product.ineligible_reason] : null;
+  const reason = product.ineligible_reason ? pointProductIneligibleReasonLabels[product.ineligible_reason] : null;
   const limitedBonus = product.limited_bonus;
   return (
-    <PointProductCardShell action={<ProductCta product={product} />} badge={product.audience.label}>
+    <PointProductCardShell
+      action={(
+        <div className="point-product-card__actions">
+          <Link className="button button--ghost" href={pointPurchaseDetailRoute(product.id)}>詳細を見る</Link>
+          <ProductCta product={product} />
+        </div>
+      )}
+      badge={product.audience.label}
+    >
       <div className="point-product-card__heading">
         <h3>{presentCoinTerminology(product.title)}</h3>
-        <span data-sale-state={product.sale_state}>{saleStateLabels[product.sale_state]}</span>
+        <span data-sale-state={product.sale_state}>{pointProductSaleStateLabels[product.sale_state]}</span>
       </div>
-      <p className="point-product-card__grant"><strong>{number.format(product.grant.total_points)}</strong><span>コイン</span></p>
+      <p className="point-product-card__grant"><strong>{pointProductNumber.format(product.grant.total_points)}</strong><span>コイン</span></p>
       {limitedBonus?.presentation.is_visible ? <LimitedBonusPresentation limitedBonus={limitedBonus} /> : null}
       <dl className="point-product-card__facts">
         <div><dt>販売価格</dt><dd>{yen.format(product.price.amount)}</dd></div>
