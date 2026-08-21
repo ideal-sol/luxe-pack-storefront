@@ -12,9 +12,12 @@ import { ContactClientProvider } from "@/components/contact/contact-client-provi
 import { ContactForm } from "@/components/contact/contact-form";
 import type { AuthClientAdapter, AuthSession, ContactClientAdapter } from "@/lib/platform";
 
+const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
+
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 
-function authClient(session: AuthSession): AuthClientAdapter {
+function authClient(session: AuthSession, overrides: Partial<AuthClientAdapter> = {}): AuthClientAdapter {
   return {
     completeEmailVerification: vi.fn(),
     getCurrentSession: vi.fn().mockResolvedValue({ data: session, metadata }),
@@ -22,6 +25,7 @@ function authClient(session: AuthSession): AuthClientAdapter {
     logout: vi.fn(),
     register: vi.fn(),
     resendEmailVerification: vi.fn(),
+    ...overrides,
   } as AuthClientAdapter;
 }
 
@@ -33,7 +37,7 @@ function contactClient(submitContact = vi.fn().mockResolvedValue({
 }
 
 function renderForm(
-  session: AuthSession = PUBLIC_AUTH_FIXTURE.anonymous_session,
+  session: AuthSession = PUBLIC_AUTH_FIXTURE.authenticated_session,
   client: ContactClientAdapter = contactClient(),
 ) {
   return render(
@@ -57,18 +61,42 @@ function problem(source: Readonly<Record<string, unknown>>) {
 }
 
 describe("Contact page and form", () => {
-  it("renders the public /contact route", async () => {
-    render(<SessionProvider client={authClient(PUBLIC_AUTH_FIXTURE.anonymous_session)}><ContactPage /></SessionProvider>);
+  beforeEach(() => replace.mockClear());
+
+  it("renders /contact only for an authenticated Session", async () => {
+    render(<SessionProvider client={authClient(PUBLIC_AUTH_FIXTURE.authenticated_session)}><ContactPage /></SessionProvider>);
     expect(screen.getByRole("heading", { name: "お問い合わせ", level: 1 })).toBeInTheDocument();
-    expect(await screen.findByText("会員登録やログインなしでお問い合わせいただけます。")).toBeInTheDocument();
+    expect(await screen.findByText("ログイン中のアカウントからお問い合わせいただけます。氏名とメールアドレスを入力してください。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "お問い合わせを送信" })).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ["anonymous", PUBLIC_AUTH_FIXTURE.anonymous_session, "会員登録やログインなしでお問い合わせいただけます。"],
-    ["authenticated", PUBLIC_AUTH_FIXTURE.authenticated_session, "ログイン中のアカウントからお問い合わせいただけます。氏名とメールアドレスを入力してください。"],
-  ] as const)("renders empty normal inputs for the %s presentation", async (_, session, message) => {
-    renderForm(session);
-    expect(await screen.findByText(message)).toBeInTheDocument();
+  it("redirects a confirmed unauthenticated Session to exact /login without rendering the form", async () => {
+    render(<SessionProvider client={authClient(PUBLIC_AUTH_FIXTURE.anonymous_session)}><ContactPage /></SessionProvider>);
+    expect(screen.queryByRole("button", { name: "お問い合わせを送信" })).not.toBeInTheDocument();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/login"));
+    expect(replace).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("button", { name: "お問い合わせを送信" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the form hidden while Session is loading", async () => {
+    let resolveSession!: (value: { readonly data: AuthSession; readonly metadata: typeof metadata }) => void;
+    const pendingSession = new Promise<{ readonly data: AuthSession; readonly metadata: typeof metadata }>((resolve) => {
+      resolveSession = resolve;
+    });
+    const client = authClient(PUBLIC_AUTH_FIXTURE.authenticated_session, {
+      getCurrentSession: vi.fn(() => pendingSession),
+    });
+    render(<SessionProvider client={client}><ContactPage /></SessionProvider>);
+    expect(screen.getByRole("status")).toHaveTextContent("読み込み中");
+    expect(screen.queryByRole("button", { name: "お問い合わせを送信" })).not.toBeInTheDocument();
+    resolveSession({ data: PUBLIC_AUTH_FIXTURE.authenticated_session, metadata });
+    expect(await screen.findByRole("button", { name: "お問い合わせを送信" })).toBeInTheDocument();
+  });
+
+  it("renders empty normal inputs for the authenticated presentation", async () => {
+    renderForm();
+    expect(await screen.findByText("ログイン中のアカウントからお問い合わせいただけます。氏名とメールアドレスを入力してください。")).toBeInTheDocument();
     expect(screen.getByLabelText("お名前")).toHaveValue("");
     expect(screen.getByLabelText("メールアドレス")).toHaveValue("");
   });
@@ -82,12 +110,12 @@ describe("Contact page and form", () => {
     expect(view.container.querySelector('[name="website"]')).toBeNull();
   });
 
-  it("maps empty optional phone and the canonical honeypot on anonymous submit", async () => {
+  it("maps empty optional phone and the canonical honeypot on authenticated submit", async () => {
     const submitContact = vi.fn().mockResolvedValue({
       data: PUBLIC_CONTACT_FIXTURE.receipt,
       metadata: { ...metadata, status: 202 },
     });
-    renderForm(PUBLIC_AUTH_FIXTURE.anonymous_session, contactClient(submitContact));
+    renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
 
@@ -102,7 +130,7 @@ describe("Contact page and form", () => {
     });
     expect(await screen.findByRole("status")).toHaveTextContent("お問い合わせを受け付けました");
     expect(screen.getByRole("status")).toHaveTextContent(`受付番号: ${PUBLIC_CONTACT_FIXTURE.receipt.receipt_code}`);
-    expect(screen.queryByRole("link", { name: "マイページへ戻る" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "マイページへ戻る" })).toHaveAttribute("href", "/mypage");
   });
 
   it("submits optional phone for an authenticated member and offers the My Page return", async () => {
@@ -121,7 +149,7 @@ describe("Contact page and form", () => {
 
   it("presents typed 422 field validation without exposing Backend detail", async () => {
     const submitContact = vi.fn().mockRejectedValue(problem(PUBLIC_CONTACT_PROBLEM_FIXTURES.validation));
-    renderForm(PUBLIC_AUTH_FIXTURE.anonymous_session, contactClient(submitContact));
+    renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("入力内容を確認してください。");
@@ -131,7 +159,7 @@ describe("Contact page and form", () => {
 
   it("presents typed 429 rate limiting", async () => {
     const submitContact = vi.fn().mockRejectedValue(problem(PUBLIC_CONTACT_PROBLEM_FIXTURES.rate_limited));
-    renderForm(PUBLIC_AUTH_FIXTURE.anonymous_session, contactClient(submitContact));
+    renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("送信回数が上限に達しました");
@@ -140,7 +168,7 @@ describe("Contact page and form", () => {
 
   it("presents a typed network error and does not automatically resubmit", async () => {
     const submitContact = vi.fn().mockRejectedValue(new StorefrontTransportError("NETWORK_ERROR", "fixture network failure"));
-    renderForm(PUBLIC_AUTH_FIXTURE.anonymous_session, contactClient(submitContact));
+    renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("自動再送されていません");
@@ -149,7 +177,7 @@ describe("Contact page and form", () => {
 
   it("presents an unknown error safely", async () => {
     const submitContact = vi.fn().mockRejectedValue(new Error("sensitive fixture detail"));
-    renderForm(PUBLIC_AUTH_FIXTURE.anonymous_session, contactClient(submitContact));
+    renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("予期しない問題が発生しました");
@@ -159,7 +187,7 @@ describe("Contact page and form", () => {
   it("disables the form and prevents a double submit while the request is pending", async () => {
     let resolveSubmission!: (value: unknown) => void;
     const submitContact = vi.fn(() => new Promise((resolve) => { resolveSubmission = resolve; }));
-    renderForm(PUBLIC_AUTH_FIXTURE.anonymous_session, contactClient(submitContact));
+    renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
     fillRequiredFields();
     const submit = screen.getByRole("button", { name: "お問い合わせを送信" });
     fireEvent.click(submit);

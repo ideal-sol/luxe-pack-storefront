@@ -60,7 +60,7 @@ export const myPageAccountNavigation = [
 ] as const;
 
 export const myPageSupportNavigation = [
-  { href: "/contact", label: "お問い合わせ", description: "商品やサービスについて問い合わせる" },
+  { href: "https://support.luxe-pack.biz/", label: "お問い合わせ", description: "商品やサービスについて問い合わせる" },
   { ...primaryNavigation[2], description: "Luxe Packからのお知らせ" },
   { ...informationNavigation[0], description: "Storefrontの利用方法" },
   { ...informationNavigation[1], description: "サービスの利用条件" },

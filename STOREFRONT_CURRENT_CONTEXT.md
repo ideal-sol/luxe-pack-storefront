@@ -30,6 +30,7 @@
 - SITE-030 Coin Display / Expiring Balance Integration: implemented by this change
 - SITE-031 Coin Terminology Completion — Prize UI: implemented by this change
 - SITE-036 Shipping Address Management Page: implemented by this change
+- SITE-037 Authenticated Contact and Support Link: implemented by this change
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -270,6 +271,17 @@ new-address CTA and, only when `listShippingAddresses` returns an empty
 collection, blocks shipping and links normally to `/mypage/address`. The pinned
 Artifact, Platform Contract, Prize eligibility, Point/Coin Exchange, and
 successful canonical refetch behavior remain unchanged.
+
+SITE-037 makes `/contact` authenticated-only at the Storefront UI boundary.
+The route waits for the existing root Session Provider, mounts no Contact form
+while Session is loading, and uses the established Next client navigation to
+replace a confirmed unauthenticated／expired Session with exact `/login`. It
+adds no Return URL query, Cookie inspection, independent Auth decision, or
+Platform call. Authenticated Contact submission retains the pinned Browser-safe
+Client and its canonical receipt／typed-error／no-retry behavior. My Page keeps
+the established support order while changing `お問い合わせ` to exact
+`https://support.luxe-pack.biz/` with the existing external-link treatment.
+SITE-036 address navigation and Prize Shipping behavior remain unchanged.
 
 ## Pending contracts
 

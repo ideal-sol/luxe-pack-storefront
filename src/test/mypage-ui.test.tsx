@@ -73,7 +73,24 @@ describe("my page top", () => {
     expect(screen.getByRole("link", { name: /お届け先登録/ })).toHaveAttribute("href", "/mypage/address");
     expect(screen.getByRole("link", { name: /LINE連携/ })).toHaveAttribute("href", "/mypage/line");
     expect(screen.getByRole("link", { name: /お知らせ/ })).toHaveAttribute("href", "/notices");
-    expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("href", "/contact");
+    expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("href", "https://support.luxe-pack.biz/");
+    expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("target", "_blank");
+    expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("keeps the confirmed support order and uses no /contact destination", async () => {
+    renderMyPage(client());
+    const support = await screen.findByRole("navigation", { name: "お知らせ・サポート" });
+    const links = Array.from(support.querySelectorAll("a"));
+    expect(links.map((link) => link.querySelector("strong")?.textContent)).toEqual([
+      "お問い合わせ",
+      "お知らせ",
+      "ご利用ガイド",
+      "利用規約",
+      "プライバシーポリシー",
+    ]);
+    expect(links[0]).toHaveAttribute("href", "https://support.luxe-pack.biz/");
+    expect(links.some((link) => link.getAttribute("href") === "/contact")).toBe(false);
   });
 
   it("places shipping address registration immediately above LINE in Account", async () => {
