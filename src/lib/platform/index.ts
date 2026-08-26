@@ -111,3 +111,26 @@ export {
   presentContactProblem,
   type ContactProblemPresentation,
 } from "./contact-problem";
+export {
+  createBrowserPaymentClient,
+  createIdempotencyKey as createPaymentIdempotencyKey,
+  createPaymentClientAdapter,
+  type Payment,
+  type PaymentCard,
+  type PaymentCardCollection,
+  type PaymentCardComponentAction,
+  type PaymentCardRegistrationIntent,
+  type PaymentCardUiBootstrap,
+  type PaymentClientAdapter,
+  type PaymentCreateRequest,
+  type PaymentMethod,
+  type PaymentRedirectAction,
+  type PaymentResume,
+  type PaymentStatus,
+} from "./payment-client";
+export {
+  isInvalidPaymentRead,
+  paymentRetryAfterSeconds,
+  presentPaymentProblem,
+  type PaymentProblemPresentation,
+} from "./payment-problem";

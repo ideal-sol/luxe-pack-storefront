@@ -53,8 +53,8 @@ async function renderDetail({
   );
 }
 
-describe("SITE-038 Coin Purchase Detail", () => {
-  it("resolves an exact canonical Product and renders the read-only purchase summary", async () => {
+describe("SITE-040 Coin Purchase Detail", () => {
+  it("resolves an exact canonical Product and renders the canonical purchase summary", async () => {
     const client = pointClient();
     const view = await renderDetail({ client });
 
@@ -63,27 +63,31 @@ describe("SITE-038 Coin Purchase Detail", () => {
     expect(within(summary).getByText("支払金額").tagName).toBe("DT");
     expect(within(summary).getByText("￥1,000").tagName).toBe("DD");
     expect(within(summary).getByText("獲得コイン").tagName).toBe("DT");
-    expect(within(summary).getByText("1,100")).toBeInTheDocument();
+    expect(within(summary).getByText("1,000")).toBeInTheDocument();
+    expect(within(summary).getByText("ボーナスコイン").tagName).toBe("DT");
+    expect(within(summary).getByText("100")).toBeInTheDocument();
+    expect(within(summary).getByText("期間限定ボーナスコイン").tagName).toBe("DT");
+    expect(within(summary).getByText("300")).toBeInTheDocument();
+    expect(within(summary).getByText("合計コイン").tagName).toBe("DT");
+    expect(within(summary).getByText("1,400")).toBeInTheDocument();
     expect(screen.getByText("すべてのユーザー")).toBeInTheDocument();
     expect(screen.getByText("販売中")).toHaveAttribute("data-sale-state", canonicalProduct.sale_state);
     expect(screen.getByText("購入対象です。")).toHaveAttribute("data-eligible", "true");
     expect(screen.getByRole("link", { name: /コイン購入へ戻る/ })).toHaveAttribute("href", "/points");
     expect(client.listPointProducts).toHaveBeenCalledOnce();
     expect(Object.keys(client).filter((key) => /payment|purchase|session|provider|grant|redirect/i.test(key))).toHaveLength(0);
-    expect(view.container).not.toHaveTextContent(/ポイント|決済へ進む|購入する|購入手続きは準備中です/);
-    expect(screen.queryByRole("button", { name: /購入|決済/ })).not.toBeInTheDocument();
-    expect(view.container.querySelector(".point-purchase-detail button")).not.toBeInTheDocument();
+    expect(view.container).not.toHaveTextContent(/ポイント|決済へ進む|購入手続きは準備中です/);
+    expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
   });
 
-  it("reuses the visible SITE-032 Limited Bonus presentation without changing total_points", async () => {
+  it("adds only an active Limited Bonus amount to the canonical total", async () => {
     const limitedBonus = canonicalProduct.limited_bonus;
     await renderDetail();
 
-    const presentation = await screen.findByRole("region", { name: limitedBonus.presentation.label });
-    expect(presentation).toHaveAttribute("data-limited-bonus-state", limitedBonus.state);
-    expect(within(presentation).getByText(limitedBonus.presentation.amount_text)).toBeInTheDocument();
-    expect(screen.getByText("1,100")).toBeInTheDocument();
-    expect(screen.queryByText("1,400")).not.toBeInTheDocument();
+    const summary = await screen.findByRole("region", { name: "購入内容" });
+    expect(within(summary).getByText(limitedBonus.presentation.label)).toBeInTheDocument();
+    expect(within(summary).getByText("300")).toBeInTheDocument();
+    expect(within(summary).getByText("1,400")).toBeInTheDocument();
   });
 
   it("omits Limited Bonus when canonical presentation visibility is false", async () => {
@@ -93,6 +97,22 @@ describe("SITE-038 Coin Purchase Detail", () => {
     expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent("スタンダード1000コイン");
     expect(screen.queryByRole("region", { name: product.limited_bonus.presentation.label })).not.toBeInTheDocument();
     expect(screen.getByText("この商品の販売は終了しました。")).toHaveAttribute("data-eligible", "false");
+  });
+
+  it("omits zero normal and inactive Limited Bonus rows while retaining paid and total rows", async () => {
+    const inactiveLimited = PUBLIC_POINT_PRODUCT_FIXTURES.unavailable.data[0].limited_bonus;
+    const product = {
+      ...canonicalProduct,
+      grant: { ...canonicalProduct.grant, bonus_points: 0 },
+      id: "public-no-bonus-product",
+      limited_bonus: inactiveLimited,
+    };
+    await renderDetail({ client: pointClient({ data: [product] }), productId: product.id });
+    const summary = await screen.findByRole("region", { name: "購入内容" });
+    expect(within(summary).queryByText("ボーナスコイン")).not.toBeInTheDocument();
+    expect(within(summary).queryByText("期間限定ボーナスコイン")).not.toBeInTheDocument();
+    expect(within(summary).getByText("獲得コイン")).toBeInTheDocument();
+    expect(within(summary).getByText("合計コイン")).toBeInTheDocument();
   });
 
   it("uses the anonymous collection presentation and treats an expired Session as anonymous", async () => {
@@ -163,21 +183,21 @@ describe("SITE-038 Coin Purchase Detail", () => {
     configuration.unmount();
   });
 
-  it("contains long titles and large canonical money/Coin values without derived arithmetic", async () => {
+  it("contains long titles and large canonical money/Coin values", async () => {
     const { limited_bonus: omittedLimitedBonus, ...productWithoutLimitedBonus } = canonicalProduct;
     const product = {
       ...productWithoutLimitedBonus,
       id: "public-large-product",
       title: "とても長いコイン商品名".repeat(12),
       price: { amount: 999_999_999_999, currency: "JPY" as const },
-      grant: { ...canonicalProduct.grant, total_points: 888_888_888_888 },
+      grant: { bonus_points: 0, paid_points: 888_888_888_888, total_points: 1 },
     };
     expect(omittedLimitedBonus).toBeDefined();
     const view = await renderDetail({ client: pointClient({ data: [product] }), productId: product.id });
 
     expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent("とても長いコイン商品名");
     expect(screen.getByText("￥999,999,999,999")).toBeInTheDocument();
-    expect(screen.getByText("888,888,888,888")).toBeInTheDocument();
+    expect(screen.getAllByText("888,888,888,888")).toHaveLength(2);
     expect(view.container.querySelector(".point-purchase-detail")).toBeInTheDocument();
   });
 });

@@ -6,16 +6,19 @@ settings:
 
 overrides:
   '@oripa/site-schema@2.0.0-alpha.23': file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
-  '@oripa/storefront-client@2.0.0-alpha.24': file:vendor/oripa/STORE-SITE-034/oripa-storefront-client-2.0.0-alpha.24.tgz
+  '@oripa/storefront-client@2.0.0-alpha.28': file:vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz
   nanoid@<3.3.18: 3.3.18
 
 importers:
 
   .:
     dependencies:
+      '@fincode/js':
+        specifier: 1.1.0
+        version: 1.1.0
       '@oripa/storefront-client':
-        specifier: file:vendor/oripa/STORE-SITE-034/oripa-storefront-client-2.0.0-alpha.24.tgz
-        version: file:vendor/oripa/STORE-SITE-034/oripa-storefront-client-2.0.0-alpha.24.tgz
+        specifier: file:vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz
+        version: file:vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz
       next:
         specifier: 16.3.0
         version: 16.3.0(@babel/core@7.29.7)(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -33,8 +36,8 @@ importers:
         specifier: file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
         version: file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
       '@oripa/storefront-testkit':
-        specifier: file:vendor/oripa/STORE-SITE-034/oripa-storefront-testkit-2.0.0-alpha.24.tgz
-        version: file:vendor/oripa/STORE-SITE-034/oripa-storefront-testkit-2.0.0-alpha.24.tgz
+        specifier: file:vendor/oripa/MIG-089/oripa-storefront-testkit-2.0.0-alpha.28.tgz
+        version: file:vendor/oripa/MIG-089/oripa-storefront-testkit-2.0.0-alpha.28.tgz
       '@tailwindcss/postcss':
         specifier: 4.3.3
         version: 4.3.3
@@ -270,6 +273,9 @@ packages:
     peerDependenciesMeta:
       '@noble/hashes':
         optional: true
+
+  '@fincode/js@1.1.0':
+    resolution: {integrity: sha512-0TjeUFmj1eTAyHzoCqTNrLsBkw+q14AhrWvkNrBgOG2HNTUd2VCFYHgeRyNPTPpScl8YaDm6IpYXlnlyb1CEnQ==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -535,14 +541,14 @@ packages:
     version: 2.0.0-alpha.23
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-client@file:vendor/oripa/STORE-SITE-034/oripa-storefront-client-2.0.0-alpha.24.tgz':
-    resolution: {integrity: sha512-ctPdJlpHjnec9+eBbl2jf2AisDmDswdr5+Qc0BMUvcla5mrRRO3fVuMuSJ2bGtMEP0o2TsN5vYc/UKDPtqkiWw==, tarball: file:vendor/oripa/STORE-SITE-034/oripa-storefront-client-2.0.0-alpha.24.tgz}
-    version: 2.0.0-alpha.24
+  '@oripa/storefront-client@file:vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz':
+    resolution: {integrity: sha512-r31xch+4aYmwCiAkVlTIgsYG4jdDYqwhGXiUb0FxIBKIXDEepvtNKqhZZKHNOPAiAYl/3YQSqEaVbr6ErxLN5w==, tarball: file:vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz}
+    version: 2.0.0-alpha.28
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/STORE-SITE-034/oripa-storefront-testkit-2.0.0-alpha.24.tgz':
-    resolution: {integrity: sha512-TPv1GWys5PY7nmWsZ5NM2339ImWtlzwx3qoo2cZaNYMwD9ns4TOkKrCituvRkmZdKpfsk8mjrsO1Zi7pzFtzOg==, tarball: file:vendor/oripa/STORE-SITE-034/oripa-storefront-testkit-2.0.0-alpha.24.tgz}
-    version: 2.0.0-alpha.24
+  '@oripa/storefront-testkit@file:vendor/oripa/MIG-089/oripa-storefront-testkit-2.0.0-alpha.28.tgz':
+    resolution: {integrity: sha512-xCIvJvv9O+zuWCRhoxphG9OrB/rYe+v6Q4CAXG77JIJjT7f2bzjxgz27AvISrPM/cxqSZZwZjb7qn1Nxfuc50w==, tarball: file:vendor/oripa/MIG-089/oripa-storefront-testkit-2.0.0-alpha.28.tgz}
+    version: 2.0.0-alpha.28
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
   '@oxc-project/types@0.143.0':
@@ -2907,6 +2913,8 @@ snapshots:
 
   '@exodus/bytes@1.15.1': {}
 
+  '@fincode/js@1.1.0': {}
+
   '@humanfs/core@0.19.2':
     dependencies:
       '@humanfs/types': 0.15.0
@@ -3108,12 +3116,12 @@ snapshots:
       ajv: 8.20.0
       semver: 7.8.5
 
-  '@oripa/storefront-client@file:vendor/oripa/STORE-SITE-034/oripa-storefront-client-2.0.0-alpha.24.tgz': {}
+  '@oripa/storefront-client@file:vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz': {}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/STORE-SITE-034/oripa-storefront-testkit-2.0.0-alpha.24.tgz':
+  '@oripa/storefront-testkit@file:vendor/oripa/MIG-089/oripa-storefront-testkit-2.0.0-alpha.28.tgz':
     dependencies:
       '@oripa/site-schema': file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
-      '@oripa/storefront-client': file:vendor/oripa/STORE-SITE-034/oripa-storefront-client-2.0.0-alpha.24.tgz
+      '@oripa/storefront-client': file:vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz
 
   '@oxc-project/types@0.143.0': {}
 
