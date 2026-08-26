@@ -33,7 +33,8 @@ shapes.
 | Point purchase | Browser-safe Payment start/read, caller Idempotency, Return `pid`, Card／PayPay polling, and terminal presentation | **Resolved — MIG-089 alpha.28 Payment Client; SITE-040 implemented without direct API requests or Coin grant authority** |
 | Payment Card | Bootstrap, official fincode UI mount, saved-card list/delete, registration intent, one-time and save-and-pay selection | **Resolved — MIG-089 alpha.28 `getPaymentCardUiBootstrap`; SITE-040 never reads PAN/CVC or calls registration completion** |
 | Konbini／bank transfer | Existing unpaid Payment guide and durable Provider redirect resume | **Resolved — `getPayment` plus `resumeUnpaidPayment`; SITE-040 creates no replacement Payment or Provider session** |
-| Payment history／receipt | Current-user Payment list/detail and receipt presentation | **Deferred — explicitly out of SITE-040 scope** |
+| Payment history | Current-user succeeded／unpaid Payment views, opaque cursor, owned detail, persisted Grant snapshot, and existing unpaid resume | **Resolved — MIG-089 alpha.28 `listPayments`／`getPayment`／`resumeUnpaidPayment`; SITE-041 implemented without Frontend status, expiry, or Grant recomputation** |
+| Payment receipt | Canonical receipt metadata and PDF presentation | **Deferred — explicitly out of SITE-041 scope** |
 | Draw history | Historical Gacha presentation, occurred time, requested/executed counts, Backend status, stable order, and opaque cursor | **Resolved — MIG-062W alpha.20 retains `listDrawHistory`; SITE-028 implemented** |
 | Notice list | Public notice summaries and cursor | **Resolved — MIG-061U content client** |
 | Notice detail | Public notice detail by opaque ID | **Resolved — MIG-061U content client** |

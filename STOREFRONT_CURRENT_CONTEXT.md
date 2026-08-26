@@ -34,6 +34,8 @@
 - SITE-038 Coin Purchase Detail Page: implemented by this change
 - SITE-040 Payment Purchase Flow: implemented by this change; purchase history,
   Provider Browser E2E, and deployment remain out of scope
+- SITE-041 Purchase History / Unpaid History: implemented by this change;
+  receipt, Provider Browser E2E, and deployment remain out of scope
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -122,6 +124,11 @@ Platform response or Frontend business decision changed.
   list/delete, and registration intent. New Card input is owned by the official
   fincode UI Component; the Storefront does not read PAN/CVC or complete Card
   registration directly.
+- Current-user Payment history through generated `listPayments`, preserving the
+  canonical `succeeded`／`unpaid` views, returned order, opaque cursor, amount,
+  method, status, and persisted Payment Grant snapshot. Payment detail uses
+  `getPayment`, and unpaid guidance resumes the existing Payment only through
+  `resumeUnpaidPayment` without a replacement Payment or Provider session.
 
 ## Preview deployment
 

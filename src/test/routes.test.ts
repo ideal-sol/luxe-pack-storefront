@@ -1,4 +1,4 @@
-import { mobileNavigation, pointPurchaseDetailRoute, primaryNavigation, publicRoutes } from "@/lib/routes/navigation";
+import { mobileNavigation, paymentHistoryDetailRoute, pointPurchaseDetailRoute, primaryNavigation, publicRoutes } from "@/lib/routes/navigation";
 
 describe("navigation definitions", () => {
   it("keeps primary navigation routes in the screen map", () => {
@@ -6,6 +6,12 @@ describe("navigation definitions", () => {
     for (const item of [...primaryNavigation, ...mobileNavigation]) {
       expect(routes.has(item.href)).toBe(true);
     }
+  });
+
+  it("encodes the public opaque Payment identifier as one detail path segment", () => {
+    expect(paymentHistoryDetailRoute("public/payment?attempt=1#detail")).toBe(
+      "/mypage/purchases/public%2Fpayment%3Fattempt%3D1%23detail",
+    );
   });
 
   it("uses Coin terminology without renaming the canonical Point routes", () => {
@@ -24,6 +30,7 @@ describe("navigation definitions", () => {
       "/", "/gachas", "/gachas/[slug]", "/draws/[drawRequestId]/result", "/login", "/register", "/points",
       "/points/purchase/[productId]", "/verify-email/error", "/notices", "/notices/[noticeId]", "/pages/[slug]", "/contact", "/mypage",
       "/mypage/points", "/mypage/draws", "/mypage/prizes", "/mypage/address", "/mypage/line",
+      "/mypage/purchases", "/mypage/purchases/[paymentId]",
     ]));
   });
 });

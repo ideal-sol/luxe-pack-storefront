@@ -52,11 +52,12 @@ function renderThanks(adapter: PaymentClientAdapter, pid: string | null = "payme
 }
 
 describe("SITE-040 Payment status UI", () => {
-  it("renders the exact minimal success copy without Payment details or purchase-history CTA", async () => {
+  it("retains the minimal success copy and links to Purchase History", async () => {
     renderThanks(client(payment("succeeded")));
     expect(await screen.findByRole("heading", { name: "購入完了しました" })).toBeInTheDocument();
     expect(screen.getByText("コイン購入して頂き、ありがとうございます。")).toBeInTheDocument();
-    expect(document.body).not.toHaveTextContent(/12,345|payment-public-reference|購入履歴/);
+    expect(screen.getByRole("link", { name: "購入履歴" })).toHaveAttribute("href", "/mypage/purchases");
+    expect(document.body).not.toHaveTextContent(/12,345|payment-public-reference/);
   });
 
   it.each([

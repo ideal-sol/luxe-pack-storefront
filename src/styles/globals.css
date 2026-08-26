@@ -669,6 +669,39 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .payment-unpaid-guide > .button { width: 100%; }
 .payment-unpaid-guide__note { color: var(--muted); font-size: .65rem; line-height: 1.8; margin: 18px 0 0; }
 .payment-method-row input:focus-visible, .payment-card-delete:focus-visible, .payment-card-add:focus-visible, .payment-purchase-button:focus-visible { outline: 3px solid rgba(185,133,66,.42); outline-offset: 3px; }
+.payment-history-page, .payment-history-detail-page { max-width: calc(var(--content-reading) + 40px); }
+.payment-history { display: grid; gap: 18px; min-width: 0; }
+.payment-history-tabs { border-bottom: 1px solid var(--line); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.payment-history-tab { background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--muted); cursor: pointer; font-size: .78rem; font-weight: 800; min-height: 48px; padding: 10px 12px; }
+.payment-history-tab--selected { border-bottom-color: var(--bronze); color: #765220; }
+.payment-history-tab:focus-visible, .payment-history-row:focus-visible, .payment-history-detail__back:focus-visible, .payment-history-detail__resume:focus-visible { outline: 3px solid rgba(185,133,66,.42); outline-offset: 3px; }
+#payment-history-panel { display: grid; gap: 18px; min-width: 0; }
+.payment-history-list { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-card); list-style: none; margin: 0; overflow: hidden; padding: 0; }
+.payment-history-list > li { border-bottom: 1px solid var(--line); min-width: 0; }
+.payment-history-list > li:last-child { border-bottom: 0; }
+.payment-history-row { display: grid; gap: 10px 16px; grid-template-areas: "date method" "coins amount"; grid-template-columns: repeat(2, minmax(0, 1fr)); min-height: 84px; padding: 18px 16px; }
+.payment-history-row time { color: var(--muted); font-family: monospace; font-size: .62rem; grid-area: date; min-width: 0; overflow-wrap: anywhere; }
+.payment-history-row__method { font-size: .68rem; font-weight: 800; grid-area: method; min-width: 0; overflow-wrap: anywhere; text-align: right; }
+.payment-history-row data { font-family: Georgia, "Yu Mincho", serif; font-size: .82rem; font-weight: 700; grid-area: coins; min-width: 0; overflow-wrap: anywhere; }
+.payment-history-row .payment-history-row__amount { grid-area: amount; text-align: right; }
+.payment-history-row:hover { background: #fbf6ed; }
+.payment-history__continuation-error { background: #fff6f4; border: 1px solid rgba(145,65,54,.3); color: var(--danger); font-size: .68rem; line-height: 1.6; margin: 0; padding: 12px 14px; }
+.payment-history__more { justify-self: center; min-width: 180px; }
+.payment-history-detail-page { display: grid; gap: 18px; }
+.payment-history-detail__back { color: #765220; font-size: .72rem; font-weight: 800; justify-self: start; }
+.payment-history-detail { display: grid; gap: 20px; min-width: 0; }
+.payment-history-detail__section { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: 0 8px 24px rgba(35,28,18,.07); min-width: 0; padding: 24px 20px; }
+.payment-history-detail__section > h1, .payment-history-detail__section > h2 { font-family: Georgia, "Yu Mincho", serif; font-size: 1.25rem; font-weight: 500; margin: 0 0 20px; }
+.payment-history-detail__facts, .payment-history-detail__method { display: grid; margin: 0; min-width: 0; }
+.payment-history-detail__facts > div { align-items: center; border-top: 1px solid var(--line); display: flex; gap: 16px; justify-content: space-between; min-width: 0; padding: 15px 0; }
+.payment-history-detail__facts > div:last-child { border-bottom: 1px solid var(--line); }
+.payment-history-detail__facts dt, .payment-history-detail__method dt { color: var(--muted); font-size: .68rem; }
+.payment-history-detail__facts dd, .payment-history-detail__method dd { font-size: .76rem; font-weight: 800; margin: 0; min-width: 0; overflow-wrap: anywhere; text-align: right; }
+.payment-history-detail__method { gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.payment-history-detail__method > div { display: grid; gap: 7px; min-width: 0; }
+.payment-history-detail__method > div:last-child { text-align: right; }
+.payment-history-detail__resume { width: 100%; }
+.payment-history-detail__resume:disabled { cursor: not-allowed; opacity: .48; }
 .point-history { display: grid; gap: 18px; min-width: 0; }
 .point-history > header p { color: var(--bronze); font-size: .55rem; font-weight: 800; letter-spacing: .18em; margin: 0 0 8px; }
 .point-history > header h2 { font-family: Georgia, "Yu Mincho", serif; font-size: 1.35rem; font-weight: 400; margin: 0; }
@@ -784,6 +817,8 @@ body:has(.gacha-draw-tray) .site-footer { padding-bottom: calc(370px + env(safe-
   .auth-form { padding: 42px; }
   .contact-panel { padding: 38px 42px; }
   .contact-form__fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .payment-history-row { padding: 20px 24px; }
+  .payment-history-detail__section { padding: 32px; }
   .home-banners { padding-block: 28px; }
   .home-banners__rail { padding: 2px; scroll-padding-inline: 2px; }
   .home-banner { aspect-ratio: 16 / 6.8; border-radius: 22px; }

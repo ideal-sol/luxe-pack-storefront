@@ -20,9 +20,12 @@
 
 | Route | Purpose | Current state |
 | --- | --- | --- |
-| `/points` | Coin balance and Backend-ordered Point Product collection with category presentation and read-only detail navigation | `getWallet`／`listPointProducts` connected; canonical eligibility／CTA retained; Payment remains absent |
-| `/points/purchase/[productId]` | Display-only Coin Purchase Detail resolved from the canonical Product collection | Public opaque Product ID exact-match; canonical price／grant／eligibility／Limited Bonus; no Purchase action |
+| `/points` | Coin balance and Backend-ordered Point Product collection with category presentation and purchase navigation | `getWallet`／`listPointProducts` connected; canonical eligibility／CTA retained |
+| `/points/purchase/[productId]` | Coin Purchase Detail and canonical Payment entry resolved from the Product collection | SITE-040 public opaque Product ID exact-match, four Payment methods, fincode Card UI, Return correlation, and bounded polling |
+| `/points/purchase/thanks` | Canonical `pid` Payment result, unpaid guidance, and Purchase History continuation | SITE-040 `getPayment` authority and existing-Payment resume; SITE-041 adds `/mypage/purchases` success CTA |
 | `/mypage` | Account hub | Session-connected member summary, centralized shortcuts/support navigation, and logout |
+| `/mypage/purchases` | Current-user Purchase History and Unpaid History | SITE-041 canonical `view=succeeded`／`view=unpaid` with opaque-cursor continuation |
+| `/mypage/purchases/[paymentId]` | Owned Payment detail and unpaid continuation | SITE-041 `getPayment`, persisted Grant snapshot, canonical expired status, and `resumeUnpaidPayment` only |
 | `/mypage/points` | Point history | Session-aware authenticated placeholder; data Contract pending |
 | `/mypage/draws` | Draw history | Session-aware authenticated placeholder; data Contract pending |
 | `/mypage/prizes` | Acquired item inventory, Backend-authoritative selection, registered-address shipping, and point exchange | MIG-062E Browser Prize Fulfillment Client-connected; empty address collection links to `/mypage/address` |

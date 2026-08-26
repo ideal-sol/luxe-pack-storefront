@@ -56,8 +56,20 @@ describe("MIG-089 canonical Payment browser client", () => {
     expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("41ebdddbd7c4edeedd36ad3810b2afa564495aa2d1c3e48a187f44c85deb85da");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getPaymentCardUiBootstrap", "createPayment", "getPayment", "resumeUnpaidPayment",
-      "listPaymentCards", "createPaymentCardRegistrationIntent", "deletePaymentCard",
+      "listMyPayments", "listPaymentCards", "createPaymentCardRegistrationIntent", "deletePaymentCard",
     ]));
+  });
+
+  it("lists the canonical Payment view and preserves the opaque cursor", async () => {
+    const harness = createPaymentClientTestHarness();
+    const collection = { data: [payment], pagination: { has_more: true, limit: 10, next_cursor: "opaque/cursor?site=041" } };
+    harness.mock.enqueueJson(
+      { method: "GET", url: `${origin}/me/payments?view=succeeded&limit=10&cursor=opaque%2Fcursor%3Fsite%3D041` },
+      { body: collection },
+    );
+    await expect(harness.client.listPayments!({ cursor: "opaque/cursor?site=041", limit: 10, view: "succeeded" })).resolves.toMatchObject({ data: collection });
+    expect(harness.mock.requests).toHaveLength(1);
+    harness.mock.assertExhausted();
   });
 
   it("reads bootstrap, Payment, and canonical card order without mutation", async () => {
@@ -97,9 +109,9 @@ describe("MIG-089 canonical Payment browser client", () => {
     harness.mock.assertExhausted();
   });
 
-  it("does not expose purchase-history or registration-completion operations", () => {
+  it("exposes purchase history but not registration completion", () => {
     const client = createPaymentClientTestHarness().client as unknown as Record<string, unknown>;
-    expect(client.listPayments).toBeUndefined();
+    expect(client.listPayments).toBeTypeOf("function");
     expect(client.completeCardRegistration).toBeUndefined();
   });
 });

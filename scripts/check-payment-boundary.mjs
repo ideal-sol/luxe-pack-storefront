@@ -16,13 +16,14 @@ for (const required of [
   "getPayment",
   "resumeUnpaidPayment",
   "listCards",
+  "listPayments",
   "createCardRegistrationIntent",
   "deleteCard",
   "createIdempotencyKey",
 ]) {
   if (!adapter.includes(required)) throw new Error(`Canonical Payment Client boundary is missing: ${required}`);
 }
-for (const forbidden of ["listPayments", "completeCardRegistration", "fetch(", "/api" + "/v2"]) {
+for (const forbidden of ["completeCardRegistration", "fetch(", "/api" + "/v2"]) {
   if (adapter.includes(forbidden)) throw new Error(`Out-of-scope Payment operation entered the adapter: ${forbidden}`);
 }
 
@@ -31,6 +32,8 @@ const applicationFiles = [
   "src/components/points/point-purchase-detail.tsx",
   "src/app/points/purchase/[productId]/page.tsx",
   "src/app/points/purchase/thanks/page.tsx",
+  "src/app/mypage/purchases/page.tsx",
+  "src/app/mypage/purchases/[paymentId]/page.tsx",
 ];
 for (const file of applicationFiles) {
   const source = readFileSync(file, "utf8");
@@ -41,7 +44,6 @@ for (const file of applicationFiles) {
     "getFormData",
     "completePaymentCardRegistration",
     "completeCardRegistration",
-    "listPayments",
     "provider_card_id:",
   ]) {
     if (source.includes(forbidden) && !(file.endsWith("point-purchase-detail.tsx") && forbidden === "provider_card_id:")) {
@@ -75,6 +77,15 @@ for (const required of [
 }
 if (!purchase.includes("payment.next_action.is_live_mode !== bootstrap.is_live_mode")) {
   throw new Error("fincode environment skew is not rejected");
+}
+if (purchase.includes("listPayments")) throw new Error("Purchase flow must not load Payment history");
+
+const history = readFileSync("src/components/payment/payment-history-page.tsx", "utf8");
+for (const required of ["listPayments", 'view: "succeeded"', 'view: "unpaid"', "pagination.next_cursor"]) {
+  if (!history.includes(required)) throw new Error(`Canonical Payment history invariant is missing: ${required}`);
+}
+for (const forbidden of ["startPayment", "next_action.url", "Date.now("]) {
+  if (history.includes(forbidden)) throw new Error(`Payment history crosses its read-only boundary: ${forbidden}`);
 }
 
 const polling = readFileSync("src/components/payment/use-payment-polling.ts", "utf8");

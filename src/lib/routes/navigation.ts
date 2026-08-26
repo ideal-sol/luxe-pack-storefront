@@ -25,6 +25,7 @@ export const mobileNavigation = [
 
 export const accountNavigation = [
   { href: "/mypage", label: "マイページ" },
+  { href: "/mypage/purchases", label: "購入履歴" },
   { href: "/mypage/points", label: "コイン履歴" },
   { href: "/mypage/draws", label: "ガチャ履歴" },
   { href: "/mypage/prizes", label: "獲得アイテム" },
@@ -32,7 +33,7 @@ export const accountNavigation = [
   { href: "/mypage/line", label: "LINE連携" },
 ] as const;
 
-export const lineAccountRoute = accountNavigation[5].href;
+export const lineAccountRoute = accountNavigation[6].href;
 
 export function drawResultRoute(drawRequestId: string) {
   return `/draws/${encodeURIComponent(drawRequestId)}/result`;
@@ -40,6 +41,10 @@ export function drawResultRoute(drawRequestId: string) {
 
 export function pointPurchaseDetailRoute(productId: string) {
   return `/points/purchase/${encodeURIComponent(productId)}`;
+}
+
+export function paymentHistoryDetailRoute(paymentId: string) {
+  return `/mypage/purchases/${encodeURIComponent(paymentId)}`;
 }
 
 export function staticPageRoute(slug: string) {
@@ -53,14 +58,15 @@ export const informationNavigation = [
 ] as const;
 
 export const myPageShortcutNavigation = [
-  { ...accountNavigation[1], description: "コイン情報を確認する", eyebrow: "COINS" },
-  { ...accountNavigation[2], description: "ガチャの利用履歴を確認する", eyebrow: "DRAW HISTORY" },
-  { ...accountNavigation[3], description: "獲得した景品を確認する", eyebrow: "PRIZES" },
+  { ...accountNavigation[1], description: "コイン購入の履歴を確認する", eyebrow: "PURCHASES" },
+  { ...accountNavigation[2], description: "コイン情報を確認する", eyebrow: "COINS" },
+  { ...accountNavigation[3], description: "ガチャの利用履歴を確認する", eyebrow: "DRAW HISTORY" },
+  { ...accountNavigation[4], description: "獲得した景品を確認する", eyebrow: "PRIZES" },
 ] as const;
 
 export const myPageAccountNavigation = [
-  { ...accountNavigation[4], description: "景品のお届け先を登録・変更する" },
-  { ...accountNavigation[5], description: "LINE連携の設定を確認する" },
+  { ...accountNavigation[5], description: "景品のお届け先を登録・変更する" },
+  { ...accountNavigation[6], description: "LINE連携の設定を確認する" },
 ] as const;
 
 export const myPageSupportNavigation = [
@@ -88,6 +94,8 @@ export const publicRoutes = [
   "/pages/[slug]",
   "/contact",
   "/mypage",
+  "/mypage/purchases",
+  "/mypage/purchases/[paymentId]",
   "/mypage/points",
   "/mypage/draws",
   "/mypage/prizes",

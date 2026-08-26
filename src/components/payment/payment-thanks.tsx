@@ -41,6 +41,7 @@ function SuccessScreen() {
       <div aria-hidden="true" className="payment-result__mark">✓</div>
       <h1>購入完了しました</h1>
       <p>コイン購入して頂き、ありがとうございます。</p>
+      <Link className="button button--dark" href="/mypage/purchases">購入履歴</Link>
     </section>
   );
 }
