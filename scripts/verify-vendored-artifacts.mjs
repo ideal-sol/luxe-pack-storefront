@@ -268,9 +268,9 @@ for (const content of [packageJsonText, lockfileText]) {
     if (!content.includes(required)) throw new Error(`Canonical package pin is missing: ${required}`);
   }
 }
-const fincodePackage = JSON.parse(readFileSync(path.join(root, "node_modules/@fincode/js/package.json"), "utf8"));
-if (fincodePackage.name !== "@fincode/js" || fincodePackage.version !== "1.1.0" ||
-    JSON.parse(packageJsonText).dependencies?.["@fincode/js"] !== "1.1.0") {
+if (JSON.parse(packageJsonText).dependencies?.["@fincode/js"] !== "1.1.0" ||
+    !lockfileText.includes("'@fincode/js@1.1.0':") ||
+    !lockfileText.includes("sha512-0TjeUFmj1eTAyHzoCqTNrLsBkw+q14AhrWvkNrBgOG2HNTUd2VCFYHgeRyNPTPpScl8YaDm6IpYXlnlyb1CEnQ==")) {
   throw new Error("Canonical fincode SDK dependency is not exactly pinned");
 }
 for (const obsolete of [
