@@ -56,7 +56,7 @@ Payment only through `resumeUnpaidPayment(pid)` and never depend on a durable
 
 - Fresh heavy-job Disk Gate: PASS (`23,817,326,592` bytes free before validate)
 - `pnpm validate`: PASS
-- Test: 37 files, 315 tests PASS
+- Test: 37 files, 316 tests PASS
 - Production build: PASS; `/points/purchase/thanks` present in route inventory
 - `pnpm security:check`: PASS
 - `pnpm audit --prod --audit-level=high`: PASS, no known vulnerabilities

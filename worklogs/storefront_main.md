@@ -1140,7 +1140,7 @@ to the Platform purchase flow. Canonical `pid` reads determine every Return and
 thanks state; Card／PayPay polling is bounded to 30 seconds, while Konbini／bank
 transfer resume only the existing Payment.
 
-Local Artifact／policy／boundary／lint／typecheck／315-test／production-build／audit／
+Local Artifact／policy／boundary／lint／typecheck／316-test／production-build／audit／
 secret gates pass. Purchase History is NOT IMPLEMENTED. Provider Browser E2E is
 HOLD and Application-only Deployment is NOT RUN. Platform Repository／DB／
 Migration／Runtime／Infrastructure remain unchanged.

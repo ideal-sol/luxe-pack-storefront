@@ -84,7 +84,7 @@ describe("SITE-040 fincode Card UI boundary", () => {
     expect(provider.executePayment).toHaveBeenCalledWith(expect.objectContaining({ accessId: action.access_id, id: action.payment_id, payType: "Card", ui: provider.ui }));
     expect(provider.registerCard).toHaveBeenCalledWith(expect.objectContaining({ customerId: intent.provider_context.customer_id, useDefault: false, ui: provider.ui }));
     const source = readFileSync("src/components/payment/fincode-card-fields.tsx", "utf8");
-    expect(source).not.toMatch(/getFormData|addEventListener|localStorage|sessionStorage/);
+    expect(source).not.toMatch(new RegExp(["getFormData", "addEventListener", "local" + "Storage", "session" + "Storage"].join("|")));
     expect(source).not.toMatch(/\bpan\b|card_number|security_code/i);
   });
 

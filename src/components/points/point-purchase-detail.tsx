@@ -107,6 +107,10 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
   };
 
   const navigateAfterStart = async (payment: Payment, newCard: boolean) => {
+    if (["processing", "succeeded", "failed", "canceled", "expired"].includes(payment.status)) {
+      window.location.replace(`/points/purchase/thanks?pid=${encodeURIComponent(payment.id)}`);
+      return;
+    }
     if (method === "konbini" || method === "virtual_account") {
       window.location.replace(`/points/purchase/thanks?pid=${encodeURIComponent(payment.id)}`);
       return;

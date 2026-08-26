@@ -239,6 +239,21 @@ describe("SITE-040 Payment purchase UI", () => {
     expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
   });
 
+  it("gives an immediate canonical terminal status priority over a new-card Provider action", async () => {
+    const client = paymentClient();
+    vi.mocked(client.startPayment).mockResolvedValueOnce({
+      data: { ...payment("credit_card"), next_action: null, status: "succeeded", succeeded_at: "2026-08-26T00:00:01Z" },
+      metadata: { ...metadata, status: 201 },
+    });
+    renderPurchase(client);
+    await chooseCreditCard();
+    fireEvent.click(screen.getByRole("button", { name: /クレジットカードを追加/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "購入する" }));
+    await waitFor(() => expect(client.startPayment).toHaveBeenCalledOnce());
+    expect(fincode.execute).not.toHaveBeenCalled();
+  });
+
   it("prevents double submit while Payment creation is pending", async () => {
     const client = paymentClient();
     vi.mocked(client.startPayment).mockImplementation(() => new Promise(() => undefined));
