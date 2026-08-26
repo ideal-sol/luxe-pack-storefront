@@ -1118,3 +1118,29 @@ Campaign time, or infer availability. Purchase Button／Payment CTA／Provider�
 mutation／redirect／polling／callback／webhook／Coin grant／DB write are absent.
 Platform／OpenAPI／Artifact／Runtime／Infrastructure changes remain zero, and
 Application-only Deployment is NOT RUN.
+
+## SITE-040 — Payment Purchase Flow
+
+- Issue: `#77`
+- Risk: CRITICAL PAYMENT (`R4`)
+- Base SHA: `58a6bc6b6119f7daaa2d415c3b9e4c3db4f98b18`
+- Branch: `site/SITE-040-payment-purchase-flow`
+- Artifact: immutable MIG-089 `2.0.0-alpha.28`
+
+SITE-040 retains SITE-038's exact public `PointProduct.id` collection boundary
+and adds the canonical paid／bonus／active limited bonus purchase summary plus
+Credit Card, PayPay, Konbini, and bank-transfer selection. All Payment and Card
+operations stay behind the alpha.28 Browser Payment Client with a caller-owned
+Idempotency Key and no Frontend Coin grant authority.
+
+New Card fields are mounted only through the official fincode UI Component after
+`getPaymentCardUiBootstrap()`. The Storefront requires mount success, never reads
+PAN／CVC or calls `getFormData()`, and leaves save-and-pay registration completion
+to the Platform purchase flow. Canonical `pid` reads determine every Return and
+thanks state; Card／PayPay polling is bounded to 30 seconds, while Konbini／bank
+transfer resume only the existing Payment.
+
+Local Artifact／policy／boundary／lint／typecheck／315-test／production-build／audit／
+secret gates pass. Purchase History is NOT IMPLEMENTED. Provider Browser E2E is
+HOLD and Application-only Deployment is NOT RUN. Platform Repository／DB／
+Migration／Runtime／Infrastructure remain unchanged.

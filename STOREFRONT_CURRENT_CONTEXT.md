@@ -32,6 +32,8 @@
 - SITE-036 Shipping Address Management Page: implemented by this change
 - SITE-037 Authenticated Contact and Support Link: implemented by this change
 - SITE-038 Coin Purchase Detail Page: implemented by this change
+- SITE-040 Payment Purchase Flow: implemented by this change; purchase history,
+  Provider Browser E2E, and deployment remain out of scope
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -55,13 +57,13 @@ Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.24`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.24`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.28`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.28`
 - Site Schema package: `@oripa/site-schema` `2.0.0-alpha.23`
-- Source Commit: `209252d9fcbad42090677f5a7bece52c5a5d3597`
-- Artifact authority: `vendor/oripa/STORE-SITE-034/artifact-manifest.json`
-- Public OpenAPI version: `2.0.0-alpha.23`
-- Public OpenAPI SHA-256: `5c735fe26514d5bfb47b3515ead108bf473fd5e1f81e0936b7e1986290904043`
+- Source Commit: `06681c689eaba3458adb935753de128a4d12d57d`
+- Artifact authority: `vendor/oripa/MIG-089/artifact-manifest.json`
+- Public OpenAPI version: `2.0.0-alpha.27`
+- Public OpenAPI SHA-256: `41ebdddbd7c4edeedd36ad3810b2afa564495aa2d1c3e48a187f44c85deb85da`
 
 ## Available contracts
 
@@ -115,6 +117,11 @@ Platform response or Frontend business decision changed.
   Historical Gacha title／presentation image, occurred time, requested／executed
   counts, Backend status／label, stable returned order, and opaque cursor
   continuation
+- Authenticated Payment purchase through the Browser-safe canonical Payment
+  Client: Payment start/read/unpaid-resume, Card UI bootstrap, saved-card
+  list/delete, and registration intent. New Card input is owned by the official
+  fincode UI Component; the Storefront does not read PAN/CVC or complete Card
+  registration directly.
 
 ## Preview deployment
 
@@ -294,9 +301,27 @@ detail exact-matches the successful collection, renders no invented Product on
 unknown IDs or read errors, and contains no Purchase／Payment button or call.
 Platform／Artifact／Runtime／Payment remain unchanged.
 
+SITE-040 adopts the immutable MIG-089 alpha.28 Client／Testkit and referenced
+Public OpenAPI alpha.27. The existing exact `PointProduct.id` boundary now shows
+the canonical paid, normal bonus, active limited bonus, and computed total rows,
+then starts Credit Card／PayPay／Konbini／Virtual Account payments only through the
+Browser-safe Payment Client with one caller Idempotency Key. Saved Card order,
+eligibility, and three-card limit remain Platform-owned. New Card input uses
+`getPaymentCardUiBootstrap()` followed by official fincode `initFincode()` and UI
+mount; mount success is required before purchase, and application code never
+calls `getFormData()` or handles raw PAN/CVC.
+
+`/points/purchase/thanks?pid=...` always reads the canonical Payment. Card and
+PayPay poll every two seconds for at most 30 seconds, honoring 429 retry hints;
+Konbini and Virtual Account reuse the same Payment through
+`resumeUnpaidPayment()`. Success, failure, cancel, expired, delayed, and contained
+invalid/unauthorized states follow the approved copy. Purchase history routes,
+receipts, Provider Browser E2E, Platform Runtime changes, and deployment remain
+unimplemented or on hold.
+
 ## Pending contracts
 
-- Point purchase
+- Payment purchase history and receipt contracts/UI
 - Optional featured placement beyond the Backend-stable Catalog order
 - Point-insufficient presentation at gacha-detail time (Draw execution uses the
   canonical Backend typed error and does not depend on this presentation)

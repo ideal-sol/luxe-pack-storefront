@@ -1,9 +1,9 @@
 # API dependency map
 
-Storefront operations use the STORE-SITE-034 package-only Artifact:
-`@oripa/storefront-client` alpha.24 with the referenced MIG-063B Public OpenAPI
-alpha.23 and Site Schema alpha.23. This map does not invent absent operations or
-response shapes.
+Storefront operations use the MIG-089 Artifact: `@oripa/storefront-client` and
+`@oripa/storefront-testkit` alpha.28 with referenced Public OpenAPI alpha.27 and
+Site Schema alpha.23. This map does not invent absent operations or response
+shapes.
 
 | Screen | Required capability | Contract state |
 | --- | --- | --- |
@@ -29,8 +29,11 @@ response shapes.
 | Points | Canonical current-user wallet total and expiry buckets | **Resolved — MIG-062Z alpha.21 `getWallet`; SITE-030 renders `expiring_within_7_days` without Frontend expiry decisions** |
 | Point history | Canonical signed ledger history and opaque cursor | **Resolved — MIG-062Z alpha.21 retains `listPointLedgerEntries`; SITE-030 applies Coin terminology only at presentation time** |
 | Points | Backend-ordered product collection, eligibility, reason, and CTA | **Resolved — MIG-062Z alpha.21 retains `listPointProducts`; SITE-030 displays canonical total grant without paid/bonus breakdown** |
-| Points | Display-only Product detail by public identifier | **Resolved — SITE-038 exact-matches encoded `PointProduct.id` against `listPointProducts`; no single-product endpoint or mutation required** |
-| Points | Point purchase mutation | **Pending Contract** |
+| Points | Product detail by public identifier | **Resolved — SITE-038 exact-matches encoded `PointProduct.id` against `listPointProducts`; SITE-040 retains that resolution boundary** |
+| Point purchase | Browser-safe Payment start/read, caller Idempotency, Return `pid`, Card／PayPay polling, and terminal presentation | **Resolved — MIG-089 alpha.28 Payment Client; SITE-040 implemented without direct API requests or Coin grant authority** |
+| Payment Card | Bootstrap, official fincode UI mount, saved-card list/delete, registration intent, one-time and save-and-pay selection | **Resolved — MIG-089 alpha.28 `getPaymentCardUiBootstrap`; SITE-040 never reads PAN/CVC or calls registration completion** |
+| Konbini／bank transfer | Existing unpaid Payment guide and durable Provider redirect resume | **Resolved — `getPayment` plus `resumeUnpaidPayment`; SITE-040 creates no replacement Payment or Provider session** |
+| Payment history／receipt | Current-user Payment list/detail and receipt presentation | **Deferred — explicitly out of SITE-040 scope** |
 | Draw history | Historical Gacha presentation, occurred time, requested/executed counts, Backend status, stable order, and opaque cursor | **Resolved — MIG-062W alpha.20 retains `listDrawHistory`; SITE-028 implemented** |
 | Notice list | Public notice summaries and cursor | **Resolved — MIG-061U content client** |
 | Notice detail | Public notice detail by opaque ID | **Resolved — MIG-061U content client** |

@@ -54,7 +54,10 @@ describe("visual and responsive convergence", () => {
     expect(css).toMatch(/\.point-purchase-detail__facts dd strong \{[^}]*font-size: clamp\([^}]*overflow-wrap: anywhere/);
     expect(css).toMatch(/\.point-purchase-detail__conditions dd \{[^}]*min-width: 0[^}]*overflow-wrap: anywhere/);
     expect(css).toMatch(/\.point-purchase-detail__summary, \.point-purchase-detail__conditions \{[^}]*padding: 24px 20px/);
-    expect(css).toMatch(/@media \(min-width: 720px\)[\s\S]*\.point-purchase-detail__summary, \.point-purchase-detail__conditions \{[^}]*padding: 32px/);
+    expect(css).toMatch(/@media \(min-width: 720px\)[\s\S]*\.point-purchase-detail__summary, \.point-purchase-detail__payment, \.point-purchase-detail__conditions \{[^}]*padding: 32px/);
+    expect(css).toMatch(/\.payment-method-row--selected \{[^}]*border-color: var\(--bronze\)[^}]*box-shadow:/);
+    expect(css).toMatch(/\.fincode-card-fields \{[^}]*min-width: 0[^}]*overflow: hidden/);
+    expect(css).toMatch(/\.fincode-card-fields iframe \{[^}]*max-width: 100%[^}]*width: 100%/);
   });
 
   it("keeps the Contact form single-column on mobile and two-column on desktop", () => {

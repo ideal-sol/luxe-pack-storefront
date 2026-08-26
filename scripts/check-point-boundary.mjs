@@ -107,36 +107,30 @@ for (const required of [
   "candidate.id === productId",
   "product.price.amount",
   "product.price.currency",
-  "product.grant.total_points",
+  "product.grant.paid_points",
+  "product.grant.bonus_points",
+  'product.limited_bonus?.state === "active"',
+  "product.limited_bonus.amount",
   "product.audience.label",
   "product.sale_state",
   "product.eligible",
   "product.ineligible_reason",
-  "limitedBonus?.presentation.is_visible",
-  "LimitedBonusPresentation",
+  "client.startPayment(input",
+  "createPaymentIdempotencyKey()",
 ]) {
   if (!purchaseDetail.includes(required)) throw new Error(`Coin Purchase Detail canonical presentation is missing: ${required}`);
 }
 for (const forbidden of [
-  "product.grant.paid_points",
-  "product.grant.bonus_points",
-  "limitedBonus.amount",
-  "limitedBonus.as_of",
-  "limitedBonus.state ===",
-  "product.grant.total_points +",
   "createPointPurchase",
-  "createPayment",
   "paymentSession",
   "paymentIntent",
-  "providerRedirect",
-  "purchaseMutation",
   "fetch(",
   "/api" + "/v2",
 ]) {
   if (purchaseDetail.includes(forbidden)) throw new Error(`Coin Purchase Detail inference or mutation detected: ${forbidden}`);
 }
-if (/<button\b/.test(purchaseDetail) || /購入する|決済へ進む|購入手続きは準備中/.test(purchaseDetail)) {
-  throw new Error("Coin Purchase Detail contains a Purchase or Payment action");
+if (!purchaseDetail.includes("product.grant.paid_points + product.grant.bonus_points + limitedBonus")) {
+  throw new Error("Coin Purchase Detail total does not follow the canonical SITE-040 mapping");
 }
 
 const routes = readFileSync("src/lib/routes/navigation.ts", "utf8");
