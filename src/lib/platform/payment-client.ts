@@ -4,6 +4,7 @@ import {
 } from "@oripa/storefront-client";
 import type {
   BrowserStorefrontPaymentClient,
+  PaymentHistoryQuery,
   PublicComponents,
   StorefrontTransport,
 } from "@oripa/storefront-client";
@@ -13,6 +14,7 @@ import type { PlatformRuntimeConfiguration } from "./runtime-configuration";
 type Schemas = PublicComponents["schemas"];
 
 export type Payment = Schemas["Payment"];
+export type PaymentCollection = Schemas["PaymentCollection"];
 export type PaymentCard = Schemas["PaymentCard"];
 export type PaymentCardCollection = Schemas["PaymentCardCollection"];
 export type PaymentCardComponentAction = Schemas["PaymentCardComponentAction"];
@@ -24,7 +26,7 @@ export type PaymentRedirectAction = Schemas["PaymentRedirectAction"];
 export type PaymentResume = Schemas["PaymentResume"];
 export type PaymentStatus = Schemas["PaymentStatus"];
 
-export type PaymentClientAdapter = Pick<
+type PaymentPurchaseClientAdapter = Pick<
   BrowserStorefrontPaymentClient,
   | "createCardRegistrationIntent"
   | "deleteCard"
@@ -35,6 +37,8 @@ export type PaymentClientAdapter = Pick<
   | "startPayment"
 >;
 
+export type PaymentClientAdapter = PaymentPurchaseClientAdapter & Partial<Pick<BrowserStorefrontPaymentClient, "listPayments">>;
+
 export function createPaymentClientAdapter(transport: StorefrontTransport): PaymentClientAdapter {
   const client = createCsrfManagedStorefrontPaymentClient(transport);
   return {
@@ -43,6 +47,7 @@ export function createPaymentClientAdapter(transport: StorefrontTransport): Paym
     getPayment: client.getPayment,
     getPaymentCardUiBootstrap: client.getPaymentCardUiBootstrap,
     listCards: client.listCards,
+    listPayments: client.listPayments,
     resumeUnpaidPayment: client.resumeUnpaidPayment,
     startPayment: client.startPayment,
   };
@@ -56,3 +61,4 @@ export function createBrowserPaymentClient(
 }
 
 export { createIdempotencyKey };
+export type { PaymentHistoryQuery };

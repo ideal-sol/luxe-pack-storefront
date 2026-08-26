@@ -60,6 +60,14 @@ describe("visual and responsive convergence", () => {
     expect(css).toMatch(/\.fincode-card-fields iframe \{[^}]*max-width: 100%[^}]*width: 100%/);
   });
 
+  it("keeps Payment History two-column without horizontal overflow and details single-column", () => {
+    expect(css).toMatch(/\.payment-history-row \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+    expect(css).toMatch(/\.payment-history-row__method \{[^}]*min-width: 0[^}]*overflow-wrap: anywhere/);
+    expect(css).toMatch(/\.payment-history-detail \{[^}]*display: grid[^}]*min-width: 0/);
+    expect(css).toMatch(/\.payment-history-detail__section \{[^}]*min-width: 0/);
+    expect(css).toMatch(/\.payment-history-tab--selected \{[^}]*border-bottom-color: var\(--bronze\)[^}]*color:/);
+  });
+
   it("keeps the Contact form single-column on mobile and two-column on desktop", () => {
     expect(css).toMatch(/\.contact-form__fields \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
     expect(css).toMatch(/@media \(min-width: 720px\)[\s\S]*\.contact-form__fields \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);

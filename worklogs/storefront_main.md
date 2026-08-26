@@ -1144,3 +1144,34 @@ Local Artifact／policy／boundary／lint／typecheck／316-test／production-bu
 secret gates pass. Purchase History is NOT IMPLEMENTED. Provider Browser E2E is
 HOLD and Application-only Deployment is NOT RUN. Platform Repository／DB／
 Migration／Runtime／Infrastructure remain unchanged.
+
+## SITE-041 — Purchase History / Unpaid History
+
+- Issue: `#79`
+- Risk: CRITICAL PAYMENT (`R4`)
+- Base SHA: `e80563d6589a97a66a5d8b7295a8d8d7902721e7`
+- Branch: `site/SITE-041-purchase-history-unpaid-history`
+- Artifact: retained immutable MIG-089 `2.0.0-alpha.28`
+
+SITE-041 adds `購入履歴` immediately above `コイン履歴` on My Page and connects
+authenticated `/mypage/purchases` to the generated `listPayments` operation.
+The succeeded and unpaid tabs send only the canonical `view`, preserve returned
+order, and pass an opaque continuation cursor unchanged. Rows show only
+`grant.paid_points`, canonical amount, creation time, and mapped Payment method;
+they perform no status, unpaid, expiry, or Grant filtering／recalculation.
+
+`/mypage/purchases/[paymentId]` uses only ownership-checked `getPayment` and the
+persisted Payment Grant snapshot. Optional Bonus rows use the returned snapshot,
+and total Coin uses `grant.total_points` without arithmetic. Eligible Konbini／
+Virtual Account detail resumes the existing Payment through
+`resumeUnpaidPayment`; canonical `expired` renders a disabled control and performs
+no mutation. SITE-040 purchase／Card／Return／polling behavior remains unchanged,
+apart from the confirmed success link to Purchase History.
+
+Receipt is NOT IMPLEMENTED. Provider Browser E2E is HOLD and Application-only
+Deployment is NOT RUN. Platform Repository／DB／Migration／Runtime／Provider／
+Infrastructure and Artifact adoption remain unchanged.
+
+Local Artifact／Policy／all boundary／lint／typecheck／331-test／production-build／
+dependency-audit／secret gates pass. All 23 changed files are exact Task Policy
+paths with no wildcard or scope escape.

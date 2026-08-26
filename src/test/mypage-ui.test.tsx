@@ -68,6 +68,7 @@ describe("my page top", () => {
       expect(screen.getByRole("link", { name: new RegExp(item.label) })).toHaveAttribute("href", item.href);
     }
     expect(screen.getByRole("link", { name: /コイン履歴/ })).toHaveAttribute("href", "/mypage/points");
+    expect(screen.getByRole("link", { name: /購入履歴/ })).toHaveAttribute("href", "/mypage/purchases");
     expect(screen.getByRole("link", { name: /ガチャ履歴/ })).toHaveAttribute("href", "/mypage/draws");
     expect(screen.getByRole("link", { name: /獲得アイテム/ })).toHaveAttribute("href", "/mypage/prizes");
     expect(screen.getByRole("link", { name: /お届け先登録/ })).toHaveAttribute("href", "/mypage/address");
@@ -76,6 +77,16 @@ describe("my page top", () => {
     expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("href", "https://support.luxe-pack.biz/");
     expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("target", "_blank");
     expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("places Purchase History immediately above Coin History", async () => {
+    renderMyPage(client());
+    const shortcuts = await screen.findByRole("navigation", { name: "会員ショートカット" });
+    const links = Array.from(shortcuts.querySelectorAll("a"));
+    expect(links.slice(0, 2).map((link) => link.getAttribute("href"))).toEqual([
+      "/mypage/purchases",
+      "/mypage/points",
+    ]);
   });
 
   it("keeps the confirmed support order and uses no /contact destination", async () => {
