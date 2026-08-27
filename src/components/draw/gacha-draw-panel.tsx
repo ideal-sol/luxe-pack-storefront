@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { ConfirmationDialog } from "@/components/common/confirmation-dialog";
+import { usePointClient } from "@/components/points/point-client-provider";
 import type { GachaDetail, GachaPresentationState, StorefrontDrawCount } from "@/lib/platform";
 import { createIdempotencyKey, presentDrawProblem } from "@/lib/platform";
 import { drawResultRoute } from "@/lib/routes/navigation";
@@ -77,6 +78,7 @@ export function GachaDrawPanel({
 }) {
   const router = useRouter();
   const { client, configurationAvailable } = useDrawClient();
+  const { refreshWallet } = usePointClient();
   const [selectedCount, setSelectedCount] = useState<StorefrontDrawCount | null>(
     presentation.allowed_draw_counts[0] ?? null,
   );
@@ -110,6 +112,7 @@ export function GachaDrawPanel({
       });
       setRecoveryId(data.id);
       setConfirming(false);
+      void refreshWallet();
       router.push(drawResultRoute(data.id));
     } catch (error) {
       const presentation = presentDrawProblem(error);
@@ -123,7 +126,7 @@ export function GachaDrawPanel({
   }
 
   const confirmation = selectedCount
-    ? `${detail.title}を${number.format(selectedCount)}回抽選します。表示上の合計は${number.format(detail.price_points * selectedCount)}コインです。実際の消費額と結果はPlatformの応答を正本とします。`
+    ? `${detail.title}を${number.format(selectedCount)}回抽選します。表示上の合計は${number.format(detail.price_points * selectedCount)}コインです。`
     : "抽選回数を選択してください。";
 
   return (
@@ -159,7 +162,7 @@ export function GachaDrawPanel({
               <Link className="button button--accent" href="/login">ログインして抽選する</Link>
             ) : drawEnabled ? (
               <button
-                aria-describedby="draw-boundary-note"
+                aria-describedby={!configurationAvailable ? "draw-boundary-note" : undefined}
                 className="button button--accent"
                 disabled={!selectedCount || !configurationAvailable || submitting}
                 onClick={() => setConfirming(true)}
@@ -172,9 +175,7 @@ export function GachaDrawPanel({
                 {disabledActionLabel(presentation)}
               </button>
             )}
-            <small id="draw-boundary-note">
-              {!configurationAvailable ? "この環境では抽選接続が設定されていません。" : "抽選条件と消費コインは実行時にPlatformが再検証します。"}
-            </small>
+            {!configurationAvailable && <small id="draw-boundary-note">エラーが発生しました、運営までお問い合わせください</small>}
             {problem && <p className="gacha-draw-tray__error" role="alert">{problem}</p>}
             {recoveryId && <Link className="gacha-draw-tray__recovery" href={drawResultRoute(recoveryId)}>取得済みの結果を表示する</Link>}
           </div>

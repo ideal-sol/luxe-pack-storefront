@@ -13,6 +13,7 @@ import type { DrawClientAdapter, GachaDetail, GachaPresentationState, PublicCata
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+vi.mock("@/components/points/point-client-provider", () => ({ usePointClient: () => ({ refreshWallet: vi.fn() }) }));
 
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 const detail = PUBLIC_CATALOG_FIXTURE.data as GachaDetail;
@@ -105,6 +106,8 @@ describe("gacha detail UI", () => {
 
     const configuration = renderDetail(null);
     expect(screen.getByText("ガチャ詳細を表示できません")).toBeInTheDocument();
+    expect(screen.getByText("現在、ガチャ詳細を表示できません")).toBeInTheDocument();
+    expect(screen.queryByText(/Catalog|CONFIGURATION/)).not.toBeInTheDocument();
     configuration.unmount();
 
     const notFoundProblem = new ApiProblemError({

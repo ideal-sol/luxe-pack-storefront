@@ -121,6 +121,8 @@ describe("Draw Result recovery UI", () => {
 
     const configuration = renderResult(null);
     expect(await screen.findByText("抽選結果を表示できません")).toBeInTheDocument();
+    expect(screen.getByText("エラーが発生しました、運営までお問い合わせください")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/Platform接続/);
     configuration.unmount();
 
     const notFoundProblem = new ApiProblemError({
@@ -155,5 +157,13 @@ describe("Draw Result recovery UI", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "抽選結果" })).toBeInTheDocument());
     view.unmount();
     expect(createDraw).not.toHaveBeenCalled();
+  });
+
+  it("uses the approved empty-Prize copy without Platform wording", async () => {
+    renderResult(drawClient({
+      getDrawRequest: vi.fn().mockResolvedValue(response({ ...result, prize_counts: [] })),
+    }));
+    expect(await screen.findByText("獲得景品はありません、コイン還元をご確認ください")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Platform");
   });
 });

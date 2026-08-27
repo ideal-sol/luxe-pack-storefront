@@ -10,6 +10,8 @@ import type {
   UserPrize,
 } from "@/lib/platform";
 
+const { refreshWallet } = vi.hoisted(() => ({ refreshWallet: vi.fn().mockResolvedValue(undefined) }));
+
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 const prize = PUBLIC_USER_PRIZE_FIXTURE as UserPrize;
 const shippingRequest = PUBLIC_SHIPPING_REQUEST_FIXTURE;
@@ -98,6 +100,13 @@ function renderDialog(action: "point_exchange" | "shipping", fulfillmentClient: 
 }
 
 describe("prize fulfillment UI", () => {
+  beforeEach(() => {
+    refreshWallet.mockClear();
+    document.addEventListener("storefront:wallet-refresh", refreshWallet);
+  });
+
+  afterEach(() => document.removeEventListener("storefront:wallet-refresh", refreshWallet));
+
   it("reuses one idempotency key for the same point-exchange retry and reconciles canonical reads", async () => {
     const exchangePrizes = vi.fn()
       .mockRejectedValueOnce(fulfillmentProblem("IDEMPOTENCY_FAILURE", true))
@@ -125,6 +134,7 @@ describe("prize fulfillment UI", () => {
     expect(onReconcile).toHaveBeenCalledOnce();
     expect(fulfillmentClient.listShippingAddresses).toHaveBeenCalled();
     expect(fulfillmentClient.listShippingRequests).toHaveBeenCalled();
+    expect(refreshWallet).toHaveBeenCalledOnce();
   });
 
   it("blocks a second click while a point exchange is in flight", async () => {
@@ -146,6 +156,7 @@ describe("prize fulfillment UI", () => {
       wallet_free_points_after: 8000,
     }));
     expect(await screen.findByText("手続きが完了しました")).toBeInTheDocument();
+    expect(refreshWallet).toHaveBeenCalledOnce();
   });
 
   it("uses typed fulfillment problems without exposing Backend detail", async () => {
@@ -156,6 +167,7 @@ describe("prize fulfillment UI", () => {
     fireEvent.click(screen.getByRole("button", { name: "コインに交換する" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("お支払い状況の確認中");
     expect(screen.queryByText(/このdetail/)).not.toBeInTheDocument();
+    expect(refreshWallet).not.toHaveBeenCalled();
   });
 
   it("presents a typed non-exchangeable problem with Coin terminology", async () => {

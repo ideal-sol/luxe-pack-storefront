@@ -60,8 +60,8 @@ describe("SITE-032 Limited Bonus Coin presentation", () => {
     expect(await screen.findByRole("heading", { name: "スタンダード1000コイン" })).toBeInTheDocument();
     expect(screen.getByText("1,100")).toBeInTheDocument();
     expect(screen.getByText("￥1,000")).toBeInTheDocument();
-    expect(screen.getByText("購入対象です。")).toBeInTheDocument();
-    expect(screen.getByText("購入可能")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/購入対象です。|購入可能|購入手続きは準備中/);
+    expect(screen.getByRole("link", { name: "詳細を見る" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "期間限定ボーナスコイン" })).not.toBeInTheDocument();
     expect(screen.queryByText("通常ボーナス")).not.toBeInTheDocument();
   });
@@ -136,16 +136,13 @@ describe("SITE-030 Coin Product read regression", () => {
     expect(await screen.findByRole("heading", { name: "スタンダード1000コイン" })).toBeInTheDocument();
     expect(screen.getByText("1,100")).toBeInTheDocument();
     expect(screen.getByText("コイン", { selector: ".point-product-card__grant span" })).toBeInTheDocument();
-    expect(screen.getByText("購入対象です。")).toBeInTheDocument();
-    expect(screen.getByText("購入可能")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "購入手続きは準備中" })).toBeDisabled();
+    expect(document.body).not.toHaveTextContent(/購入対象です。|購入可能|購入手続きは準備中/);
     const detailLink = screen.getByRole("link", { name: "詳細を見る" });
     expect(detailLink).toHaveAttribute(
       "href",
       `/points/purchase/${PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0].id}`,
     );
     expect(detailLink.querySelector("button")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "購入手続きは準備中" }).closest("a")).toBeNull();
     expect(client.getWallet).toHaveBeenCalledOnce();
     expect(client.listPointProducts).toHaveBeenCalledOnce();
     expect(PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0].title).toBe(originalTitle);
@@ -184,7 +181,7 @@ describe("SITE-030 Coin Product read regression", () => {
     fireEvent.click(screen.getByRole("tab", { name: "初回ユーザー" }));
     const headings = screen.getAllByRole("article").map((card) => within(card).getByRole("heading", { level: 3 }).textContent);
     expect(headings).toEqual(["先に返された初回商品", "初回限定1000コイン"]);
-    expect(screen.getAllByText("購入対象です。")).toHaveLength(2);
+    expect(document.body).not.toHaveTextContent(/購入対象です。|購入可能|購入手続きは準備中/);
   });
 
   it("shows the Backend first-purchase ineligible reason without enabling purchase", async () => {

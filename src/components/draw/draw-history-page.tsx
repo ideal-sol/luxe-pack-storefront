@@ -141,10 +141,10 @@ export function DrawHistoryPage() {
   }
   if (session.status === "unauthenticated" || session.status === "session-expired") return <LoginRequiredState />;
   if (session.status === "configuration-unavailable" || !configurationAvailable) {
-    return <CatalogMessage description="この環境ではガチャ履歴への接続が設定されていません。" eyebrow="CONFIGURATION" title="ガチャ履歴を表示できません" />;
+    return <CatalogMessage description="ガチャ履歴を確認できませんでした、時間をおいて再度お試しください" eyebrow="ERROR" title="ガチャ履歴を表示できません" tone="error" />;
   }
   if (session.status === "error") {
-    return <CatalogMessage description="Sessionを確認できませんでした。時間をおいて再度お試しください。" eyebrow="ERROR" title="ガチャ履歴を表示できません" tone="error" />;
+    return <CatalogMessage description="現在、ガチャ履歴を表示できません、時間をおいて再度お試しください" eyebrow="ERROR" title="ガチャ履歴を表示できません" tone="error" />;
   }
   if (state.status === "loading" || state.status === "idle" || state.sessionUserId !== sessionUserId) {
     return <CatalogLoading label="ガチャ履歴を読み込み中" />;

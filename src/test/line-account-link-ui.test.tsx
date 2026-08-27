@@ -71,7 +71,7 @@ describe("LINE account link UI", () => {
     const { navigate } = renderLine(externalClient);
 
     expect(await screen.findByRole("heading", { name: PUBLIC_LINE_FRIEND_STATE_FIXTURES.unlinked.status.label })).toBeInTheDocument();
-    expect(screen.getByText(PUBLIC_LINE_FRIEND_STATE_FIXTURES.unlinked.status.code)).toBeInTheDocument();
+    expect(screen.queryByText(PUBLIC_LINE_FRIEND_STATE_FIXTURES.unlinked.status.code)).not.toBeInTheDocument();
     expect(screen.getByText("対象外")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: PUBLIC_LINE_FRIEND_STATE_FIXTURES.unlinked.primary_action.label }));
     await waitFor(() => expect(startLineIdentityLink).toHaveBeenCalledWith({ return_path: lineAccountRoute }, {}));
@@ -86,13 +86,16 @@ describe("LINE account link UI", () => {
       listExternalIdentities: vi.fn().mockResolvedValue(response(PUBLIC_EXTERNAL_IDENTITY_FIXTURE.linked)),
     }));
     expect(await screen.findByRole("heading", { name: PUBLIC_LINE_FRIEND_STATE_FIXTURES.friend_add_required.status.label })).toBeInTheDocument();
+    expect(screen.getByText("現在のLINE連携・友だち追加済みです")).toBeInTheDocument();
     expect(screen.getByText("連携日時")).toBeInTheDocument();
-    expect(screen.getAllByText("連携済み")).toHaveLength(2);
+    expect(screen.getByText("連携済み")).toBeInTheDocument();
     expect(screen.getByText("未確認")).toBeInTheDocument();
     expect(screen.getByText("対象外")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /解除/ })).not.toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("token");
     expect(document.body).not.toHaveTextContent("subject");
+    expect(document.body).not.toHaveTextContent(/状態コード|LINE Identity|Callback|Storefront|Platform/);
+    expect(screen.queryByRole("heading", { name: "連携について" })).not.toBeInTheDocument();
   });
 
   it("uses the Backend external action label and only a safe explicit HTTPS href", async () => {
@@ -152,7 +155,8 @@ describe("LINE account link UI", () => {
       getLineFriendState: vi.fn().mockResolvedValue(response(PUBLIC_LINE_FRIEND_STATE_FIXTURES.confirmed)),
       listExternalIdentities: vi.fn().mockResolvedValue(response({ items: [] })),
     }));
-    expect(await screen.findByText("LINE連携状態を確認できません")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "LINE連携を確認できませんでした" })).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/CONTRACT ERROR|LINE Identity/);
     expect(screen.queryByRole("button", { name: /連携|追加/ })).not.toBeInTheDocument();
   });
 
@@ -172,7 +176,7 @@ describe("LINE account link UI", () => {
       if (fixture.code === "AUTHENTICATION_REQUIRED") {
         expect(await screen.findByText("ログインしてください")).toBeInTheDocument();
       } else if (fixture.code === "SESSION_EXPIRED") {
-        expect(await screen.findByText("セッションの有効期限が切れました")).toBeInTheDocument();
+        expect(await screen.findByText("LINE連携を確認できませんでした、時間をおいて再度お試しください")).toBeInTheDocument();
       } else {
         expect(await screen.findByText("アクセスが集中しています。時間をおいて、もう一度お試しください。")).toBeInTheDocument();
       }
@@ -186,6 +190,8 @@ describe("LINE account link UI", () => {
 
     const unavailable = renderLine(null);
     expect(await screen.findByText("LINE連携を表示できません")).toBeInTheDocument();
+    expect(screen.getByText("LINE連携を確認できませんでした")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/CONFIGURATION|接続が設定/);
     unavailable.unmount();
 
     renderLine(identityClient(), authClient(PUBLIC_AUTH_FIXTURE.anonymous_session));

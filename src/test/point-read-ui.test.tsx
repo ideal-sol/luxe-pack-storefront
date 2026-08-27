@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
 import {
   PUBLIC_AUTH_FIXTURE,
@@ -13,7 +13,7 @@ import PointsPage from "@/app/points/page";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { ToastProvider } from "@/components/common/toast-provider";
 import { SiteHeader } from "@/components/layout/site-header";
-import { PointClientProvider } from "@/components/points/point-client-provider";
+import { PointClientProvider, usePointClient, WALLET_REFRESH_POLICY } from "@/components/points/point-client-provider";
 import type { AuthClientAdapter, PointClientAdapter } from "@/lib/platform";
 
 const metadata = { idempotency_replayed: false, status: 200 } as const;
@@ -45,7 +45,29 @@ function renderPointUi(children: React.ReactNode, point: PointClientAdapter | nu
   );
 }
 
+function WalletRefreshProbe() {
+  const { refreshWallet } = usePointClient();
+  return <button onClick={() => { void refreshWallet(); void refreshWallet(); }} type="button">wallet refresh</button>;
+}
+
+async function flushAsyncEffects() {
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+}
+
+function setPageVisibility(value: "hidden" | "visible") {
+  Object.defineProperty(document, "visibilityState", { configurable: true, value });
+}
+
 describe("SITE-030 Coin history and canonical Wallet presentation", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    setPageVisibility("visible");
+  });
+
   it("renders Backend history order, signed deltas, and Coin terminology without mutating canonical labels", async () => {
     const originalLabels = PUBLIC_POINT_HISTORY_FIXTURES.multiple.items.map((entry) => entry.reason.label);
     const view = renderPointUi(<MyPointsPage />);
@@ -129,7 +151,7 @@ describe("SITE-030 Coin history and canonical Wallet presentation", () => {
     loading.unmount();
 
     const configuration = renderPointUi(<PointsPage />, null);
-    expect(await screen.findByText("コイン情報への接続が設定されていません。")).toBeInTheDocument();
+    expect(await screen.findByText("エラーが発生しました。運営までお問い合わせください")).toBeInTheDocument();
     configuration.unmount();
 
     const problem = new ApiProblemError(PUBLIC_POINT_READ_PROBLEM_FIXTURES.unauthenticated);
@@ -142,9 +164,108 @@ describe("SITE-030 Coin history and canonical Wallet presentation", () => {
     const client = pointClient();
     const failingAuth = authClient({ getCurrentSession: vi.fn().mockRejectedValue(new Error("fixture session failure")) });
     renderPointUi(<PointsPage />, client, failingAuth);
-    expect(await screen.findByText("Sessionを確認できませんでした。時間をおいて再度お試しください。")).toBeInTheDocument();
+    expect(await screen.findByText("現在、コイン商品を表示できませんでした、時間をおいて再度お試しください")).toBeInTheDocument();
     expect(client.getWallet).not.toHaveBeenCalled();
     expect(client.listPointProducts).not.toHaveBeenCalled();
     expect(Object.keys(client).filter((key) => /payment|purchase|grant|debit/i.test(key))).toHaveLength(0);
+  });
+
+  it("polls the canonical Wallet every 60 seconds only while the page is visible", async () => {
+    vi.useFakeTimers();
+    setPageVisibility("visible");
+    const getWallet = vi.fn().mockResolvedValue({ data: PUBLIC_POINT_BALANCE_FIXTURES.positive, metadata });
+    renderPointUi(<SiteHeader />, pointClient({ getWallet }));
+    await flushAsyncEffects();
+    expect(getWallet).toHaveBeenCalledOnce();
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(WALLET_REFRESH_POLICY.pollingIntervalMs); });
+    expect(getWallet).toHaveBeenCalledTimes(2);
+
+    setPageVisibility("hidden");
+    document.dispatchEvent(new Event("visibilitychange"));
+    await act(async () => { await vi.advanceTimersByTimeAsync(WALLET_REFRESH_POLICY.pollingIntervalMs * 3); });
+    expect(getWallet).toHaveBeenCalledTimes(2);
+  });
+
+  it("refreshes once on foreground when visibilitychange and focus arrive together", async () => {
+    vi.useFakeTimers();
+    setPageVisibility("visible");
+    const getWallet = vi.fn().mockResolvedValue({ data: PUBLIC_POINT_BALANCE_FIXTURES.positive, metadata });
+    renderPointUi(<SiteHeader />, pointClient({ getWallet }));
+    await flushAsyncEffects();
+    expect(getWallet).toHaveBeenCalledOnce();
+
+    setPageVisibility("hidden");
+    document.dispatchEvent(new Event("visibilitychange"));
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_000); });
+    setPageVisibility("visible");
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"));
+      window.dispatchEvent(new Event("focus"));
+      await Promise.resolve();
+    });
+    expect(getWallet).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps a valid balance when a background refresh fails", async () => {
+    vi.useFakeTimers();
+    setPageVisibility("visible");
+    const getWallet = vi.fn()
+      .mockResolvedValueOnce({ data: PUBLIC_POINT_BALANCE_FIXTURES.positive, metadata })
+      .mockRejectedValueOnce(new Error("temporary wallet failure"));
+    renderPointUi(<SiteHeader />, pointClient({ getWallet }));
+    await flushAsyncEffects();
+    expect(screen.getAllByLabelText("コイン残高")[0]).toHaveTextContent("コイン 1,000");
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(WALLET_REFRESH_POLICY.pollingIntervalMs); });
+    expect(getWallet).toHaveBeenCalledTimes(2);
+    expect(screen.getAllByLabelText("コイン残高")[0]).toHaveTextContent("コイン 1,000");
+  });
+
+  it("refreshes the canonical Wallet after a confirmed mutation event", async () => {
+    const refreshed = { ...PUBLIC_POINT_BALANCE_FIXTURES.positive, total_points: 7_654 };
+    const getWallet = vi.fn()
+      .mockResolvedValueOnce({ data: PUBLIC_POINT_BALANCE_FIXTURES.positive, metadata })
+      .mockResolvedValueOnce({ data: refreshed, metadata });
+    renderPointUi(<SiteHeader />, pointClient({ getWallet }));
+    await waitFor(() => expect(getWallet).toHaveBeenCalledOnce());
+
+    document.dispatchEvent(new Event("storefront:wallet-refresh"));
+
+    await waitFor(() => expect(getWallet).toHaveBeenCalledTimes(2));
+    expect(screen.getAllByLabelText("コイン残高")[0]).toHaveTextContent("コイン 7,654");
+  });
+
+  it("coalesces duplicate manual refreshes and queues one canonical read behind an older passive read", async () => {
+    let resolveInitial!: (value: { data: typeof PUBLIC_POINT_BALANCE_FIXTURES.positive; metadata: typeof metadata }) => void;
+    const initial = new Promise<{ data: typeof PUBLIC_POINT_BALANCE_FIXTURES.positive; metadata: typeof metadata }>((resolve) => { resolveInitial = resolve; });
+    const refreshed = { ...PUBLIC_POINT_BALANCE_FIXTURES.positive, total_points: 4_321 };
+    const getWallet = vi.fn()
+      .mockImplementationOnce(() => initial)
+      .mockResolvedValueOnce({ data: refreshed, metadata });
+    renderPointUi(<><SiteHeader /><WalletRefreshProbe /></>, pointClient({ getWallet }));
+    await waitFor(() => expect(getWallet).toHaveBeenCalledOnce());
+
+    fireEvent.click(screen.getByRole("button", { name: "wallet refresh" }));
+    expect(getWallet).toHaveBeenCalledOnce();
+    resolveInitial({ data: PUBLIC_POINT_BALANCE_FIXTURES.positive, metadata });
+    await waitFor(() => expect(getWallet).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.getAllByLabelText("コイン残高")[0]).toHaveTextContent("コイン 4,321"));
+  });
+
+  it("cleans up polling and foreground listeners on unmount", async () => {
+    vi.useFakeTimers();
+    setPageVisibility("visible");
+    const getWallet = vi.fn().mockResolvedValue({ data: PUBLIC_POINT_BALANCE_FIXTURES.positive, metadata });
+    const view = renderPointUi(<SiteHeader />, pointClient({ getWallet }));
+    await flushAsyncEffects();
+    expect(getWallet).toHaveBeenCalledOnce();
+    view.unmount();
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(WALLET_REFRESH_POLICY.pollingIntervalMs * 2); });
+    window.dispatchEvent(new Event("focus"));
+    document.dispatchEvent(new Event("visibilitychange"));
+    document.dispatchEvent(new Event("storefront:wallet-refresh"));
+    expect(getWallet).toHaveBeenCalledOnce();
   });
 });
