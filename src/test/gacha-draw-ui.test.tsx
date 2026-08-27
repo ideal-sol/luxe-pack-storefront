@@ -17,8 +17,9 @@ import type {
   GachaPresentationState,
 } from "@/lib/platform";
 
-const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+const { push, refreshWallet } = vi.hoisted(() => ({ push: vi.fn(), refreshWallet: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+vi.mock("@/components/points/point-client-provider", () => ({ usePointClient: () => ({ refreshWallet }) }));
 
 const detail = PUBLIC_CATALOG_FIXTURE.data as GachaDetail;
 const presentation = PUBLIC_GACHA_PRESENTATION_FIXTURE.data as GachaPresentationState;
@@ -47,7 +48,10 @@ function confirmOneDraw() {
 }
 
 describe("Gacha Draw execution UI", () => {
-  beforeEach(() => push.mockReset());
+  beforeEach(() => {
+    push.mockReset();
+    refreshWallet.mockClear();
+  });
 
   it("uses only Presentation counts and navigates with the canonical Draw ID", async () => {
     const createDraw = vi.fn().mockResolvedValue(response(drawResponse));
@@ -63,7 +67,9 @@ describe("Gacha Draw execution UI", () => {
     expect(gachaId).toBe(detail.id);
     expect(count).toBe(1);
     expect(options.idempotency_key).toMatch(/^[0-9a-f-]{36}$/);
+    expect(refreshWallet).toHaveBeenCalledOnce();
     expect(push).toHaveBeenCalledWith(`/draws/${drawResponse.id}/result`);
+    expect(screen.queryByText(/Platformの応答を正本/)).not.toBeInTheDocument();
   });
 
   it("blocks a double click while the same Draw is pending", async () => {
@@ -174,7 +180,8 @@ describe("Gacha Draw execution UI", () => {
   it("does not offer mutation when the Draw configuration is unavailable", () => {
     renderPanel(null);
     expect(screen.getByRole("button", { name: "1回抽選する" })).toBeDisabled();
-    expect(screen.getByText("この環境では抽選接続が設定されていません。")).toBeInTheDocument();
+    expect(screen.getByText("エラーが発生しました、運営までお問い合わせください")).toBeInTheDocument();
+    expect(screen.queryByText(/Platform|抽選条件と消費コイン/)).not.toBeInTheDocument();
   });
 
   it.each([

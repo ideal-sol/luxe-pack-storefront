@@ -1175,3 +1175,31 @@ Infrastructure and Artifact adoption remain unchanged.
 Local Artifact／Policy／all boundary／lint／typecheck／331-test／production-build／
 dependency-audit／secret gates pass. All 23 changed files are exact Task Policy
 paths with no wildcard or scope escape.
+
+## SITE-042 — Wallet Sync / Storefront UI Hygiene
+
+- Issue: `#81`
+- Risk: CRITICAL WALLET／PAYMENT (`R4`)
+- Base SHA: `aa4bd5a16c038a8e3d2145fb36cc12bda798a366`
+- Branch: `site/SITE-042-wallet-sync-ui-hygiene`
+- Artifact: retained immutable MIG-089 `2.0.0-alpha.28`
+
+SITE-042 makes the shared canonical Wallet read refreshable without adding a new
+endpoint or Frontend balance authority. Successful Draw, Prize Coin Exchange,
+and canonical Payment `succeeded` confirmation refresh `getWallet()` immediately.
+Visible pages poll every 60 seconds, hidden pages stop periodic reads, and
+visibility／focus return refreshes are deduplicated. Concurrent refreshes are
+coalesced, one trailing mutation read is preserved behind an older passive read,
+and a temporary background error does not erase a valid displayed balance.
+
+The `/points` Product cards remove only `購入対象です。`, `購入可能`, and
+`購入手続きは準備中`; canonical details, Product presentation, eligibility,
+ineligible reasons, and action availability remain intact. Human-confirmed
+technical Gacha／Wallet／Product／History／LINE copy is removed or replaced, while
+unconfirmed source-wide audit candidates remain unchanged and are recorded in
+`worklogs/report/SITE-042.md`.
+
+Local Artifact／Policy／all boundary／lint／typecheck／339-test／production-build／
+dependency-audit／secret gates pass. Changed files are exact Task Policy paths
+with no wildcard, symlink, or scope escape. Provider Browser E2E is HOLD and
+Application-only Deployment is NOT RUN.

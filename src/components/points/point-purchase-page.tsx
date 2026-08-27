@@ -66,8 +66,8 @@ export function PointBalanceSummary({ wallet }: { readonly wallet: PointWalletSt
         <h2 id="point-balance-title">現在のコイン</h2>
         {wallet.status === "unauthenticated" && <small>ログイン後に残高を表示します。</small>}
         {wallet.status === "error" && <small>{wallet.problem.message}</small>}
-        {wallet.status === "session-error" && <small>Sessionを確認できませんでした。</small>}
-        {wallet.status === "configuration-unavailable" && <small>コイン情報への接続が設定されていません。</small>}
+        {wallet.status === "session-error" && <small>ログインしてからご覧ください</small>}
+        {wallet.status === "configuration-unavailable" && <small>エラーが発生しました。運営までお問い合わせください</small>}
       </div>
       <output aria-label="現在のコイン残高" aria-live="polite">
         {wallet.status === "loading" ? <span className="point-balance-summary__loading">読み込み中</span> : value}
@@ -116,12 +116,7 @@ function ProductCta({ product }: { readonly product: PointProduct }) {
     return <Link className="button button--dark" href="/login">ログインして確認</Link>;
   }
   if (product.cta.state === "enabled" && product.cta.action === "purchase") {
-    return (
-      <div className="point-product-card__purchase-pending" data-platform-cta-state="enabled">
-        <strong>購入可能</strong>
-        <button className="button button--dark" disabled type="button">購入手続きは準備中</button>
-      </div>
-    );
+    return null;
   }
   return <button className="button button--ghost" data-platform-cta-state={product.cta.state} disabled type="button">現在購入できません</button>;
 }
@@ -170,9 +165,11 @@ function PointProductCard({ product }: { readonly product: PointProduct }) {
       <dl className="point-product-card__facts">
         <div><dt>販売価格</dt><dd>{yen.format(product.price.amount)}</dd></div>
       </dl>
-      <p className={`point-product-card__eligibility point-product-card__eligibility--${product.eligible ? "eligible" : "ineligible"}`}>
-        {product.eligible ? "購入対象です。" : reason ?? "現在購入できません。"}
-      </p>
+      {!product.eligible && (
+        <p className="point-product-card__eligibility point-product-card__eligibility--ineligible">
+          {reason ?? "現在購入できません。"}
+        </p>
+      )}
     </PointProductCardShell>
   );
 }
@@ -271,8 +268,8 @@ export function PointPurchasePage() {
       </section>
       <div aria-labelledby={`point-category-${category}`} id="point-product-panel" role="tabpanel">
         {displayState.status === "loading" && <CatalogLoading label="コイン商品を読み込み中" />}
-        {displayState.status === "configuration-unavailable" && <CatalogMessage description="この環境ではコイン商品への接続が設定されていません。" eyebrow="CONFIGURATION" title="コイン商品を表示できません" />}
-        {displayState.status === "session-error" && <CatalogMessage description="Sessionを確認できませんでした。時間をおいて再度お試しください。" eyebrow="ERROR" title="コイン商品を表示できません" tone="error" />}
+        {displayState.status === "configuration-unavailable" && <CatalogMessage description="コイン商品を表示できませんでした、時間をおいて再度お試しください" eyebrow="ERROR" title="コイン商品を表示できません" tone="error" />}
+        {displayState.status === "session-error" && <CatalogMessage description="現在、コイン商品を表示できませんでした、時間をおいて再度お試しください" eyebrow="ERROR" title="コイン商品を表示できません" tone="error" />}
         {displayState.status === "error" && <CatalogMessage action={() => { setState({ status: "loading" }); setRequestKey((value) => value + 1); }} description={displayState.problem.message} eyebrow="ERROR" title="コイン商品を取得できませんでした" tone="error" />}
         {displayState.status === "ready" && <PointProductRegion products={products} />}
       </div>

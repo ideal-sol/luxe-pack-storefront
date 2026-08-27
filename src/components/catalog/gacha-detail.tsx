@@ -209,7 +209,7 @@ export function GachaDetailView({ slug }: { readonly slug: string }) {
 
   if (state.status === "loading") return <CatalogLoading label="ガチャ詳細を読み込み中" />;
   if (state.status === "configuration-unavailable") {
-    return <CatalogMessage description="この環境では公開Catalog接続が設定されていません。" eyebrow="CONFIGURATION" title="ガチャ詳細を表示できません" />;
+    return <CatalogMessage description="現在、ガチャ詳細を表示できません" eyebrow="ERROR" title="ガチャ詳細を表示できません" tone="error" />;
   }
   if (state.status === "not-found") {
     return <CatalogMessage description="指定されたガチャは公開されていないか、見つかりません。" eyebrow="NOT FOUND" title="ガチャが見つかりません" />;

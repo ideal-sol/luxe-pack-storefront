@@ -36,6 +36,8 @@
   Provider Browser E2E, and deployment remain out of scope
 - SITE-041 Purchase History / Unpaid History: implemented by this change;
   receipt, Provider Browser E2E, and deployment remain out of scope
+- SITE-042 Wallet Sync / Storefront UI Hygiene: implemented by this change;
+  Provider Browser E2E and deployment remain out of scope
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -325,6 +327,23 @@ Konbini and Virtual Account reuse the same Payment through
 invalid/unauthorized states follow the approved copy. Purchase history routes,
 receipts, Provider Browser E2E, Platform Runtime changes, and deployment remain
 unimplemented or on hold.
+
+SITE-042 keeps the existing Wallet Client and Session boundary as the only
+Header balance authority. Successful Draw, Prize Coin Exchange, and canonical
+Payment `succeeded` confirmation trigger a fresh `getWallet()` read; visible
+pages also refresh every 60 seconds, hidden pages stop polling, and foreground
+focus／visibility refreshes are coalesced. Existing valid balance presentation
+survives a temporary background read failure. No mutation amount is added to or
+subtracted from the Header in the Frontend.
+
+The `/points` cards omit the three approved redundant purchase labels without
+leaving an empty CTA region, while canonical Product facts, detail links, sale／
+audience／eligibility state, and ineligible reasons remain visible. The approved
+Gacha, Wallet, Product, History, and LINE technical copy is removed or replaced;
+LINE status code／Identity rows and its technical footer are no longer rendered.
+The immutable MIG-089 alpha.28 Artifact and all Platform business presentation
+remain unchanged. Application-only Deployment is NOT RUN and Provider Browser
+E2E remains HOLD.
 
 ## Pending contracts
 

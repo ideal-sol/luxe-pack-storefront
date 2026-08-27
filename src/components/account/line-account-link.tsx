@@ -93,13 +93,13 @@ export function LineAccountLink({
   if (session.status === "loading") return <CatalogLoading label="LINE連携状態を確認中" />;
   if (session.status === "unauthenticated") return <LoginRequiredState />;
   if (session.status === "session-expired") {
-    return <CatalogMessage description="安全のため、もう一度ログインしてください。" eyebrow="SESSION EXPIRED" title="セッションの有効期限が切れました" tone="error" />;
+    return <CatalogMessage description="LINE連携を確認できませんでした、時間をおいて再度お試しください" eyebrow="ERROR" title="LINE連携を確認できませんでした" tone="error" />;
   }
   if (session.status === "configuration-unavailable" || !configurationAvailable) {
-    return <CatalogMessage description="この環境ではLINE連携への接続が設定されていません。" eyebrow="CONFIGURATION" title="LINE連携を表示できません" />;
+    return <CatalogMessage description="LINE連携を確認できませんでした" eyebrow="ERROR" title="LINE連携を表示できません" tone="error" />;
   }
   if (session.status === "error") {
-    return <CatalogMessage description="Sessionを確認できませんでした。時間をおいて再度お試しください。" eyebrow="ERROR" title="LINE連携を表示できません" tone="error" />;
+    return <CatalogMessage description="LINE連携を確認できませんでした、時間をおいて再度お試しください" eyebrow="ERROR" title="LINE連携を表示できません" tone="error" />;
   }
   if (
     identityState.status === "idle"
@@ -110,7 +110,7 @@ export function LineAccountLink({
   }
   if (identityState.status === "error") {
     if (identityState.problem.sessionExpired) {
-      return <CatalogMessage description="安全のため、もう一度ログインしてください。" eyebrow="SESSION EXPIRED" title="セッションの有効期限が切れました" tone="error" />;
+      return <CatalogMessage description="LINE連携を確認できませんでした、時間をおいて再度お試しください" eyebrow="ERROR" title="LINE連携を確認できませんでした" tone="error" />;
     }
     if (identityState.problem.authenticationRequired) return <LoginRequiredState />;
     return (
@@ -132,9 +132,9 @@ export function LineAccountLink({
   if (Boolean(lineIdentity) !== friendState.linked) {
     return (
       <CatalogMessage
-        description="LINE Identityと友だち確認状態の整合を確認できませんでした。時間をおいて、もう一度お試しください。"
-        eyebrow="CONTRACT ERROR"
-        title="LINE連携状態を確認できません"
+        description="LINE連携を確認できませんでした"
+        eyebrow="ERROR"
+        title="LINE連携を確認できませんでした"
         tone="error"
       />
     );
@@ -160,14 +160,10 @@ export function LineAccountLink({
         <div className="line-account__copy">
           <p>LINE FRIEND STATE</p>
           <h2 id="line-account-heading">{friendState.status.label}</h2>
-          <span>Platformが確認した現在のLINE連携・友だち追加状態です。</span>
+          <span>現在のLINE連携・友だち追加済みです</span>
         </div>
         <div className="line-account__details">
           <dl aria-label="LINE Friend State">
-            <div>
-              <dt>状態コード</dt>
-              <dd><code>{friendState.status.code}</code></dd>
-            </div>
             <div>
               <dt>LINE連携</dt>
               <dd>{friendState.linked ? "連携済み" : "未連携"}</dd>
@@ -179,10 +175,6 @@ export function LineAccountLink({
             <div>
               <dt>LINEユーザー</dt>
               <dd>{friendState.is_line_user ? "対象" : "対象外"}</dd>
-            </div>
-            <div>
-              <dt>LINE Identity</dt>
-              <dd>{lineIdentity ? "連携済み" : "未連携"}</dd>
             </div>
             {lineIdentity && (
               <div>
@@ -205,11 +197,6 @@ export function LineAccountLink({
       </section>
 
       {actionProblem && <p className="line-account__problem" role="alert">{actionProblem.message}</p>}
-
-      <aside className="line-account__notice">
-        <h2>連携について</h2>
-        <p>認証情報やLINE TokenはStorefrontへ保存しません。認証とCallback検証はPlatformの正式なExternal Identity境界で処理されます。</p>
-      </aside>
     </div>
   );
 }

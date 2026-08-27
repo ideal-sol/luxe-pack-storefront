@@ -69,7 +69,7 @@ function DrawResultContent({ result }: { readonly result: DrawResponse }) {
           <h2 id="draw-prizes">獲得景品</h2>
         </div>
         {result.prize_counts.length === 0 ? (
-          <p className="draw-result__empty">獲得景品はありません。Platformが確定したコイン還元をご確認ください。</p>
+          <p className="draw-result__empty">獲得景品はありません、コイン還元をご確認ください</p>
         ) : (
           <div className="draw-result__grid">
             {result.prize_counts.map(({ count, prize, rank }) => {
@@ -120,7 +120,7 @@ export function DrawResultView({ drawRequestId }: { readonly drawRequestId: stri
 
   if (session.status === "loading") return <LoadingState />;
   if (session.status === "configuration-unavailable" || !configurationAvailable) {
-    return <ResultMessage description="この環境ではPlatform接続が設定されていません。" title="抽選結果を表示できません" />;
+    return <ResultMessage description="エラーが発生しました、運営までお問い合わせください" title="抽選結果を表示できません" />;
   }
   if (session.status !== "authenticated") return <LoginRequiredState />;
   if (state.status === "loading") return <LoadingState />;

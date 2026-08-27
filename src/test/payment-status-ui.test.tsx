@@ -8,6 +8,9 @@ import { PaymentReturnAlert } from "@/components/payment/payment-return-alert";
 import { PaymentThanks } from "@/components/payment/payment-thanks";
 import type { AuthClientAdapter, Payment, PaymentClientAdapter } from "@/lib/platform";
 
+const { refreshWallet } = vi.hoisted(() => ({ refreshWallet: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/components/points/point-client-provider", () => ({ usePointClient: () => ({ refreshWallet }) }));
+
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 
 function payment(
@@ -52,12 +55,15 @@ function renderThanks(adapter: PaymentClientAdapter, pid: string | null = "payme
 }
 
 describe("SITE-040 Payment status UI", () => {
+  beforeEach(() => refreshWallet.mockClear());
+
   it("retains the minimal success copy and links to Purchase History", async () => {
     renderThanks(client(payment("succeeded")));
     expect(await screen.findByRole("heading", { name: "購入完了しました" })).toBeInTheDocument();
     expect(screen.getByText("コイン購入して頂き、ありがとうございます。")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "購入履歴" })).toHaveAttribute("href", "/mypage/purchases");
     expect(document.body).not.toHaveTextContent(/12,345|payment-public-reference/);
+    await waitFor(() => expect(refreshWallet).toHaveBeenCalledOnce());
   });
 
   it.each([
@@ -67,6 +73,7 @@ describe("SITE-040 Payment status UI", () => {
   ] as const)("renders canonical %s terminal UI", async (status, title) => {
     renderThanks(client(payment(status)));
     expect(await screen.findByRole("heading", { name: title })).toBeInTheDocument();
+    expect(refreshWallet).not.toHaveBeenCalled();
   });
 
   it.each([

@@ -137,9 +137,15 @@ describe("SITE-028 current-user Gacha history", () => {
   it("contains a Session error without issuing a Draw read or mutation", async () => {
     const client = drawClient();
     renderHistory(client, authClient({ getCurrentSession: vi.fn().mockRejectedValue(new Error("fixture session failure")) }));
-    expect(await screen.findByText("Sessionを確認できませんでした。時間をおいて再度お試しください。")).toBeInTheDocument();
+    expect(await screen.findByText("現在、ガチャ履歴を表示できません、時間をおいて再度お試しください")).toBeInTheDocument();
     expect(client.listDrawHistory).not.toHaveBeenCalled();
     expect(client.createDraw).not.toHaveBeenCalled();
+  });
+
+  it("uses the approved connection copy without technical labels", async () => {
+    renderHistory(drawClient(), null as unknown as AuthClientAdapter);
+    expect(await screen.findByText("ガチャ履歴を確認できませんでした、時間をおいて再度お試しください")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/CONFIGURATION|ガチャ履歴への接続/);
   });
 
   it.each([

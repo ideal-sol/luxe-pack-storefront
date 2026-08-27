@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
 import { LoginRequiredState } from "@/components/common/state-panel";
 import { CatalogLoading } from "@/components/catalog/catalog-message";
+import { usePointClient } from "@/components/points/point-client-provider";
 import { presentPaymentProblem, type Payment } from "@/lib/platform";
 import { usePaymentClient } from "./payment-client-provider";
 import { usePaymentPolling } from "./use-payment-polling";
@@ -118,8 +119,17 @@ function UnpaidGuide({ payment }: { readonly payment: Payment }) {
 export function PaymentThanks({ pid }: { readonly pid: string | null }) {
   const { state: session } = useSession();
   const { client } = usePaymentClient();
+  const { refreshWallet } = usePointClient();
+  const refreshedPaymentId = useRef<string | null>(null);
   const authenticatedClient = session.status === "authenticated" ? client : null;
   const polling = usePaymentPolling(authenticatedClient, pid);
+
+  useEffect(() => {
+    if (polling.status !== "ready" || polling.payment.status !== "succeeded") return;
+    if (refreshedPaymentId.current === polling.payment.id) return;
+    refreshedPaymentId.current = polling.payment.id;
+    void refreshWallet();
+  }, [polling, refreshWallet]);
 
   if (session.status === "loading") return <CatalogLoading label="決済状況を確認中" />;
   if (session.status === "unauthenticated" || session.status === "session-expired") return <LoginRequiredState />;

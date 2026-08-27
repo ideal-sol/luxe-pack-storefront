@@ -96,7 +96,7 @@ export function PublicHome() {
     return <PageContainer className="public-home-state"><CatalogLoading label="トップページを読み込み中" /></PageContainer>;
   }
   if (state.status === "configuration-unavailable") {
-    return <PageContainer className="public-home-state"><CatalogMessage description="この環境では公開Catalog接続が設定されていません。" eyebrow="CONFIGURATION" title="公開情報を表示できません" /></PageContainer>;
+    return <PageContainer className="public-home-state"><CatalogMessage description="現在、ガチャ情報を表示できません" eyebrow="ERROR" title="公開情報を表示できません" tone="error" /></PageContainer>;
   }
   if (state.status === "error") {
     return <PageContainer className="public-home-state"><CatalogMessage action={retry} description={state.problem.message} eyebrow="ERROR" title="公開情報を取得できませんでした" tone="error" /></PageContainer>;

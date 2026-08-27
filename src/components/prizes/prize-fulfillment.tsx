@@ -18,7 +18,6 @@ import {
   type ShippingRequestSummary,
   type UserPrize,
 } from "@/lib/platform";
-
 export type FulfillmentAction = "point_exchange" | "shipping";
 
 interface FulfillmentDialogProps {
@@ -130,6 +129,7 @@ export function PrizeFulfillmentDialog({
     try {
       const { data } = await client.exchangePrizes(prizeIds, { idempotency_key: key });
       await reconcileReads();
+      document.dispatchEvent(new Event("storefront:wallet-refresh"));
       pendingExchange.current = null;
       setSuccess(exchangeSuccess(data));
     } catch (error) {

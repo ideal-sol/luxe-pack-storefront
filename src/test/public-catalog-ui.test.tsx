@@ -201,6 +201,8 @@ describe("public catalog UI", () => {
 
     renderPublic(<PublicHome />, null);
     expect(screen.getByText("公開情報を表示できません")).toBeInTheDocument();
+    expect(screen.getByText("現在、ガチャ情報を表示できません")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/Catalog|CONFIGURATION/);
   });
 
   it("keeps home content available while the Banner request is loading or fails", async () => {
