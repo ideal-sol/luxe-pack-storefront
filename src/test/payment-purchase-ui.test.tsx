@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle } from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { PUBLIC_AUTH_FIXTURE, PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES, PUBLIC_POINT_BALANCE_FIXTURES, PUBLIC_POINT_PRODUCT_FIXTURES } from "@oripa/storefront-testkit";
+import { ApiProblemError, StorefrontTransportError } from "@oripa/storefront-client";
 import { vi } from "vitest";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { PaymentClientProvider } from "@/components/payment/payment-client-provider";
@@ -46,6 +47,19 @@ vi.mock("@/components/payment/fincode-card-fields", () => ({
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 const product = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0];
 const transferNotice = "※原則お振込みをしていただきましたら、即時コインの反映されますが、土日祝日や平日の場合でもコイン残高に反映されるまで最大で3日程度かかる場合がございます";
+const konbiniUnpaidCopy = "コンビニ決済の未払いがあるため、コンビニ決済を使用できません";
+
+function paymentProblem(code: string) {
+  return new ApiProblemError({
+    code,
+    detail: "fixture private detail",
+    request_id: "request-public-reference",
+    retryable: false,
+    status: 409,
+    title: "fixture private title",
+    type: "about:blank",
+  });
+}
 
 function card(id: string, overrides: Partial<PaymentCard> = {}): PaymentCard {
   return {
@@ -244,6 +258,53 @@ describe("SITE-040 Payment purchase UI", () => {
       expect.objectContaining({ idempotency_key: expect.any(String) }),
     );
     expect(client.resumeUnpaidPayment).not.toHaveBeenCalled();
+  });
+
+  it("shows the exact unpaid-limit copy for only a canonical Konbini start failure", async () => {
+    const client = paymentClient();
+    vi.mocked(client.startPayment).mockRejectedValueOnce(paymentProblem("KONBINI_UNPAID_LIMIT_REACHED"));
+    renderPurchase(client);
+    fireEvent.click(await screen.findByRole("radio", { name: "コンビニ決済" }));
+    fireEvent.click(screen.getByRole("button", { name: "購入する" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(konbiniUnpaidCopy);
+  });
+
+  it("keeps another Konbini ApiProblem on the generic Payment copy", async () => {
+    const client = paymentClient();
+    vi.mocked(client.startPayment).mockRejectedValueOnce(paymentProblem("OTHER_PAYMENT_ERROR"));
+    renderPurchase(client);
+    fireEvent.click(await screen.findByRole("radio", { name: "コンビニ決済" }));
+    fireEvent.click(screen.getByRole("button", { name: "購入する" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("決済処理を完了できませんでした。時間をおいて、もう一度お試しください。");
+    expect(alert).not.toHaveTextContent(konbiniUnpaidCopy);
+  });
+
+  it.each([
+    ["クレジットカード", "credit_card"],
+    ["PayPay", "paypay"],
+    ["銀行振込", "virtual_account"],
+  ] as const)("does not apply the Konbini copy to %s", async (label, method) => {
+    const client = paymentClient(method === "credit_card" ? [card("card-public-4242")] : []);
+    vi.mocked(client.startPayment).mockRejectedValueOnce(paymentProblem("KONBINI_UNPAID_LIMIT_REACHED"));
+    renderPurchase(client);
+    fireEvent.click(await screen.findByRole("radio", { name: label }));
+    if (method === "credit_card") await waitFor(() => expect(screen.getByRole("radio", { name: /VISA/ })).toBeChecked());
+    fireEvent.click(screen.getByRole("button", { name: "購入する" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("決済処理を完了できませんでした。時間をおいて、もう一度お試しください。");
+    expect(alert).not.toHaveTextContent(konbiniUnpaidCopy);
+  });
+
+  it("keeps a Konbini Transport Error on the result-unknown copy", async () => {
+    const client = paymentClient();
+    vi.mocked(client.startPayment).mockRejectedValueOnce(new StorefrontTransportError("NETWORK_ERROR", "fixture network failure"));
+    renderPurchase(client);
+    fireEvent.click(await screen.findByRole("radio", { name: "コンビニ決済" }));
+    fireEvent.click(screen.getByRole("button", { name: "購入する" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("通信結果を確認できませんでした。同じ操作を繰り返さず、時間をおいて状態をご確認ください。");
+    expect(alert).not.toHaveTextContent(konbiniUnpaidCopy);
   });
 
   it("starts one-time new-card payment without registration completion", async () => {

@@ -641,8 +641,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .fincode-card-fields { display: grid; gap: 8px; min-width: 0; overflow: hidden; }
 .fincode-card-fields__label { font-size: .75rem; font-weight: 800; margin: 0; }
 .fincode-card-fields__description { color: var(--muted); font-size: .64rem; line-height: 1.6; margin: 0; }
-.fincode-card-fields > div { min-height: 280px; min-width: 0; width: 100%; }
-.fincode-card-fields iframe { border: 0; max-width: 100%; width: 100%; }
+.fincode-card-fields__form { box-sizing: border-box; margin: 0 !important; max-width: 100%; min-height: 280px; min-width: 0; width: 100% !important; }
+.fincode-card-fields__mount { min-height: 250px; min-width: 0; width: 100% !important; }
+.fincode-card-fields iframe { border: 0; max-width: 100%; width: 100% !important; }
 .payment-card-loading { align-items: center; color: var(--muted); display: flex; font-size: .68rem; min-height: 120px; }
 .payment-save-card { align-items: center; display: flex; font-size: .7rem; font-weight: 750; gap: 10px; }
 .payment-inline-error, .payment-submission-locked { background: #fff0ef; border-left: 3px solid var(--danger); color: #7d3027; font-size: .7rem; line-height: 1.7; margin: 16px 0 0; padding: 12px 14px; }

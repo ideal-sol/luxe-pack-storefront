@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { assertBrowserRequestBoundary, PUBLIC_AUTH_FIXTURE, PUBLIC_CONTRACT_FIXTURE, PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES } from "@oripa/storefront-testkit";
+import { ApiProblemError } from "@oripa/storefront-client";
 import { createPaymentClientTestHarness } from "@/lib/platform/testing";
 import type { Payment, PaymentCard, PaymentCardRegistrationIntent } from "@/lib/platform";
 
@@ -95,6 +96,30 @@ describe("MIG-094 canonical Payment browser client", () => {
     await harness.client.startPayment({ payment_method: "paypay", point_product_id: payment.point_product_id! }, { idempotency_key: key });
     expect(harness.mock.requests.slice(1).map((request) => request.headers["idempotency-key"])).toEqual([key, key]);
     expect(harness.mock.requests.slice(1).map((request) => request.headers["x-xsrf-token"])).toEqual([csrf, csrf]);
+    harness.mock.assertExhausted();
+  });
+
+  it("preserves the canonical Konbini unpaid-limit Problem code through the Client boundary", async () => {
+    const harness = createPaymentClientTestHarness(csrf);
+    enqueueCsrf(harness);
+    harness.mock.enqueueProblem(
+      { method: "POST", url: `${origin}/payments` },
+      {
+        code: "KONBINI_UNPAID_LIMIT_REACHED",
+        detail: "fixture detail",
+        request_id: "request-public-reference",
+        retryable: false,
+        status: 409,
+        title: "fixture title",
+        type: "about:blank",
+      },
+    );
+    const error = await harness.client.startPayment(
+      { payment_method: "konbini", point_product_id: payment.point_product_id! },
+      { idempotency_key: "site044-idempotency-key" },
+    ).catch((reason: unknown) => reason);
+    expect(error).toBeInstanceOf(ApiProblemError);
+    expect(error).toMatchObject({ code: "KONBINI_UNPAID_LIMIT_REACHED", status: 409 });
     harness.mock.assertExhausted();
   });
 
