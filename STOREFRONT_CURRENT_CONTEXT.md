@@ -42,6 +42,9 @@
   change; deployment and Provider Browser E2E remain out of scope
 - SITE-044 Credit Card UI Browser Fix / Konbini Unpaid Error Copy: implemented
   by this change; deployment and Provider Browser E2E remain out of scope
+- SITE-045 Temporarily Hide LINE Link UI: implemented by this change; the My
+  Page entry is hidden while the direct route and LINE implementation remain
+  available, and deployment remains out of scope
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
