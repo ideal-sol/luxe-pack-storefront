@@ -1237,3 +1237,30 @@ save-and-pay, Konbini／Virtual Account Thanks and resume, histories, Wallet syn
 polling, and Return behavior retain regression coverage. Application-only
 Deployment and Provider Browser E2E are NOT RUN. Platform／DB／Migration／Nginx／
 DNS／TLS／systemd／runtime environment／Provider configuration remain unchanged.
+
+## SITE-044 — Credit Card UI Browser Fix / Konbini Unpaid Error Copy
+
+- Issue: `#85`
+- Risk: CRITICAL PAYMENT (`R4`)
+- Base SHA: `7fae62be0d841d9db5b319acc2b7cf381a46277d`
+- Branch: `site/SITE-044-credit-card-ui-browser-fix`
+- Artifact: retained immutable MIG-094 `2.0.0-alpha.29`
+
+SITE-044 re-audits the official `@fincode/js@1.1.0` package and active fincode
+Browser runtime after Human Browser acceptance showed SITE-043 remained blank.
+SITE-043's malformed existing-script selector was real but only the first
+failure. Once preload bypassed it, `ui.mount()` required the additional exact
+`elementId + "-form"` DOM wrapper and a numeric width. The Storefront supplied
+neither contract correctly, so mount threw before iframe creation. The component
+now renders both required nodes, passes a bounded numeric width, confirms the
+official iframe before enabling purchase, and preserves cleanup／remount behavior.
+
+The purchase error boundary presents exact
+`コンビニ決済の未払いがあるため、コンビニ決済を使用できません` only for current
+method `konbini` plus canonical `ApiProblemError.code` exact
+`KONBINI_UNPAID_LIMIT_REACHED`. It does not inspect title／detail／message or HTTP
+status alone and does not apply to transport, PayPay, Virtual Account, Credit
+Card, or other errors. Unpaid history selection, Platform business rules,
+Thanks／resume, Client／Testkit／OpenAPI, package／lockfile／vendor, and runtime／
+infrastructure remain unchanged. Application-only Deployment and Provider
+Browser E2E are NOT RUN.

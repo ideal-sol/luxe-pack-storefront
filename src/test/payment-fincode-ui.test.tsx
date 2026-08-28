@@ -12,8 +12,11 @@ import type { PaymentCardComponentAction, PaymentCardRegistrationIntent } from "
 
 const provider = vi.hoisted(() => {
   const create = vi.fn();
-  const mount = vi.fn((id: string) => {
-    document.getElementById(id)?.append(document.createElement("iframe"));
+  const state = { renderFrame: true };
+  const mount = vi.fn((id: string, width: string) => {
+    if (!document.getElementById(`${id}-form`)) throw new Error("fixture required form wrapper is missing");
+    if (!/^\d+$/.test(width)) throw new Error("fixture mount width must be numeric");
+    if (state.renderFrame) document.getElementById(id)?.append(document.createElement("iframe"));
   });
   const ui = { create, mount };
   const fincode = { ui: vi.fn(() => ui) };
@@ -24,6 +27,7 @@ const provider = vi.hoisted(() => {
     initFincode: vi.fn(async () => fincode),
     mount,
     registerCard: vi.fn(async () => ({ id: "provider-card-safe-reference" })),
+    state,
     ui,
   };
 });
@@ -69,14 +73,22 @@ function providerScripts() {
 describe("SITE-043 fincode Card UI boundary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(document, "readyState", "get").mockReturnValue("complete");
     provider.create.mockImplementation(() => undefined);
     provider.fincode.ui.mockImplementation(() => provider.ui);
     provider.initFincode.mockResolvedValue(provider.fincode);
-    provider.mount.mockImplementation((id: string) => {
-      document.getElementById(id)?.append(document.createElement("iframe"));
+    provider.state.renderFrame = true;
+    provider.mount.mockImplementation((id: string, width: string) => {
+      if (!document.getElementById(`${id}-form`)) throw new Error("fixture required form wrapper is missing");
+      if (!/^\d+$/.test(width)) throw new Error("fixture mount width must be numeric");
+      if (provider.state.renderFrame) document.getElementById(id)?.append(document.createElement("iframe"));
     });
     providerScripts().forEach((script) => script.remove());
     setProviderInitializer(vi.fn());
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("loads the official Browser SDK, initializes, creates, and mounts the Payment component", async () => {
@@ -110,7 +122,11 @@ describe("SITE-043 fincode Card UI boundary", () => {
     }));
     expect(errors).toEqual([]);
     expect(states.at(-1)).toBe(true);
-    expect(screen.getByLabelText("クレジットカード入力フォーム").querySelector("iframe")).toBeInTheDocument();
+    const target = screen.getByLabelText("クレジットカード入力フォーム");
+    expect(document.getElementById(`${target.id}-form`)).toBeInTheDocument();
+    expect(provider.mount).toHaveBeenCalledWith(target.id, expect.stringMatching(/^\d+$/));
+    expect(provider.mount.mock.calls[0]?.[1]).not.toContain("%");
+    expect(target.querySelector("iframe")).toBeInTheDocument();
   });
 
   it("classifies an official SDK resource failure without attempting initialization", async () => {
@@ -199,6 +215,22 @@ describe("SITE-043 fincode Card UI boundary", () => {
     expect(states).not.toContain(true);
   });
 
+  it("requires the official iframe render before reporting mounted", async () => {
+    const errors: FincodeCardUiError[] = [];
+    const states: boolean[] = [];
+    provider.state.renderFrame = false;
+    render(
+      <FincodeCardFields
+        bootstrap={PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES.sandbox}
+        onError={(error) => errors.push(error)}
+        onMountStateChange={(state) => states.push(state)}
+      />,
+    );
+    await waitFor(() => expect(errors.at(-1)?.stage).toBe("ui_render"));
+    expect(states).not.toContain(true);
+    expect(screen.getByLabelText("クレジットカード入力フォーム").querySelector("iframe")).not.toBeInTheDocument();
+  });
+
   it("delegates execution and registration without exposing raw fields", async () => {
     const ref = createRef<FincodeCardFieldsHandle>();
     render(<FincodeCardFields bootstrap={PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES.sandbox} onMountStateChange={() => undefined} ref={ref} />);
@@ -219,6 +251,31 @@ describe("SITE-043 fincode Card UI boundary", () => {
     act(() => view.unmount());
     expect(states.at(-1)).toBe(false);
     expect(document.querySelector(".fincode-card-fields")).not.toBeInTheDocument();
+  });
+
+  it("survives Strict Mode-equivalent effect cleanup and remount with one connected iframe", async () => {
+    const errors: FincodeCardUiError[] = [];
+    const states: boolean[] = [];
+    const first = render(
+      <FincodeCardFields
+        bootstrap={PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES.sandbox}
+        onError={(error) => errors.push(error)}
+        onMountStateChange={(state) => states.push(state)}
+      />,
+    );
+    await waitFor(() => expect(provider.mount.mock.calls.length).toBeGreaterThanOrEqual(1));
+    first.unmount();
+    render(
+      <FincodeCardFields
+        bootstrap={PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES.sandbox}
+        onError={(error) => errors.push(error)}
+        onMountStateChange={(state) => states.push(state)}
+      />,
+    );
+    await waitFor(() => expect(provider.mount.mock.calls.length).toBeGreaterThanOrEqual(2));
+    expect(errors.map((error) => error.stage)).toEqual([]);
+    expect(states.at(-1)).toBe(true);
+    expect(screen.getByLabelText("クレジットカード入力フォーム").querySelectorAll("iframe")).toHaveLength(1);
   });
 
   it("cleans the prior mount when bootstrap changes", async () => {

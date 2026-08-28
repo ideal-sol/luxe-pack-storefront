@@ -62,14 +62,21 @@ for (const required of [
   'ui.create("payments"',
   "target?.isConnected",
   "ui.mount(",
+  "providerMountWidth(target)",
+  'querySelector("iframe")',
+  '`${mountId}-form`',
   "executePayment",
   "registerCard",
   '"sdk_load"',
   '"init"',
   '"ui_create"',
   '"ui_mount"',
+  '"ui_render"',
 ]) {
   if (!cardFields.includes(required)) throw new Error(`Canonical fincode UI integration is missing: ${required}`);
+}
+if (/ui\.mount\([^\n]+["']100%["']/.test(cardFields)) {
+  throw new Error("fincode UI mount width must use the official numeric contract");
 }
 for (const forbidden of [
   "getFormData",
@@ -113,6 +120,19 @@ const providerRedirect = purchase.indexOf("window.location.assign(payment.next_a
 if (unpaidThanks < 0 || providerRedirect < 0 || unpaidThanks > providerRedirect ||
     !purchase.includes("/points/purchase/thanks?pid=")) {
   throw new Error("Konbini and Virtual Account must retain Purchase to Thanks before unpaid resume");
+}
+
+const paymentProblem = readFileSync("src/lib/platform/payment-problem.ts", "utf8");
+for (const required of [
+  'paymentMethod === "konbini"',
+  'error.code === KONBINI_UNPAID_LIMIT_CODE',
+  'KONBINI_UNPAID_LIMIT_REACHED',
+  'コンビニ決済の未払いがあるため、コンビニ決済を使用できません',
+]) {
+  if (!paymentProblem.includes(required)) throw new Error(`Canonical Konbini problem mapping is missing: ${required}`);
+}
+for (const forbidden of ["error.title", "error.detail", "error.message"]) {
+  if (paymentProblem.includes(forbidden)) throw new Error(`Konbini problem mapping uses forbidden text matching: ${forbidden}`);
 }
 
 const history = readFileSync("src/components/payment/payment-history-page.tsx", "utf8");

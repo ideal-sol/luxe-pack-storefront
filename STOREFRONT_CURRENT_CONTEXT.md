@@ -40,6 +40,8 @@
   Provider Browser E2E and deployment remain out of scope
 - SITE-043 Payment Client alpha.29 Adoption / Card UI Fix: implemented by this
   change; deployment and Provider Browser E2E remain out of scope
+- SITE-044 Credit Card UI Browser Fix / Konbini Unpaid Error Copy: implemented
+  by this change; deployment and Provider Browser E2E remain out of scope
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -369,6 +371,29 @@ classified internally as SDK load, init, create, or mount without retaining or
 logging credentials, PAN, CVC, raw Provider responses, Cookie, Session, or
 tokens. No `getFormData()`, undocumented event, CSP, Nginx, runtime, Platform,
 or Provider configuration change is included.
+
+SITE-044 confirms SITE-043's malformed loader selector was real but incomplete.
+After the explicit official script preload allows `initFincode()` to proceed,
+the official Browser runtime's `ui.mount(elementId, width)` synchronously requires
+both `elementId` and `elementId + "-form"`. SITE-043 supplied only the first node,
+so the runtime dereferenced the absent form wrapper and threw before creating its
+iframe. It also passed CSS text `"100%"` where the runtime parses a numeric width.
+
+The Card component now supplies both required connected nodes, passes a bounded
+numeric width, waits for the document load boundary when necessary, and confirms
+that the official iframe exists before reporting mount success. Cleanup removes
+the frame across unmount, payment-method changes, Bootstrap changes, and Strict
+Mode-equivalent remount. No CSP header or Nginx restriction participates. PAN／
+CVC state, `getFormData()`, undocumented iframe events／`postMessage`, custom Card
+fields, Provider private APIs, Public Key logging, and Secret Key use remain zero.
+
+Canonical `ApiProblemError.code === "KONBINI_UNPAID_LIMIT_REACHED"` maps to exact
+`コンビニ決済の未払いがあるため、コンビニ決済を使用できません` only while the
+current Payment Method is `konbini`. Title, detail, HTTP status alone, message
+text, transport failures, PayPay, Virtual Account, Credit Card, and other codes
+cannot select this copy. The Storefront performs no unpaid prefetch or business
+decision. MIG-095 unpaid history selection, Thanks／resume, and immutable MIG-094
+alpha.29 Client／Testkit／Public OpenAPI remain unchanged.
 
 ## Pending contracts
 

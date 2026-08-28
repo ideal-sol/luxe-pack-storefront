@@ -167,7 +167,7 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
       if (newCard && saveCard) void refreshCards().catch(() => undefined);
       await navigateAfterStart(payment, newCard);
     } catch (reason) {
-      setError(presentPaymentProblem(reason).message);
+      setError(presentPaymentProblem(reason, method).message);
       if (paymentCreated || reason instanceof StorefrontTransportError) setSubmissionLocked(true);
       setSubmitting(false);
     }

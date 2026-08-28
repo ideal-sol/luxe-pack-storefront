@@ -19,12 +19,15 @@ const FINCODE_SCRIPT_URL = {
   test: "https://js.test.fincode.jp/v1/fincode.js",
 } as const;
 const FINCODE_SCRIPT_TIMEOUT_MS = 15_000;
+const FINCODE_UI_DEFAULT_WIDTH = 500;
+const FINCODE_UI_MIN_WIDTH = 250;
+const FINCODE_UI_MAX_WIDTH = 768;
 const providerScriptPromises = new Map<string, Promise<void>>();
 
 type FincodeSdk = typeof import("@fincode/js");
 type FincodeWindow = Window & { readonly Fincode?: unknown };
 
-export type FincodeCardUiStage = "sdk_load" | "init" | "ui_create" | "ui_mount";
+export type FincodeCardUiStage = "sdk_load" | "init" | "ui_create" | "ui_mount" | "ui_render";
 
 export class FincodeCardUiError extends Error {
   readonly stage: FincodeCardUiStage;
@@ -42,6 +45,12 @@ function providerScriptSource(isLiveMode: boolean) {
 
 function findProviderScript(source: string) {
   return Array.from(document.scripts).find((script) => script.src === source) ?? null;
+}
+
+function providerMountWidth(target: HTMLElement) {
+  const measured = Math.floor(target.getBoundingClientRect().width);
+  const width = Number.isFinite(measured) && measured > 0 ? measured : FINCODE_UI_DEFAULT_WIDTH;
+  return String(Math.min(FINCODE_UI_MAX_WIDTH, Math.max(FINCODE_UI_MIN_WIDTH, width)));
 }
 
 async function loadFincodeSdk(isLiveMode: boolean): Promise<FincodeSdk> {
@@ -157,6 +166,7 @@ export const FincodeCardFields = forwardRef<FincodeCardFieldsHandle, {
 
   useEffect(() => {
     let active = true;
+    let cancelPendingLoad: (() => void) | null = null;
     onMountStateChange(false);
     providerRef.current = null;
 
@@ -206,6 +216,23 @@ export const FincodeCardFields = forwardRef<FincodeCardFieldsHandle, {
       }
       if (!active) return;
 
+      if (document.readyState !== "complete") {
+        await new Promise<void>((resolve) => {
+          let settled = false;
+          const handleLoad = () => finish();
+          const finish = () => {
+            if (settled) return;
+            settled = true;
+            window.removeEventListener("load", handleLoad);
+            cancelPendingLoad = null;
+            resolve();
+          };
+          cancelPendingLoad = finish;
+          window.addEventListener("load", handleLoad, { once: true });
+        });
+      }
+      if (!active) return;
+
       const target = document.getElementById(mountId);
       if (!target?.isConnected) {
         fail("ui_mount");
@@ -213,13 +240,17 @@ export const FincodeCardFields = forwardRef<FincodeCardFieldsHandle, {
       }
       try {
         target.replaceChildren();
-        ui.mount(mountId, "100%");
+        ui.mount(mountId, providerMountWidth(target));
       } catch {
         fail("ui_mount");
         return;
       }
       if (!active) {
         target.replaceChildren();
+        return;
+      }
+      if (target.querySelector("iframe")?.isConnected !== true) {
+        fail("ui_render");
         return;
       }
       providerRef.current = { fincode, sdk, ui };
@@ -229,6 +260,7 @@ export const FincodeCardFields = forwardRef<FincodeCardFieldsHandle, {
     void mount();
     return () => {
       active = false;
+      cancelPendingLoad?.();
       providerRef.current = null;
       onMountStateChange(false);
       document.getElementById(mountId)?.replaceChildren();
@@ -241,7 +273,9 @@ export const FincodeCardFields = forwardRef<FincodeCardFieldsHandle, {
       <p className="fincode-card-fields__description">
         カード番号、有効期限、セキュリティコード、カード名義人を入力してください。
       </p>
-      <div aria-label="クレジットカード入力フォーム" id={mountId} />
+      <div className="fincode-card-fields__form" id={`${mountId}-form`}>
+        <div aria-label="クレジットカード入力フォーム" className="fincode-card-fields__mount" id={mountId} />
+      </div>
     </div>
   );
 });

@@ -1,4 +1,8 @@
 import { ApiProblemError, StorefrontTransportError } from "@oripa/storefront-client";
+import type { PaymentMethod } from "./payment-client";
+
+const KONBINI_UNPAID_LIMIT_CODE = "KONBINI_UNPAID_LIMIT_REACHED";
+const KONBINI_UNPAID_LIMIT_MESSAGE = "コンビニ決済の未払いがあるため、コンビニ決済を使用できません";
 
 export interface PaymentProblemPresentation {
   readonly message: string;
@@ -20,10 +24,12 @@ export function isInvalidPaymentRead(error: unknown) {
   return error instanceof ApiProblemError && [401, 403, 404].includes(error.status);
 }
 
-export function presentPaymentProblem(error: unknown): PaymentProblemPresentation {
+export function presentPaymentProblem(error: unknown, paymentMethod?: PaymentMethod): PaymentProblemPresentation {
   if (error instanceof ApiProblemError) {
     return {
-      message: error.status === 429
+      message: paymentMethod === "konbini" && error.code === KONBINI_UNPAID_LIMIT_CODE
+        ? KONBINI_UNPAID_LIMIT_MESSAGE
+        : error.status === 429
         ? "アクセスが集中しています。時間をおいて、もう一度お試しください。"
         : "決済処理を完了できませんでした。時間をおいて、もう一度お試しください。",
       retryAfterSeconds: paymentRetryAfterSeconds(error),
