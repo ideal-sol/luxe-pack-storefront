@@ -1203,3 +1203,37 @@ Local Artifact／Policy／all boundary／lint／typecheck／339-test／productio
 dependency-audit／secret gates pass. Changed files are exact Task Policy paths
 with no wildcard, symlink, or scope escape. Provider Browser E2E is HOLD and
 Application-only Deployment is NOT RUN.
+
+## SITE-043 — Payment Client alpha.29 Adoption / Card UI Fix
+
+- Issue: `#83`
+- Risk: CRITICAL PAYMENT (`R4`)
+- Base SHA: `30c6334c39a7c698dd18fa93243dfd29c2af4cfe`
+- Branch: `site/SITE-043-payment-client-alpha29-card-ui-fix`
+- Artifact: immutable MIG-094 `2.0.0-alpha.29`
+
+SITE-043 adopts the canonical package-only MIG-094 Client／Testkit while retaining
+MIG-089 alpha.28 byte-for-byte. Public OpenAPI remains alpha.27 with the same
+SHA-256. The alpha.29 canonical `resumeUnpaidPayment()` supplies the Browser-safe
+empty JSON POST body; Storefront adds no raw fetch, Content-Type override,
+middleware workaround, replacement Payment, or Provider session. Konbini and
+Virtual Account keep Purchase → Thanks Page → guide → existing redirect resume.
+
+The Card UI root cause is the exact-pinned `@fincode/js@1.1.0` loader's malformed
+existing-script selector, which rejects before the official fincode resource is
+injected. Storefront now dynamically loads the official test/live fincode script,
+then calls canonical `initFincode()`, `ui.create("payments")`, and `ui.mount()`.
+SDK-load, init, create, and mount failures are internally classified, safely
+presented through the existing generic UI, and never log or retain Public API Key
+values, PAN, CVC, Provider response bodies, Cookie, Session, Secret, or Token.
+Purchase becomes available only after mount succeeds. Unmount, method changes,
+and Bootstrap changes clear the mounted UI. `getFormData()`, PAN/CVC React state,
+undocumented iframe events, and purchase-flow registration completion remain
+absent.
+
+Local Artifact／Policy／all boundary／lint／typecheck／358-test／production-build／
+dependency-audit／secret gates pass. PayPay start/redirect handling, saved Card,
+save-and-pay, Konbini／Virtual Account Thanks and resume, histories, Wallet sync,
+polling, and Return behavior retain regression coverage. Application-only
+Deployment and Provider Browser E2E are NOT RUN. Platform／DB／Migration／Nginx／
+DNS／TLS／systemd／runtime environment／Provider configuration remain unchanged.

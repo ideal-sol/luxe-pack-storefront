@@ -7,37 +7,133 @@ import {
   useImperativeHandle,
   useRef,
 } from "react";
-import {
-  executePayment,
-  initFincode,
-  registerCard,
-  type FincodeInstance,
-  type FincodeUI,
-} from "@fincode/js";
+import type { FincodeInstance, FincodeUI } from "@fincode/js";
 import type {
   PaymentCardComponentAction,
   PaymentCardRegistrationIntent,
   PaymentCardUiBootstrap,
 } from "@/lib/platform";
 
+const FINCODE_SCRIPT_URL = {
+  live: "https://js.fincode.jp/v1/fincode.js",
+  test: "https://js.test.fincode.jp/v1/fincode.js",
+} as const;
+const FINCODE_SCRIPT_TIMEOUT_MS = 15_000;
+const providerScriptPromises = new Map<string, Promise<void>>();
+
+type FincodeSdk = typeof import("@fincode/js");
+type FincodeWindow = Window & { readonly Fincode?: unknown };
+
+export type FincodeCardUiStage = "sdk_load" | "init" | "ui_create" | "ui_mount";
+
+export class FincodeCardUiError extends Error {
+  readonly stage: FincodeCardUiStage;
+
+  constructor(stage: FincodeCardUiStage) {
+    super("fincode Card UI setup failed");
+    this.name = "FincodeCardUiError";
+    this.stage = stage;
+  }
+}
+
+function providerScriptSource(isLiveMode: boolean) {
+  return isLiveMode ? FINCODE_SCRIPT_URL.live : FINCODE_SCRIPT_URL.test;
+}
+
+function findProviderScript(source: string) {
+  return Array.from(document.scripts).find((script) => script.src === source) ?? null;
+}
+
+async function loadFincodeSdk(isLiveMode: boolean): Promise<FincodeSdk> {
+  const sdk = await import("@fincode/js");
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    throw new Error("fincode Browser SDK requires a document");
+  }
+
+  const source = providerScriptSource(isLiveMode);
+  const otherSource = providerScriptSource(!isLiveMode);
+  if (typeof (window as FincodeWindow).Fincode === "function") {
+    if (findProviderScript(otherSource) && !findProviderScript(source)) {
+      throw new Error("fincode SDK environment mismatch");
+    }
+    return sdk;
+  }
+
+  let pending = providerScriptPromises.get(source);
+  if (!pending) {
+    pending = new Promise<void>((resolve, reject) => {
+      const existing = findProviderScript(source);
+      const script = existing ?? document.createElement("script");
+      const created = !existing;
+      let settled = false;
+      const finish = (failure?: Error) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        script.removeEventListener("load", handleLoad);
+        script.removeEventListener("error", handleError);
+        if (failure) {
+          if (created) script.remove();
+          reject(failure);
+        }
+        else resolve();
+      };
+      const handleLoad = () => {
+        if (typeof (window as FincodeWindow).Fincode !== "function") {
+          finish(new Error("fincode SDK initializer is unavailable"));
+          return;
+        }
+        finish();
+      };
+      const handleError = () => finish(new Error("fincode SDK resource failed to load"));
+      const timeout = window.setTimeout(
+        () => finish(new Error("fincode SDK resource load timed out")),
+        FINCODE_SCRIPT_TIMEOUT_MS,
+      );
+      script.addEventListener("load", handleLoad, { once: true });
+      script.addEventListener("error", handleError, { once: true });
+      if (!existing) {
+        script.async = true;
+        script.src = source;
+        (document.head || document.body).appendChild(script);
+      }
+    });
+    providerScriptPromises.set(source, pending);
+    void pending.then(() => {
+      if (providerScriptPromises.get(source) === pending) providerScriptPromises.delete(source);
+    }, () => {
+      if (providerScriptPromises.get(source) === pending) providerScriptPromises.delete(source);
+    });
+  }
+  await pending;
+  return sdk;
+}
+
 export interface FincodeCardFieldsHandle {
   readonly execute: (action: PaymentCardComponentAction) => Promise<string | null>;
   readonly register: (intent: PaymentCardRegistrationIntent) => Promise<string>;
 }
 
+type MountedProvider = {
+  readonly fincode: FincodeInstance;
+  readonly sdk: FincodeSdk;
+  readonly ui: FincodeUI;
+};
+
 export const FincodeCardFields = forwardRef<FincodeCardFieldsHandle, {
   readonly bootstrap: PaymentCardUiBootstrap;
+  readonly onError?: (error: FincodeCardUiError) => void;
   readonly onMountStateChange: (mounted: boolean) => void;
-}>(function FincodeCardFields({ bootstrap, onMountStateChange }, ref) {
+}>(function FincodeCardFields({ bootstrap, onError, onMountStateChange }, ref) {
   const reactId = useId();
   const mountId = `fincode-card-${reactId.replaceAll(":", "")}`;
-  const providerRef = useRef<{ fincode: FincodeInstance; ui: FincodeUI } | null>(null);
+  const providerRef = useRef<MountedProvider | null>(null);
 
   useImperativeHandle(ref, () => ({
     async execute(action) {
       const provider = providerRef.current;
       if (!provider) throw new Error("fincode Card UI is not mounted");
-      const payment = await executePayment({
+      const payment = await provider.sdk.executePayment({
         accessId: action.access_id,
         fincode: provider.fincode,
         id: action.payment_id,
@@ -49,7 +145,7 @@ export const FincodeCardFields = forwardRef<FincodeCardFieldsHandle, {
     async register(intent) {
       const provider = providerRef.current;
       if (!provider) throw new Error("fincode Card UI is not mounted");
-      const card = await registerCard({
+      const card = await provider.sdk.registerCard({
         customerId: intent.provider_context.customer_id,
         fincode: provider.fincode,
         ui: provider.ui,
@@ -63,36 +159,81 @@ export const FincodeCardFields = forwardRef<FincodeCardFieldsHandle, {
     let active = true;
     onMountStateChange(false);
     providerRef.current = null;
+
+    const fail = (stage: FincodeCardUiStage) => {
+      if (!active) return;
+      providerRef.current = null;
+      onMountStateChange(false);
+      onError?.(new FincodeCardUiError(stage));
+    };
+
     const mount = async () => {
-      const fincode = await initFincode({
-        isLiveMode: bootstrap.is_live_mode,
-        publicKey: bootstrap.public_api_key,
-      });
+      let sdk: FincodeSdk;
+      try {
+        sdk = await loadFincodeSdk(bootstrap.is_live_mode);
+      } catch {
+        fail("sdk_load");
+        return;
+      }
       if (!active) return;
-      const ui = fincode.ui({ layout: "vertical" });
-      ui.create("payments", {
-        hidePayTimes: true,
-        labelCardNo: "カード番号",
-        labelCVC: "セキュリティコード",
-        labelExpire: "有効期限",
-        labelHolderName: "カード名義人",
-        layout: "vertical",
-      });
-      ui.mount(mountId, "100%");
+
+      let fincode: FincodeInstance;
+      try {
+        fincode = await sdk.initFincode({
+          isLiveMode: bootstrap.is_live_mode,
+          publicKey: bootstrap.public_api_key,
+        });
+      } catch {
+        fail("init");
+        return;
+      }
       if (!active) return;
-      providerRef.current = { fincode, ui };
+
+      let ui: FincodeUI;
+      try {
+        ui = fincode.ui({ layout: "vertical" });
+        ui.create("payments", {
+          hidePayTimes: true,
+          labelCardNo: "カード番号",
+          labelCVC: "セキュリティコード",
+          labelExpire: "有効期限",
+          labelHolderName: "カード名義人",
+          layout: "vertical",
+        });
+      } catch {
+        fail("ui_create");
+        return;
+      }
+      if (!active) return;
+
+      const target = document.getElementById(mountId);
+      if (!target?.isConnected) {
+        fail("ui_mount");
+        return;
+      }
+      try {
+        target.replaceChildren();
+        ui.mount(mountId, "100%");
+      } catch {
+        fail("ui_mount");
+        return;
+      }
+      if (!active) {
+        target.replaceChildren();
+        return;
+      }
+      providerRef.current = { fincode, sdk, ui };
       onMountStateChange(true);
     };
-    void mount().catch(() => {
-      if (active) onMountStateChange(false);
-    });
+
+    void mount();
     return () => {
       active = false;
       providerRef.current = null;
       onMountStateChange(false);
       document.getElementById(mountId)?.replaceChildren();
     };
-  }, [bootstrap.is_live_mode, bootstrap.public_api_key, mountId, onMountStateChange]);
+  }, [bootstrap.is_live_mode, bootstrap.public_api_key, mountId, onError, onMountStateChange]);
 
   return (
     <div className="fincode-card-fields" data-testid="fincode-card-fields">

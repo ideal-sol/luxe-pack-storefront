@@ -6,7 +6,7 @@ settings:
 
 overrides:
   '@oripa/site-schema@2.0.0-alpha.23': file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
-  '@oripa/storefront-client@2.0.0-alpha.28': file:vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz
+  '@oripa/storefront-client@2.0.0-alpha.29': file:vendor/oripa/MIG-094/oripa-storefront-client-2.0.0-alpha.29.tgz
   nanoid@<3.3.18: 3.3.18
 
 importers:
@@ -17,8 +17,8 @@ importers:
         specifier: 1.1.0
         version: 1.1.0
       '@oripa/storefront-client':
-        specifier: file:vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz
-        version: file:vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz
+        specifier: file:vendor/oripa/MIG-094/oripa-storefront-client-2.0.0-alpha.29.tgz
+        version: file:vendor/oripa/MIG-094/oripa-storefront-client-2.0.0-alpha.29.tgz
       next:
         specifier: 16.3.0
         version: 16.3.0(@babel/core@7.29.7)(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -36,8 +36,8 @@ importers:
         specifier: file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
         version: file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
       '@oripa/storefront-testkit':
-        specifier: file:vendor/oripa/MIG-089/oripa-storefront-testkit-2.0.0-alpha.28.tgz
-        version: file:vendor/oripa/MIG-089/oripa-storefront-testkit-2.0.0-alpha.28.tgz
+        specifier: file:vendor/oripa/MIG-094/oripa-storefront-testkit-2.0.0-alpha.29.tgz
+        version: file:vendor/oripa/MIG-094/oripa-storefront-testkit-2.0.0-alpha.29.tgz
       '@tailwindcss/postcss':
         specifier: 4.3.3
         version: 4.3.3
@@ -541,14 +541,14 @@ packages:
     version: 2.0.0-alpha.23
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-client@file:vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz':
-    resolution: {integrity: sha512-r31xch+4aYmwCiAkVlTIgsYG4jdDYqwhGXiUb0FxIBKIXDEepvtNKqhZZKHNOPAiAYl/3YQSqEaVbr6ErxLN5w==, tarball: file:vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz}
-    version: 2.0.0-alpha.28
+  '@oripa/storefront-client@file:vendor/oripa/MIG-094/oripa-storefront-client-2.0.0-alpha.29.tgz':
+    resolution: {integrity: sha512-iPr+/clWfzyte3zGCpiNP3OxGdWPsXYUeayqiW0KO8wf5BrqhaeHM4Azm05k7RYiz44UxyiRRepVihYpbT2JRQ==, tarball: file:vendor/oripa/MIG-094/oripa-storefront-client-2.0.0-alpha.29.tgz}
+    version: 2.0.0-alpha.29
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/MIG-089/oripa-storefront-testkit-2.0.0-alpha.28.tgz':
-    resolution: {integrity: sha512-xCIvJvv9O+zuWCRhoxphG9OrB/rYe+v6Q4CAXG77JIJjT7f2bzjxgz27AvISrPM/cxqSZZwZjb7qn1Nxfuc50w==, tarball: file:vendor/oripa/MIG-089/oripa-storefront-testkit-2.0.0-alpha.28.tgz}
-    version: 2.0.0-alpha.28
+  '@oripa/storefront-testkit@file:vendor/oripa/MIG-094/oripa-storefront-testkit-2.0.0-alpha.29.tgz':
+    resolution: {integrity: sha512-a8w84Btl3Sua4sfWzLMUQZ6r/HRhLlRr4NDGlt7C3Y7iDP6NcWNrxFlA6J0w+cJWF156KD/IL4PBPzKG2U4u4A==, tarball: file:vendor/oripa/MIG-094/oripa-storefront-testkit-2.0.0-alpha.29.tgz}
+    version: 2.0.0-alpha.29
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
   '@oxc-project/types@0.143.0':
@@ -1447,6 +1447,7 @@ packages:
   eslint@9.39.4:
     resolution: {integrity: sha512-XoMjdBOwe/esVgEvLmNsD3IRHkm7fbKIUGvrleloJXUZgDHig2IPWNniv+GwjyJXzuNqVjlr5+4yVUZjycJwfQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -3116,12 +3117,12 @@ snapshots:
       ajv: 8.20.0
       semver: 7.8.5
 
-  '@oripa/storefront-client@file:vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz': {}
+  '@oripa/storefront-client@file:vendor/oripa/MIG-094/oripa-storefront-client-2.0.0-alpha.29.tgz': {}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/MIG-089/oripa-storefront-testkit-2.0.0-alpha.28.tgz':
+  '@oripa/storefront-testkit@file:vendor/oripa/MIG-094/oripa-storefront-testkit-2.0.0-alpha.29.tgz':
     dependencies:
       '@oripa/site-schema': file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
-      '@oripa/storefront-client': file:vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz
+      '@oripa/storefront-client': file:vendor/oripa/MIG-094/oripa-storefront-client-2.0.0-alpha.29.tgz
 
   '@oxc-project/types@0.143.0': {}
 

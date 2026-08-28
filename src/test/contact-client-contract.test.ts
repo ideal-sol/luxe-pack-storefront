@@ -45,7 +45,7 @@ describe("STORE-SITE-034 browser Contact contract", () => {
     expect(harness.mock.requests[1]).toMatchObject({ credentials: "include", method: "POST" });
     expect(JSON.parse(harness.mock.requests[1]!.body ?? "null")).toEqual(PUBLIC_CONTACT_FIXTURE.input);
     expect(Object.keys(harness.mock.requests[1]!.headers).some((name) => name.includes("idempotency"))).toBe(false);
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.28", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.29", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 

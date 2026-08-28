@@ -70,14 +70,23 @@ describe("SITE-041 Payment History detail", () => {
   });
 
   it.each([
-    ["konbini", "コンビニ決済"],
-    ["virtual_account", "銀行振込"],
-  ] as const)("resumes the existing unpaid %s Payment only", async (method, label) => {
-    const adapter = renderDetail(payment({ method, status: "created", succeeded_at: null }));
+    ["konbini", "requires_action", "コンビニ決済"],
+    ["virtual_account", "requires_action", "銀行振込"],
+    ["konbini", "processing", "コンビニ決済"],
+    ["virtual_account", "processing", "銀行振込"],
+  ] as const)("resumes the existing unpaid %s %s Payment only", async (method, status, label) => {
+    const adapter = renderDetail(payment({ method, status, succeeded_at: null }));
     expect(await screen.findByText(label)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "振込案内ページ" }));
     await waitFor(() => expect(adapter.resumeUnpaidPayment).toHaveBeenCalledWith("payment_public_041"));
     expect(Object.keys(adapter)).not.toContain("startPayment");
+  });
+
+  it("fails closed for an invalid unpaid-resume method", async () => {
+    const adapter = renderDetail(payment({ method: "paypay", status: "processing", succeeded_at: null }));
+    expect(await screen.findByText("PayPay")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "振込案内ページ" })).not.toBeInTheDocument();
+    expect(adapter.resumeUnpaidPayment).not.toHaveBeenCalled();
   });
 
   it("shows a disabled expired control without href or resume mutation", async () => {

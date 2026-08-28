@@ -38,6 +38,8 @@
   receipt, Provider Browser E2E, and deployment remain out of scope
 - SITE-042 Wallet Sync / Storefront UI Hygiene: implemented by this change;
   Provider Browser E2E and deployment remain out of scope
+- SITE-043 Payment Client alpha.29 Adoption / Card UI Fix: implemented by this
+  change; deployment and Provider Browser E2E remain out of scope
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -61,11 +63,11 @@ Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.28`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.28`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.29`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.29`
 - Site Schema package: `@oripa/site-schema` `2.0.0-alpha.23`
-- Source Commit: `06681c689eaba3458adb935753de128a4d12d57d`
-- Artifact authority: `vendor/oripa/MIG-089/artifact-manifest.json`
+- Source Commit: `5cde1e0a91151b584de8a63d19efd7b4a15e8ab1`
+- Artifact authority: `vendor/oripa/MIG-094/artifact-manifest.json`
 - Public OpenAPI version: `2.0.0-alpha.27`
 - Public OpenAPI SHA-256: `41ebdddbd7c4edeedd36ad3810b2afa564495aa2d1c3e48a187f44c85deb85da`
 
@@ -131,6 +133,13 @@ Platform response or Frontend business decision changed.
   method, status, and persisted Payment Grant snapshot. Payment detail uses
   `getPayment`, and unpaid guidance resumes the existing Payment only through
   `resumeUnpaidPayment` without a replacement Payment or Provider session.
+- Browser-safe unpaid resume uses the MIG-094 alpha.29 canonical JSON POST
+  request. Konbini and Virtual Account retain Purchase → Thanks → guide → resume,
+  and the Storefront adds no raw request or 415 workaround.
+- New Card UI loads the official environment-specific fincode Browser script
+  before calling canonical `initFincode()`, then distinguishes secret-safe
+  SDK-load, initialization, UI-create, and UI-mount failures. Purchase remains
+  disabled until `ui.mount()` succeeds.
 
 ## Preview deployment
 
@@ -345,9 +354,25 @@ The immutable MIG-089 alpha.28 Artifact and all Platform business presentation
 remain unchanged. Application-only Deployment is NOT RUN and Provider Browser
 E2E remains HOLD.
 
+SITE-043 adopts immutable MIG-094 alpha.29 as a new vendor directory while
+retaining MIG-089 byte-for-byte. The package-only release changes only the
+canonical Payment resume request to carry an empty JSON body; Public OpenAPI
+alpha.27 and Site Schema alpha.23 remain unchanged. Konbini and Virtual Account
+continue through Purchase → Thanks Page → unpaid guide → existing redirect
+resume, with no replacement Payment or Provider session.
+
+The Card UI failure was in the pinned `@fincode/js@1.1.0` Browser loader: its
+existing-script selector rejects before it can inject the official fincode
+resource. The Storefront now loads only the official test/live script URL first,
+then calls `initFincode()`, `ui.create("payments")`, and `ui.mount()`. Failures are
+classified internally as SDK load, init, create, or mount without retaining or
+logging credentials, PAN, CVC, raw Provider responses, Cookie, Session, or
+tokens. No `getFormData()`, undocumented event, CSP, Nginx, runtime, Platform,
+or Provider configuration change is included.
+
 ## Pending contracts
 
-- Payment purchase history and receipt contracts/UI
+- Payment receipt contract/UI
 - Optional featured placement beyond the Backend-stable Catalog order
 - Point-insufficient presentation at gacha-detail time (Draw execution uses the
   canonical Backend typed error and does not depend on this presentation)
