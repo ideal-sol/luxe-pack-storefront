@@ -8,18 +8,37 @@ import { PointClientProvider } from "@/components/points/point-client-provider";
 import { PointPurchaseDetail } from "@/components/points/point-purchase-detail";
 import type { AuthClientAdapter, Payment, PaymentCard, PaymentClientAdapter, PointClientAdapter } from "@/lib/platform";
 
-const fincode = vi.hoisted(() => ({ execute: vi.fn(async () => null), register: vi.fn(async () => "provider-card-safe-reference") }));
+const fincode = vi.hoisted(() => ({
+  cleanup: vi.fn(),
+  execute: vi.fn(async () => null),
+  failMount: false,
+  register: vi.fn(async () => "provider-card-safe-reference"),
+}));
 
 vi.mock("@/components/payment/fincode-card-fields", () => ({
   FincodeCardFields: forwardRef(function MockFincodeCardFields(
-    { onMountStateChange }: { readonly onMountStateChange: (mounted: boolean) => void },
+    {
+      onError,
+      onMountStateChange,
+    }: {
+      readonly onError?: (error: Error) => void;
+      readonly onMountStateChange: (mounted: boolean) => void;
+    },
     ref,
   ) {
     useImperativeHandle(ref, () => fincode);
     useEffect(() => {
-      onMountStateChange(true);
-      return () => onMountStateChange(false);
-    }, [onMountStateChange]);
+      if (fincode.failMount) {
+        onMountStateChange(false);
+        onError?.(new Error("ui_mount"));
+      } else {
+        onMountStateChange(true);
+      }
+      return () => {
+        fincode.cleanup();
+        onMountStateChange(false);
+      };
+    }, [onError, onMountStateChange]);
     return <div aria-label="クレジットカード入力フォーム" data-testid="fincode-card-fields" />;
   }),
 }));
@@ -49,16 +68,18 @@ function payment(method: Payment["method"]): Payment {
     grant: { bonus_points: 100, limited_bonus_points: 300, paid_points: 1_000, total_points: 1_400 },
     id: "payment-public-reference",
     method,
-    next_action: method === "credit_card" ? {
-      access_id: "access-safe-reference",
-      failure_url: "https://platform.example/failure",
-      is_live_mode: false,
-      payment_id: "provider-payment-safe-reference",
-      public_api_key: PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES.sandbox.public_api_key,
-      return_url: "https://platform.example/return",
-      tds_type: "2",
-      type: "fincode_card_component",
-    } : null,
+    next_action: method === "credit_card"
+      ? {
+        access_id: "access-safe-reference",
+        failure_url: "https://platform.example/failure",
+        is_live_mode: false,
+        payment_id: "provider-payment-safe-reference",
+        public_api_key: PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES.sandbox.public_api_key,
+        return_url: "https://platform.example/return",
+        tds_type: "2",
+        type: "fincode_card_component",
+      }
+      : { type: "redirect", url: "https://provider.example/existing-payment" },
     point_product_id: product.id,
     status: "requires_action",
     succeeded_at: null,
@@ -105,7 +126,10 @@ async function chooseCreditCard() {
 }
 
 describe("SITE-040 Payment purchase UI", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    fincode.failMount = false;
+  });
 
   it("shows four accessible methods in canonical order and selection beyond color", async () => {
     renderPurchase();
@@ -157,6 +181,26 @@ describe("SITE-040 Payment purchase UI", () => {
     expect(client.getPaymentCardUiBootstrap).toHaveBeenCalledOnce();
   });
 
+  it("keeps purchase unavailable and presents only the safe generic error when Card UI mount fails", async () => {
+    fincode.failMount = true;
+    renderPurchase();
+    await chooseCreditCard();
+    fireEvent.click(screen.getByRole("button", { name: /クレジットカードを追加/ }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("エラーが発生しました。時間をおいて、もう一度お試しください。");
+    expect(screen.getByRole("alert")).not.toHaveTextContent("ui_mount");
+    expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
+  });
+
+  it("cleans the mounted Card UI when the payment method changes", async () => {
+    renderPurchase();
+    await chooseCreditCard();
+    fireEvent.click(screen.getByRole("button", { name: /クレジットカードを追加/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("radio", { name: "PayPay" }));
+    expect(fincode.cleanup).toHaveBeenCalledOnce();
+    expect(screen.queryByTestId("fincode-card-fields")).not.toBeInTheDocument();
+  });
+
   it("fails closed when card inventory is unknown and allows an explicit retry", async () => {
     const client = paymentClient();
     vi.mocked(client.listCards)
@@ -183,6 +227,23 @@ describe("SITE-040 Payment purchase UI", () => {
       payment_method: "credit_card",
       point_product_id: product.id,
     }, expect.objectContaining({ idempotency_key: expect.any(String) }));
+  });
+
+  it.each([
+    ["PayPay", "paypay"],
+    ["コンビニ決済", "konbini"],
+    ["銀行振込", "virtual_account"],
+  ] as const)("starts %s through the canonical client without resume or replacement creation", async (label, method) => {
+    const client = paymentClient();
+    renderPurchase(client);
+    fireEvent.click(await screen.findByRole("radio", { name: label }));
+    fireEvent.click(screen.getByRole("button", { name: "購入する" }));
+    await waitFor(() => expect(client.startPayment).toHaveBeenCalledOnce());
+    expect(client.startPayment).toHaveBeenCalledWith(
+      { payment_method: method, point_product_id: product.id },
+      expect.objectContaining({ idempotency_key: expect.any(String) }),
+    );
+    expect(client.resumeUnpaidPayment).not.toHaveBeenCalled();
   });
 
   it("starts one-time new-card payment without registration completion", async () => {

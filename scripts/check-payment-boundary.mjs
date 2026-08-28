@@ -54,11 +54,40 @@ for (const file of applicationFiles) {
 }
 
 const cardFields = readFileSync("src/components/payment/fincode-card-fields.tsx", "utf8");
-for (const required of ["initFincode", 'ui.create("payments"', "ui.mount(", "executePayment", "registerCard"]) {
+for (const required of [
+  'import("@fincode/js")',
+  "https://js.test.fincode.jp/v1/fincode.js",
+  "https://js.fincode.jp/v1/fincode.js",
+  "initFincode",
+  'ui.create("payments"',
+  "target?.isConnected",
+  "ui.mount(",
+  "executePayment",
+  "registerCard",
+  '"sdk_load"',
+  '"init"',
+  '"ui_create"',
+  '"ui_mount"',
+]) {
   if (!cardFields.includes(required)) throw new Error(`Canonical fincode UI integration is missing: ${required}`);
 }
-for (const forbidden of ["getFormData", "addEventListener", ".on(", "PAN", "provider token", "secretKey"]) {
+for (const forbidden of [
+  "getFormData",
+  ".on(",
+  "postMessage",
+  'addEventListener("message"',
+  "onmessage",
+  "PAN",
+  "provider token",
+  "secretKey",
+  "console.",
+]) {
   if (cardFields.includes(forbidden)) throw new Error(`Sensitive or undocumented fincode integration detected: ${forbidden}`);
+}
+for (const match of cardFields.matchAll(/(?:add|remove)EventListener\(\s*["']([^"']+)["']/g)) {
+  if (!new Set(["load", "error"]).has(match[1])) {
+    throw new Error(`Undocumented fincode event integration detected: ${match[1]}`);
+  }
 }
 
 const purchase = readFileSync("src/components/points/point-purchase-detail.tsx", "utf8");
@@ -79,6 +108,12 @@ if (!purchase.includes("payment.next_action.is_live_mode !== bootstrap.is_live_m
   throw new Error("fincode environment skew is not rejected");
 }
 if (purchase.includes("listPayments")) throw new Error("Purchase flow must not load Payment history");
+const unpaidThanks = purchase.indexOf('if (method === "konbini" || method === "virtual_account")');
+const providerRedirect = purchase.indexOf("window.location.assign(payment.next_action.url)");
+if (unpaidThanks < 0 || providerRedirect < 0 || unpaidThanks > providerRedirect ||
+    !purchase.includes("/points/purchase/thanks?pid=")) {
+  throw new Error("Konbini and Virtual Account must retain Purchase to Thanks before unpaid resume");
+}
 
 const history = readFileSync("src/components/payment/payment-history-page.tsx", "utf8");
 for (const required of ["listPayments", 'view: "succeeded"', 'view: "unpaid"', "pagination.next_cursor"]) {

@@ -1,5 +1,6 @@
+import { readFileSync } from "node:fs";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { ApiProblemError } from "@oripa/storefront-client";
+import { ApiProblemError, StorefrontTransportError } from "@oripa/storefront-client";
 import { PUBLIC_AUTH_FIXTURE } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { SessionProvider } from "@/components/auth/session-provider";
@@ -90,10 +91,12 @@ describe("SITE-040 Payment status UI", () => {
   });
 
   it.each([
-    ["konbini", "コンビニ決済のご案内", "コンビニ決済案内ページへ", "コンビニ決済情報"],
-    ["virtual_account", "銀行振込のご案内", "銀行振込案内ページへ", "銀行振込情報"],
-  ] as const)("shows the %s unpaid guide and reuses the existing Payment", async (method, title, cta, information) => {
-    const adapter = client(payment("created", method));
+    ["konbini", "requires_action", "コンビニ決済のご案内", "コンビニ決済案内ページへ", "コンビニ決済情報"],
+    ["virtual_account", "requires_action", "銀行振込のご案内", "銀行振込案内ページへ", "銀行振込情報"],
+    ["konbini", "processing", "コンビニ決済のご案内", "コンビニ決済案内ページへ", "コンビニ決済情報"],
+    ["virtual_account", "processing", "銀行振込のご案内", "銀行振込案内ページへ", "銀行振込情報"],
+  ] as const)("shows the %s %s unpaid guide and reuses the existing Payment", async (method, status, title, cta, information) => {
+    const adapter = client(payment(status, method));
     renderThanks(adapter);
     expect(await screen.findByRole("heading", { name: title })).toBeInTheDocument();
     expect(screen.getByText("￥12,345")).toBeInTheDocument();
@@ -101,15 +104,38 @@ describe("SITE-040 Payment status UI", () => {
     fireEvent.click(screen.getByRole("button", { name: cta }));
     await waitFor(() => expect(adapter.resumeUnpaidPayment).toHaveBeenCalledWith("payment-public-reference"));
     expect(Object.keys(adapter)).not.toContain("startPayment");
+    const source = readFileSync("src/components/payment/payment-thanks.tsx", "utf8");
+    expect(source).toContain("window.location.assign(data.next_action.url)");
   });
 
-  it("presents resume failure and never falls back to next_action.url", async () => {
-    const adapter = client(payment("created", "konbini"));
-    vi.mocked(adapter.resumeUnpaidPayment).mockRejectedValue(new Error("fixture resume failure"));
+  it.each([
+    [
+      new ApiProblemError({ code: "PAYMENT_NOT_RESUMABLE", detail: "fixture", request_id: "request-public-reference", retryable: false, status: 409, title: "Conflict", type: "about:blank" }),
+      "決済処理を完了できませんでした。時間をおいて、もう一度お試しください。",
+    ],
+    [
+      new StorefrontTransportError("NETWORK_ERROR", "fixture result unknown"),
+      "通信結果を確認できませんでした。同じ操作を繰り返さず、時間をおいて状態をご確認ください。",
+    ],
+  ])("presents a safe resume failure without creating a replacement Payment", async (failure, message) => {
+    const adapter = client(payment("requires_action", "konbini"));
+    vi.mocked(adapter.resumeUnpaidPayment).mockRejectedValue(failure);
     renderThanks(adapter);
     fireEvent.click(await screen.findByRole("button", { name: "コンビニ決済案内ページへ" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("エラーが発生しました。時間をおいて、もう一度お試しください。");
+    expect(await screen.findByRole("alert")).toHaveTextContent(message);
     expect(adapter.resumeUnpaidPayment).toHaveBeenCalledOnce();
+    expect(Object.keys(adapter)).not.toContain("startPayment");
+  });
+
+  it.each([
+    ["credit_card", "processing"],
+    ["paypay", "requires_action"],
+  ] as const)("does not offer unpaid resume for invalid method %s in %s", async (method, status) => {
+    const adapter = client(payment(status, method));
+    renderThanks(adapter);
+    await screen.findByText("決済処理中");
+    expect(screen.queryByRole("button", { name: /案内ページへ/ })).not.toBeInTheDocument();
+    expect(adapter.resumeUnpaidPayment).not.toHaveBeenCalled();
   });
 
   it.each([

@@ -73,6 +73,9 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
   const [submissionLocked, setSubmissionLocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const onCardMountStateChange = useCallback((mounted: boolean) => setCardMounted(mounted), []);
+  const onCardUiError = useCallback((reason: unknown) => {
+    setError(presentPaymentProblem(reason).message);
+  }, []);
 
   const refreshCards = useCallback(async () => {
     if (!client) return;
@@ -211,7 +214,7 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
         selectedMethod={method}
       >
         <div className="payment-new-card">
-          {bootstrap ? <FincodeCardFields bootstrap={bootstrap} onMountStateChange={onCardMountStateChange} ref={cardFieldsRef} />
+          {bootstrap ? <FincodeCardFields bootstrap={bootstrap} onError={onCardUiError} onMountStateChange={onCardMountStateChange} ref={cardFieldsRef} />
             : <div aria-live="polite" className="payment-card-loading" role="status">カード入力欄を準備中です。</div>}
           <label className="payment-save-card">
             <input checked={saveCard} disabled={!cardMounted || cardBusy} onChange={(event) => setSaveCard(event.target.checked)} type="checkbox" />
