@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { createRef } from "react";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES } from "@oripa/storefront-testkit";
+import type { FincodeInstance } from "@fincode/js";
 import { vi } from "vitest";
 import {
   FincodeCardFields,
@@ -19,13 +20,27 @@ const provider = vi.hoisted(() => {
     if (state.renderFrame) document.getElementById(id)?.append(document.createElement("iframe"));
   });
   const ui = { create, mount };
-  const fincode = { ui: vi.fn(() => ui) };
+  const payments = vi.fn((
+    _transaction: Parameters<FincodeInstance["payments"]>[0],
+    callback: Parameters<FincodeInstance["payments"]>[1],
+  ) => callback(200, { redirect_url: "https://provider.example/3ds" } as never));
+  const fincode = { payments, ui: vi.fn(() => ui) };
   return {
     create,
-    executePayment: vi.fn(async () => ({ redirect_url: "https://provider.example/3ds" })),
+    executePayment: vi.fn(async (args: {
+      readonly accessId: string;
+      readonly fincode: FincodeInstance;
+      readonly id: string;
+      readonly payType: "Card";
+    }) => await new Promise((resolve, reject) => args.fincode.payments({
+      access_id: args.accessId,
+      id: args.id,
+      pay_type: args.payType,
+    }, (status, response) => status === 200 ? resolve(response) : reject(response), reject))),
     fincode,
     initFincode: vi.fn(async () => fincode),
     mount,
+    payments,
     registerCard: vi.fn(async () => ({ id: "provider-card-safe-reference" })),
     state,
     ui,
@@ -231,17 +246,23 @@ describe("SITE-043 fincode Card UI boundary", () => {
     expect(screen.getByLabelText("クレジットカード入力フォーム").querySelector("iframe")).not.toBeInTheDocument();
   });
 
-  it("delegates execution and registration without exposing raw fields", async () => {
+  it("passes canonical merchant returns to Card execution without exposing raw fields", async () => {
     const ref = createRef<FincodeCardFieldsHandle>();
     render(<FincodeCardFields bootstrap={PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES.sandbox} onMountStateChange={() => undefined} ref={ref} />);
     await waitFor(() => expect(provider.mount).toHaveBeenCalled());
     await expect(ref.current!.execute(action)).resolves.toBe("https://provider.example/3ds");
     await expect(ref.current!.register(intent)).resolves.toBe("provider-card-safe-reference");
     expect(provider.executePayment).toHaveBeenCalledWith(expect.objectContaining({ accessId: action.access_id, id: action.payment_id, payType: "Card", ui: provider.ui }));
+    expect(provider.payments).toHaveBeenCalledWith(expect.objectContaining({
+      return_url: action.return_url,
+      return_url_on_failure: action.failure_url,
+    }), expect.any(Function), expect.any(Function));
+    expect(provider.payments.mock.calls[0]?.[0]).not.toHaveProperty("redirect_url");
     expect(provider.registerCard).toHaveBeenCalledWith(expect.objectContaining({ customerId: intent.provider_context.customer_id, useDefault: false, ui: provider.ui }));
     const source = readFileSync("src/components/payment/fincode-card-fields.tsx", "utf8");
     expect(source).not.toMatch(new RegExp(["getFormData", "local" + "Storage", "session" + "Storage", "postMessage"].join("|")));
     expect(source).not.toMatch(/\bpan\b|card_number|security_code/i);
+    expect(source).not.toMatch(/\/cards\/(?:success|failure)/);
   });
 
   it("clears the provider mount on unmount", async () => {

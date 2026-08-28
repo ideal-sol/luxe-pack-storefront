@@ -32,8 +32,8 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
   it("pins the canonical package-only versions and retains existing contracts", () => {
     for (const [packageName, version] of Object.entries({
       "site-schema": "2.0.0-alpha.23",
-      "storefront-client": "2.0.0-alpha.29",
-      "storefront-testkit": "2.0.0-alpha.29",
+      "storefront-client": "2.0.0-alpha.30",
+      "storefront-testkit": "2.0.0-alpha.30",
     })) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
       expect(packageJson.version).toBe(version);
@@ -89,7 +89,7 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
     });
     expect(data.items[0]?.allowed_actions).toEqual(fixture.allowed_actions);
     expect(data.next_cursor).toBe("next-page");
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.29", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.30", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -130,7 +130,7 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
     expect(harness.mock.requests[1]?.credentials).toBe("include");
     expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBe(key);
     expect(harness.mock.requests[1]?.headers["x-xsrf-token"]).toBe(csrf);
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.29", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.30", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 

@@ -1291,3 +1291,30 @@ production-build／dependency-audit／secret gates pass. Focused My Page, Route,
 LINE UI, external-identity, and Friend State coverage passes 5 files／34 tests.
 All changed files are exact Task Policy paths with zero wildcard or scope
 escape. Application-only Deployment is NOT RUN.
+
+## SITE-046 — alpha.30 Adoption / Card Merchant Return Integration
+
+- Issue: `#89`
+- Risk: CRITICAL PAYMENT (`R4`)
+- Base SHA: `126816f8e1102749a3b79289c033e003ecac93c1`
+- Branch: `site/SITE-046-alpha30-card-merchant-return`
+- Artifact: immutable MIG-096 `2.0.0-alpha.30`
+
+SITE-046 adopts canonical package-only MIG-096 Client／Testkit without changing
+MIG-094 alpha.29 or Public OpenAPI alpha.27 bytes. Card Registration Intent now
+uses the alpha.30 Client's canonical JSON `{}` POST with no Storefront fetch or
+Content-Type workaround.
+
+Post-start Card behavior dispatches only the returned `Payment.next_action`.
+Card Component execute passes Platform `return_url` and `failure_url` unchanged
+to fincode `return_url` and `return_url_on_failure`; returned `redirect_url` is
+only 3DS navigation. Saved Card and save-and-pay navigate the Platform-returned
+3DS Action after Platform-side execute, with no dependency on the pre-start
+new／saved selection. `/cards/success`／`/cards/failure`, merchant URL generation,
+PAN／CVC state or logging, and purchase-flow registration completion remain zero.
+
+Local Artifact／Policy／all boundary／lint／typecheck／40-file 376-test／
+production-build／dependency-audit／secret gates pass. All 25 changed files are
+exact Task Policy paths with wildcard zero. Application-only Deployment and
+Provider Browser E2E are NOT RUN; Platform／DB／Migration／Webhook／infrastructure／
+runtime／Provider configuration remain unchanged.

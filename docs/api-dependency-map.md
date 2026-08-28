@@ -1,7 +1,7 @@
 # API dependency map
 
-Storefront operations use the MIG-094 Artifact: `@oripa/storefront-client` and
-`@oripa/storefront-testkit` alpha.29 with referenced Public OpenAPI alpha.27 and
+Storefront operations use the MIG-096 Artifact: `@oripa/storefront-client` and
+`@oripa/storefront-testkit` alpha.30 with referenced Public OpenAPI alpha.27 and
 Site Schema alpha.23. This map does not invent absent operations or response
 shapes.
 
@@ -30,10 +30,10 @@ shapes.
 | Point history | Canonical signed ledger history and opaque cursor | **Resolved — MIG-062Z alpha.21 retains `listPointLedgerEntries`; SITE-030 applies Coin terminology only at presentation time** |
 | Points | Backend-ordered product collection, eligibility, reason, and CTA | **Resolved — MIG-062Z alpha.21 retains `listPointProducts`; SITE-030 displays canonical total grant without paid/bonus breakdown** |
 | Points | Product detail by public identifier | **Resolved — SITE-038 exact-matches encoded `PointProduct.id` against `listPointProducts`; SITE-040 retains that resolution boundary** |
-| Point purchase | Browser-safe Payment start/read, caller Idempotency, Return `pid`, Card／PayPay polling, and terminal presentation | **Resolved — MIG-094 alpha.29 Payment Client; SITE-040 flow retained without direct API requests or Coin grant authority** |
-| Payment Card | Bootstrap, official fincode Browser SDK load/init/create/mount, saved-card list/delete, registration intent, one-time and save-and-pay selection | **Resolved — SITE-043 loads the official script before canonical `initFincode`; mount success gates purchase and PAN/CVC remain outside Storefront state** |
-| Konbini／bank transfer | Existing unpaid Payment guide and durable Provider redirect resume | **Resolved — MIG-094 alpha.29 canonical JSON `resumeUnpaidPayment`; Purchase → Thanks → guide is retained with no replacement Payment or Provider session** |
-| Payment history | Current-user succeeded／unpaid Payment views, opaque cursor, owned detail, persisted Grant snapshot, and existing unpaid resume | **Resolved — alpha.29 `listPayments`／`getPayment`／`resumeUnpaidPayment`; SITE-041 behavior is retained without Frontend status, expiry, or Grant recomputation** |
+| Point purchase | Browser-safe Payment start/read, caller Idempotency, Return `pid`, Card／PayPay polling, and terminal presentation | **Resolved — MIG-096 alpha.30 Payment Client; SITE-040 flow retained without direct API requests or Coin grant authority** |
+| Payment Card | Bootstrap, official fincode Browser SDK load/init/create/mount, saved-card list/delete, registration intent, one-time and save-and-pay selection | **Resolved — SITE-046 dispatches canonical `Payment.next_action`, passes Platform merchant returns to Card Component execute, and uses alpha.30 JSON Card Registration Intent without a Storefront workaround; PAN/CVC remain outside Storefront state** |
+| Konbini／bank transfer | Existing unpaid Payment guide and durable Provider redirect resume | **Resolved — MIG-096 alpha.30 retains canonical JSON `resumeUnpaidPayment`; Purchase → Thanks → guide is retained with no replacement Payment or Provider session** |
+| Payment history | Current-user succeeded／unpaid Payment views, opaque cursor, owned detail, persisted Grant snapshot, and existing unpaid resume | **Resolved — alpha.30 `listPayments`／`getPayment`／`resumeUnpaidPayment`; SITE-041 behavior is retained without Frontend status, expiry, or Grant recomputation** |
 | Payment receipt | Canonical receipt metadata and PDF presentation | **Deferred — explicitly out of SITE-041 scope** |
 | Draw history | Historical Gacha presentation, occurred time, requested/executed counts, Backend status, stable order, and opaque cursor | **Resolved — MIG-062W alpha.20 retains `listDrawHistory`; SITE-028 implemented** |
 | Notice list | Public notice summaries and cursor | **Resolved — MIG-061U content client** |

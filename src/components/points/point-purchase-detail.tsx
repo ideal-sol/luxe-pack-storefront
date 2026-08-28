@@ -109,7 +109,7 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
       .catch((reason) => setError(presentPaymentProblem(reason).message)).finally(() => setCardBusy(false));
   };
 
-  const navigateAfterStart = async (payment: Payment, newCard: boolean) => {
+  const navigateAfterStart = async (payment: Payment) => {
     if (["processing", "succeeded", "failed", "canceled", "expired"].includes(payment.status)) {
       window.location.replace(`/points/purchase/thanks?pid=${encodeURIComponent(payment.id)}`);
       return;
@@ -118,8 +118,8 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
       window.location.replace(`/points/purchase/thanks?pid=${encodeURIComponent(payment.id)}`);
       return;
     }
-    if (newCard) {
-      if (!bootstrap || payment.next_action?.type !== "fincode_card_component" ||
+    if (payment.next_action?.type === "fincode_card_component") {
+      if (!bootstrap || !cardMounted ||
           payment.next_action.public_api_key !== bootstrap.public_api_key ||
           payment.next_action.is_live_mode !== bootstrap.is_live_mode || payment.next_action.tds_type !== "2") {
         throw new Error("Canonical fincode Card action is unavailable");
@@ -165,7 +165,7 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
       const { data: payment } = await client.startPayment(input, { idempotency_key: idempotencyKey });
       paymentCreated = true;
       if (newCard && saveCard) void refreshCards().catch(() => undefined);
-      await navigateAfterStart(payment, newCard);
+      await navigateAfterStart(payment);
     } catch (reason) {
       setError(presentPaymentProblem(reason, method).message);
       if (paymentCreated || reason instanceof StorefrontTransportError) setSubmissionLocked(true);

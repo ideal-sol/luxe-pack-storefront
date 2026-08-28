@@ -4,35 +4,35 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const vendor = path.join(root, "vendor/oripa/MIG-094");
-const retainedVendor = path.join(root, "vendor/oripa/MIG-089");
+const vendor = path.join(root, "vendor/oripa/MIG-096");
+const retainedVendor = path.join(root, "vendor/oripa/MIG-094");
 const schemaVendor = path.join(root, "vendor/oripa/MIG-063B");
-const bundleVersion = "2.0.0-alpha.29";
-const predecessorBundleVersion = "2.0.0-alpha.28";
+const bundleVersion = "2.0.0-alpha.30";
+const predecessorBundleVersion = "2.0.0-alpha.29";
 const publicApiVersion = "2.0.0-alpha.27";
 const siteSchemaVersion = "2.0.0-alpha.23";
-const sourceCommit = "5cde1e0a91151b584de8a63d19efd7b4a15e8ab1";
+const sourceCommit = "4a7703859473f0c3f5e317cfca454cb8dce401ae";
 const expected = new Map([
+  ["SHA256SUMS", "5849402d1d7770751683c93d0dfd619edbf33eb7bd262094d6b3ce87948aa363"],
+  ["artifact-manifest.json", "25667419d9db73a946f48ca1351f2c8b0e9fc1f371508efe2c44b9403852fe5a"],
+  ["oripa-storefront-client-2.0.0-alpha.30.tgz", "f44e2da2d427621296f2bb27958ef7b20e217b5b07fbcf6cc342978e2ef9dae6"],
+  ["oripa-storefront-testkit-2.0.0-alpha.30.tgz", "f349b6e07421507ccbdca9a6e0cbc07d79379b444fbe2119b1a92709319e8809"],
+  ["public.openapi.json", "41ebdddbd7c4edeedd36ad3810b2afa564495aa2d1c3e48a187f44c85deb85da"],
+]);
+const retainedExpected = new Map([
   ["SHA256SUMS", "23a1afd8f69eacff43e5b0146259172e93754a542f88fa4294f52deec9c3a944"],
   ["artifact-manifest.json", "9e5059d1d098d435d16399d8ce7d60172befb1c2ffe979037bf93ae1c447423b"],
   ["oripa-storefront-client-2.0.0-alpha.29.tgz", "28e5756000847df3a1a27cf77be3da97beb4aef447486978ee74ecd979b425e1"],
   ["oripa-storefront-testkit-2.0.0-alpha.29.tgz", "1e976d1cd83c00e79c632636018c57461bc89940640d0de949568cc1769b0b56"],
   ["public.openapi.json", "41ebdddbd7c4edeedd36ad3810b2afa564495aa2d1c3e48a187f44c85deb85da"],
 ]);
-const retainedExpected = new Map([
-  ["SHA256SUMS", "8e5d113274d4897d07c66ec613c6d1049e2b7fcdc5fa6b4441c69bda782d9349"],
-  ["artifact-manifest.json", "2b9299baa5816a1ff65af147178bb76574411dbcaeda13d5242a32e38bfab6fa"],
-  ["oripa-storefront-client-2.0.0-alpha.28.tgz", "7be14c543a1a1d69ad85af0549ddedce275ad86828c4e99dc90b6fc0af6a0a00"],
-  ["oripa-storefront-testkit-2.0.0-alpha.28.tgz", "8bc1cd287d15a61c94694034b9ac5280f4b2e4f296d8a6de836ad64550bf0e94"],
-  ["public.openapi.json", "41ebdddbd7c4edeedd36ad3810b2afa564495aa2d1c3e48a187f44c85deb85da"],
-]);
 const publishedPackages = new Map([
   ["@oripa/storefront-client", {
-    file: "oripa-storefront-client-2.0.0-alpha.29.tgz",
+    file: "oripa-storefront-client-2.0.0-alpha.30.tgz",
     version: bundleVersion,
   }],
   ["@oripa/storefront-testkit", {
-    file: "oripa-storefront-testkit-2.0.0-alpha.29.tgz",
+    file: "oripa-storefront-testkit-2.0.0-alpha.30.tgz",
     version: bundleVersion,
   }],
 ]);
@@ -59,12 +59,12 @@ for (const [file, digest] of expected) {
   if (sha256(path.join(vendor, file)) !== digest) throw new Error(`Artifact digest mismatch: ${file}`);
 }
 for (const [file, digest] of retainedExpected) {
-  if (sha256(path.join(retainedVendor, file)) !== digest) throw new Error(`Retained alpha.28 digest mismatch: ${file}`);
+  if (sha256(path.join(retainedVendor, file)) !== digest) throw new Error(`Retained alpha.29 digest mismatch: ${file}`);
 }
 const retainedInventory = readdirSync(retainedVendor).sort();
 const expectedRetainedInventory = [...retainedExpected.keys(), "PROVENANCE.md"].sort();
 if (JSON.stringify(retainedInventory) !== JSON.stringify(expectedRetainedInventory)) {
-  throw new Error("Retained alpha.28 inventory mismatch");
+  throw new Error("Retained alpha.29 inventory mismatch");
 }
 const inventory = readdirSync(vendor).sort();
 const expectedInventory = [...expected.keys(), "PROVENANCE.md"].sort();
@@ -83,8 +83,8 @@ const sums = new Map(
     }),
 );
 for (const file of [
-  "oripa-storefront-client-2.0.0-alpha.29.tgz",
-  "oripa-storefront-testkit-2.0.0-alpha.29.tgz",
+  "oripa-storefront-client-2.0.0-alpha.30.tgz",
+  "oripa-storefront-testkit-2.0.0-alpha.30.tgz",
   "public.openapi.json",
 ]) {
   if (sums.get(file) !== expected.get(file)) throw new Error(`SHA256SUMS mismatch: ${file}`);
@@ -92,7 +92,7 @@ for (const file of [
 if (sums.size !== 3) throw new Error("SHA256SUMS entry set is invalid");
 
 const manifest = JSON.parse(readFileSync(path.join(vendor, "artifact-manifest.json"), "utf8"));
-if (manifest.task_id !== "MIG-094" || manifest.source_commit !== sourceCommit) {
+if (manifest.task_id !== "MIG-096" || manifest.source_commit !== sourceCommit) {
   throw new Error("Artifact provenance mismatch");
 }
 if (manifest.bundle?.version !== bundleVersion || manifest.bundle?.predecessor !== predecessorBundleVersion ||
@@ -123,7 +123,7 @@ if (schemaEntry?.disposition !== "referenced" || schemaEntry.file !== undefined 
 if (manifestPackages.size !== 3 || manifest.packages?.length !== 3) throw new Error("Package manifest is incomplete");
 
 const provenance = readFileSync(path.join(vendor, "PROVENANCE.md"), "utf8");
-for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "MIG-094", ...expected.values(), referencedSiteSchema.sha256]) {
+for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "MIG-096", ...expected.values(), referencedSiteSchema.sha256]) {
   if (!provenance.includes(value)) throw new Error(`Artifact provenance is incomplete: ${value}`);
 }
 if (/\/(?:var\/(?:www|lib)|home)\//.test(provenance)) {
@@ -173,6 +173,9 @@ for (const declaration of [
   "amount_text: string | null;",
   'limited_bonus?: components["schemas"]["PointProductLimitedBonus"];',
   'PaymentCardUiBootstrap: {',
+  'PaymentCardComponentAction: {',
+  "return_url: string;",
+  "failure_url: string;",
   'provider: "fincode";',
   "is_live_mode: boolean;",
   "limited_bonus_points: number;",
@@ -203,6 +206,15 @@ if (resumeImplementations.length !== 2 || resumeImplementations.some((implementa
     !request.includes('csrf: "required"') || !request.includes("retry: false");
 })) {
   throw new Error("Canonical Payment resume JSON request contract is incomplete");
+}
+const registrationIntentImplementations = paymentRuntime.split("createCardRegistrationIntent:").slice(1);
+if (registrationIntentImplementations.length !== 2 || registrationIntentImplementations.some((implementation) => {
+  const request = implementation.slice(0, implementation.indexOf("}),") + 3);
+  return !request.includes('path: "/me/payment-card-registration-intents"') ||
+    !request.includes('method: "POST"') || !request.includes("body: {}") ||
+    !request.includes('csrf: "required"');
+})) {
+  throw new Error("Canonical Card Registration Intent JSON request contract is incomplete");
 }
 const browserDeclarations = archiveText(clientArchive, "package/dist/browser.d.ts");
 const contactDeclarations = archiveText(clientArchive, "package/dist/content-contact.d.ts");
@@ -290,8 +302,8 @@ for (const content of [packageJsonText, lockfileText]) {
     throw new Error("Server-specific file dependency");
   }
   for (const required of [
-    "vendor/oripa/MIG-094/oripa-storefront-client-2.0.0-alpha.29.tgz",
-    "vendor/oripa/MIG-094/oripa-storefront-testkit-2.0.0-alpha.29.tgz",
+    "vendor/oripa/MIG-096/oripa-storefront-client-2.0.0-alpha.30.tgz",
+    "vendor/oripa/MIG-096/oripa-storefront-testkit-2.0.0-alpha.30.tgz",
     "vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
   ]) {
     if (!content.includes(required)) throw new Error(`Canonical package pin is missing: ${required}`);
@@ -303,6 +315,8 @@ if (JSON.parse(packageJsonText).dependencies?.["@fincode/js"] !== "1.1.0" ||
   throw new Error("Canonical fincode SDK dependency is not exactly pinned");
 }
 for (const obsolete of [
+  "vendor/oripa/MIG-094/oripa-storefront-client-2.0.0-alpha.29.tgz",
+  "vendor/oripa/MIG-094/oripa-storefront-testkit-2.0.0-alpha.29.tgz",
   "vendor/oripa/MIG-089/oripa-storefront-client-2.0.0-alpha.28.tgz",
   "vendor/oripa/MIG-089/oripa-storefront-testkit-2.0.0-alpha.28.tgz",
   "vendor/oripa/STORE-SITE-034/oripa-storefront-client-2.0.0-alpha.24.tgz",
