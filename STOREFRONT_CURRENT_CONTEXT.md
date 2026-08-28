@@ -45,6 +45,8 @@
 - SITE-045 Temporarily Hide LINE Link UI: implemented by this change; the My
   Page entry is hidden while the direct route and LINE implementation remain
   available, and deployment remains out of scope
+- SITE-046 alpha.30 Adoption / Card Merchant Return Integration: implemented by
+  this change; deployment and Provider Browser E2E remain out of scope
 - SITE-005 Original Base: `9b5eb72d545c95a6cfa3462f500cb4bdeb9fd76c`
 - SITE-005 Resumed Base and latest published `main` at resume: `e6e30eaa37aacb7df98663ecc70eb6422989b9d5`
 
@@ -68,11 +70,11 @@ Platform response or Frontend business decision changed.
 
 ## Platform artifacts
 
-- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.29`
-- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.29`
+- Storefront Client: `@oripa/storefront-client` `2.0.0-alpha.30`
+- Storefront Testkit: `@oripa/storefront-testkit` `2.0.0-alpha.30`
 - Site Schema package: `@oripa/site-schema` `2.0.0-alpha.23`
-- Source Commit: `5cde1e0a91151b584de8a63d19efd7b4a15e8ab1`
-- Artifact authority: `vendor/oripa/MIG-094/artifact-manifest.json`
+- Source Commit: `4a7703859473f0c3f5e317cfca454cb8dce401ae`
+- Artifact authority: `vendor/oripa/MIG-096/artifact-manifest.json`
 - Public OpenAPI version: `2.0.0-alpha.27`
 - Public OpenAPI SHA-256: `41ebdddbd7c4edeedd36ad3810b2afa564495aa2d1c3e48a187f44c85deb85da`
 
@@ -138,7 +140,7 @@ Platform response or Frontend business decision changed.
   method, status, and persisted Payment Grant snapshot. Payment detail uses
   `getPayment`, and unpaid guidance resumes the existing Payment only through
   `resumeUnpaidPayment` without a replacement Payment or Provider session.
-- Browser-safe unpaid resume uses the MIG-094 alpha.29 canonical JSON POST
+- Browser-safe unpaid resume uses the MIG-096 alpha.30 canonical JSON POST
   request. Konbini and Virtual Account retain Purchase → Thanks → guide → resume,
   and the Storefront adds no raw request or 415 workaround.
 - New Card UI loads the official environment-specific fincode Browser script
@@ -397,6 +399,22 @@ text, transport failures, PayPay, Virtual Account, Credit Card, and other codes
 cannot select this copy. The Storefront performs no unpaid prefetch or business
 decision. MIG-095 unpaid history selection, Thanks／resume, and immutable MIG-094
 alpha.29 Client／Testkit／Public OpenAPI remain unchanged.
+
+SITE-046 adopts immutable MIG-096 alpha.30 as a new vendor directory while
+retaining MIG-094 alpha.29 byte-for-byte. The canonical Client now sends Card
+Registration Intent creation as JSON `body: {}` through its existing CSRF
+transport. Storefront adds no fetch, Content-Type, middleware, or registration
+completion workaround.
+
+After `startPayment()`, the canonical `Payment.next_action` discriminator is the
+only execution authority. A `fincode_card_component` action passes the exact
+Platform `return_url` and `failure_url` into fincode execution, mapping the
+failure destination to the Provider request's `return_url_on_failure` field.
+The Provider response `redirect_url` remains only the 3DS navigation target.
+Redirect／3DS actions navigate their returned canonical URL, including saved Card
+and save-and-pay after Platform-side execute. The pre-start new／saved selection
+does not decide post-start dispatch. No merchant URL is generated or rewritten,
+and `/cards/success`／`/cards/failure`, PAN／CVC state or logging remain absent.
 
 ## Pending contracts
 

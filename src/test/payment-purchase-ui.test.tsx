@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { forwardRef, useEffect, useImperativeHandle } from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { PUBLIC_AUTH_FIXTURE, PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES, PUBLIC_POINT_BALANCE_FIXTURES, PUBLIC_POINT_PRODUCT_FIXTURES } from "@oripa/storefront-testkit";
@@ -231,6 +232,10 @@ describe("SITE-040 Payment purchase UI", () => {
 
   it("starts a saved-card Payment with only the canonical public card id", async () => {
     const client = paymentClient([card("card-public-4242")]);
+    vi.mocked(client.startPayment).mockResolvedValueOnce({
+      data: { ...payment("credit_card"), next_action: { type: "three_d_secure", url: "https://provider.example/saved-card-3ds" } },
+      metadata: { ...metadata, status: 201 },
+    });
     renderPurchase(client);
     fireEvent.click(await screen.findByRole("radio", { name: "クレジットカード" }));
     await waitFor(() => expect(screen.getByRole("radio", { name: /VISA/ })).toBeChecked());
@@ -241,6 +246,9 @@ describe("SITE-040 Payment purchase UI", () => {
       payment_method: "credit_card",
       point_product_id: product.id,
     }, expect.objectContaining({ idempotency_key: expect.any(String) }));
+    expect(fincode.execute).not.toHaveBeenCalled();
+    expect(readFileSync("src/components/points/point-purchase-detail.tsx", "utf8"))
+      .toContain("window.location.assign(payment.next_action.url)");
   });
 
   it.each([
@@ -320,11 +328,19 @@ describe("SITE-040 Payment purchase UI", () => {
       expect.objectContaining({ idempotency_key: expect.any(String) }),
     );
     expect(client.createCardRegistrationIntent).not.toHaveBeenCalled();
-    expect(fincode.execute).toHaveBeenCalled();
+    expect(fincode.execute).toHaveBeenCalledWith(expect.objectContaining({
+      failure_url: "https://platform.example/failure",
+      return_url: "https://platform.example/return",
+      type: "fincode_card_component",
+    }));
   });
 
   it("uses intent and provider card reference for save, with the same idempotency key", async () => {
     const client = paymentClient();
+    vi.mocked(client.startPayment).mockResolvedValueOnce({
+      data: { ...payment("credit_card"), next_action: { type: "three_d_secure", url: "https://provider.example/save-and-pay-3ds" } },
+      metadata: { ...metadata, status: 201 },
+    });
     renderPurchase(client);
     await chooseCreditCard();
     fireEvent.click(screen.getByRole("button", { name: /クレジットカードを追加/ }));
@@ -343,7 +359,11 @@ describe("SITE-040 Payment purchase UI", () => {
       source: "new",
     } }), expect.anything());
     expect(fincode.register).toHaveBeenCalledOnce();
+    expect(fincode.execute).not.toHaveBeenCalled();
     expect(Object.keys(client)).not.toContain("completeCardRegistration");
+    const source = readFileSync("src/components/points/point-purchase-detail.tsx", "utf8");
+    expect(source).not.toContain("navigateAfterStart(payment, newCard)");
+    expect(source).toContain('payment.next_action?.type === "fincode_card_component"');
   });
 
   it("fails closed on fincode environment skew after Payment creation", async () => {

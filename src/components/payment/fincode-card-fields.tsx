@@ -129,6 +129,26 @@ type MountedProvider = {
   readonly ui: FincodeUI;
 };
 
+function withMerchantReturnUrls(
+  fincode: FincodeInstance,
+  action: PaymentCardComponentAction,
+): FincodeInstance {
+  return new Proxy(fincode, {
+    get(target, property, receiver) {
+      if (property !== "payments") return Reflect.get(target, property, receiver);
+      return (
+        transaction: Parameters<FincodeInstance["payments"]>[0],
+        callback: Parameters<FincodeInstance["payments"]>[1],
+        errorCallback: Parameters<FincodeInstance["payments"]>[2],
+      ) => target.payments({
+        ...transaction,
+        return_url: action.return_url,
+        return_url_on_failure: action.failure_url,
+      }, callback, errorCallback);
+    },
+  });
+}
+
 export const FincodeCardFields = forwardRef<FincodeCardFieldsHandle, {
   readonly bootstrap: PaymentCardUiBootstrap;
   readonly onError?: (error: FincodeCardUiError) => void;
@@ -144,7 +164,7 @@ export const FincodeCardFields = forwardRef<FincodeCardFieldsHandle, {
       if (!provider) throw new Error("fincode Card UI is not mounted");
       const payment = await provider.sdk.executePayment({
         accessId: action.access_id,
-        fincode: provider.fincode,
+        fincode: withMerchantReturnUrls(provider.fincode, action),
         id: action.payment_id,
         payType: "Card",
         ui: provider.ui,
