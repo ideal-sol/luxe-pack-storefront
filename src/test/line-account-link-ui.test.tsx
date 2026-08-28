@@ -16,7 +16,12 @@ import type {
   ExternalIdentityAdapter,
   LineFriendState,
 } from "@/lib/platform";
-import { lineAccountRoute, myPageAccountNavigation } from "@/lib/routes/navigation";
+import {
+  accountNavigation,
+  lineAccountRoute,
+  myPageAccountNavigation,
+  publicRoutes,
+} from "@/lib/routes/navigation";
 
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 
@@ -198,11 +203,13 @@ describe("LINE account link UI", () => {
     expect(await screen.findByText("ログインしてください")).toBeInTheDocument();
   });
 
-  it("keeps the SITE-006 route definition and session boundary", async () => {
+  it("keeps the direct route and session boundary outside the My Page menu", async () => {
     renderLine();
     expect(await screen.findByRole("link", { name: "← マイページへ戻る" })).toHaveAttribute("href", "/mypage");
-    expect(myPageAccountNavigation[1].href).toBe(lineAccountRoute);
+    expect(myPageAccountNavigation.map((item) => item.href)).not.toContain(lineAccountRoute);
+    expect(accountNavigation).toContainEqual({ href: lineAccountRoute, label: "LINE連携" });
     expect(lineAccountRoute).toBe("/mypage/line");
+    expect(publicRoutes).toContain(lineAccountRoute);
   });
 
   it("prevents duplicate link starts while the canonical transaction is pending", async () => {

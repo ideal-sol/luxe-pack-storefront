@@ -66,7 +66,6 @@ export const myPageShortcutNavigation = [
 
 export const myPageAccountNavigation = [
   { ...accountNavigation[5], description: "景品のお届け先を登録・変更する" },
-  { ...accountNavigation[6], description: "LINE連携の設定を確認する" },
 ] as const;
 
 export const myPageSupportNavigation = [

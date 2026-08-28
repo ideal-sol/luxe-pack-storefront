@@ -1264,3 +1264,30 @@ Card, or other errors. Unpaid history selection, Platform business rules,
 Thanks／resume, Client／Testkit／OpenAPI, package／lockfile／vendor, and runtime／
 infrastructure remain unchanged. Application-only Deployment and Provider
 Browser E2E are NOT RUN.
+
+## SITE-045 — Temporarily Hide LINE Link UI
+
+- Issue: `#87`
+- Risk: HIGH GOVERNANCE (`R4`)
+- Base SHA: `1fcc9bd3e46414b7755fb75628ee60c1c8937927`
+- Branch: `site/SITE-045-temporarily-hide-line-link-ui`
+- Artifact: retained immutable MIG-094 `2.0.0-alpha.29`
+
+SITE-045 removes only the LINE account-link entry from
+`myPageAccountNavigation`, so authenticated `/mypage` users no longer receive a
+LINE menu row in either desktop or mobile presentation. The Account section
+retains `お届け先登録`; Purchase History, Coin History, Draw History, Prize,
+Support, and Logout navigation remain unchanged.
+
+The canonical `accountNavigation` LINE entry, `lineAccountRoute`,
+`publicRoutes`, and direct `/mypage/line` page remain present. LINE Client,
+external-identity and Friend State Contracts, callback and account-link
+implementations, Platform, Provider configuration, Payment, Coin, package,
+Artifact, infrastructure, and runtime behavior are unchanged. No feature flag,
+404, or redirect is introduced.
+
+Local Artifact／Policy／all boundary／lint／typecheck／40-file 376-test／
+production-build／dependency-audit／secret gates pass. Focused My Page, Route,
+LINE UI, external-identity, and Friend State coverage passes 5 files／34 tests.
+All changed files are exact Task Policy paths with zero wildcard or scope
+escape. Application-only Deployment is NOT RUN.

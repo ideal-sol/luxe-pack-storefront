@@ -6,9 +6,12 @@ import { ToastProvider } from "@/components/common/toast-provider";
 import { MobileBottomNavigation } from "@/components/layout/mobile-bottom-navigation";
 import type { AuthClientAdapter, AuthSession } from "@/lib/platform";
 import {
+  accountNavigation,
+  lineAccountRoute,
   myPageAccountNavigation,
   myPageShortcutNavigation,
   myPageSupportNavigation,
+  publicRoutes,
 } from "@/lib/routes/navigation";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/mypage" }));
@@ -72,7 +75,7 @@ describe("my page top", () => {
     expect(screen.getByRole("link", { name: /ガチャ履歴/ })).toHaveAttribute("href", "/mypage/draws");
     expect(screen.getByRole("link", { name: /獲得アイテム/ })).toHaveAttribute("href", "/mypage/prizes");
     expect(screen.getByRole("link", { name: /お届け先登録/ })).toHaveAttribute("href", "/mypage/address");
-    expect(screen.getByRole("link", { name: /LINE連携/ })).toHaveAttribute("href", "/mypage/line");
+    expect(screen.queryByRole("link", { name: /LINE連携/ })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /お知らせ/ })).toHaveAttribute("href", "/notices");
     expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("href", "https://support.luxe-pack.biz/");
     expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("target", "_blank");
@@ -104,15 +107,27 @@ describe("my page top", () => {
     expect(links.some((link) => link.getAttribute("href") === "/contact")).toBe(false);
   });
 
-  it("places shipping address registration immediately above LINE in Account", async () => {
+  it.each([
+    ["mobile", 375],
+    ["desktop", 1440],
+  ])("keeps the Account layout without the LINE entry at the %s viewport", async (_viewport, width) => {
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
+    window.dispatchEvent(new Event("resize"));
     renderMyPage(client());
     const account = await screen.findByRole("navigation", { name: "アカウント" });
     const links = Array.from(account.querySelectorAll("a"));
-    expect(links.map((link) => link.getAttribute("href"))).toEqual(["/mypage/address", "/mypage/line"]);
-    expect(links.map((link) => link.textContent)).toEqual(expect.arrayContaining([
-      expect.stringContaining("お届け先登録"),
-      expect.stringContaining("LINE連携"),
-    ]));
+    expect(links.map((link) => link.getAttribute("href"))).toEqual(["/mypage/address"]);
+    expect(links[0]).toHaveTextContent("お届け先登録");
+    expect(account).not.toHaveTextContent("LINE連携");
+    expect(screen.getAllByRole("link")).toHaveLength(
+      myPageShortcutNavigation.length + myPageAccountNavigation.length + myPageSupportNavigation.length,
+    );
+  });
+
+  it("retains the LINE direct-route navigation contract outside the My Page menu", () => {
+    expect(accountNavigation).toContainEqual({ href: "/mypage/line", label: "LINE連携" });
+    expect(lineAccountRoute).toBe("/mypage/line");
+    expect(publicRoutes).toContain("/mypage/line");
   });
 
   it("distinguishes Session loading and unauthenticated states", async () => {
