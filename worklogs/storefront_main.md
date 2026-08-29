@@ -1318,3 +1318,38 @@ production-build／dependency-audit／secret gates pass. All 25 changed files ar
 exact Task Policy paths with wildcard zero. Application-only Deployment and
 Provider Browser E2E are NOT RUN; Platform／DB／Migration／Webhook／infrastructure／
 runtime／Provider configuration remain unchanged.
+
+## SITE-047 — Card Failure Return Final Screen Fix
+
+- Issue: `#91`
+- Pull Request: `#92`
+- Risk: CRITICAL PAYMENT (`R4`)
+- Base SHA: `bddff7106a8e710859a94cc07ada9a93b18aa136`
+- Branch: `site/SITE-047-card-failure-return-final-screen-fix`
+- Artifact: retained immutable MIG-096 `2.0.0-alpha.30`
+
+Stage 0 live readback confirmed local／origin／GitHub main and active Storefront
+Runtime at the exact Base, a clean main worktree, no open Storefront Issue／PR or
+task conflict, free Shared Locks, healthy MIG-097 Platform API, and HTTP 200 with
+redirect zero on the three required Storefront same-origin API reads. The
+root-owned mode `0600` Task Policy binds exact five paths with wildcard zero.
+
+The purchase-page `PaymentReturnAlert` no longer has a Thanks navigation or
+redirecting state. A failure Return stays on the Coin purchase page and presents
+the canonical failure copy across `created`／`requires_action`／`processing` races,
+an inconsistent `succeeded` read, and terminal `failed` remount. It never exposes
+the Thanks `決済処理中` presentation. The canonical Payment read and Product
+correlation remain read-only; invalid `pid` stays contained and no Payment／Coin
+mutation is available to this Return flow.
+
+Normal success Return remains on the existing Thanks page. PayPay, Konbini, and
+Virtual Account behavior, Platform Return URL／303 Location, MIG-097, alpha.30
+Artifact, Platform／DB／Migration／Provider／infrastructure, and Save Card are
+unchanged. Provider Browser E2E is reserved for Human acceptance after exact
+squash-main Application-only Activation.
+
+Frozen install and local Artifact／Policy／all boundary／lint／typecheck／40-file
+386-test／production-build／dependency-audit／secret／diff gates pass. Focused
+Payment status coverage passes 1 file／29 tests. Changed files are the exact five
+Task Policy paths with wildcard and scope escape zero. Fresh exact-head Required
+Checks and R4 self-review remain required before Squash Merge.
