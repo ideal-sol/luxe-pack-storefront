@@ -1322,6 +1322,7 @@ runtime／Provider configuration remain unchanged.
 ## SITE-047 — Card Failure Return Final Screen Fix
 
 - Issue: `#91`
+- Pull Request: `#92`
 - Risk: CRITICAL PAYMENT (`R4`)
 - Base SHA: `bddff7106a8e710859a94cc07ada9a93b18aa136`
 - Branch: `site/SITE-047-card-failure-return-final-screen-fix`
