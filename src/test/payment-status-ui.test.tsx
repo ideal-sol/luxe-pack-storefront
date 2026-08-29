@@ -44,6 +44,22 @@ function client(result: Payment | Error): PaymentClientAdapter {
   } as unknown as PaymentClientAdapter;
 }
 
+function returnClient(result: Payment | Error) {
+  const adapter = client(result);
+  return Object.assign(adapter, {
+    createCardRegistrationIntent: vi.fn(),
+    deleteCard: vi.fn(),
+    startPayment: vi.fn(),
+  });
+}
+
+function expectNoReturnMutation(adapter: ReturnType<typeof returnClient>) {
+  expect(adapter.createCardRegistrationIntent).not.toHaveBeenCalled();
+  expect(adapter.deleteCard).not.toHaveBeenCalled();
+  expect(adapter.resumeUnpaidPayment).not.toHaveBeenCalled();
+  expect(adapter.startPayment).not.toHaveBeenCalled();
+}
+
 function renderThanks(adapter: PaymentClientAdapter, pid: string | null = "payment-public-reference") {
   const auth = { getCurrentSession: vi.fn().mockResolvedValue({ data: PUBLIC_AUTH_FIXTURE.authenticated_session, metadata }) } as unknown as AuthClientAdapter;
   render(
@@ -55,7 +71,7 @@ function renderThanks(adapter: PaymentClientAdapter, pid: string | null = "payme
   );
 }
 
-describe("SITE-040 Payment status UI", () => {
+describe("SITE-040 / SITE-047 Payment status UI", () => {
   beforeEach(() => refreshWallet.mockClear());
 
   it("retains the minimal success copy and links to Purchase History", async () => {
@@ -140,19 +156,54 @@ describe("SITE-040 Payment status UI", () => {
 
   it.each([
     ["failed", "決済が失敗しました。"],
+    ["succeeded", "決済が失敗しました。"],
+    ["created", "決済が失敗しました。"],
+    ["requires_action", "決済が失敗しました。"],
+    ["processing", "決済が失敗しました。"],
     ["canceled", "決済をキャンセルしました。"],
-  ] as const)("uses getPayment for purchase return status %s", async (status, copy) => {
-    const adapter = client(payment(status));
+    ["expired", "決済の有効期限が切れました。"],
+  ] as const)("keeps purchase return status %s on the failure screen", async (status, copy) => {
+    const adapter = returnClient(payment(status));
     render(<PaymentReturnAlert client={adapter} pid="payment-public-reference" productId="product-public-reference" />);
     expect(await screen.findByRole("alert")).toHaveTextContent(copy);
     expect(adapter.getPayment).toHaveBeenCalledWith("payment-public-reference");
+    expect(screen.queryByText("決済処理中")).not.toBeInTheDocument();
+    expectNoReturnMutation(adapter);
   });
 
-  it("gives canonical succeeded status priority on a failure Return race", async () => {
-    const adapter = client(payment("succeeded"));
-    const replace = vi.fn();
-    render(<PaymentReturnAlert client={adapter} pid="payment-public-reference" productId="product-public-reference" replace={replace} />);
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/points/purchase/thanks?pid=payment-public-reference"));
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  it("keeps the canonical failure screen when a pending Card Return remounts after terminal failure", async () => {
+    const adapter = returnClient(payment("requires_action"));
+    vi.mocked(adapter.getPayment)
+      .mockResolvedValueOnce({ data: payment("requires_action"), metadata })
+      .mockResolvedValueOnce({ data: payment("failed"), metadata });
+    const first = render(<PaymentReturnAlert client={adapter} pid="payment-public-reference" productId="product-public-reference" />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("決済が失敗しました。");
+    first.unmount();
+    render(<PaymentReturnAlert client={adapter} pid="payment-public-reference" productId="product-public-reference" />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("決済が失敗しました。");
+    expect(adapter.getPayment).toHaveBeenCalledTimes(2);
+    expectNoReturnMutation(adapter);
+  });
+
+  it.each(["paypay", "konbini", "virtual_account"] as const)("keeps %s failure Return read-only", async (method) => {
+    const adapter = returnClient(payment("failed", method));
+    render(<PaymentReturnAlert client={adapter} pid="payment-public-reference" productId="product-public-reference" />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("決済が失敗しました。");
+    expectNoReturnMutation(adapter);
+  });
+
+  it("contains an invalid failure Return pid without a read, mutation, or navigation", () => {
+    const adapter = returnClient(payment("failed"));
+    render(<PaymentReturnAlert client={adapter} pid="malformed/id" productId="product-public-reference" />);
+    expect(screen.getByRole("alert")).toHaveTextContent("決済情報を確認できませんでした。");
+    expect(adapter.getPayment).not.toHaveBeenCalled();
+    expectNoReturnMutation(adapter);
+  });
+
+  it("contains failure Return navigation inside the purchase page", () => {
+    const source = readFileSync("src/components/payment/payment-return-alert.tsx", "utf8");
+    expect(source).not.toContain("window.location");
+    expect(source).not.toContain("/points/purchase/thanks");
+    expect(source).not.toContain('status: "redirecting"');
   });
 });

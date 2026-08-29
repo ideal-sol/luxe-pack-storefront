@@ -416,6 +416,23 @@ and save-and-pay after Platform-side execute. The pre-start new／saved selectio
 does not decide post-start dispatch. No merchant URL is generated or rewritten,
 and `/cards/success`／`/cards/failure`, PAN／CVC state or logging remain absent.
 
+SITE-047 keeps a Platform failure Return on `/points/purchase/[productId]` as
+its final Browser screen. `PaymentReturnAlert` still performs the canonical
+read-only Payment correlation, but it no longer owns a client navigation to the
+Thanks route and has no redirecting state. A Card Payment observed as
+`created`／`requires_action`／`processing` during the Provider failure race, or as
+terminal `failed` after remount, presents the canonical failure message on the
+purchase page without showing the Thanks processing UI. An inconsistent
+`succeeded` observation also cannot make the failure Return navigate.
+
+The normal Platform success Return continues directly to
+`/points/purchase/thanks`; PayPay, Konbini, and Virtual Account Thanks／resume
+behavior is unchanged. Browser Return remains presentation only: Payment and
+Coin mutation count is zero. Platform Return URLs／303 Location, MIG-097,
+immutable alpha.30 Client／Testkit／OpenAPI, infrastructure, and Save Card are
+unchanged. Application-only Deployment occurs only from squash-merged main;
+Provider Browser acceptance remains a Human boundary after Activation.
+
 ## Pending contracts
 
 - Payment receipt contract/UI
