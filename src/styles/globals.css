@@ -151,7 +151,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .auth-problem { background: #fff4f1; border-left: 3px solid var(--danger); padding: 16px 18px; }
 .auth-problem strong { font-size: .78rem; }
 .auth-problem p { color: #6f3128; font-size: .76rem; line-height: 1.65; margin: 7px 0 0; }
+.auth-success { background: #eef8f1; border-left: 3px solid #326747; padding: 16px 18px; }
+.auth-success strong { color: #245137; font-size: .78rem; }
+.auth-success p { color: #326747; font-size: .76rem; line-height: 1.65; margin: 7px 0 0; }
 .auth-form__submit { width: 100%; }
+.auth-form .button:disabled { cursor: not-allowed; opacity: .58; transform: none; }
 .auth-form__alternate, .auth-form__terms { color: var(--muted); font-size: .74rem; line-height: 1.75; margin: 0; text-align: center; }
 .auth-form__alternate a, .auth-form__terms a, .verification-card > a:not(.button) { border-bottom: 1px solid currentColor; color: var(--ink); font-weight: 750; }
 .auth-form__terms a { margin-inline: 3px; }
@@ -163,6 +167,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .verification-card .auth-problem { margin-block: 16px; text-align: left; width: 100%; }
 .verification-card .button { margin: 6px 0 22px; }
 .verification-card__success { color: #326747 !important; font-weight: 700; }
+.account-security-page__back { align-items: center; color: var(--muted); display: inline-flex; font-size: .72rem; font-weight: 750; margin: -12px auto 18px; min-height: 44px; width: min(100%, 560px); }
+.account-security-status br { display: none; }
+.password-field__control { display: block; position: relative; }
+.password-field__control input { padding-right: 72px; }
+.password-field__toggle { background: transparent; border: 0; color: var(--muted); cursor: pointer; font-size: .68rem; font-weight: 750; min-height: 40px; padding: 6px 12px; position: absolute; right: 5px; top: 5px; }
+.password-field__toggle:disabled { cursor: not-allowed; opacity: .5; }
 
 .contact-page { max-width: calc(var(--content-reading) + 40px); }
 .contact-panel, .contact-receipt { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow); }
@@ -823,6 +833,7 @@ body:has(.gacha-draw-tray) .site-footer { padding-bottom: calc(370px + env(safe-
   .site-footer__brand { grid-column: auto; }
   .mobile-navigation { display: none; }
   .auth-form { padding: 42px; }
+  .account-security-status br { display: initial; }
   .contact-panel { padding: 38px 42px; }
   .contact-form__fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .payment-history-row { padding: 20px 24px; }

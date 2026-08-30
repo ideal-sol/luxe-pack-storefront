@@ -37,6 +37,24 @@ unavailable/session expired/error states, and refreshes after successful identit
 mutations. It stores the typed session response only in memory and does not cache
 credentials or authentication material.
 
+SITE-050 extends that adapter with the alpha.33 Account Security operations.
+Password Reset request／completion never refreshes into an authenticated Session.
+Email Address Change refreshes only when the canonical completion result says the
+current browser is authenticated; cross-browser completion explicitly remains
+anonymous. Password Change refreshes the canonical Session after the immediate
+mutation so rotated Session／CSRF state replaces stale client state. Shared password
+fields own only visibility, confirmation, loading, and presentation validation;
+Platform remains the Password Policy and credential authority.
+
+Platform-generated Password Reset and Email Change links land on `/` with query
+parameters. `src/proxy.ts` runs only for that landing path and redirects before
+React rendering to a dedicated route with a browser-only fragment, `no-store`,
+and `no-referrer`. The dedicated Client Component validates the public input
+shape, consumes it once across React Strict Mode, and immediately removes the
+fragment without copying App Router history state. Tokens are not passed through
+Server Component props, DOM bootstrap data, Browser storage, analytics, or
+Account Security application logging.
+
 Authenticated routes consume that same root Session state. They
 render Loading while the initial read is pending, Login Required only for an
 explicit unauthenticated／expired state, a neutral pending-content state for an

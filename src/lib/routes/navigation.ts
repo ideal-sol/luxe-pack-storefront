@@ -30,10 +30,12 @@ export const accountNavigation = [
   { href: "/mypage/draws", label: "ガチャ履歴" },
   { href: "/mypage/prizes", label: "獲得アイテム" },
   { href: "/mypage/address", label: "お届け先登録" },
+  { href: "/mypage/email", label: "メールアドレス変更" },
+  { href: "/mypage/password", label: "パスワード変更" },
   { href: "/mypage/line", label: "LINE連携" },
 ] as const;
 
-export const lineAccountRoute = accountNavigation[6].href;
+export const lineAccountRoute = accountNavigation[8].href;
 
 export function drawResultRoute(drawRequestId: string) {
   return `/draws/${encodeURIComponent(drawRequestId)}/result`;
@@ -70,6 +72,8 @@ export const myPageShortcutNavigation = [
 
 export const myPageAccountNavigation = [
   { ...accountNavigation[5], description: "景品のお届け先を登録・変更する" },
+  { ...accountNavigation[6], description: "ログインに使用するメールアドレスを変更する" },
+  { ...accountNavigation[7], description: "ログインに使用するパスワードを変更する" },
 ] as const;
 
 export const myPageSupportNavigation = [
@@ -87,6 +91,9 @@ export const publicRoutes = [
   "/draws/[drawRequestId]/result",
   "/login",
   "/register",
+  "/password-reset",
+  "/password-reset/confirm",
+  "/email-change/verify",
   "/verify-email",
   "/verify-email/error",
   "/verify-email/[userId]/[hash]",
@@ -103,5 +110,7 @@ export const publicRoutes = [
   "/mypage/draws",
   "/mypage/prizes",
   "/mypage/address",
+  "/mypage/email",
+  "/mypage/password",
   "/mypage/line",
 ] as const;

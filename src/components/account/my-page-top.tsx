@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
 import { LoadingState } from "@/components/common/loading-state";
 import { ErrorState, LoginRequiredState } from "@/components/common/state-panel";
@@ -13,10 +13,25 @@ import {
   myPageSupportNavigation,
 } from "@/lib/routes/navigation";
 
-export function MyPageTop() {
+export function MyPageTop({
+  accountUpdated,
+}: {
+  readonly accountUpdated?: "email" | "password";
+}) {
   const { logout, state } = useSession();
   const { showToast } = useToast();
   const [loggingOut, setLoggingOut] = useState(false);
+  const successShown = useRef(false);
+
+  useEffect(() => {
+    if (!accountUpdated || successShown.current) return;
+    successShown.current = true;
+    window.history.replaceState(window.history.state, "", "/mypage");
+    showToast(
+      accountUpdated === "email" ? "メールアドレス変更" : "パスワード変更",
+      accountUpdated === "email" ? "メールアドレスを変更しました。" : "パスワードを変更しました。",
+    );
+  }, [accountUpdated, showToast]);
 
   async function handleLogout() {
     if (loggingOut) return;

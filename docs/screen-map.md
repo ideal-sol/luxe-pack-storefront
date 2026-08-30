@@ -13,6 +13,9 @@
 | `/pages/[slug]` | Managed public content | Content Client-connected by slug; sanitized document layout |
 | `/login` | Email/password login | Client-connected form; runtime configuration required |
 | `/register` | Registration entry | Client-connected form and pending-verification state |
+| `/password-reset` | Enumeration-safe Password Reset request | alpha.33 Identity Client request; no account-state inference |
+| `/password-reset/confirm` | One-time Password Reset completion | Platform-generated root link is redirected before render, consumed from a transient fragment, and scrubbed before form presentation; success creates no Session and returns to Login |
+| `/email-change/verify` | One-time Email Address Change completion | Same-browser Session rotation is refreshed; cross-browser completion does not mint or refresh a Session |
 | `/verify-email` | Verification guidance and optional resend | Client-connected when canonical `user_id` is present |
 | `/verify-email/[userId]/[hash]` | One-time email verification completion | Client-connected canonical completion input |
 
@@ -30,6 +33,8 @@
 | `/mypage/draws` | Draw history | Session-aware authenticated placeholder; data Contract pending |
 | `/mypage/prizes` | Acquired item inventory, Backend-authoritative selection, registered-address shipping, and point exchange | MIG-062E Browser Prize Fulfillment Client-connected; empty address collection links to `/mypage/address` |
 | `/mypage/address` | Login-required shipping-address list, registration, edit, and delete | SITE-012 Browser-safe address Contract reused; masked list presentation is canonical |
+| `/mypage/email` | Login-required Email Address Change request | alpha.33 Identity Client; no current-password or Fresh Authentication UI |
+| `/mypage/password` | Login-required immediate Password Change | alpha.33 Identity Client; current/new/confirm fields and post-rotation Session refresh |
 | `/mypage/line` | LINE connection | Session and External Identity Client-connected state/link UI; unlink deferred pending safe reauthentication journey |
 
 The Header now renders neutral, unauthenticated, and authenticated controls from
