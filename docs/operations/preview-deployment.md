@@ -43,11 +43,20 @@ Browser traffic on the same Preview Origin.
 
 ## Release preparation
 
-Deploy only a merged `main` commit for which all five GitHub gates passed.
-Create a release from `git archive <squash-sha>` so local reports and other
-untracked files are never copied. The release directory is owned by the runtime
-user. Use Node `22.22.3`, pnpm `10.12.1`, `pnpm install --frozen-lockfile`, and a
-production `pnpm build`; never run the development server as a service.
+Use the Build Authority in `docs/engineering-governance.md`. This filesystem
+release flow can readily build the Squash-Merged `main` commit and should use
+that preferred authority. Create the release from `git archive <squash-sha>` so
+local reports and other untracked files are never copied. The source commit must
+have all five GitHub gates and its required fresh self-review complete. The
+release directory is owned by the runtime user. Use Node `22.22.3`, pnpm
+`10.12.1`, `pnpm install --frozen-lockfile`, and a production `pnpm build`;
+never run the development server as a service.
+
+If another pipeline needs to reuse a build produced from the Final PR Head, it
+must satisfy the documented Reviewed Tree Authority after Squash Merge: identical
+Final Head and Merge tree SHAs, content diff `0`, matching build provenance, and
+complete Required Check and fresh self-review evidence. Any mismatch fails
+closed and prohibits Activation of that build.
 
 Before switching `current`, verify:
 
@@ -162,6 +171,11 @@ Nginx for an application-only refresh.
 
 Retain the previous verified release until the refresh smoke has passed. Never
 remove unrelated releases or other service data to obtain capacity.
+
+Record the active source revision, Build ID, deployable image/Artifact digest and
+OCI source revision where applicable, plus the active deployment revision after
+the switch. Production Activation is a separate Human checkpoint and is not
+authorized by this Preview runbook.
 
 ## Verification
 

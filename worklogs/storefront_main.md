@@ -1,5 +1,10 @@
 # Storefront worklog
 
+> **Historical ledger notice:** This file preserves per-change process evidence.
+> References to mandatory Issues, dedicated Worktrees, Task Policies, exact
+> `allowed_paths`, or locks are historical and no longer canonical after
+> 2026-08-30. Current rules are in `docs/engineering-governance.md`.
+
 ## SITE-029 — LINE Friend State Integration
 
 - Issue: `#57`

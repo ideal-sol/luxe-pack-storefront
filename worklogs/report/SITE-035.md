@@ -1,5 +1,9 @@
 # SITE-035 Email Verification Error Page Report
 
+> **Historical report:** Its Issue, Worktree, Task Policy, exact-path, and lock
+> evidence records the ceremony used at the time. Those requirements are
+> superseded and no longer canonical; see `docs/engineering-governance.md`.
+
 ## Outcome
 
 The public `/verify-email/error` route is implemented as the user-facing target
