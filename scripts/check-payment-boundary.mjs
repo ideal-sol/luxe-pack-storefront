@@ -17,19 +17,23 @@ for (const required of [
   "resumeUnpaidPayment",
   "listCards",
   "listPayments",
-  "createCardRegistrationIntent",
+  "startCardRegistration",
+  "getCardRegistration",
+  "reconcileCardRegistration",
+  "cancelCardRegistration",
   "deleteCard",
   "createIdempotencyKey",
 ]) {
   if (!adapter.includes(required)) throw new Error(`Canonical Payment Client boundary is missing: ${required}`);
 }
-for (const forbidden of ["completeCardRegistration", "fetch(", "/api" + "/v2"]) {
+for (const forbidden of ["createCardRegistrationIntent", "completeCardRegistration", "fetch(", "/api" + "/v2"]) {
   if (adapter.includes(forbidden)) throw new Error(`Out-of-scope Payment operation entered the adapter: ${forbidden}`);
 }
 
 const applicationFiles = [
   ...filesUnder("src/components/payment"),
   "src/components/points/point-purchase-detail.tsx",
+  "src/app/page.tsx",
   "src/app/points/purchase/[productId]/page.tsx",
   "src/app/points/purchase/thanks/page.tsx",
   "src/app/mypage/purchases/page.tsx",
@@ -40,17 +44,39 @@ for (const file of applicationFiles) {
   for (const forbidden of [
     "/api" + "/v2",
     "localStorage",
-    "sessionStorage",
     "getFormData",
+    "createCardRegistrationIntent",
     "completePaymentCardRegistration",
     "completeCardRegistration",
-    "provider_card_id:",
+    "provider_card_id",
+    "customer_id",
   ]) {
-    if (source.includes(forbidden) && !(file.endsWith("point-purchase-detail.tsx") && forbidden === "provider_card_id:")) {
+    if (source.includes(forbidden)) {
       throw new Error(`Payment UI crosses the Platform boundary (${forbidden}): ${file}`);
     }
   }
+  if (source.includes("sessionStorage") && !file.endsWith("card-registration-resume.ts")) {
+    throw new Error(`Payment UI persists state outside the opaque Return correlation boundary: ${file}`);
+  }
   if (/\bfetch\s*\(/.test(source)) throw new Error(`Payment UI performs raw fetch: ${file}`);
+}
+
+const registrationResume = readFileSync("src/components/payment/card-registration-resume.ts", "utf8");
+for (const required of [
+  '"luxe-pack:card-registration-resume:v1"',
+  '"awaiting_return"',
+  '"return_processing"',
+  '"payment_starting"',
+  "paymentIdempotencyKey",
+  "productId",
+  "registrationId",
+]) {
+  if (!registrationResume.includes(required)) throw new Error(`Registration Return correlation is incomplete: ${required}`);
+}
+for (const forbidden of ["card_token", "cardToken", "provider_card", "customer", "CVC", "security_code", "last4"]) {
+  if (registrationResume.includes(forbidden)) {
+    throw new Error(`Registration Return correlation persists forbidden Card data: ${forbidden}`);
+  }
 }
 
 const cardFields = readFileSync("src/components/payment/fincode-card-fields.tsx", "utf8");
@@ -66,7 +92,8 @@ for (const required of [
   'querySelector("iframe")',
   '`${mountId}-form`',
   "executePayment",
-  "registerCard",
+  "getCardToken",
+  "tokenize",
   '"sdk_load"',
   '"init"',
   '"ui_create"',
@@ -88,6 +115,7 @@ for (const forbidden of [
   "provider token",
   "secretKey",
   "console.",
+  "registerCard",
 ]) {
   if (cardFields.includes(forbidden)) throw new Error(`Sensitive or undocumented fincode integration detected: ${forbidden}`);
 }
@@ -100,22 +128,43 @@ for (const match of cardFields.matchAll(/(?:add|remove)EventListener\(\s*["']([^
 const purchase = readFileSync("src/components/points/point-purchase-detail.tsx", "utf8");
 for (const required of [
   "getPaymentCardUiBootstrap()",
-  "createCardRegistrationIntent",
+  "startCardRegistration(",
+  "getCardRegistration(registrationId)",
+  "reconcileCardRegistration(registrationId)",
+  'registration.status !== "completed"',
+  "registration.saved_card_id",
+  "registration_remaining",
+  "next_capacity_at",
+  "saveCardRegistrationResume",
+  "beginCardRegistrationReturn",
+  "markCardRegistrationPaymentStarting",
   "startPayment(input",
   "deleteCard(cardId)",
   "cardMounted",
-  "registration_intent_id",
-  "provider_card_id",
   "source: \"saved\"",
   "source: \"new\"",
+  "save: false",
 ]) {
   if (!purchase.includes(required)) throw new Error(`Payment purchase invariant is missing: ${required}`);
 }
 if (!purchase.includes("payment.next_action.is_live_mode !== bootstrap.is_live_mode")) {
   throw new Error("fincode environment skew is not rejected");
 }
+for (const forbidden of [
+  "createCardRegistrationIntent",
+  "completeCardRegistration",
+  "registerCard",
+  "provider_card_id",
+  "registration_intent_id",
+  "setCardToken",
+  "setPan",
+  "setCvc",
+  "console.",
+]) {
+  if (purchase.includes(forbidden)) throw new Error(`Legacy or sensitive Save Card path remains: ${forbidden}`);
+}
 if (purchase.includes("listPayments")) throw new Error("Purchase flow must not load Payment history");
-const unpaidThanks = purchase.indexOf('if (method === "konbini" || method === "virtual_account")');
+const unpaidThanks = purchase.indexOf('if (paymentMethod === "konbini" || paymentMethod === "virtual_account")');
 const providerRedirect = purchase.indexOf("window.location.assign(payment.next_action.url)");
 if (unpaidThanks < 0 || providerRedirect < 0 || unpaidThanks > providerRedirect ||
     !purchase.includes("/points/purchase/thanks?pid=")) {
@@ -128,11 +177,26 @@ for (const required of [
   'error.code === KONBINI_UNPAID_LIMIT_CODE',
   'KONBINI_UNPAID_LIMIT_REACHED',
   'コンビニ決済の未払いがあるため、コンビニ決済を使用できません',
+  "isCardRegistrationProblemError",
+  "presentCardRegistrationProblem",
 ]) {
   if (!paymentProblem.includes(required)) throw new Error(`Canonical Konbini problem mapping is missing: ${required}`);
 }
 for (const forbidden of ["error.title", "error.detail", "error.message"]) {
   if (paymentProblem.includes(forbidden)) throw new Error(`Konbini problem mapping uses forbidden text matching: ${forbidden}`);
+}
+
+const returnRouter = readFileSync("src/components/payment/card-registration-return-router.tsx", "utf8");
+for (const required of ["readCardRegistrationResume", 'phase === "awaiting_return"', "window.location.replace"] ) {
+  if (!returnRouter.includes(required)) throw new Error(`Registration Return router invariant is missing: ${required}`);
+}
+if (/startCardRegistration|startPayment|reconcileCardRegistration/.test(returnRouter)) {
+  throw new Error("Root Registration Return router must not perform a mutation");
+}
+const purchaseRoute = readFileSync("src/app/points/purchase/[productId]/page.tsx", "utf8");
+if (!purchaseRoute.includes("!registrationId &&") ||
+    !purchaseRoute.includes("card_registration_id") || !purchaseRoute.includes("pid")) {
+  throw new Error("Registration Return and Payment Return correlations are not kept distinct");
 }
 
 const history = readFileSync("src/components/payment/payment-history-page.tsx", "utf8");

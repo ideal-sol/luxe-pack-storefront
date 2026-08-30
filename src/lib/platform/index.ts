@@ -120,7 +120,9 @@ export {
   type PaymentCard,
   type PaymentCardCollection,
   type PaymentCardComponentAction,
-  type PaymentCardRegistrationIntent,
+  type PaymentCardRegistration,
+  type PaymentCardRegistrationAction,
+  type PaymentCardRegistrationStatus,
   type PaymentCardUiBootstrap,
   type PaymentClientAdapter,
   type PaymentCreateRequest,
@@ -131,8 +133,11 @@ export {
   type PaymentStatus,
 } from "./payment-client";
 export {
+  isDefinitiveCardRegistrationProblem,
   isInvalidPaymentRead,
+  isUncertainCardRegistrationProblem,
   paymentRetryAfterSeconds,
+  presentCardRegistrationProblem,
   presentPaymentProblem,
   type PaymentProblemPresentation,
 } from "./payment-problem";

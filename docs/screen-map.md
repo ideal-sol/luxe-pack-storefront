@@ -4,7 +4,7 @@
 
 | Route | Purpose | SITE-003 state |
 | --- | --- | --- |
-| `/` | Canonical top Banner carousel, categories, Backend-visible gacha summaries, and notice summaries | MIG-062P alpha.14 Banner collection; mixed Catalog sale states retained |
+| `/` | Canonical top Banner carousel, categories, Backend-visible gacha summaries, notices, and Platform Card Registration Return dispatch | MIG-062P catalog behavior retained; SITE-048 accepts only `card_registration_id` correlated to tab-local opaque resume state and performs no mutation at the root router |
 | `/gachas` | Backend-ordered gacha cards, category filter, and cursor continuation | alpha.9 sale/eligibility/display flags; Testkit verified |
 | `/gachas/[slug]` | Public pack detail and Draw entry | Backend-configured alpha.10 requested counts, including optional 100／1000; no remaining-count inference |
 | `/draws/[drawRequestId]/result` | Completed Draw result | Authenticated `getDrawRequest` recovery; canonical executed count; reload performs GET only |
@@ -21,7 +21,7 @@
 | Route | Purpose | Current state |
 | --- | --- | --- |
 | `/points` | Coin balance and Backend-ordered Point Product collection with category presentation and purchase navigation | `getWallet`／`listPointProducts` connected; canonical eligibility／CTA retained |
-| `/points/purchase/[productId]` | Coin Purchase Detail and canonical Payment entry resolved from the Product collection | SITE-040 public opaque Product ID exact-match, four Payment methods, fincode Card UI, Return correlation, and bounded polling |
+| `/points/purchase/[productId]` | Coin Purchase Detail and canonical Payment entry resolved from the Product collection | SITE-048 retains four methods and adds the save confirmation, alpha.31 Registration 3DS Return read／single reconcile, authoritative capacity, and separate saved-card Payment 3DS |
 | `/points/purchase/thanks` | Canonical `pid` Payment result, unpaid guidance, and Purchase History continuation | SITE-040 `getPayment` authority and existing-Payment resume; SITE-041 adds `/mypage/purchases` success CTA |
 | `/mypage` | Account hub | Session-connected member summary, centralized shortcuts/support navigation, and logout |
 | `/mypage/purchases` | Current-user Purchase History and Unpaid History | SITE-041 canonical `view=succeeded`／`view=unpaid` with opaque-cursor continuation |

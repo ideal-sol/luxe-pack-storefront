@@ -1,4 +1,11 @@
-import { mobileNavigation, paymentHistoryDetailRoute, pointPurchaseDetailRoute, primaryNavigation, publicRoutes } from "@/lib/routes/navigation";
+import {
+  mobileNavigation,
+  paymentHistoryDetailRoute,
+  pointPurchaseCardRegistrationReturnRoute,
+  pointPurchaseDetailRoute,
+  primaryNavigation,
+  publicRoutes,
+} from "@/lib/routes/navigation";
 
 describe("navigation definitions", () => {
   it("keeps primary navigation routes in the screen map", () => {
@@ -22,6 +29,15 @@ describe("navigation definitions", () => {
   it("encodes the public Point Product identifier as one purchase-detail path segment", () => {
     expect(pointPurchaseDetailRoute("public/product?edition=1#summary")).toBe(
       "/points/purchase/public%2Fproduct%3Fedition%3D1%23summary",
+    );
+  });
+
+  it("keeps Payment pid and Card Registration id on distinct Return correlations", () => {
+    expect(pointPurchaseCardRegistrationReturnRoute(
+      "public/product?edition=1#summary",
+      "public/registration?attempt=1#return",
+    )).toBe(
+      "/points/purchase/public%2Fproduct%3Fedition%3D1%23summary?card_registration_id=public%2Fregistration%3Fattempt%3D1%23return",
     );
   });
 

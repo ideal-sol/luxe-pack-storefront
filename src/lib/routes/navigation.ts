@@ -43,6 +43,10 @@ export function pointPurchaseDetailRoute(productId: string) {
   return `/points/purchase/${encodeURIComponent(productId)}`;
 }
 
+export function pointPurchaseCardRegistrationReturnRoute(productId: string, registrationId: string) {
+  return `${pointPurchaseDetailRoute(productId)}?card_registration_id=${encodeURIComponent(registrationId)}`;
+}
+
 export function paymentHistoryDetailRoute(paymentId: string) {
   return `/mypage/purchases/${encodeURIComponent(paymentId)}`;
 }

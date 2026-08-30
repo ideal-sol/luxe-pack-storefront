@@ -12,6 +12,7 @@
 8. `src/components/content` owns public notices, static documents, and the single sanitized HTML boundary.
 9. `src/components/prizes` owns authenticated inventory orchestration, Backend-authoritative selection presentation, and Browser-safe fulfillment journeys.
 10. `src/components/draw` owns confirmation, transient Idempotency operation state, typed Draw-error presentation, and GET-only result recovery.
+11. `src/components/payment` owns Provider-approved Card UI, opaque Return correlation, typed Payment／Card Registration presentation, and no business-rule authority.
 
 ## Preview runtime
 
@@ -55,7 +56,19 @@ against the successful collection response. A successful collection without a
 match is Not Found; a failed read remains Error. The detail renders returned
 price/currency, `grant.total_points`, audience, sale/eligibility presentation,
 and the established SITE-032 Limited Bonus presentation without calculation.
-It contains no Purchase or Payment action.
+The Purchase form delegates every Payment and Card Registration request to the
+narrow generated Payment Client adapter.
+
+SITE-048 replaces the legacy non-3DS Save Card path with MIG-098 alpha.31.
+New Card input remains inside the fincode UI and is tokenized only for the typed
+`startCardRegistration` request. A Platform `requires_action` URL performs
+Registration 3DS. The root Return dispatcher correlates only a Public Opaque
+Registration ID with tab-local product and Idempotency identifiers; it stores no
+Card input or Provider identifier. The Purchase route performs a canonical read
+and at most one typed reconcile. Only `completed` with `saved_card_id` can start
+a separate `source=saved` Payment, whose 3DS action is independently required.
+`registration_remaining` controls save availability; `cards.length` is retained
+only for the Human-specified three-card input visibility rule.
 
 The root Public Client Provider constructs a separate read adapter from the same
 browser transport configuration. It does not depend on Session state. Home and
@@ -198,6 +211,13 @@ units never hide or reduce a requested option. The selected requested count is
 sent unchanged. Result recovery reads generated `requested_count` and
 `executed_count` independently, uses the latter for completed-count
 presentation, and never recalculates Point cost, Prize totals, or sold units.
+
+SITE-048 adds alpha.31 digest／manifest compatibility checks, exact Registration
+Client request checks, save-confirmation and Provider-input lifetime tests,
+capacity tests, canonical Return read／single-reconcile tests, all terminal and
+unavailable failure gates, saved-card Payment 3DS dispatch, opaque-only resume
+storage checks, and regressions for existing Card, PayPay, Konbini, and Virtual
+Account flows.
 
 SITE-022 extends the existing public Content adapter with MIG-062O alpha.11
 `listFooterPages`. A small client component inside the shared Footer renders the

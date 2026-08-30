@@ -10,7 +10,6 @@ import {
 import type { FincodeInstance, FincodeUI } from "@fincode/js";
 import type {
   PaymentCardComponentAction,
-  PaymentCardRegistrationIntent,
   PaymentCardUiBootstrap,
 } from "@/lib/platform";
 
@@ -120,7 +119,7 @@ async function loadFincodeSdk(isLiveMode: boolean): Promise<FincodeSdk> {
 
 export interface FincodeCardFieldsHandle {
   readonly execute: (action: PaymentCardComponentAction) => Promise<string | null>;
-  readonly register: (intent: PaymentCardRegistrationIntent) => Promise<string>;
+  readonly tokenize: () => Promise<string>;
 }
 
 type MountedProvider = {
@@ -171,16 +170,17 @@ export const FincodeCardFields = forwardRef<FincodeCardFieldsHandle, {
       });
       return payment.redirect_url ?? null;
     },
-    async register(intent) {
+    async tokenize() {
       const provider = providerRef.current;
       if (!provider) throw new Error("fincode Card UI is not mounted");
-      const card = await provider.sdk.registerCard({
-        customerId: intent.provider_context.customer_id,
+      const response = await provider.sdk.getCardToken({
         fincode: provider.fincode,
+        number: "1",
         ui: provider.ui,
-        useDefault: false,
       });
-      return card.id;
+      const token = response.list[0]?.token;
+      if (!token) throw new Error("fincode Card token is unavailable");
+      return token;
     },
   }), []);
 

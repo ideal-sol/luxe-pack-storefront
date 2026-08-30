@@ -1,4 +1,8 @@
-import { ApiProblemError, StorefrontTransportError } from "@oripa/storefront-client";
+import {
+  ApiProblemError,
+  isCardRegistrationProblemError,
+  StorefrontTransportError,
+} from "@oripa/storefront-client";
 import type { PaymentMethod } from "./payment-client";
 
 const KONBINI_UNPAID_LIMIT_CODE = "KONBINI_UNPAID_LIMIT_REACHED";
@@ -22,6 +26,36 @@ export function paymentRetryAfterSeconds(error: unknown) {
 
 export function isInvalidPaymentRead(error: unknown) {
   return error instanceof ApiProblemError && [401, 403, 404].includes(error.status);
+}
+
+export function isUncertainCardRegistrationProblem(error: unknown) {
+  return error instanceof StorefrontTransportError ||
+    isCardRegistrationProblemError(error, "CARD_REGISTRATION_UNAVAILABLE") ||
+    isCardRegistrationProblemError(error, "CARD_REGISTRATION_CONFLICT");
+}
+
+export function isDefinitiveCardRegistrationProblem(error: unknown) {
+  return isCardRegistrationProblemError(error) && !isUncertainCardRegistrationProblem(error);
+}
+
+export function presentCardRegistrationProblem(error: unknown): PaymentProblemPresentation {
+  if (isUncertainCardRegistrationProblem(error)) {
+    return {
+      message: "通信結果を確認できませんでした。同じ操作を繰り返さず、時間をおいて状態をご確認ください。",
+      retryAfterSeconds: paymentRetryAfterSeconds(error),
+      sessionExpired: false,
+    };
+  }
+  if (isCardRegistrationProblemError(error)) {
+    return {
+      message: error.status === 429
+        ? "アクセスが集中しています。時間をおいて、もう一度お試しください。"
+        : "エラーが発生しました。時間をおいて、もう一度お試しください。",
+      retryAfterSeconds: paymentRetryAfterSeconds(error),
+      sessionExpired: error.status === 401 || error.code === "AUTHENTICATION_REQUIRED",
+    };
+  }
+  return presentPaymentProblem(error);
 }
 
 export function presentPaymentProblem(error: unknown, paymentMethod?: PaymentMethod): PaymentProblemPresentation {

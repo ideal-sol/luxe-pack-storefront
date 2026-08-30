@@ -47,16 +47,22 @@ function client(result: Payment | Error): PaymentClientAdapter {
 function returnClient(result: Payment | Error) {
   const adapter = client(result);
   return Object.assign(adapter, {
-    createCardRegistrationIntent: vi.fn(),
+    cancelCardRegistration: vi.fn(),
     deleteCard: vi.fn(),
+    getCardRegistration: vi.fn(),
+    reconcileCardRegistration: vi.fn(),
+    startCardRegistration: vi.fn(),
     startPayment: vi.fn(),
   });
 }
 
 function expectNoReturnMutation(adapter: ReturnType<typeof returnClient>) {
-  expect(adapter.createCardRegistrationIntent).not.toHaveBeenCalled();
+  expect(adapter.cancelCardRegistration).not.toHaveBeenCalled();
   expect(adapter.deleteCard).not.toHaveBeenCalled();
+  expect(adapter.getCardRegistration).not.toHaveBeenCalled();
+  expect(adapter.reconcileCardRegistration).not.toHaveBeenCalled();
   expect(adapter.resumeUnpaidPayment).not.toHaveBeenCalled();
+  expect(adapter.startCardRegistration).not.toHaveBeenCalled();
   expect(adapter.startPayment).not.toHaveBeenCalled();
 }
 

@@ -33,6 +33,8 @@ jobs:
       - run: pnpm gacha-detail-boundary:check
       - run: pnpm draw-boundary:check
       - run: pnpm prize-boundary:check
+      - run: pnpm point-boundary:check
+      - run: pnpm payment-boundary:check
 
   quality-gate:
     name: quality-gate
@@ -64,6 +66,8 @@ jobs:
       - run: pnpm gacha-detail-boundary:check
       - run: pnpm draw-boundary:check
       - run: pnpm prize-boundary:check
+      - run: pnpm point-boundary:check
+      - run: pnpm payment-boundary:check
       - run: pnpm security:check
       - run: pnpm audit --audit-level high
 
