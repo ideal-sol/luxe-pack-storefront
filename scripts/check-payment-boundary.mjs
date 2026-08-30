@@ -128,14 +128,12 @@ for (const match of cardFields.matchAll(/(?:add|remove)EventListener\(\s*["']([^
 const purchase = readFileSync("src/components/points/point-purchase-detail.tsx", "utf8");
 for (const required of [
   "getPaymentCardUiBootstrap()",
-  "startCardRegistration(",
   "getCardRegistration(registrationId)",
   "reconcileCardRegistration(registrationId)",
   'registration.status !== "completed"',
   "registration.saved_card_id",
   "registration_remaining",
   "next_capacity_at",
-  "saveCardRegistrationResume",
   "beginCardRegistrationReturn",
   "markCardRegistrationPaymentStarting",
   "startPayment(input",
@@ -146,6 +144,9 @@ for (const required of [
   "save: false",
 ]) {
   if (!purchase.includes(required)) throw new Error(`Payment purchase invariant is missing: ${required}`);
+}
+for (const forbidden of ["startCardRegistration(", "saveCardRegistrationResume(", ".tokenize()"]) {
+  if (purchase.includes(forbidden)) throw new Error(`Disabled Save Card purchase path remains executable: ${forbidden}`);
 }
 if (!purchase.includes("payment.next_action.is_live_mode !== bootstrap.is_live_mode")) {
   throw new Error("fincode environment skew is not rejected");
@@ -169,6 +170,14 @@ const providerRedirect = purchase.indexOf("window.location.assign(payment.next_a
 if (unpaidThanks < 0 || providerRedirect < 0 || unpaidThanks > providerRedirect ||
     !purchase.includes("/points/purchase/thanks?pid=")) {
   throw new Error("Konbini and Virtual Account must retain Purchase to Thanks before unpaid resume");
+}
+
+const saveConfirmation = readFileSync("src/components/payment/card-save-confirmation.tsx", "utf8");
+for (const required of ["onBack", "onBuyWithoutSaving", "戻る", "保存せず購入"]) {
+  if (!saveConfirmation.includes(required)) throw new Error(`New Card confirmation action is missing: ${required}`);
+}
+for (const forbidden of ["onSaveAndBuy", "カードを保存して購入"]) {
+  if (saveConfirmation.includes(forbidden)) throw new Error(`Disabled Save Card confirmation action remains: ${forbidden}`);
 }
 
 const paymentProblem = readFileSync("src/lib/platform/payment-problem.ts", "utf8");

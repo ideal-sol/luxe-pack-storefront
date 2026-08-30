@@ -173,7 +173,7 @@ async function chooseCreditCard() {
   await screen.findByText(/登録カードはありません|VISA/);
 }
 
-describe("SITE-040 / SITE-048 Payment purchase UI", () => {
+describe("SITE-040 / SITE-048 / SITE-049 Payment purchase UI", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     fincode.failMount = false;
@@ -264,7 +264,9 @@ describe("SITE-040 / SITE-048 Payment purchase UI", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: "購入する" }));
     const dialog = screen.getByRole("dialog", { name: "このカードを保存しますか？" });
-    expect(within(dialog).getByRole("button", { name: "カードを保存して購入" })).toBeDisabled();
+    expect(within(dialog).queryByRole("button", { name: "カードを保存して購入" })).not.toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "保存せず購入" })).toBeEnabled();
+    expect(within(dialog).getByRole("button", { name: "戻る" })).toBeEnabled();
     expect(within(dialog).getByText(/2026/)).toHaveTextContent(/カードの保存は.*以降に再度お試しください。/);
     fireEvent.click(within(dialog).getByRole("button", { name: "保存せず購入" }));
     await waitFor(() => expect(client.startPayment).toHaveBeenCalledOnce());
@@ -370,7 +372,7 @@ describe("SITE-040 / SITE-048 Payment purchase UI", () => {
     expect(alert).not.toHaveTextContent(konbiniUnpaidCopy);
   });
 
-  it("opens the canonical save confirmation and Back retains the mounted Card input without mutation", async () => {
+  it("removes the Save Card action while Back retains the mounted Card input without mutation", async () => {
     const client = paymentClient();
     renderPurchase(client);
     await chooseCreditCard();
@@ -380,12 +382,22 @@ describe("SITE-040 / SITE-048 Payment purchase UI", () => {
     fireEvent.click(screen.getByRole("button", { name: "購入する" }));
     const dialog = screen.getByRole("dialog", { name: "このカードを保存しますか？" });
     expect(within(dialog).getByText("カードを保存すると、次回以降はカード情報の入力を省略できます。")).toBeInTheDocument();
+    expect(within(dialog).queryByRole("button", { name: "カードを保存して購入" })).not.toBeInTheDocument();
+    expect(within(dialog).queryByText("カードを保存して購入")).not.toBeInTheDocument();
+    expect(within(dialog).getAllByRole("button")).toHaveLength(2);
+    expect(within(dialog).getByRole("button", { name: "保存せず購入" })).toBeEnabled();
+    expect(within(dialog).getByRole("button", { name: "戻る" })).toBeEnabled();
     fireEvent.click(within(dialog).getByRole("button", { name: "戻る" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByTestId("fincode-card-fields")).toBe(fields);
     expect(fincode.cleanup).not.toHaveBeenCalled();
     expect(client.startCardRegistration).not.toHaveBeenCalled();
     expect(client.startPayment).not.toHaveBeenCalled();
+    const confirmationSource = readFileSync("src/components/payment/card-save-confirmation.tsx", "utf8");
+    const purchaseSource = readFileSync("src/components/points/point-purchase-detail.tsx", "utf8");
+    expect(confirmationSource).not.toContain("onSaveAndBuy");
+    expect(purchaseSource).not.toContain("startCardRegistration(");
+    expect(purchaseSource).not.toContain("saveCardRegistrationResume(");
   });
 
   it("starts one-time new-card Payment from 保存せず購入 with Registration zero", async () => {
@@ -402,108 +414,12 @@ describe("SITE-040 / SITE-048 Payment purchase UI", () => {
       expect.objectContaining({ idempotency_key: expect.any(String) }),
     );
     expect(client.startCardRegistration).not.toHaveBeenCalled();
+    expect(fincode.tokenize).not.toHaveBeenCalled();
     expect(fincode.execute).toHaveBeenCalledWith(expect.objectContaining({
       failure_url: "https://platform.example/failure",
       return_url: "https://platform.example/return",
       type: "fincode_card_component",
     }));
-  });
-
-  it("uses completed Registration saved_card_id for a separate Payment 3DS start", async () => {
-    const client = paymentClient();
-    vi.mocked(client.startCardRegistration).mockResolvedValueOnce({
-      data: PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.completed,
-      metadata: { ...metadata, status: 201 },
-    });
-    vi.mocked(client.startPayment).mockResolvedValueOnce({
-      data: { ...payment("credit_card"), next_action: { type: "three_d_secure", url: "https://provider.example/save-and-pay-3ds" } },
-      metadata: { ...metadata, status: 201 },
-    });
-    renderPurchase(client);
-    await chooseCreditCard();
-    fireEvent.click(screen.getByRole("button", { name: /クレジットカードを追加/ }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
-    fireEvent.click(screen.getByRole("button", { name: "購入する" }));
-    fireEvent.click(screen.getByRole("button", { name: "カードを保存して購入" }));
-    await waitFor(() => expect(client.startPayment).toHaveBeenCalledOnce());
-    expect(client.startCardRegistration).toHaveBeenCalledWith(
-      { card_token: "tok_browser_public-safe-fixture" },
-      expect.objectContaining({ idempotency_key: expect.any(String) }),
-    );
-    expect(client.startPayment).toHaveBeenCalledWith({
-      card: { card_id: PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.completed.saved_card_id, source: "saved" },
-      payment_method: "credit_card",
-      point_product_id: product.id,
-    }, expect.objectContaining({ idempotency_key: expect.any(String) }));
-    expect(fincode.tokenize).toHaveBeenCalledOnce();
-    expect(fincode.execute).not.toHaveBeenCalled();
-    expect(window.sessionStorage.getItem("luxe-pack:card-registration-resume:v1")).toBeNull();
-    const source = readFileSync("src/components/points/point-purchase-detail.tsx", "utf8");
-    expect(source).not.toMatch(/createCardRegistrationIntent|provider_card_id|registration_intent_id/);
-    expect(readFileSync("src/components/payment/fincode-card-fields.tsx", "utf8")).not.toContain("registerCard");
-  });
-
-  it("retries a definitive post-Registration Payment failure from the saved Card without duplicate Registration", async () => {
-    const registration = PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.completed;
-    const savedCard = card(registration.saved_card_id);
-    const client = paymentClient();
-    vi.mocked(client.listCards)
-      .mockResolvedValueOnce({
-        data: PUBLIC_PAYMENT_CARD_CAPACITY_FIXTURES.saved_0_pending_0,
-        metadata,
-      })
-      .mockResolvedValue({
-        data: {
-          data: [savedCard],
-          limits: { maximum: 3, next_capacity_at: null, registration_remaining: 2, remaining: 2 },
-        },
-        metadata,
-      });
-    vi.mocked(client.startCardRegistration).mockResolvedValueOnce({
-      data: registration,
-      metadata: { ...metadata, status: 201 },
-    });
-    vi.mocked(client.startPayment)
-      .mockRejectedValueOnce(paymentProblem("PAYMENT_FAILED"))
-      .mockResolvedValueOnce({
-        data: { ...payment("credit_card"), next_action: { type: "three_d_secure", url: "https://provider.example/saved-card-retry-3ds" } },
-        metadata: { ...metadata, status: 201 },
-      });
-    renderPurchase(client);
-    await chooseCreditCard();
-    fireEvent.click(screen.getByRole("button", { name: /クレジットカードを追加/ }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
-    fireEvent.click(screen.getByRole("button", { name: "購入する" }));
-    fireEvent.click(screen.getByRole("button", { name: "カードを保存して購入" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("決済処理を完了できませんでした。時間をおいて、もう一度お試しください。");
-    await waitFor(() => expect(screen.getByRole("radio", { name: /VISA/ })).toBeChecked());
-    expect(screen.queryByTestId("fincode-card-fields")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "購入する" }));
-    await waitFor(() => expect(client.startPayment).toHaveBeenCalledTimes(2));
-    expect(client.startCardRegistration).toHaveBeenCalledOnce();
-    expect(fincode.tokenize).toHaveBeenCalledOnce();
-    expect(client.startPayment).toHaveBeenLastCalledWith({
-      card: { card_id: registration.saved_card_id, source: "saved" },
-      payment_method: "credit_card",
-      point_product_id: product.id,
-    }, expect.objectContaining({ idempotency_key: expect.any(String) }));
-  });
-
-  it("stores only opaque resume context for Registration next_action and does not start Payment", async () => {
-    const client = paymentClient();
-    renderPurchase(client);
-    await chooseCreditCard();
-    fireEvent.click(screen.getByRole("button", { name: /クレジットカードを追加/ }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
-    fireEvent.click(screen.getByRole("button", { name: "購入する" }));
-    fireEvent.click(screen.getByRole("button", { name: "カードを保存して購入" }));
-    await waitFor(() => expect(client.startCardRegistration).toHaveBeenCalledOnce());
-    expect(client.startPayment).not.toHaveBeenCalled();
-    const stored = window.sessionStorage.getItem("luxe-pack:card-registration-resume:v1");
-    expect(stored).toContain(PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.requires_action.id);
-    expect(stored).toContain(product.id);
-    expect(stored).not.toContain("tok_browser_public-safe-fixture");
-    expect(stored).not.toMatch(/cardNo|CVC|security_code/);
   });
 
   it("requires canonical completed read before starting Payment after Browser Return", async () => {
@@ -652,46 +568,6 @@ describe("SITE-040 / SITE-048 Payment purchase UI", () => {
     expect(client.startCardRegistration).not.toHaveBeenCalled();
     expect(client.startPayment).not.toHaveBeenCalled();
   });
-
-  it("keeps typed unavailable raw detail private and starts neither Payment nor automatic Registration retry", async () => {
-    const client = paymentClient();
-    vi.mocked(client.startCardRegistration).mockRejectedValueOnce(
-      registrationProblem(PUBLIC_PAYMENT_CARD_REGISTRATION_PROBLEM_FIXTURES.unavailable),
-    );
-    renderPurchase(client);
-    await chooseCreditCard();
-    fireEvent.click(screen.getByRole("button", { name: /クレジットカードを追加/ }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
-    fireEvent.click(screen.getByRole("button", { name: "購入する" }));
-    fireEvent.click(screen.getByRole("button", { name: "カードを保存して購入" }));
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("通信結果を確認できませんでした。同じ操作を繰り返さず、時間をおいて状態をご確認ください。");
-    expect(alert).not.toHaveTextContent(/provider raw private/);
-    expect(client.startCardRegistration).toHaveBeenCalledOnce();
-    expect(client.startPayment).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
-  });
-
-  it.each(["failed", "canceled", "expired"] as const)(
-    "starts no Payment when Registration start returns canonical %s",
-    async (status) => {
-      const client = paymentClient();
-      vi.mocked(client.startCardRegistration).mockResolvedValueOnce({
-        data: PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES[status],
-        metadata: { ...metadata, status: 201 },
-      });
-      renderPurchase(client);
-      await chooseCreditCard();
-      fireEvent.click(screen.getByRole("button", { name: /クレジットカードを追加/ }));
-      await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
-      fireEvent.click(screen.getByRole("button", { name: "購入する" }));
-      fireEvent.click(screen.getByRole("button", { name: "カードを保存して購入" }));
-      expect(await screen.findByRole("alert")).toHaveTextContent("エラーが発生しました。時間をおいて、もう一度お試しください。");
-      expect(client.startCardRegistration).toHaveBeenCalledOnce();
-      expect(client.startPayment).not.toHaveBeenCalled();
-      expect(window.location.pathname).not.toBe("/points/purchase/thanks");
-    },
-  );
 
   it("fails closed on fincode environment skew after Payment creation", async () => {
     const client = paymentClient();

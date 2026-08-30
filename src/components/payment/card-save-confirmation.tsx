@@ -17,14 +17,12 @@ export function CardSaveConfirmation({
   nextCapacityAt,
   onBack,
   onBuyWithoutSaving,
-  onSaveAndBuy,
 }: {
   readonly busy: boolean;
   readonly canSave: boolean;
   readonly nextCapacityAt: string | null;
   readonly onBack: () => void;
   readonly onBuyWithoutSaving: () => void;
-  readonly onSaveAndBuy: () => void;
 }) {
   return (
     <div
@@ -52,9 +50,6 @@ export function CardSaveConfirmation({
         <div className="payment-save-confirmation__actions">
           <button autoFocus className="button button--ghost" disabled={busy} onClick={onBack} type="button">戻る</button>
           <button className="button button--ghost" disabled={busy} onClick={onBuyWithoutSaving} type="button">保存せず購入</button>
-          <button className="button button--dark" disabled={busy || !canSave} onClick={onSaveAndBuy} type="button">
-            カードを保存して購入
-          </button>
         </div>
       </section>
     </div>
