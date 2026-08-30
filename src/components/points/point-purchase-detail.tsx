@@ -245,6 +245,8 @@ function PurchaseForm({
         return;
       }
       if (registration.status === "completed" && registration.saved_card_id) {
+        setSelectedCardId(registration.saved_card_id);
+        setCardMounted(false);
         saveCardRegistrationResume({
           paymentIdempotencyKey,
           productId: product.id,
@@ -350,6 +352,8 @@ function PurchaseForm({
             finishWithoutPayment(registration);
             return;
           }
+          setSelectedCardId(registration.saved_card_id);
+          setCardMounted(false);
           const paymentContext = markCardRegistrationPaymentStarting(registrationId);
           if (!paymentContext) throw new Error("Card registration Payment resume is unavailable");
           paymentStarting = true;
