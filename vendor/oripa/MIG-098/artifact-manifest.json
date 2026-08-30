@@ -1,0 +1,76 @@
+{
+  "bundle": {
+    "immutable": true,
+    "predecessor": "2.0.0-alpha.30",
+    "release_mode": "contract-additive",
+    "version": "2.0.0-alpha.31"
+  },
+  "generated_at": "2026-08-29T13:18:25Z",
+  "installation": {
+    "consumer_resolution": "pin published tarballs and retain referenced package digests from the predecessor bundle",
+    "registry_publish_performed": false,
+    "workspace_dependency_required": false
+  },
+  "packages": [
+    {
+      "browser_compatible": true,
+      "disposition": "published",
+      "file": "oripa-storefront-client-2.0.0-alpha.31.tgz",
+      "minimum_public_api_contract": "2.0.0-alpha.28",
+      "name": "@oripa/storefront-client",
+      "required_capabilities": [
+        "draw.browser-mutation.v2",
+        "gacha.catalog-display.v2",
+        "gacha.presentation.v2",
+        "payment.fincode.v2",
+        "prize.fulfillment-browser-mutation.v2",
+        "user-draw-history.read.v2",
+        "user-point.read.v2",
+        "user-prize.presentation.v2"
+      ],
+      "sha256": "0caf5e8ac829a1f13d1790298ba4a2fef3c50fe6ae11cad63329ab327cea40cf",
+      "version": "2.0.0-alpha.31"
+    },
+    {
+      "disposition": "referenced",
+      "name": "@oripa/site-schema",
+      "sha256": "b4ca0ddb0ec8a6f4bda6dfec40fb5f3f5098a837160310be64de97cab36740c2",
+      "source_bundle_version": "2.0.0-alpha.23",
+      "source_tree": "11f6bee77dd463c2f90352537f817404cf3042bd",
+      "version": "2.0.0-alpha.23"
+    },
+    {
+      "browser_compatible": true,
+      "disposition": "published",
+      "file": "oripa-storefront-testkit-2.0.0-alpha.31.tgz",
+      "name": "@oripa/storefront-testkit",
+      "public_api_operation_count": 71,
+      "sha256": "932cc4cc6560aa595e01bb5d929320f8d2f70dda32d5a8dd70ec91e84acb8716",
+      "site_schema_version": "2.0.0-alpha.23",
+      "storefront_client_version": "2.0.0-alpha.31",
+      "version": "2.0.0-alpha.31"
+    }
+  ],
+  "platform": {
+    "application_versions": {
+      "admin": "2.0.0-alpha.23",
+      "workspace": "2.0.0-alpha.23"
+    },
+    "version": "2.0.0-alpha.23"
+  },
+  "public_openapi": {
+    "breaking_change": false,
+    "compatibility_family": 2,
+    "file": "public.openapi.json",
+    "operation_count": 71,
+    "sha256": "60a14073f7ee52d91b919c69fbc7444bf6afe391a887121bb4af5e45fbb85626",
+    "version": "2.0.0-alpha.28"
+  },
+  "schema_version": "2.0",
+  "source_commit": "ad078ecd1eebd68cd2443b347d387433177fd686",
+  "task_id": "MIG-098",
+  "toolchain": {
+    "node": "22.22.3",
+    "pnpm": "10.12.1"
+  }
+}

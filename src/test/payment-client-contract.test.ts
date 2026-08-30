@@ -1,8 +1,15 @@
 import { readFileSync } from "node:fs";
-import { assertBrowserRequestBoundary, PUBLIC_AUTH_FIXTURE, PUBLIC_CONTRACT_FIXTURE, PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES } from "@oripa/storefront-testkit";
+import {
+  assertBrowserRequestBoundary,
+  PUBLIC_AUTH_FIXTURE,
+  PUBLIC_CONTRACT_FIXTURE,
+  PUBLIC_PAYMENT_CARD_CAPACITY_FIXTURES,
+  PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES,
+  PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES,
+} from "@oripa/storefront-testkit";
 import { ApiProblemError } from "@oripa/storefront-client";
 import { createPaymentClientTestHarness } from "@/lib/platform/testing";
-import type { Payment, PaymentCard, PaymentCardRegistrationIntent } from "@/lib/platform";
+import type { Payment, PaymentCard } from "@/lib/platform";
 
 const origin = "https://storefront.test/platform";
 const csrf = "e".repeat(64);
@@ -29,18 +36,8 @@ const card = {
   is_expired: false,
   last4: "4242",
   last_used_at: null,
+  verification_status: "verified",
 } satisfies PaymentCard;
-
-const registrationIntent = {
-  expires_at: metadataTime,
-  id: "reg_public_040",
-  provider_context: {
-    customer_id: "customer_public_040",
-    provider: "fincode",
-    public_api_key: "p_test_public-safe-fixture",
-    tds_type: "2",
-  },
-} satisfies PaymentCardRegistrationIntent;
 
 function enqueueCsrf(harness: ReturnType<typeof createPaymentClientTestHarness>) {
   harness.mock.enqueueJson(
@@ -49,15 +46,18 @@ function enqueueCsrf(harness: ReturnType<typeof createPaymentClientTestHarness>)
   );
 }
 
-describe("MIG-096 canonical Payment browser client", () => {
-  it("pins alpha.30 and the unchanged 65-operation Public OpenAPI", () => {
+describe("MIG-098 alpha.31 canonical Payment browser client", () => {
+  it("pins alpha.31 and the additive 71-operation Public OpenAPI", () => {
     for (const name of ["storefront-client", "storefront-testkit"]) {
-      expect(JSON.parse(readFileSync(`node_modules/@oripa/${name}/package.json`, "utf8")).version).toBe("2.0.0-alpha.30");
+      expect(JSON.parse(readFileSync(`node_modules/@oripa/${name}/package.json`, "utf8")).version).toBe("2.0.0-alpha.31");
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("41ebdddbd7c4edeedd36ad3810b2afa564495aa2d1c3e48a187f44c85deb85da");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("60a14073f7ee52d91b919c69fbc7444bf6afe391a887121bb4af5e45fbb85626");
+    expect(PUBLIC_CONTRACT_FIXTURE.operation_count).toBe(71);
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getPaymentCardUiBootstrap", "createPayment", "getPayment", "resumeUnpaidPayment",
-      "listMyPayments", "listPaymentCards", "createPaymentCardRegistrationIntent", "deletePaymentCard",
+      "listMyPayments", "listPaymentCards", "startPaymentCardRegistration",
+      "getPaymentCardRegistration", "reconcilePaymentCardRegistration",
+      "cancelPaymentCardRegistration", "deletePaymentCard",
     ]));
   });
 
@@ -73,34 +73,59 @@ describe("MIG-096 canonical Payment browser client", () => {
     harness.mock.assertExhausted();
   });
 
-  it("reads bootstrap, Payment, and canonical card order without mutation", async () => {
+  it("reads bootstrap, Payment, and authoritative registration capacity without mutation", async () => {
     const harness = createPaymentClientTestHarness();
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/payment-card-ui-bootstrap` }, { body: PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES.sandbox });
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/payments/${payment.id}` }, { body: payment });
-    harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/payment-cards` }, { body: { data: [card], limits: { maximum: 3, remaining: 2 } } });
+    harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/payment-cards` }, { body: PUBLIC_PAYMENT_CARD_CAPACITY_FIXTURES.saved_2_pending_1 });
     await expect(harness.client.getPaymentCardUiBootstrap()).resolves.toMatchObject({ data: PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES.sandbox });
     await expect(harness.client.getPayment(payment.id)).resolves.toMatchObject({ data: payment });
-    await expect(harness.client.listCards()).resolves.toMatchObject({ data: { data: [card] } });
+    await expect(harness.client.listCards()).resolves.toMatchObject({
+      data: { limits: { next_capacity_at: expect.any(String), registration_remaining: 0 } },
+    });
     expect(harness.mock.requests.map((request) => request.method)).toEqual(["GET", "GET", "GET"]);
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.30", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.31", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
-  it("uses one caller idempotency key for intent and Payment creation", async () => {
+  it("uses the exact typed start, read, reconcile, and cancel Registration operations", async () => {
     const harness = createPaymentClientTestHarness(csrf);
-    const key = "site040-idempotency-key";
+    const key = "site048-registration-idempotency-key";
+    const registrationId = PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.requires_action.id;
     enqueueCsrf(harness);
-    harness.mock.enqueueJson({ method: "POST", url: `${origin}/me/payment-card-registration-intents` }, { body: registrationIntent, status: 201 });
-    harness.mock.enqueueJson({ method: "POST", url: `${origin}/payments` }, { body: payment, status: 201 });
-    await harness.client.createCardRegistrationIntent({ idempotency_key: key });
-    await harness.client.startPayment({ payment_method: "paypay", point_product_id: payment.point_product_id! }, { idempotency_key: key });
-    expect(harness.mock.requests[1]?.body).toBe("{}");
-    expect(harness.mock.requests[1]?.headers["content-type"]).toBe("application/json");
-    expect(harness.mock.requests[1]?.method).toBe("POST");
-    expect(harness.mock.requests.slice(1).map((request) => request.headers["idempotency-key"])).toEqual([key, key]);
-    expect(harness.mock.requests.slice(1).map((request) => request.headers["x-xsrf-token"])).toEqual([csrf, csrf]);
-    const adapterSource = readFileSync("src/lib/platform/payment-client.ts", "utf8");
-    expect(adapterSource).not.toMatch(/\bfetch\s*\(|content-type/i);
+    harness.mock.enqueueJson(
+      { method: "POST", url: `${origin}/me/payment-card-registrations` },
+      { body: PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.requires_action, status: 201 },
+    );
+    harness.mock.enqueueJson(
+      { method: "GET", url: `${origin}/me/payment-card-registrations/${registrationId}` },
+      { body: PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.pending },
+    );
+    harness.mock.enqueueJson(
+      { method: "POST", url: `${origin}/me/payment-card-registrations/${registrationId}/reconcile` },
+      { body: PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.completed },
+    );
+    harness.mock.enqueueJson(
+      { method: "POST", url: `${origin}/me/payment-card-registrations/${registrationId}/cancel` },
+      { body: PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.canceled },
+    );
+
+    await harness.client.startCardRegistration(
+      { card_token: "tok_browser_public-safe-fixture" },
+      { idempotency_key: key },
+    );
+    await harness.client.getCardRegistration(registrationId);
+    await harness.client.reconcileCardRegistration(registrationId);
+    await harness.client.cancelCardRegistration(registrationId);
+
+    expect(harness.mock.requests.slice(1).map((request) => request.method)).toEqual(["POST", "GET", "POST", "POST"]);
+    expect(harness.mock.requests[1]?.body).toBe('{"card_token":"tok_browser_public-safe-fixture"}');
+    expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBe(key);
+    expect(harness.mock.requests[3]?.body).toBe("{}");
+    expect(harness.mock.requests[4]?.body).toBe("{}");
+    expect(harness.mock.requests.slice(1).map((request) => request.headers["x-xsrf-token"]))
+      .toEqual([csrf, undefined, csrf, csrf]);
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.31", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -140,13 +165,17 @@ describe("MIG-096 canonical Payment browser client", () => {
     expect(harness.mock.requests[1]?.headers["content-type"]).toBe("application/json");
     expect(harness.mock.requests[1]?.headers["x-xsrf-token"]).toBe(csrf);
     expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBeUndefined();
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.30", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.31", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
-  it("exposes purchase history but not registration completion", () => {
+  it("exposes canonical Registration operations but not either legacy save operation", () => {
     const client = createPaymentClientTestHarness().client as unknown as Record<string, unknown>;
-    expect(client.listPayments).toBeTypeOf("function");
+    expect(client.startCardRegistration).toBeTypeOf("function");
+    expect(client.getCardRegistration).toBeTypeOf("function");
+    expect(client.reconcileCardRegistration).toBeTypeOf("function");
+    expect(client.cancelCardRegistration).toBeTypeOf("function");
+    expect(client.createCardRegistrationIntent).toBeUndefined();
     expect(client.completeCardRegistration).toBeUndefined();
   });
 });

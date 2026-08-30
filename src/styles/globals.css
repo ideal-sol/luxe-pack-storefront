@@ -376,6 +376,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .prize-modal__copy > p:first-child { color: var(--bronze); font-size: .58rem; font-weight: 800; letter-spacing: .18em; }
 .prize-modal__copy h2 { font-family: Georgia, "Yu Mincho", serif; font-size: 1.65rem; font-weight: 400; margin: 10px 0; }
 .prize-modal__copy > p:last-child { color: var(--muted); font-size: .78rem; line-height: 1.8; }
+.payment-save-confirmation { align-items: center; background: rgba(23,22,20,.78); display: flex; inset: 0; justify-content: center; padding: 16px; position: fixed; z-index: 100; }
+.payment-save-confirmation__dialog { background: var(--white); border-radius: 14px; box-shadow: var(--shadow); max-width: 560px; padding: 28px; width: 100%; }
+.payment-save-confirmation__dialog h2 { font-family: Georgia, "Yu Mincho", serif; font-size: 1.45rem; font-weight: 400; margin: 0 0 12px; }
+.payment-save-confirmation__dialog > p { color: var(--muted); font-size: .86rem; line-height: 1.8; margin: 0; }
+.payment-save-confirmation__capacity { color: var(--danger) !important; margin-top: 14px !important; }
+.payment-save-confirmation__actions { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 24px; }
+.payment-save-confirmation__actions .button:last-child { grid-column: 1 / -1; }
 .gacha-eligibility { background: var(--white); border: 1px solid var(--line); border-left: 4px solid var(--bronze); display: grid; gap: 20px; padding: 22px; }
 .gacha-eligibility--sold_out, .gacha-eligibility--ended { border-left-color: var(--danger); }
 .gacha-eligibility > div:first-child { display: grid; gap: 8px; }

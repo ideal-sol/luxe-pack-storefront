@@ -9,7 +9,7 @@ import {
   type FincodeCardFieldsHandle,
   type FincodeCardUiError,
 } from "@/components/payment/fincode-card-fields";
-import type { PaymentCardComponentAction, PaymentCardRegistrationIntent } from "@/lib/platform";
+import type { PaymentCardComponentAction } from "@/lib/platform";
 
 const provider = vi.hoisted(() => {
   const create = vi.fn();
@@ -38,10 +38,15 @@ const provider = vi.hoisted(() => {
       pay_type: args.payType,
     }, (status, response) => status === 200 ? resolve(response) : reject(response), reject))),
     fincode,
+    getCardToken: vi.fn(async () => ({
+      card_no: "************4242",
+      expore: "2026/08/29 13:00:00.000",
+      list: [{ token: "tok_browser_public-safe-fixture" }],
+      security_code_set: "1",
+    })),
     initFincode: vi.fn(async () => fincode),
     mount,
     payments,
-    registerCard: vi.fn(async () => ({ id: "provider-card-safe-reference" })),
     state,
     ui,
   };
@@ -49,8 +54,8 @@ const provider = vi.hoisted(() => {
 
 vi.mock("@fincode/js", () => ({
   executePayment: provider.executePayment,
+  getCardToken: provider.getCardToken,
   initFincode: provider.initFincode,
-  registerCard: provider.registerCard,
 }));
 
 const action = {
@@ -63,17 +68,6 @@ const action = {
   tds_type: "2",
   type: "fincode_card_component",
 } satisfies PaymentCardComponentAction;
-
-const intent = {
-  expires_at: "2026-08-26T01:00:00Z",
-  id: "registration-intent-public-reference",
-  provider_context: {
-    customer_id: "customer-public-reference",
-    provider: "fincode",
-    public_api_key: "p_test_public-safe-fixture",
-    tds_type: "2",
-  },
-} satisfies PaymentCardRegistrationIntent;
 
 function setProviderInitializer(value: unknown) {
   Object.defineProperty(window, "Fincode", { configurable: true, value, writable: true });
@@ -251,18 +245,19 @@ describe("SITE-043 fincode Card UI boundary", () => {
     render(<FincodeCardFields bootstrap={PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES.sandbox} onMountStateChange={() => undefined} ref={ref} />);
     await waitFor(() => expect(provider.mount).toHaveBeenCalled());
     await expect(ref.current!.execute(action)).resolves.toBe("https://provider.example/3ds");
-    await expect(ref.current!.register(intent)).resolves.toBe("provider-card-safe-reference");
+    await expect(ref.current!.tokenize()).resolves.toBe("tok_browser_public-safe-fixture");
     expect(provider.executePayment).toHaveBeenCalledWith(expect.objectContaining({ accessId: action.access_id, id: action.payment_id, payType: "Card", ui: provider.ui }));
     expect(provider.payments).toHaveBeenCalledWith(expect.objectContaining({
       return_url: action.return_url,
       return_url_on_failure: action.failure_url,
     }), expect.any(Function), expect.any(Function));
     expect(provider.payments.mock.calls[0]?.[0]).not.toHaveProperty("redirect_url");
-    expect(provider.registerCard).toHaveBeenCalledWith(expect.objectContaining({ customerId: intent.provider_context.customer_id, useDefault: false, ui: provider.ui }));
+    expect(provider.getCardToken).toHaveBeenCalledWith(expect.objectContaining({ fincode: provider.fincode, number: "1", ui: provider.ui }));
     const source = readFileSync("src/components/payment/fincode-card-fields.tsx", "utf8");
     expect(source).not.toMatch(new RegExp(["getFormData", "local" + "Storage", "session" + "Storage", "postMessage"].join("|")));
     expect(source).not.toMatch(/\bpan\b|card_number|security_code/i);
     expect(source).not.toMatch(/\/cards\/(?:success|failure)/);
+    expect(source).not.toContain("registerCard");
   });
 
   it("clears the provider mount on unmount", async () => {

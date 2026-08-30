@@ -1,5 +1,11 @@
 import { ApiProblemError, StorefrontTransportError } from "@oripa/storefront-client";
-import { presentPaymentProblem, type PaymentMethod } from "@/lib/platform";
+import {
+  isDefinitiveCardRegistrationProblem,
+  isUncertainCardRegistrationProblem,
+  presentCardRegistrationProblem,
+  presentPaymentProblem,
+  type PaymentMethod,
+} from "@/lib/platform";
 
 const unpaidCopy = "コンビニ決済の未払いがあるため、コンビニ決済を使用できません";
 const genericPaymentCopy = "決済処理を完了できませんでした。時間をおいて、もう一度お試しください。";
@@ -50,5 +56,46 @@ describe("SITE-044 Payment problem presentation", () => {
     const presentation = presentPaymentProblem(transport, "konbini");
     expect(presentation.message).toBe("通信結果を確認できませんでした。同じ操作を繰り返さず、時間をおいて状態をご確認ください。");
     expect(presentation.message).not.toBe(unpaidCopy);
+  });
+});
+
+describe("SITE-048 Card Registration problem presentation", () => {
+  it.each(["CARD_REGISTRATION_UNAVAILABLE", "CARD_REGISTRATION_CONFLICT"])(
+    "treats %s as result-uncertain without exposing Provider text",
+    (code) => {
+      const problem = apiProblem(code, {
+        detail: "provider raw private detail",
+        title: "provider raw private title",
+      });
+      const presentation = presentCardRegistrationProblem(problem);
+      expect(isUncertainCardRegistrationProblem(problem)).toBe(true);
+      expect(isDefinitiveCardRegistrationProblem(problem)).toBe(false);
+      expect(presentation.message).toBe("通信結果を確認できませんでした。同じ操作を繰り返さず、時間をおいて状態をご確認ください。");
+      expect(presentation.message).not.toMatch(/provider raw private/);
+    },
+  );
+
+  it.each([
+    "CARD_REGISTRATION_FAILED",
+    "CARD_REGISTRATION_CANCELED",
+    "CARD_INTENT_EXPIRED",
+    "CARD_REGISTRATION_OWNERSHIP_INVALID",
+  ])("maps definitive %s to a fixed safe copy", (code) => {
+    const problem = apiProblem(code);
+    expect(isDefinitiveCardRegistrationProblem(problem)).toBe(true);
+    expect(isUncertainCardRegistrationProblem(problem)).toBe(false);
+    expect(presentCardRegistrationProblem(problem).message)
+      .toBe("エラーが発生しました。時間をおいて、もう一度お試しください。");
+  });
+
+  it("retains typed authentication and retry metadata without raw detail", () => {
+    const problem = apiProblem("AUTHENTICATION_REQUIRED", {
+      retry_after_seconds: 17,
+      status: 401,
+    });
+    const presentation = presentCardRegistrationProblem(problem);
+    expect(presentation.sessionExpired).toBe(true);
+    expect(presentation.message).toBe("エラーが発生しました。時間をおいて、もう一度お試しください。");
+    expect(presentation.message).not.toContain("fixture detail");
   });
 });

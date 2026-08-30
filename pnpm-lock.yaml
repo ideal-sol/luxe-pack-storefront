@@ -6,7 +6,7 @@ settings:
 
 overrides:
   '@oripa/site-schema@2.0.0-alpha.23': file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
-  '@oripa/storefront-client@2.0.0-alpha.30': file:vendor/oripa/MIG-096/oripa-storefront-client-2.0.0-alpha.30.tgz
+  '@oripa/storefront-client@2.0.0-alpha.31': file:vendor/oripa/MIG-098/oripa-storefront-client-2.0.0-alpha.31.tgz
   nanoid@<3.3.18: 3.3.18
 
 importers:
@@ -17,8 +17,8 @@ importers:
         specifier: 1.1.0
         version: 1.1.0
       '@oripa/storefront-client':
-        specifier: file:vendor/oripa/MIG-096/oripa-storefront-client-2.0.0-alpha.30.tgz
-        version: file:vendor/oripa/MIG-096/oripa-storefront-client-2.0.0-alpha.30.tgz
+        specifier: file:vendor/oripa/MIG-098/oripa-storefront-client-2.0.0-alpha.31.tgz
+        version: file:vendor/oripa/MIG-098/oripa-storefront-client-2.0.0-alpha.31.tgz
       next:
         specifier: 16.3.0
         version: 16.3.0(@babel/core@7.29.7)(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -36,8 +36,8 @@ importers:
         specifier: file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
         version: file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
       '@oripa/storefront-testkit':
-        specifier: file:vendor/oripa/MIG-096/oripa-storefront-testkit-2.0.0-alpha.30.tgz
-        version: file:vendor/oripa/MIG-096/oripa-storefront-testkit-2.0.0-alpha.30.tgz
+        specifier: file:vendor/oripa/MIG-098/oripa-storefront-testkit-2.0.0-alpha.31.tgz
+        version: file:vendor/oripa/MIG-098/oripa-storefront-testkit-2.0.0-alpha.31.tgz
       '@tailwindcss/postcss':
         specifier: 4.3.3
         version: 4.3.3
@@ -541,14 +541,14 @@ packages:
     version: 2.0.0-alpha.23
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-client@file:vendor/oripa/MIG-096/oripa-storefront-client-2.0.0-alpha.30.tgz':
-    resolution: {integrity: sha512-IwuIyHX+qjRujowJS8Qg5mB8pmkPYAlexM2+jYP8c5FdwcEc5i6x4fD3dPjIyYV2ZDuNYw8ntaT7lRgjPjr37w==, tarball: file:vendor/oripa/MIG-096/oripa-storefront-client-2.0.0-alpha.30.tgz}
-    version: 2.0.0-alpha.30
+  '@oripa/storefront-client@file:vendor/oripa/MIG-098/oripa-storefront-client-2.0.0-alpha.31.tgz':
+    resolution: {integrity: sha512-Vqr/mqtbr4vmNlzEUN9fCq7tKthId7cc58OWs7Y/hfsUf6pwOZltuCACpdpAaJASKrO4UfgtgXV9vdehwWj3zg==, tarball: file:vendor/oripa/MIG-098/oripa-storefront-client-2.0.0-alpha.31.tgz}
+    version: 2.0.0-alpha.31
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/MIG-096/oripa-storefront-testkit-2.0.0-alpha.30.tgz':
-    resolution: {integrity: sha512-Xg8Sd/aIN6ruIn9nNDEUiTBABSEJdxR1l0OcsYUpJ4nd+QPx4RvNlVLp+ItP/zgyRui6b9Byclurm8ZnSUEUtw==, tarball: file:vendor/oripa/MIG-096/oripa-storefront-testkit-2.0.0-alpha.30.tgz}
-    version: 2.0.0-alpha.30
+  '@oripa/storefront-testkit@file:vendor/oripa/MIG-098/oripa-storefront-testkit-2.0.0-alpha.31.tgz':
+    resolution: {integrity: sha512-6RdhOcKmY5Ag3MdEsKA82NPatJREYHAOK28TYRBZ6K6+7F/qvsLYttd8z0SqubVfPs2YcWG9/+1z/OXc3FGG6A==, tarball: file:vendor/oripa/MIG-098/oripa-storefront-testkit-2.0.0-alpha.31.tgz}
+    version: 2.0.0-alpha.31
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
   '@oxc-project/types@0.143.0':
@@ -3117,12 +3117,12 @@ snapshots:
       ajv: 8.20.0
       semver: 7.8.5
 
-  '@oripa/storefront-client@file:vendor/oripa/MIG-096/oripa-storefront-client-2.0.0-alpha.30.tgz': {}
+  '@oripa/storefront-client@file:vendor/oripa/MIG-098/oripa-storefront-client-2.0.0-alpha.31.tgz': {}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/MIG-096/oripa-storefront-testkit-2.0.0-alpha.30.tgz':
+  '@oripa/storefront-testkit@file:vendor/oripa/MIG-098/oripa-storefront-testkit-2.0.0-alpha.31.tgz':
     dependencies:
       '@oripa/site-schema': file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
-      '@oripa/storefront-client': file:vendor/oripa/MIG-096/oripa-storefront-client-2.0.0-alpha.30.tgz
+      '@oripa/storefront-client': file:vendor/oripa/MIG-098/oripa-storefront-client-2.0.0-alpha.31.tgz
 
   '@oxc-project/types@0.143.0': {}
 

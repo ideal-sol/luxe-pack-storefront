@@ -6,15 +6,29 @@ import { useSession } from "@/components/auth/session-provider";
 import { LoginRequiredState } from "@/components/common/state-panel";
 import { CatalogLoading, CatalogMessage } from "@/components/catalog/catalog-message";
 import { FincodeCardFields, type FincodeCardFieldsHandle } from "@/components/payment/fincode-card-fields";
+import { CardSaveConfirmation } from "@/components/payment/card-save-confirmation";
+import {
+  assertCardRegistrationResumeAvailable,
+  beginCardRegistrationReturn,
+  clearCardRegistrationResume,
+  markCardRegistrationPaymentStarting,
+  readCardRegistrationResume,
+  saveCardRegistrationResume,
+} from "@/components/payment/card-registration-resume";
 import { PaymentMethodSelector } from "@/components/payment/payment-method-selector";
 import { PaymentReturnAlert } from "@/components/payment/payment-return-alert";
 import { usePaymentClient } from "@/components/payment/payment-client-provider";
 import {
   createPaymentIdempotencyKey,
+  isDefinitiveCardRegistrationProblem,
+  isUncertainCardRegistrationProblem,
+  presentCardRegistrationProblem,
   presentPaymentProblem,
   presentPlatformProblem,
   type Payment,
   type PaymentCard,
+  type PaymentCardCollection,
+  type PaymentCardRegistration,
   type PaymentCardUiBootstrap,
   type PaymentCreateRequest,
   type PaymentMethod,
@@ -22,6 +36,7 @@ import {
   type PointProduct,
   type PointProductCollection,
 } from "@/lib/platform";
+import { pointPurchaseDetailRoute } from "@/lib/routes/navigation";
 import { usePointClient } from "./point-client-provider";
 import {
   pointProductIneligibleReasonLabels,
@@ -58,20 +73,28 @@ function PurchaseSummary({ product }: { readonly product: PointProduct }) {
   );
 }
 
-function PurchaseForm({ product }: { readonly product: PointProduct }) {
+function PurchaseForm({
+  product,
+  registrationId,
+}: {
+  readonly product: PointProduct;
+  readonly registrationId: string | null;
+}) {
   const { client } = usePaymentClient();
   const cardFieldsRef = useRef<FincodeCardFieldsHandle>(null);
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [cards, setCards] = useState<readonly PaymentCard[]>([]);
+  const [cardLimits, setCardLimits] = useState<PaymentCardCollection["limits"] | null>(null);
   const [cardsLoaded, setCardsLoaded] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | "new" | null>(null);
   const [bootstrap, setBootstrap] = useState<PaymentCardUiBootstrap | null>(null);
   const [cardMounted, setCardMounted] = useState(false);
-  const [saveCard, setSaveCard] = useState(false);
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [cardBusy, setCardBusy] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submissionLocked, setSubmissionLocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const registrationResumeRef = useRef<string | null>(null);
   const onCardMountStateChange = useCallback((mounted: boolean) => setCardMounted(mounted), []);
   const onCardUiError = useCallback((reason: unknown) => {
     setError(presentPaymentProblem(reason).message);
@@ -81,6 +104,7 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
     if (!client) return;
     const { data } = await client.listCards();
     setCards(data.data);
+    setCardLimits(data.limits);
     setCardsLoaded(true);
     setSelectedCardId((current) => {
       if (current === "new") return current;
@@ -109,12 +133,20 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
       .catch((reason) => setError(presentPaymentProblem(reason).message)).finally(() => setCardBusy(false));
   };
 
-  const navigateAfterStart = async (payment: Payment) => {
+  const navigateAfterStart = useCallback(async (
+    payment: Payment,
+    paymentMethod: PaymentMethod,
+    requireSavedCard3ds = false,
+  ) => {
+    if (requireSavedCard3ds && ["created", "requires_action"].includes(payment.status) &&
+        payment.next_action?.type !== "three_d_secure") {
+      throw new Error("Canonical saved-card Payment 3DS action is unavailable");
+    }
     if (["processing", "succeeded", "failed", "canceled", "expired"].includes(payment.status)) {
       window.location.replace(`/points/purchase/thanks?pid=${encodeURIComponent(payment.id)}`);
       return;
     }
-    if (method === "konbini" || method === "virtual_account") {
+    if (paymentMethod === "konbini" || paymentMethod === "virtual_account") {
       window.location.replace(`/points/purchase/thanks?pid=${encodeURIComponent(payment.id)}`);
       return;
     }
@@ -134,9 +166,9 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
       return;
     }
     window.location.replace(`/points/purchase/thanks?pid=${encodeURIComponent(payment.id)}`);
-  };
+  }, [bootstrap, cardMounted]);
 
-  const submit = async () => {
+  const submitPayment = async () => {
     if (!client || !method || submitting || cardBusy || submissionLocked) return;
     const newCard = method === "credit_card" && selectedCardId === "new";
     if (method === "credit_card" && (!selectedCardId || newCard && !cardMounted)) return;
@@ -148,14 +180,6 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
       let card: PaymentCreateRequest["card"];
       if (method === "credit_card" && selectedCardId && selectedCardId !== "new") {
         card = { card_id: selectedCardId, source: "saved" };
-      } else if (newCard && saveCard) {
-        const { data: intent } = await client.createCardRegistrationIntent({ idempotency_key: idempotencyKey });
-        if (!bootstrap || intent.provider_context.public_api_key !== bootstrap.public_api_key || intent.provider_context.tds_type !== "2") {
-          throw new Error("Canonical fincode Card registration context is unavailable");
-        }
-        const providerCardId = await cardFieldsRef.current?.register(intent);
-        if (!providerCardId) throw new Error("Card registration did not return a card reference");
-        card = { provider_card_id: providerCardId, registration_intent_id: intent.id, save: true, source: "new" };
       } else if (newCard) {
         card = { save: false, source: "new" };
       }
@@ -164,14 +188,208 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
         : { payment_method: method, point_product_id: product.id };
       const { data: payment } = await client.startPayment(input, { idempotency_key: idempotencyKey });
       paymentCreated = true;
-      if (newCard && saveCard) void refreshCards().catch(() => undefined);
-      await navigateAfterStart(payment);
+      await navigateAfterStart(
+        payment,
+        method,
+        method === "credit_card" && selectedCardId !== "new",
+      );
     } catch (reason) {
       setError(presentPaymentProblem(reason, method).message);
       if (paymentCreated || reason instanceof StorefrontTransportError) setSubmissionLocked(true);
       setSubmitting(false);
     }
   };
+
+  const startSavedCardPayment = useCallback(async (
+    cardId: string,
+    idempotencyKey: string,
+  ) => {
+    if (!client) throw new Error("Canonical Payment Client is unavailable");
+    const { data: payment } = await client.startPayment({
+      card: { card_id: cardId, source: "saved" },
+      payment_method: "credit_card",
+      point_product_id: product.id,
+    }, { idempotency_key: idempotencyKey });
+    return payment;
+  }, [client, product.id]);
+
+  const saveAndBuy = async () => {
+    if (!client || submitting || cardBusy || submissionLocked || !cardMounted ||
+        (cardLimits?.registration_remaining ?? 0) <= 0) return;
+    setConfirmationOpen(false);
+    setSubmitting(true);
+    setError(null);
+    let registrationCreated = false;
+    let paymentCreated = false;
+    let paymentStarting = false;
+    let registrationPublicId: string | null = null;
+    try {
+      assertCardRegistrationResumeAvailable();
+      const registrationIdempotencyKey = createPaymentIdempotencyKey();
+      const paymentIdempotencyKey = createPaymentIdempotencyKey();
+      const cardToken = await cardFieldsRef.current?.tokenize();
+      if (!cardToken) throw new Error("Card tokenization did not return a token");
+      const { data: registration } = await client.startCardRegistration(
+        { card_token: cardToken },
+        { idempotency_key: registrationIdempotencyKey },
+      );
+      registrationCreated = true;
+      registrationPublicId = registration.id;
+      if (registration.status === "requires_action" && registration.next_action?.type === "three_d_secure") {
+        saveCardRegistrationResume({
+          paymentIdempotencyKey,
+          productId: product.id,
+          registrationId: registration.id,
+        });
+        window.location.assign(registration.next_action.url);
+        return;
+      }
+      if (registration.status === "completed" && registration.saved_card_id) {
+        setSelectedCardId(registration.saved_card_id);
+        setCardMounted(false);
+        saveCardRegistrationResume({
+          paymentIdempotencyKey,
+          productId: product.id,
+          registrationId: registration.id,
+        });
+        if (!beginCardRegistrationReturn(registration.id, product.id) ||
+            !markCardRegistrationPaymentStarting(registration.id)) {
+          throw new Error("Card registration Payment correlation is unavailable");
+        }
+        paymentStarting = true;
+        const payment = await startSavedCardPayment(registration.saved_card_id, paymentIdempotencyKey);
+        paymentCreated = true;
+        void refreshCards().catch(() => undefined);
+        await navigateAfterStart(payment, "credit_card", true);
+        clearCardRegistrationResume(registration.id);
+        return;
+      }
+      setError(presentCardRegistrationProblem(null).message);
+      if (registration.status === "pending" || registration.status === "requires_action") {
+        setSubmissionLocked(true);
+      }
+      setSubmitting(false);
+    } catch (reason) {
+      const uncertain = paymentStarting
+        ? reason instanceof StorefrontTransportError
+        : isUncertainCardRegistrationProblem(reason);
+      if (paymentStarting && !uncertain && !paymentCreated && registrationPublicId) {
+        clearCardRegistrationResume(registrationPublicId);
+        void refreshCards().catch(() => undefined);
+      }
+      setError(paymentStarting
+        ? presentPaymentProblem(reason, "credit_card").message
+        : presentCardRegistrationProblem(reason).message);
+      if (uncertain || paymentCreated || registrationCreated && !paymentStarting) setSubmissionLocked(true);
+      setSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (registrationId) return;
+    const timer = window.setTimeout(() => {
+      try {
+        const context = readCardRegistrationResume();
+        if (context?.productId === product.id) setSubmissionLocked(true);
+      } catch (reason) {
+        setError(presentCardRegistrationProblem(reason).message);
+        setSubmissionLocked(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [product.id, registrationId]);
+
+  useEffect(() => {
+    if (!client || !registrationId || registrationResumeRef.current === registrationId) return;
+    let active = true;
+    const timer = window.setTimeout(() => {
+      if (!active || registrationResumeRef.current === registrationId) return;
+      registrationResumeRef.current = registrationId;
+      let paymentStarting = false;
+      let paymentCreated = false;
+      let context: ReturnType<typeof beginCardRegistrationReturn>;
+      try {
+        context = beginCardRegistrationReturn(registrationId, product.id);
+      } catch (reason) {
+        setError(presentCardRegistrationProblem(reason).message);
+        setSubmissionLocked(true);
+        return;
+      }
+      if (!context) {
+        setError(presentCardRegistrationProblem(null).message);
+        setSubmissionLocked(true);
+        return;
+      }
+      window.history.replaceState(null, "", pointPurchaseDetailRoute(product.id));
+      setMethod("credit_card");
+      setSubmitting(true);
+      setError(null);
+
+      const finishWithoutPayment = (registration: PaymentCardRegistration) => {
+        if (["failed", "canceled", "expired"].includes(registration.status)) {
+          clearCardRegistrationResume(registration.id);
+          setError(presentCardRegistrationProblem(null).message);
+          setSubmitting(false);
+          void refreshCards().catch(() => undefined);
+          return;
+        }
+        setError(presentCardRegistrationProblem(new StorefrontTransportError(
+          "HTTP_ERROR",
+          "Card registration remains incomplete",
+        )).message);
+        setSubmissionLocked(true);
+        setSubmitting(false);
+      };
+
+      const resume = async () => {
+        try {
+          let registration = (await client.getCardRegistration(registrationId)).data;
+          if (registration.status === "pending" || registration.status === "requires_action") {
+            registration = (await client.reconcileCardRegistration(registrationId)).data;
+          }
+          if (!active) return;
+          if (registration.status !== "completed" || !registration.saved_card_id) {
+            finishWithoutPayment(registration);
+            return;
+          }
+          setSelectedCardId(registration.saved_card_id);
+          setCardMounted(false);
+          const paymentContext = markCardRegistrationPaymentStarting(registrationId);
+          if (!paymentContext) throw new Error("Card registration Payment resume is unavailable");
+          paymentStarting = true;
+          const payment = await startSavedCardPayment(
+            registration.saved_card_id,
+            paymentContext.paymentIdempotencyKey,
+          );
+          paymentCreated = true;
+          if (!active) return;
+          void refreshCards().catch(() => undefined);
+          await navigateAfterStart(payment, "credit_card", true);
+          clearCardRegistrationResume(registrationId);
+        } catch (reason) {
+          if (!active) return;
+          const uncertain = isUncertainCardRegistrationProblem(reason) ||
+            paymentStarting && (paymentCreated || reason instanceof StorefrontTransportError);
+          const definitiveRegistrationFailure = !paymentStarting &&
+            isDefinitiveCardRegistrationProblem(reason);
+          if (!uncertain && (paymentStarting || definitiveRegistrationFailure)) {
+            clearCardRegistrationResume(registrationId);
+          }
+          setError(paymentStarting
+            ? presentPaymentProblem(reason, "credit_card").message
+            : presentCardRegistrationProblem(reason).message);
+          setSubmissionLocked(uncertain || !paymentStarting && !definitiveRegistrationFailure);
+          setSubmitting(false);
+          if (paymentStarting && !uncertain) void refreshCards().catch(() => undefined);
+        }
+      };
+      void resume();
+    }, 0);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [client, navigateAfterStart, product.id, refreshCards, registrationId, startSavedCardPayment]);
 
   const deleteCard = async (cardId: string) => {
     if (!client || cardBusy || submitting) return;
@@ -193,6 +411,7 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
     !selectedCardId || selectedCardId === "new" ? !cardMounted : !selectedSavedCard?.can_pay || selectedSavedCard.is_expired
   );
   const disabled = !method || backendUnavailable || submitting || cardBusy || cardUnavailable || submissionLocked;
+  const canSaveCard = (cardLimits?.registration_remaining ?? 0) > 0;
 
   return (
     <section aria-labelledby="payment-method-title" className="point-purchase-detail__payment">
@@ -203,6 +422,7 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
         cards={cards}
         onDeleteCard={(cardId) => { void deleteCard(cardId); }}
         onMethodChange={(next) => {
+          setConfirmationOpen(false);
           setMethod(next);
           setError(null);
           if (next === "credit_card" && !cardsLoaded) loadCards();
@@ -216,22 +436,41 @@ function PurchaseForm({ product }: { readonly product: PointProduct }) {
         <div className="payment-new-card">
           {bootstrap ? <FincodeCardFields bootstrap={bootstrap} onError={onCardUiError} onMountStateChange={onCardMountStateChange} ref={cardFieldsRef} />
             : <div aria-live="polite" className="payment-card-loading" role="status">カード入力欄を準備中です。</div>}
-          <label className="payment-save-card">
-            <input checked={saveCard} disabled={!cardMounted || cardBusy} onChange={(event) => setSaveCard(event.target.checked)} type="checkbox" />
-            <span>このカードを保存する</span>
-          </label>
         </div>
       </PaymentMethodSelector>
       {error ? <p className="payment-inline-error" role="alert">{error}</p> : null}
       {submissionLocked ? <p className="payment-submission-locked">決済状況を確認できるまで、新しい決済は開始できません。</p> : null}
-      <button className="button button--dark payment-purchase-button" disabled={disabled} onClick={() => { void submit(); }} type="button">
+      <button className="button button--dark payment-purchase-button" disabled={disabled} onClick={() => {
+        if (method === "credit_card" && selectedCardId === "new") setConfirmationOpen(true);
+        else void submitPayment();
+      }} type="button">
         {submitting ? "処理中…" : "購入する"}
       </button>
+      {confirmationOpen ? (
+        <CardSaveConfirmation
+          busy={submitting}
+          canSave={canSaveCard}
+          nextCapacityAt={cardLimits?.next_capacity_at ?? null}
+          onBack={() => setConfirmationOpen(false)}
+          onBuyWithoutSaving={() => { setConfirmationOpen(false); void submitPayment(); }}
+          onSaveAndBuy={() => { void saveAndBuy(); }}
+        />
+      ) : null}
     </section>
   );
 }
 
-function ProductDetail({ authenticated, pid, product }: { readonly authenticated: boolean; readonly pid: string | null; readonly product: PointProduct }) {
+function ProductDetail({
+  authenticated,
+  pid,
+  product,
+  registrationId,
+}: {
+  readonly authenticated: boolean;
+  readonly pid: string | null;
+  readonly product: PointProduct;
+  readonly registrationId: string | null;
+}) {
   const { client } = usePaymentClient();
   const reason = product.ineligible_reason ? pointProductIneligibleReasonLabels[product.ineligible_reason] : null;
   return (
@@ -239,7 +478,7 @@ function ProductDetail({ authenticated, pid, product }: { readonly authenticated
       <header className="point-purchase-detail__header"><p>COIN PURCHASE DETAIL</p><h1>{presentCoinTerminology(product.title)}</h1></header>
       {client ? <PaymentReturnAlert client={client} pid={pid} productId={product.id} /> : null}
       <PurchaseSummary product={product} />
-      {authenticated ? <PurchaseForm product={product} /> : <LoginRequiredState />}
+      {authenticated ? <PurchaseForm product={product} registrationId={registrationId} /> : <LoginRequiredState />}
       <section aria-labelledby="point-purchase-conditions-title" className="point-purchase-detail__conditions">
         <header><p>PRODUCT INFORMATION</p><h2 id="point-purchase-conditions-title">商品情報</h2></header>
         <dl>
@@ -252,7 +491,15 @@ function ProductDetail({ authenticated, pid, product }: { readonly authenticated
   );
 }
 
-export function PointPurchaseDetail({ pid = null, productId }: { readonly pid?: string | null; readonly productId: string }) {
+export function PointPurchaseDetail({
+  pid = null,
+  productId,
+  registrationId = null,
+}: {
+  readonly pid?: string | null;
+  readonly productId: string;
+  readonly registrationId?: string | null;
+}) {
   const { state: session } = useSession();
   const { client } = usePointClient();
   const [requestKey, setRequestKey] = useState(0);
@@ -283,5 +530,5 @@ export function PointPurchaseDetail({ pid = null, productId }: { readonly pid?: 
   if (displayState.status === "error") return <CatalogMessage action={() => { setState({ status: "loading" }); setRequestKey((value) => value + 1); }} description={displayState.problem.message} eyebrow="ERROR" title="コイン商品を取得できませんでした" tone="error" />;
   const product = displayState.collection.data.find((candidate) => candidate.id === productId);
   if (!product) return <CatalogMessage description="指定されたコイン商品は公開されていないか、見つかりません。" eyebrow="NOT FOUND" title="コイン商品が見つかりません" />;
-  return <ProductDetail authenticated={session.status === "authenticated"} pid={pid} product={product} />;
+  return <ProductDetail authenticated={session.status === "authenticated"} pid={pid} product={product} registrationId={registrationId} />;
 }
