@@ -55,11 +55,16 @@ function response<T>(data: T) {
 
 function authClient(session: AuthSession = authenticated): AuthClientAdapter {
   return {
+    changeUserPassword: vi.fn(),
+    completeEmailChange: vi.fn(),
     completeEmailVerification: vi.fn(),
+    confirmPasswordReset: vi.fn(),
+    createEmailChangeRequest: vi.fn(),
     getCurrentSession: vi.fn().mockResolvedValue(response(session)),
     login: vi.fn(),
     logout: vi.fn(),
     register: vi.fn(),
+    requestPasswordReset: vi.fn(),
     resendEmailVerification: vi.fn(),
   } as AuthClientAdapter;
 }

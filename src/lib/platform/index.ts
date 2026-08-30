@@ -3,12 +3,28 @@ export {
   createBrowserAuthClient,
   type AuthClientAdapter,
   type AuthSession,
+  type EmailChangeCompleteRequest,
+  type EmailChangeCompleted,
+  type EmailChangePending,
+  type EmailChangeRequest,
   type LoginRequest,
   type PendingRegistration,
+  type PasswordChangeRequest,
+  type PasswordChanged,
+  type PasswordResetAccepted,
+  type PasswordResetCompleted,
+  type PasswordResetConfirmRequest,
+  type PasswordResetRequest,
   type RegistrationRequest,
   type VerificationResendRequest,
 } from "./auth-client";
-export { presentAuthProblem, type AuthProblemPresentation } from "./problem-details";
+export {
+  presentAccountSecurityProblem,
+  presentAuthProblem,
+  type AccountSecurityOperation,
+  type AccountSecurityProblemPresentation,
+  type AuthProblemPresentation,
+} from "./problem-details";
 export {
   createBrowserExternalIdentityClient,
   createExternalIdentityAdapter,

@@ -17,13 +17,18 @@ const metadata = { idempotency_replayed: false, status: 200 } as const;
 
 function client(session: AuthSession, pending = false): AuthClientAdapter {
   return {
+    changeUserPassword: vi.fn(),
+    completeEmailChange: vi.fn(),
     completeEmailVerification: vi.fn(),
+    confirmPasswordReset: vi.fn(),
+    createEmailChangeRequest: vi.fn(),
     getCurrentSession: pending
       ? vi.fn(() => new Promise(() => undefined))
       : vi.fn().mockResolvedValue({ data: session, metadata }),
     login: vi.fn(),
     logout: vi.fn(),
     register: vi.fn(),
+    requestPasswordReset: vi.fn(),
     resendEmailVerification: vi.fn(),
   } as AuthClientAdapter;
 }

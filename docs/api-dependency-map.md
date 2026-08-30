@@ -1,7 +1,7 @@
 # API dependency map
 
-Storefront operations use the MIG-098 Artifact: `@oripa/storefront-client` and
-`@oripa/storefront-testkit` alpha.31 with referenced Public OpenAPI alpha.28 and
+Storefront operations use the GOV-025 Artifact: `@oripa/storefront-client` and
+`@oripa/storefront-testkit` alpha.33 with referenced Public OpenAPI alpha.29 and
 Site Schema alpha.23. This map does not invent absent operations or response
 shapes.
 
@@ -19,6 +19,9 @@ shapes.
 | Registration | Registration and pending email verification | **Resolved — MIG-061U identity client** |
 | Logout | Browser session invalidation | **Resolved — MIG-061U identity client** |
 | Email verification | Resend and one-time completion | **Resolved — MIG-061U identity client** |
+| Password Reset | Enumeration-safe request and one-time reset completion without Session creation | **Resolved — GOV-025 alpha.33 Account Security Client; SITE-050 implemented** |
+| Email Address Change | Authenticated request and same-browser／cross-browser one-time completion with canonical Session rotation result | **Resolved — GOV-025 alpha.33 Account Security Client; SITE-050 implemented** |
+| Password Change | Current-password-authorized immediate update with canonical Session rotation result | **Resolved — GOV-025 alpha.33 Account Security Client; SITE-050 implemented** |
 | My Page top | Current browser Session user verification and account state | **Resolved — existing identity Session; SITE-006 implemented** |
 | LINE link state | Current user's linked External Identity collection | **Resolved — alpha.4 `listExternalIdentities`; SITE-011 implemented** |
 | LINE link start | Session-bound canonical LINE authorization transaction | **Resolved — alpha.4 `startLineIdentityLink`; SITE-011 implemented** |

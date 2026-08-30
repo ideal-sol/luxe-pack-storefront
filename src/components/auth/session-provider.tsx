@@ -15,8 +15,18 @@ import {
   PlatformConfigurationError,
   type AuthClientAdapter,
   type AuthSession,
+  type EmailChangeCompleteRequest,
+  type EmailChangeCompleted,
+  type EmailChangePending,
+  type EmailChangeRequest,
   type LoginRequest,
   type PendingRegistration,
+  type PasswordChangeRequest,
+  type PasswordChanged,
+  type PasswordResetAccepted,
+  type PasswordResetCompleted,
+  type PasswordResetConfirmRequest,
+  type PasswordResetRequest,
   type RegistrationRequest,
   type VerificationResendRequest,
 } from "@/lib/platform";
@@ -36,11 +46,16 @@ function sessionState(data: AuthSession): SessionState {
 }
 
 interface SessionContextValue {
+  readonly changePassword: (input: PasswordChangeRequest) => Promise<PasswordChanged>;
+  readonly completeEmailChange: (input: EmailChangeCompleteRequest) => Promise<EmailChangeCompleted>;
   readonly completeEmailVerification: (input: { readonly user_id: string; readonly hash: string }) => Promise<void>;
+  readonly confirmPasswordReset: (input: PasswordResetConfirmRequest) => Promise<PasswordResetCompleted>;
+  readonly createEmailChangeRequest: (input: EmailChangeRequest) => Promise<EmailChangePending>;
   readonly login: (input: LoginRequest) => Promise<void>;
   readonly logout: () => Promise<void>;
   readonly refreshSession: () => Promise<void>;
   readonly register: (input: RegistrationRequest) => Promise<PendingRegistration>;
+  readonly requestPasswordReset: (input: PasswordResetRequest) => Promise<PasswordResetAccepted>;
   readonly resendEmailVerification: (input: VerificationResendRequest) => Promise<void>;
   readonly state: SessionState;
 }
@@ -116,9 +131,37 @@ export function SessionProvider({
   }, [client]);
 
   const value = useMemo<SessionContextValue>(() => ({
+    async changePassword(input) {
+      const { data } = await requireClient().changeUserPassword(input, {});
+      await refreshSession();
+      return data;
+    },
+    async completeEmailChange(input) {
+      const { data } = await requireClient().completeEmailChange(input, {});
+      if (data.authenticated) {
+        await refreshSession();
+      } else {
+        refreshSequence.current += 1;
+        setState({
+          status: "unauthenticated",
+          session: { authenticated: false, user: null },
+        });
+      }
+      return data;
+    },
     async completeEmailVerification(input) {
       await requireClient().completeEmailVerification(input);
       await refreshSession();
+    },
+    async confirmPasswordReset(input) {
+      const { data } = await requireClient().confirmPasswordReset(input, {});
+      refreshSequence.current += 1;
+      setState(sessionState({ authenticated: data.authenticated, user: data.user }));
+      return data;
+    },
+    async createEmailChangeRequest(input) {
+      const { data } = await requireClient().createEmailChangeRequest(input, {});
+      return data;
     },
     async login(input) {
       await requireClient().login(input);
@@ -136,6 +179,10 @@ export function SessionProvider({
     async register(input) {
       const { data } = await requireClient().register(input);
       await refreshSession();
+      return data;
+    },
+    async requestPasswordReset(input) {
+      const { data } = await requireClient().requestPasswordReset(input, {});
       return data;
     },
     async resendEmailVerification(input) {

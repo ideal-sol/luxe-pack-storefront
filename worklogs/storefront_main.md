@@ -1358,3 +1358,38 @@ Frozen install and local Artifact／Policy／all boundary／lint／typecheck／4
 Payment status coverage passes 1 file／29 tests. Changed files are the exact five
 Task Policy paths with wildcard and scope escape zero. Fresh exact-head Required
 Checks and R4 self-review remain required before Squash Merge.
+
+## SITE-050 — Account Security UI / Artifact alpha.33 Adoption
+
+- Risk: high-risk Strict Auth／Session／CSRF／Security／Public Contract／Artifact
+- Base SHA: `3e6617ed8c10aec7bd22fca16cbb6ef9a0ee74d3`
+- Branch: `site/SITE-050-account-security-alpha33-resume`
+- Artifact: immutable GOV-025 `2.0.0-alpha.33`
+
+SITE-050 resumes the fail-closed Account Security work by adopting alpha.33
+directly from alpha.31; retired alpha.32 is never adopted. Live publication and
+release-ledger readback, Manifest／SHA256SUMS／archive verification, Client package／
+runtime／header alpha.33 coherence, Testkit alpha.33 coherence, and independent
+Public OpenAPI alpha.29 compatibility all pass.
+
+The Storefront adds Password Reset, Email Address Change, and immediate Password
+Change through the generated Identity Client. Password Reset never creates or
+refreshes into a Session. Same-browser Email Change and Password Change refresh
+the canonical rotated Session; cross-browser Email completion remains anonymous.
+No Fresh Authentication UI, verification ceremony for Password Change, direct
+API request, Password／email ownership policy, cookie authority, storage, or raw
+credential logging is added.
+
+Platform root query links are redirected before React rendering to dedicated
+routes with a transient browser fragment, `no-store`, and `no-referrer`; the
+fragment is consumed once and removed before form presentation. Browser evidence
+verifies token absence from URL／hash／history／DOM and catches React Strict Mode
+double-effect regressions.
+
+Local Artifact／Policy／all boundary／lint／typecheck／43-file 445-test／production
+build／dependency-audit／secret gates pass. Focused coverage passes 9 files／88
+tests. Chromium acceptance passes 11 scenarios with 17 desktop／mobile state
+screenshots and zero console／runtime／request／500／502／504 errors. Payment source
+changes are zero; Save Card remains hidden and normal Card retains `save=false`.
+Required Checks, fresh final-head self-review, Squash Merge, merged-main Preview
+Activation, Shared Preview E2E, and Runtime Acceptance remain pending.

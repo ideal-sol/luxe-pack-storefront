@@ -12,6 +12,13 @@ export interface AuthProblemPresentation {
 
 export type PlatformProblemPresentation = AuthProblemPresentation;
 
+export interface AccountSecurityProblemPresentation extends AuthProblemPresentation {
+  readonly authenticationRequired: boolean;
+  readonly invalidLink: boolean;
+}
+
+export type AccountSecurityOperation = "email-change" | "password-change" | "password-reset";
+
 export function isPlatformNotFound(error: unknown) {
   return error instanceof ApiProblemError && error.status === 404;
 }
@@ -81,5 +88,50 @@ export function presentAuthProblem(error: unknown): AuthProblemPresentation {
     fieldErrors: {},
     message: "予期しない問題が発生しました。時間をおいて、もう一度お試しください。",
     sessionExpired: false,
+  };
+}
+
+export function presentAccountSecurityProblem(
+  error: unknown,
+  operation: AccountSecurityOperation,
+): AccountSecurityProblemPresentation {
+  const fallback = presentAuthProblem(error);
+  if (!(error instanceof ApiProblemError)) {
+    return { ...fallback, authenticationRequired: false, invalidLink: false };
+  }
+
+  const authenticationRequired = isAuthProblemError(error, "AUTHENTICATION_REQUIRED") ||
+    isAuthProblemError(error, "SESSION_EXPIRED");
+  const invalidLink = operation === "password-reset"
+    ? isAuthProblemError(error, "INVALID_PASSWORD_RESET")
+    : operation === "email-change" && isAuthProblemError(error, "INVALID_EMAIL_CHANGE_REQUEST");
+  let message = fallback.message;
+
+  if (invalidLink && operation === "password-reset") {
+    message = "このパスワード再設定リンクは無効または有効期限が切れています。もう一度パスワード再設定を行ってください。";
+  } else if (invalidLink) {
+    message = "このメールアドレス変更用リンクは無効または有効期限が切れています。もう一度メールアドレス変更を行ってください。";
+  } else if (isAuthProblemError(error, "PASSWORD_POLICY_VIOLATION")) {
+    message = "新しいパスワードがセキュリティ要件を満たしていません。入力内容を確認してください。";
+  } else if (isAuthProblemError(error, "PASSWORD_UNCHANGED")) {
+    message = "新しいパスワードには、現在と異なるパスワードを入力してください。";
+  } else if (isAuthProblemError(error, "INVALID_REAUTHENTICATION")) {
+    message = "現在のパスワードを確認してください。";
+  } else if (isAuthProblemError(error, "EMAIL_UNCHANGED")) {
+    message = "現在と異なるメールアドレスを入力してください。";
+  } else if (isAuthProblemError(error, "EMAIL_ALREADY_CLAIMED")) {
+    message = "このメールアドレスはすでに使用されています。別のメールアドレスを入力してください。";
+  } else if (authenticationRequired) {
+    message = "ログインの有効期限が切れました。もう一度ログインしてください。";
+  } else if (isAuthProblemError(error, "INVALID_REQUEST")) {
+    message = "入力内容を確認して、もう一度お試しください。";
+  }
+
+  return {
+    authenticationRequired,
+    fieldErrors: error.errors ?? {},
+    invalidLink,
+    message,
+    sessionExpired: isAuthProblemError(error, "SESSION_EXPIRED"),
   };
 }

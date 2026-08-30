@@ -2,6 +2,8 @@ import { ApiProblemError } from "@oripa/storefront-client";
 import { readFileSync } from "node:fs";
 import {
   assertBrowserRequestBoundary,
+  PUBLIC_ACCOUNT_SECURITY_FIXTURE,
+  PUBLIC_ACCOUNT_SECURITY_PROBLEM_FIXTURES,
   PUBLIC_AUTH_FIXTURE,
 } from "@oripa/storefront-testkit";
 import { createAuthClientTestHarness } from "@/lib/platform/testing";
@@ -28,12 +30,12 @@ function enqueueCsrf(harness: ReturnType<typeof createAuthClientTestHarness>) {
   );
 }
 
-describe("MIG-062Z retained authentication contract", () => {
+describe("alpha.33 authentication and account security contract", () => {
   it("imports the canonical immutable Client, Schema, and Testkit versions", () => {
     for (const [packageName, version] of Object.entries({
       "site-schema": "2.0.0-alpha.23",
-      "storefront-client": "2.0.0-alpha.31",
-      "storefront-testkit": "2.0.0-alpha.31",
+      "storefront-client": "2.0.0-alpha.33",
+      "storefront-testkit": "2.0.0-alpha.33",
     })) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
       expect(packageJson.version).toBe(version);
@@ -50,7 +52,7 @@ describe("MIG-062Z retained authentication contract", () => {
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/auth/session` }, { body: session, status: 200 });
 
     await expect(harness.client.getCurrentSession()).resolves.toMatchObject({ data: session });
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.31", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.33", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -79,7 +81,7 @@ describe("MIG-062Z retained authentication contract", () => {
     );
     await expect(login.client.login({ email: "fixture@example.test", password: "fixture-password" }))
       .resolves.toMatchObject({ data: PUBLIC_AUTH_FIXTURE.authenticated_session });
-    assertBrowserRequestBoundary(login.mock.requests[1]!, { client_version: "2.0.0-alpha.31", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(login.mock.requests[1]!, { client_version: "2.0.0-alpha.33", site_version: "0.1.0" });
     login.mock.assertExhausted();
   });
 
@@ -151,5 +153,138 @@ describe("MIG-062Z retained authentication contract", () => {
       hash: "c".repeat(64),
       user_id: PUBLIC_AUTH_FIXTURE.pending_registration.user_id,
     })).rejects.toMatchObject({ code: "VERIFICATION_LINK_EXPIRED" });
+  });
+
+  it("uses the canonical Password Reset requests without creating a session", async () => {
+    const request = createAuthClientTestHarness(csrf);
+    enqueueCsrf(request);
+    request.mock.enqueueJson(
+      { method: "POST", url: `${origin}/auth/password/forgot` },
+      {
+        body: {
+          message: "If the account is eligible, password reset instructions will be sent.",
+          status: "accepted",
+        },
+        status: 202,
+      },
+    );
+    await expect(request.client.requestPasswordReset({
+      email: "fixture@example.test",
+      redirect_path: "/",
+    }, {})).resolves.toMatchObject({ data: { status: "accepted" } });
+    expect(JSON.parse(request.mock.requests[1]?.body ?? "null")).toEqual({
+      email: "fixture@example.test",
+      redirect_path: "/",
+    });
+    assertBrowserRequestBoundary(request.mock.requests[1]!, {
+      client_version: "2.0.0-alpha.33",
+      site_version: "0.1.0",
+    });
+
+    const confirm = createAuthClientTestHarness(csrf);
+    enqueueCsrf(confirm);
+    confirm.mock.enqueueJson(
+      { method: "POST", url: `${origin}/auth/password/reset` },
+      { body: PUBLIC_ACCOUNT_SECURITY_FIXTURE.password_reset_completed, status: 200 },
+    );
+    await expect(confirm.client.confirmPasswordReset({
+      password: "new-fixture-password",
+      token: "b".repeat(64),
+      user_id: PUBLIC_AUTH_FIXTURE.pending_registration.user_id,
+    }, {})).resolves.toMatchObject({
+      data: {
+        authenticated: false,
+        next_action: "login",
+        user: null,
+      },
+    });
+    expect(JSON.parse(confirm.mock.requests[1]?.body ?? "null")).toEqual({
+      password: "new-fixture-password",
+      token: "b".repeat(64),
+      user_id: PUBLIC_AUTH_FIXTURE.pending_registration.user_id,
+    });
+    expect(confirm.mock.requests).toHaveLength(2);
+  });
+
+  it("uses canonical Email Change operations for same-browser and cross-browser completion", async () => {
+    const requestId = PUBLIC_ACCOUNT_SECURITY_FIXTURE.email_change_pending.request_id;
+    const request = createAuthClientTestHarness(csrf);
+    enqueueCsrf(request);
+    request.mock.enqueueJson(
+      { method: "POST", url: `${origin}/me/email-change-requests` },
+      { body: PUBLIC_ACCOUNT_SECURITY_FIXTURE.email_change_pending, status: 202 },
+    );
+    await expect(request.client.createEmailChangeRequest({
+      email: "changed@example.test",
+      redirect_path: "/",
+    }, {})).resolves.toMatchObject({ data: { status: "pending_verification" } });
+    expect(JSON.parse(request.mock.requests[1]?.body ?? "null")).toEqual({
+      email: "changed@example.test",
+      redirect_path: "/",
+    });
+
+    for (const completed of [
+      PUBLIC_ACCOUNT_SECURITY_FIXTURE.email_change_completed_same_browser,
+      PUBLIC_ACCOUNT_SECURITY_FIXTURE.email_change_completed_cross_browser,
+    ]) {
+      const completion = createAuthClientTestHarness(csrf);
+      enqueueCsrf(completion);
+      completion.mock.enqueueJson(
+        { method: "POST", url: `${origin}/me/email-change-requests/${requestId}/complete` },
+        { body: completed, status: 200 },
+      );
+      await expect(completion.client.completeEmailChange({ request_id: requestId, token: "c".repeat(64) }, {}))
+        .resolves.toMatchObject({ data: completed });
+      expect(JSON.parse(completion.mock.requests[1]?.body ?? "null")).toEqual({ token: "c".repeat(64) });
+      expect(completion.mock.requests).toHaveLength(2);
+    }
+  });
+
+  it("changes Password immediately with current and new values", async () => {
+    const harness = createAuthClientTestHarness(csrf);
+    enqueueCsrf(harness);
+    harness.mock.enqueueJson(
+      { method: "PUT", url: `${origin}/me/password` },
+      { body: PUBLIC_ACCOUNT_SECURITY_FIXTURE.password_changed, status: 200 },
+    );
+    await expect(harness.client.changeUserPassword({
+      current_password: "current-fixture-password",
+      new_password: "new-fixture-password",
+    }, {})).resolves.toMatchObject({ data: { authenticated: true, session_rotated: true } });
+    expect(JSON.parse(harness.mock.requests[1]?.body ?? "null")).toEqual({
+      current_password: "current-fixture-password",
+      new_password: "new-fixture-password",
+    });
+    expect(harness.mock.requests[1]?.method).toBe("PUT");
+  });
+
+  it("keeps single-use mutations non-retrying and surfaces typed Account Security Problems", async () => {
+    const reset = createAuthClientTestHarness(csrf);
+    enqueueCsrf(reset);
+    reset.mock.enqueueProblem(
+      { method: "POST", url: `${origin}/auth/password/reset` },
+      PUBLIC_ACCOUNT_SECURITY_PROBLEM_FIXTURES.invalid_password_reset,
+    );
+    await expect(reset.client.confirmPasswordReset({
+      password: "new-fixture-password",
+      token: "d".repeat(64),
+      user_id: PUBLIC_AUTH_FIXTURE.pending_registration.user_id,
+    }, {})).rejects.toMatchObject({ code: "INVALID_PASSWORD_RESET" });
+    expect(reset.mock.requests).toHaveLength(2);
+
+    const email = createAuthClientTestHarness(csrf);
+    enqueueCsrf(email);
+    email.mock.enqueueProblem(
+      {
+        method: "POST",
+        url: `${origin}/me/email-change-requests/${PUBLIC_ACCOUNT_SECURITY_FIXTURE.email_change_pending.request_id}/complete`,
+      },
+      PUBLIC_ACCOUNT_SECURITY_PROBLEM_FIXTURES.invalid_email_change,
+    );
+    await expect(email.client.completeEmailChange({
+      request_id: PUBLIC_ACCOUNT_SECURITY_FIXTURE.email_change_pending.request_id,
+      token: "e".repeat(64),
+    }, {})).rejects.toMatchObject({ code: "INVALID_EMAIL_CHANGE_REQUEST" });
+    expect(email.mock.requests).toHaveLength(2);
   });
 });

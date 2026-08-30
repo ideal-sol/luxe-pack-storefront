@@ -6,6 +6,7 @@ const tracked = execFileSync("git", ["ls-files", "--cached", "-z"], { encoding: 
   .filter(Boolean);
 const sourceFiles = tracked.filter((file) => file.startsWith("src/") && /\.(?:ts|tsx|js|jsx)$/.test(file));
 const platformPrefix = "src/lib/platform/";
+const authUiPrefixes = ["src/components/auth/", "src/components/account-security/"];
 const directApi = "/api" + "/v2";
 const forbiddenBrowserStorage = ["local" + "Storage", "session" + "Storage"];
 const nonAuthStorageFiles = new Set([
@@ -25,7 +26,8 @@ for (const file of sourceFiles) {
   if (!nonAuthStorageFiles.has(file) && forbiddenBrowserStorage.some((marker) => content.includes(marker))) {
     failures.push(`${file}:auth-storage`);
   }
-  if (file.startsWith("src/components/auth/") && /console\.(?:debug|info|log|warn|error)\s*\(/.test(content)) {
+  if ((file === "src/proxy.ts" || authUiPrefixes.some((prefix) => file.startsWith(prefix)))
+    && /console\.(?:debug|info|log|warn|error)\s*\(/.test(content)) {
     failures.push(`${file}:auth-logging`);
   }
 }

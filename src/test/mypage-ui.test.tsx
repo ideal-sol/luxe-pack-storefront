@@ -43,10 +43,12 @@ function client(session: AuthSession = authenticated, overrides: Partial<AuthCli
   } as AuthClientAdapter;
 }
 
-function renderMyPage(authClient: AuthClientAdapter | null) {
+function renderMyPage(authClient: AuthClientAdapter | null, accountUpdated?: "email" | "password") {
   return render(
     <ToastProvider>
-      <SessionProvider client={authClient}><MyPageTop /></SessionProvider>
+      <SessionProvider client={authClient}>
+        <MyPageTop {...(accountUpdated ? { accountUpdated } : {})} />
+      </SessionProvider>
     </ToastProvider>,
   );
 }
@@ -75,6 +77,8 @@ describe("my page top", () => {
     expect(screen.getByRole("link", { name: /ガチャ履歴/ })).toHaveAttribute("href", "/mypage/draws");
     expect(screen.getByRole("link", { name: /獲得アイテム/ })).toHaveAttribute("href", "/mypage/prizes");
     expect(screen.getByRole("link", { name: /お届け先登録/ })).toHaveAttribute("href", "/mypage/address");
+    expect(screen.getByRole("link", { name: /メールアドレス変更/ })).toHaveAttribute("href", "/mypage/email");
+    expect(screen.getByRole("link", { name: /パスワード変更/ })).toHaveAttribute("href", "/mypage/password");
     expect(screen.queryByRole("link", { name: /LINE連携/ })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /お知らせ/ })).toHaveAttribute("href", "/notices");
     expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("href", "https://support.luxe-pack.biz/");
@@ -116,8 +120,14 @@ describe("my page top", () => {
     renderMyPage(client());
     const account = await screen.findByRole("navigation", { name: "アカウント" });
     const links = Array.from(account.querySelectorAll("a"));
-    expect(links.map((link) => link.getAttribute("href"))).toEqual(["/mypage/address"]);
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/mypage/address",
+      "/mypage/email",
+      "/mypage/password",
+    ]);
     expect(links[0]).toHaveTextContent("お届け先登録");
+    expect(links[1]).toHaveTextContent("メールアドレス変更");
+    expect(links[2]).toHaveTextContent("パスワード変更");
     expect(account).not.toHaveTextContent("LINE連携");
     expect(screen.getAllByRole("link")).toHaveLength(
       myPageShortcutNavigation.length + myPageAccountNavigation.length + myPageSupportNavigation.length,
@@ -147,6 +157,17 @@ describe("my page top", () => {
     fireEvent.click(await screen.findByRole("button", { name: "ログアウト" }));
     await waitFor(() => expect(logout).toHaveBeenCalledTimes(1));
     expect(await screen.findByText("ログインしてください")).toBeInTheDocument();
+  });
+
+  it.each([
+    ["email", "メールアドレスを変更しました。"],
+    ["password", "パスワードを変更しました。"],
+  ] as const)("shows the one-time %s success and removes its query marker", async (accountUpdated, message) => {
+    window.history.replaceState({}, "", `/mypage?account-updated=${accountUpdated}`);
+    renderMyPage(client(), accountUpdated);
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/mypage");
+    expect(window.location.search).toBe("");
   });
 
   it("keeps unconfirmed member products and profile fields out of the page", async () => {
