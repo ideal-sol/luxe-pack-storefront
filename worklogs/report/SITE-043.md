@@ -1,5 +1,9 @@
 # SITE-043 — Payment Client alpha.29 Adoption / Card UI Fix
 
+> **Historical report:** Its Issue, Worktree, Task Policy, exact-path, and lock
+> evidence records the ceremony used at the time. Those requirements are
+> superseded and no longer canonical; see `docs/engineering-governance.md`.
+
 ## Governance
 
 - Issue: `#83`

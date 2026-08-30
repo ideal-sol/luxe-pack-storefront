@@ -1,5 +1,9 @@
 # SITE-045 — Temporarily Hide LINE Link UI
 
+> **Historical report:** Its Issue, Worktree, Task Policy, exact-path, and lock
+> evidence records the ceremony used at the time. Those requirements are
+> superseded and no longer canonical; see `docs/engineering-governance.md`.
+
 ## Outcome
 
 The user-facing LINE account-link entry is temporarily absent from authenticated

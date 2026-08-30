@@ -1,5 +1,9 @@
 # SITE-034 Contact Page Report
 
+> **Historical report:** Its Issue, Worktree, Task Policy, exact-path, and lock
+> evidence records the ceremony used at the time. Those requirements are
+> superseded and no longer canonical; see `docs/engineering-governance.md`.
+
 ## Outcome
 
 The public `/contact` route and My Page `お問い合わせ` link are implemented through

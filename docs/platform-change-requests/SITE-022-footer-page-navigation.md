@@ -1,5 +1,10 @@
 # SITE-022 Footer page navigation contract
 
+> **Historical ceremony notice:** Issue, branch, Worktree, or Task Policy
+> references below preserve SITE-022's completed process evidence. They are
+> superseded as current ceremony by `docs/engineering-governance.md`; the
+> Contract and Artifact findings remain historical technical evidence.
+
 ## Status
 
 **Resolved by MIG-062O Production Artifact `2.0.0-alpha.11` on 2026-08-14.**

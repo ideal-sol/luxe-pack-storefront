@@ -1,5 +1,9 @@
 # SITE-047 — Card Failure Return Final Screen Fix
 
+> **Historical report:** Its Issue, Worktree, Task Policy, exact-path, and lock
+> evidence records the ceremony used at the time. Those requirements are
+> superseded and no longer canonical; see `docs/engineering-governance.md`.
+
 ## Governance and Stage 0
 
 - Issue: `#91`
