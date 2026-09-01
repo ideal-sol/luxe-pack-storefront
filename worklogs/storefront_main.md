@@ -1393,3 +1393,34 @@ screenshots and zero console／runtime／request／500／502／504 errors. Payme
 changes are zero; Save Card remains hidden and normal Card retains `save=false`.
 Required Checks, fresh final-head self-review, Squash Merge, merged-main Preview
 Activation, Shared Preview E2E, and Runtime Acceptance remain pending.
+
+## SITE-051 — Rank Master / Gacha Rank alpha.34 Adoption
+
+- Risk: high-risk Strict breaking Public Contract／Artifact／Draw presentation
+- Base SHA: `f66110ec72c1c574e210e5515551723f21bf7202`
+- Branch: `site/SITE-051-rank-alpha34-adoption`
+- Artifact: immutable MIG-099 `2.0.0-alpha.34`
+
+SITE-051 exact-pins the formally published alpha.34 Client and Testkit after
+live release-ledger, publication, Manifest, checksum, source, OpenAPI, generated
+Client, and Testkit verification. The Artifact gate fixes all authoritative
+identities and rejects an alpha.33 runtime or lock dependency.
+
+Gacha detail now consumes only the canonical public Rank set, sorts it by
+`display_order`, renders `rank_name` and `lineup_image`, and displays canonical
+setting total stock only for true／non-null visibility. It does not synthesize
+Prize-zero Ranks, recalculate stock, or autoplay `current_video`. Legacy
+`RankDisplay`, `rank.code`, nested Rank Prize, and `presentation_assets`
+assumptions are removed.
+
+Draw Result renders only the fixed Draw snapshots for Rank name, result image,
+and video. Current Rank Master／Gacha Rank video fallback and refetch are zero;
+media failure preserves the result. Existing Draw request semantics, Auth,
+Account Security, Point／Coin, Payment, and Save Card disabled behavior remain
+unchanged.
+
+Local final gates, exact-head self-review, Pull Request, Required Checks, Squash
+Merge, and cleanup remain required at this record point. Shared Preview／
+Production Activation are zero. Shared Preview E2E and Human Browser Acceptance
+remain HOLD pending Preview／Production API target isolation and Shared Preview
+application of Platform migrations `000069`／`000070`.

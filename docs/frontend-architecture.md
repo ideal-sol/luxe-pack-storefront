@@ -37,7 +37,8 @@ unavailable/session expired/error states, and refreshes after successful identit
 mutations. It stores the typed session response only in memory and does not cache
 credentials or authentication material.
 
-SITE-050 extends that adapter with the alpha.33 Account Security operations.
+SITE-050 extends that adapter with the Account Security operations now retained by
+the exact-pinned alpha.34 Client.
 Password Reset request／completion never refreshes into an authenticated Session.
 Email Address Change refreshes only when the canonical completion result says the
 current browser is authenticated; cross-browser completion explicitly remains
@@ -109,6 +110,14 @@ read. Sale state, eligibility, reason, allowed counts, daily limit, and CTA stat
 are rendered directly from that presentation. Session state, timestamps, counts,
 and Point balance are never converted into eligibility or CTA policy.
 
+SITE-051 consumes the alpha.34 `GachaRankPresentation` collection exactly as
+returned. The detail sorts the returned Prize-associated Ranks by canonical
+`display_order` with `rank_id` only as a stable tie-breaker, renders
+`rank_name` and `lineup_image`, and displays only non-null `total_stock` when
+`show_total_stock` is true. It does not reconstruct Rank Master membership,
+classify Prizes, calculate stock, play `current_video`, or retain a legacy
+`RankDisplay` adapter.
+
 SITE-007 adds a separate authenticated Prize adapter limited to generated
 `listPrizes` and `getPrize` reads. Cards use `presentation`; deprecated open
 snapshots are ignored. Selection reads only `allowed_actions.selection.allowed`,
@@ -126,6 +135,13 @@ defines a new operation. The result route receives only the returned public Draw
 Request ID and calls `getDrawRequest`; mounting, Back, and reload never call the
 mutation. Point, eligibility, sale, inventory, and awarded Prize state are never
 updated optimistically.
+
+SITE-051 presents individual or high-Rank Draw results from the persisted
+`rank_name_snapshot`, `result_image_snapshot`, and `video_snapshot`. Snapshot
+array ordering is preserved. Video is user-controlled, inline-capable, and a
+playback failure removes only the video while the snapshot image, name, and Draw
+facts remain visible. The result route never fetches current Rank Master or
+Gacha Rank video state and never falls back to detail `lineup_image`.
 
 SITE-012 extends the Prize boundary with the generated
 `createBrowserStorefrontPrizeShippingClient`. The Client owns Cookie/CSRF
@@ -204,7 +220,9 @@ notice detail, and static-page lookup. Component tests cover list/detail/documen
 states, links, cursor continuation, route switching, long-form structure, and XSS
 removal. SITE-004 adds MIG-061Y Testkit coverage for explicit sale states,
 anonymous/authenticated eligibility, allowed counts, daily limits, CTA state,
-detail UI, prize modal accessibility, and Backend-authoritative presentation fields.
+detail UI, and Backend-authoritative presentation fields. SITE-051 replaces the
+retired nested Rank／Prize fixture assumptions with alpha.34 Rank lineup, stock,
+ordering, Draw snapshot stability, and video-failure coverage.
 
 SITE-007 adds MIG-062A contract coverage for typed presentation, nullable assets,
 cursor reads, and action states. Component tests cover login/configuration/read

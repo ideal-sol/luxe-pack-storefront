@@ -30,12 +30,12 @@ function enqueueCsrf(harness: ReturnType<typeof createAuthClientTestHarness>) {
   );
 }
 
-describe("alpha.33 authentication and account security contract", () => {
+describe("alpha.34 authentication and account security contract", () => {
   it("imports the canonical immutable Client, Schema, and Testkit versions", () => {
     for (const [packageName, version] of Object.entries({
       "site-schema": "2.0.0-alpha.23",
-      "storefront-client": "2.0.0-alpha.33",
-      "storefront-testkit": "2.0.0-alpha.33",
+      "storefront-client": "2.0.0-alpha.34",
+      "storefront-testkit": "2.0.0-alpha.34",
     })) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
       expect(packageJson.version).toBe(version);
@@ -52,7 +52,7 @@ describe("alpha.33 authentication and account security contract", () => {
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/auth/session` }, { body: session, status: 200 });
 
     await expect(harness.client.getCurrentSession()).resolves.toMatchObject({ data: session });
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.33", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.34", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -81,7 +81,7 @@ describe("alpha.33 authentication and account security contract", () => {
     );
     await expect(login.client.login({ email: "fixture@example.test", password: "fixture-password" }))
       .resolves.toMatchObject({ data: PUBLIC_AUTH_FIXTURE.authenticated_session });
-    assertBrowserRequestBoundary(login.mock.requests[1]!, { client_version: "2.0.0-alpha.33", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(login.mock.requests[1]!, { client_version: "2.0.0-alpha.34", site_version: "0.1.0" });
     login.mock.assertExhausted();
   });
 
@@ -177,7 +177,7 @@ describe("alpha.33 authentication and account security contract", () => {
       redirect_path: "/",
     });
     assertBrowserRequestBoundary(request.mock.requests[1]!, {
-      client_version: "2.0.0-alpha.33",
+      client_version: "2.0.0-alpha.34",
       site_version: "0.1.0",
     });
 

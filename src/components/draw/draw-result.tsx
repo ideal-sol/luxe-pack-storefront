@@ -17,6 +17,7 @@ type ResultState =
   | { readonly status: "ready"; readonly result: DrawResponse };
 
 const number = new Intl.NumberFormat("ja-JP");
+type DrawSnapshot = DrawResponse["high_rank_results"][number];
 
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("ja-JP", {
@@ -46,6 +47,66 @@ function ResultMessage({
   );
 }
 
+function SnapshotVideo({ snapshot }: { readonly snapshot: DrawSnapshot }) {
+  const [failed, setFailed] = useState(false);
+  const video = snapshot.video_snapshot;
+  const usable = video?.media_type === "video" && video.path.startsWith("/") && !video.path.startsWith("//");
+  if (!usable || failed) return null;
+
+  return (
+    <video
+      aria-label={video.alt_text ?? `${snapshot.rank_name_snapshot ?? "抽選結果"}の演出動画`}
+      className="draw-snapshot-card__video"
+      controls
+      onError={() => setFailed(true)}
+      playsInline
+      preload="metadata"
+      src={video.path}
+    />
+  );
+}
+
+function SnapshotResults({ result }: { readonly result: DrawResponse }) {
+  const snapshots = result.results ?? result.high_rank_results;
+  if (snapshots.length === 0) return null;
+
+  return (
+    <section aria-labelledby="draw-snapshots" className="draw-result__snapshots">
+      <div className="section-heading">
+        <p>DRAW PRESENTATION</p>
+        <h2 id="draw-snapshots">抽選演出・ランク結果</h2>
+      </div>
+      <div className="draw-snapshot-grid">
+        {snapshots.map((snapshot) => {
+          const image = snapshot.result_image_snapshot?.media_type === "image"
+            ? snapshot.result_image_snapshot
+            : null;
+          const title = snapshot.prize?.name ?? `${number.format(snapshot.point_back?.amount ?? 0)} コイン還元`;
+          return (
+            <article className="draw-snapshot-card" key={snapshot.id}>
+              <SnapshotVideo key={snapshot.video_snapshot?.id ?? "no-video"} snapshot={snapshot} />
+              {snapshot.result_type === "prize" && (
+                <div className="draw-snapshot-card__image">
+                  <CatalogAsset
+                    alt={image?.alt_text ?? snapshot.rank_name_snapshot ?? title}
+                    fallbackLabel="RANK IMAGE"
+                    {...(image?.path ? { src: image.path } : {})}
+                  />
+                </div>
+              )}
+              <div className="draw-snapshot-card__copy">
+                {snapshot.rank_name_snapshot !== null && <span>{snapshot.rank_name_snapshot}</span>}
+                <h3>{title}</h3>
+                <p>抽選順 {number.format(snapshot.sequence_number)}</p>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function DrawResultContent({ result }: { readonly result: DrawResponse }) {
   return (
     <article className="draw-result">
@@ -63,6 +124,7 @@ function DrawResultContent({ result }: { readonly result: DrawResponse }) {
         <div><dt>コイン還元</dt><dd>{number.format(result.point_back_total)} コイン</dd></div>
         <div><dt>実行日時</dt><dd>{formatDateTime(result.created_at)}</dd></div>
       </dl>
+      <SnapshotResults result={result} />
       <section aria-labelledby="draw-prizes" className="draw-result__prizes">
         <div className="section-heading">
           <p>PRIZES</p>
@@ -72,7 +134,7 @@ function DrawResultContent({ result }: { readonly result: DrawResponse }) {
           <p className="draw-result__empty">獲得景品はありません、コイン還元をご確認ください</p>
         ) : (
           <div className="draw-result__grid">
-            {result.prize_counts.map(({ count, prize, rank }) => {
+            {result.prize_counts.map(({ count, prize }) => {
               const asset = prize.presentation_asset?.media_type === "image" ? prize.presentation_asset : null;
               return (
                 <article className="draw-result-card" key={prize.id}>
@@ -80,7 +142,7 @@ function DrawResultContent({ result }: { readonly result: DrawResponse }) {
                     <CatalogAsset alt={asset?.alt_text ?? prize.name} fallbackLabel="PRIZE IMAGE" {...(asset?.path ? { src: asset.path } : {})} />
                   </div>
                   <div>
-                    <span>{rank.name}</span>
+                    <span>獲得景品</span>
                     <h3>{prize.name}</h3>
                     <p>× {number.format(count)}</p>
                   </div>

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
 import {
   PUBLIC_AUTH_FIXTURE,
@@ -13,6 +13,44 @@ import type { AuthClientAdapter, DrawClientAdapter, DrawResponse } from "@/lib/p
 
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 const result = PUBLIC_DRAW_FIXTURE as DrawResponse;
+const snapshotImagePath = "/api" + "/v2/catalog/presentation-assets/0198a001-0000-7000-8000-000000000302/content";
+const snapshotVideoPath = "/api" + "/v2/catalog/presentation-assets/0198a001-0000-7000-8000-000000000303/content";
+const drawSnapshot = {
+  id: "0198a001-0000-7000-8000-000000000301",
+  sequence_number: 1,
+  result_type: "prize",
+  rank: {
+    id: "0198a001-0000-7000-8000-000000000003",
+    name: "現在のSS賞",
+  },
+  rank_name_snapshot: "当時の1等",
+  result_image_snapshot: {
+    id: "0198a001-0000-7000-8000-000000000302",
+    path: snapshotImagePath,
+    checksum_sha256: "2".repeat(64),
+    media_type: "image",
+    mime_type: "image/png",
+    alt_text: "当時の1等結果画像",
+  },
+  video_snapshot: {
+    id: "0198a001-0000-7000-8000-000000000303",
+    path: snapshotVideoPath,
+    checksum_sha256: "3".repeat(64),
+    media_type: "video",
+    mime_type: "video/mp4",
+    alt_text: "当時のgold-v1演出",
+  },
+  prize: result.prize_counts[0]!.prize,
+  point_back: null,
+} satisfies DrawResponse["high_rank_results"][number];
+const snapshotResult = {
+  ...result,
+  requested_count: 1,
+  executed_count: 1,
+  high_rank_results: [drawSnapshot],
+  high_rank_results_truncated: false,
+  results: [drawSnapshot],
+} satisfies DrawResponse;
 
 function response<T>(data: T) {
   return { data, metadata };
@@ -86,6 +124,31 @@ describe("Draw Result recovery UI", () => {
     expect(createDraw).not.toHaveBeenCalled();
   });
 
+  it("renders the immutable Rank name, result image, and video snapshots without current Master fallback", async () => {
+    const getDrawRequest = vi.fn().mockResolvedValue(response(snapshotResult));
+    renderResult(drawClient({ getDrawRequest }));
+
+    expect(await screen.findByText(drawSnapshot.rank_name_snapshot)).toBeInTheDocument();
+    expect(screen.queryByText(drawSnapshot.rank.name)).not.toBeInTheDocument();
+    expect(screen.getByRole("img", { name: drawSnapshot.result_image_snapshot.alt_text! }).getAttribute("src")
+      ?.endsWith(drawSnapshot.result_image_snapshot.path)).toBe(true);
+    expect(screen.getByLabelText(drawSnapshot.video_snapshot.alt_text!))
+      .toHaveAttribute("src", drawSnapshot.video_snapshot.path);
+    expect(getDrawRequest).toHaveBeenCalledTimes(1);
+    expect(getDrawRequest).toHaveBeenCalledWith(result.id);
+  });
+
+  it("keeps the snapshot Rank image and result visible when snapshot video playback fails", async () => {
+    renderResult(drawClient({ getDrawRequest: vi.fn().mockResolvedValue(response(snapshotResult)) }));
+
+    const video = await screen.findByLabelText(drawSnapshot.video_snapshot.alt_text!);
+    fireEvent.error(video);
+    await waitFor(() => expect(screen.queryByLabelText(drawSnapshot.video_snapshot.alt_text!)).not.toBeInTheDocument());
+    expect(screen.getByText(drawSnapshot.rank_name_snapshot)).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: drawSnapshot.result_image_snapshot.alt_text! })).toBeInTheDocument();
+    expect(screen.getAllByText(drawSnapshot.prize!.name)).toHaveLength(2);
+  });
+
   it("distinguishes the selected count from the canonical partial executed count", async () => {
     const partial = PUBLIC_PARTIAL_REMAINING_DRAW_FIXTURE.response as DrawResponse;
     const getDrawRequest = vi.fn().mockResolvedValue(response(partial));
@@ -110,7 +173,7 @@ describe("Draw Result recovery UI", () => {
     const second = {
       ...result.prize_counts[0]!,
       prize: { ...result.prize_counts[0]!.prize, id: "0198a001-0000-7000-8000-000000000010", name: "Fixture A景品" },
-      rank: { id: "0198a001-0000-7000-8000-000000000004", code: "A", name: "Aランク" },
+      rank: { id: "0198a001-0000-7000-8000-000000000004", name: "Aランク" },
     };
     const multiple = { ...result, prize_counts: [result.prize_counts[0]!, second] } satisfies DrawResponse;
     renderResult(drawClient({ getDrawRequest: vi.fn().mockResolvedValue(response(multiple)) }));

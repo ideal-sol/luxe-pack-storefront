@@ -6,14 +6,14 @@
 | --- | --- | --- |
 | `/` | Canonical top Banner carousel, categories, Backend-visible gacha summaries, notices, and Platform Card Registration Return dispatch | MIG-062P catalog behavior retained; SITE-048 accepts only `card_registration_id` correlated to tab-local opaque resume state and performs no mutation at the root router |
 | `/gachas` | Backend-ordered gacha cards, category filter, and cursor continuation | alpha.9 sale/eligibility/display flags; Testkit verified |
-| `/gachas/[slug]` | Public pack detail and Draw entry | Backend-configured alpha.10 requested counts, including optional 100／1000; no remaining-count inference |
-| `/draws/[drawRequestId]/result` | Completed Draw result | Authenticated `getDrawRequest` recovery; canonical executed count; reload performs GET only |
+| `/gachas/[slug]` | Public pack detail and Draw entry | alpha.34 Prize-associated Rank lineup image／name／configured stock in canonical order; Backend-configured requested counts; no Rank or remaining-count inference |
+| `/draws/[drawRequestId]/result` | Completed Draw result | Authenticated `getDrawRequest` recovery; alpha.34 Rank name／result image／video snapshots; reload performs GET only and never reads current Rank presentation |
 | `/notices` | Public notices | Content Client-connected cursor list; Testkit verified |
 | `/notices/[noticeId]` | Public notice detail | Content Client-connected canonical HTML; sanitized before rendering |
 | `/pages/[slug]` | Managed public content | Content Client-connected by slug; sanitized document layout |
 | `/login` | Email/password login | Client-connected form; runtime configuration required |
 | `/register` | Registration entry | Client-connected form and pending-verification state |
-| `/password-reset` | Enumeration-safe Password Reset request | alpha.33 Identity Client request; no account-state inference |
+| `/password-reset` | Enumeration-safe Password Reset request | alpha.34 Identity Client request; no account-state inference |
 | `/password-reset/confirm` | One-time Password Reset completion | Platform-generated root link is redirected before render, consumed from a transient fragment, and scrubbed before form presentation; success creates no Session and returns to Login |
 | `/email-change/verify` | One-time Email Address Change completion | Same-browser Session rotation is refreshed; cross-browser completion does not mint or refresh a Session |
 | `/verify-email` | Verification guidance and optional resend | Client-connected when canonical `user_id` is present |

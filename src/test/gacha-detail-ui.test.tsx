@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
 import {
   PUBLIC_CATALOG_FIXTURE,
@@ -18,6 +18,7 @@ vi.mock("@/components/points/point-client-provider", () => ({ usePointClient: ()
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 const detail = PUBLIC_CATALOG_FIXTURE.data as GachaDetail;
 const presentation = PUBLIC_GACHA_PRESENTATION_FIXTURE.data as GachaPresentationState;
+const rank = detail.ranks[0]!;
 
 function response<T>(data: T) {
   return { data, metadata };
@@ -58,7 +59,7 @@ function presentationResponse(next: GachaPresentationState) {
 }
 
 describe("gacha detail UI", () => {
-  it("renders canonical detail fields, ranks, prizes, and presentation state", async () => {
+  it("renders canonical detail fields, Rank lineup presentation, and presentation state", async () => {
     const getGachaPresentation = presentationResponse(presentation);
     renderDetail(publicClient({ getGachaPresentation }));
 
@@ -67,13 +68,76 @@ describe("gacha detail UI", () => {
     expect(screen.getByText(`${detail.remaining_count.toLocaleString()} / ${detail.total_count.toLocaleString()}`)).toBeInTheDocument();
     expect(screen.getByText(detail.category.name)).toBeInTheDocument();
     expect(screen.getByText(`#${detail.tags[0]!.name}`)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: detail.ranks[0]!.name })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: `${detail.ranks[0]!.prizes[0]!.name}の詳細を見る` })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: rank.rank_name })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: rank.lineup_image.alt_text! }).getAttribute("src")
+      ?.endsWith(rank.lineup_image.path)).toBe(true);
+    expect(screen.getByText(`設定総数 ${rank.total_stock!.toLocaleString()}点`)).toBeInTheDocument();
     expect(screen.queryByText(/提供割合/)).not.toBeInTheDocument();
-    expect(screen.queryByText(detail.ranks[0]!.prizes[0]!.id)).not.toBeInTheDocument();
+    expect(screen.queryByText(rank.rank_id)).not.toBeInTheDocument();
     expect(screen.getAllByText("販売中")).toHaveLength(2);
     expect(screen.getByText("対象: 初回ユーザー")).toBeInTheDocument();
     expect(getGachaPresentation).toHaveBeenCalledWith(detail.id);
+  });
+
+  it("renders exactly the Platform-returned Prize-associated Rank set without synthesizing empty Ranks", async () => {
+    const returnedOnly = { ...detail, ranks: [rank] } satisfies GachaDetail;
+    renderDetail(publicClient({
+      getGachaBySlug: vi.fn().mockResolvedValue(response({ data: returnedOnly })),
+    }));
+
+    expect(await screen.findByRole("heading", { name: rank.rank_name })).toBeInTheDocument();
+    expect(document.querySelectorAll(".prize-rank")).toHaveLength(1);
+    expect(screen.queryByText("景品なしRank")).not.toBeInTheDocument();
+  });
+
+  it("orders multiple canonical Ranks by display_order with rank_id as a stable tie-breaker", async () => {
+    const later = {
+      ...rank,
+      rank_id: "0198a001-0000-7000-8000-000000000012",
+      rank_name: "2等",
+      display_order: 20,
+    };
+    const earlier = {
+      ...rank,
+      rank_id: "0198a001-0000-7000-8000-000000000010",
+      rank_name: "1等",
+      display_order: 10,
+    };
+    const unordered = { ...detail, ranks: [later, earlier] } satisfies GachaDetail;
+    renderDetail(publicClient({
+      getGachaBySlug: vi.fn().mockResolvedValue(response({ data: unordered })),
+    }));
+
+    const first = await screen.findByRole("heading", { name: "1等" });
+    const second = screen.getByRole("heading", { name: "2等" });
+    expect(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("shows only valid opted-in total_stock values and preserves zero", async () => {
+    const stockOn = { ...rank, rank_name: "在庫表示ON", total_stock: 0 };
+    const stockOff = {
+      ...rank,
+      rank_id: "0198a001-0000-7000-8000-000000000012",
+      rank_name: "在庫表示OFF",
+      show_total_stock: false,
+      total_stock: null,
+    };
+    const stockNull = {
+      ...rank,
+      rank_id: "0198a001-0000-7000-8000-000000000013",
+      rank_name: "在庫Null",
+      show_total_stock: true,
+      total_stock: null,
+    };
+    const stocks = { ...detail, ranks: [stockOn, stockOff, stockNull] } satisfies GachaDetail;
+    renderDetail(publicClient({
+      getGachaBySlug: vi.fn().mockResolvedValue(response({ data: stocks })),
+    }));
+
+    expect(await screen.findByText("設定総数 0点")).toBeInTheDocument();
+    expect(screen.getAllByText(/^設定総数 /)).toHaveLength(1);
+    expect(screen.getByRole("heading", { name: "在庫表示OFF" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "在庫Null" })).toBeInTheDocument();
   });
 
   it("moves the canonical description directly after the Prize lineup without duplication", async () => {
@@ -135,32 +199,15 @@ describe("gacha detail UI", () => {
     expect(screen.getByText(/時間をおいて/)).toBeInTheDocument();
   });
 
-  it("uses neutral fallbacks for missing main and prize images", async () => {
+  it("uses neutral fallbacks for a missing main image and a failed canonical lineup image", async () => {
     const missingAssets = {
       ...detail,
       presentation_asset: null,
-      ranks: detail.ranks.map((rank) => ({
-        ...rank,
-        prizes: rank.prizes.map((prize) => ({ ...prize, presentation_asset: null })),
-      })),
     } satisfies GachaDetail;
     renderDetail(publicClient({ getGachaBySlug: vi.fn().mockResolvedValue(response({ data: missingAssets })) }));
     expect(await screen.findByText("PACK IMAGE")).toBeInTheDocument();
-    expect(screen.getByText("PRIZE IMAGE")).toBeInTheDocument();
-  });
-
-  it("opens and closes the accessible prize modal with pointer and Escape", async () => {
-    renderDetail();
-    const trigger = await screen.findByRole("button", { name: `${detail.ranks[0]!.prizes[0]!.name}の詳細を見る` });
-    fireEvent.click(trigger);
-    expect(screen.getByRole("dialog", { name: detail.ranks[0]!.prizes[0]!.name })).toHaveAttribute("aria-modal", "true");
-    fireEvent.keyDown(document, { key: "Escape" });
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-    await waitFor(() => expect(trigger).toHaveFocus());
-
-    fireEvent.click(trigger);
-    fireEvent.click(screen.getByRole("button", { name: "景品詳細を閉じる" }));
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    fireEvent.error(screen.getByRole("img", { name: rank.lineup_image.alt_text! }));
+    expect(await screen.findByText("LINEUP IMAGE")).toBeInTheDocument();
   });
 
   it("renders only Backend-returned draw counts and opens the execution confirmation", async () => {

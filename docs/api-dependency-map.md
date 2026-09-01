@@ -1,7 +1,7 @@
 # API dependency map
 
-Storefront operations use the GOV-025 Artifact: `@oripa/storefront-client` and
-`@oripa/storefront-testkit` alpha.33 with referenced Public OpenAPI alpha.29 and
+Storefront operations use the MIG-099 Artifact: `@oripa/storefront-client` and
+`@oripa/storefront-testkit` alpha.34 with referenced Public OpenAPI alpha.30 and
 Site Schema alpha.23. This map does not invent absent operations or response
 shapes.
 
@@ -11,10 +11,10 @@ shapes.
 | Home and pack list | Backend-visible mixed-state summary collection and cursor | **Resolved — MIG-062G alpha.9 Catalog presentation; SITE-014 implemented** |
 | Catalog filter/order | Public categories, tags, opaque cursor, and Backend-stable ordering | **Resolved — MIG-062G preserves existing query/cursor contract** |
 | Home notices | Public notice summary collection | **Resolved — MIG-061U content client** |
-| Pack detail | Public gacha detail by slug | **Resolved — MIG-061Y catalog client; SITE-004 implemented** |
+| Pack detail | Public gacha detail by slug with Prize-associated canonical Rank lineup image, configured stock disclosure, and display order | **Resolved — MIG-099 alpha.34 Rank contract; SITE-051 implemented without Rank reconstruction** |
 | Pack detail CTA | User-specific presentation state and Backend-configured requested Draw counts | **Resolved — alpha.10 `getGachaPresentation`; SITE-021 preserves all returned counts** |
 | Draw execution | Browser-owned CSRF, caller Idempotency Key, typed Backend rejection, requested count, and completed response | **Resolved — alpha.10 `createBrowserStorefrontDrawClient`; partial remaining remains Backend-owned** |
-| Draw result | Completed Draw Request read by public ID with distinct requested/executed counts | **Resolved — alpha.10 `getDrawRequest`; reload-safe result uses canonical execution facts** |
+| Draw result | Completed Draw Request read by public ID with distinct requested/executed counts and immutable Rank name／result image／video snapshots | **Resolved — MIG-099 alpha.34 `getDrawRequest`; SITE-051 uses Draw snapshots without current Rank／video fallback** |
 | Login | Password login and current browser session | **Resolved — MIG-061U identity client** |
 | Registration | Registration and pending email verification | **Resolved — MIG-061U identity client** |
 | Logout | Browser session invalidation | **Resolved — MIG-061U identity client** |
