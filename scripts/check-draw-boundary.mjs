@@ -23,6 +23,10 @@ const forbidden = new Map([
   ["history-sorts", /\.sort\s*\(/.test(history)],
   ["history-current-gacha-read", /(?:getGacha|listGachas|getGachaPresentation)/.test(history)],
   ["history-count-comparison", /(?:requested_count|executed_count)[^\n]*(?:===|!==|<=|>=|<|>)[^\n]*(?:requested_count|executed_count)/.test(history)],
+  ["result-current-rank-read", /(?:getGacha|listGachas|getGachaPresentation)/.test(result)],
+  ["result-current-rank-video", /\bcurrent_video\b/.test(result)],
+  ["result-lineup-image-fallback", /\blineup_image\b/.test(result)],
+  ["result-rank-reference-name", /\brank\.name\b/.test(result)],
 ]);
 
 for (const [name, present] of forbidden) {
@@ -37,6 +41,11 @@ for (const required of [
   ["backend-counts", panel.includes("allowed_draw_counts")],
   ["draw-mutation", panel.includes("client.createDraw")],
   ["result-recovery", result.includes("client.getDrawRequest")],
+  ["snapshot-rank-name", result.includes("snapshot.rank_name_snapshot")],
+  ["snapshot-result-image", result.includes("snapshot.result_image_snapshot")],
+  ["snapshot-video", result.includes("snapshot.video_snapshot")],
+  ["snapshot-video-playback", result.includes("<video")],
+  ["snapshot-video-failure", result.includes("onError={() => setFailed(true)}")],
   ["history-read", history.includes("client.listDrawHistory")],
   ["history-presentation", history.includes("entry.gacha.presentation_asset")],
   ["history-status-label", history.includes("entry.status.label")],

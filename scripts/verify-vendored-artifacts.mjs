@@ -6,35 +6,35 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const root = process.cwd();
-const vendor = path.join(root, "vendor/oripa/GOV-025");
-const retainedVendor = path.join(root, "vendor/oripa/MIG-098");
+const vendor = path.join(root, "vendor/oripa/MIG-099");
+const retainedVendor = path.join(root, "vendor/oripa/GOV-025");
 const schemaVendor = path.join(root, "vendor/oripa/MIG-063B");
-const bundleVersion = "2.0.0-alpha.33";
-const predecessorBundleVersion = "2.0.0-alpha.32";
-const publicApiVersion = "2.0.0-alpha.29";
+const bundleVersion = "2.0.0-alpha.34";
+const predecessorBundleVersion = "2.0.0-alpha.33";
+const publicApiVersion = "2.0.0-alpha.30";
 const siteSchemaVersion = "2.0.0-alpha.23";
-const sourceCommit = "9867c1ea50140efd1eff7a652d3da5bd36665e1d";
+const sourceCommit = "576c35137946e5effcda63d6bf750d5ecc41150f";
 const expected = new Map([
+  ["SHA256SUMS", "555ae3637e71a57bff447aa084d21e649b598c878f64766b9f044d1e59f75355"],
+  ["artifact-manifest.json", "42f4bee68b787dac16d07accee1c6154c7cea392c521c41b14461d6b56221464"],
+  ["oripa-storefront-client-2.0.0-alpha.34.tgz", "3363ebf849e3c7165b89ea9f037c681ab889d16539ce290383cad41d31c134c6"],
+  ["oripa-storefront-testkit-2.0.0-alpha.34.tgz", "07916ff69e2e6882aa0e62ee676a65652382413f14f65459ba4e773a41f8a440"],
+  ["public.openapi.json", "27d0cdcee9194989058573d7e198066fa4af62017a0f301117ea4af034e733f0"],
+]);
+const retainedExpected = new Map([
   ["SHA256SUMS", "10252bf2cb15f80e2c26fd329c15092517d667267a9cc105ab74b9f5c3649328"],
   ["artifact-manifest.json", "b6522d16230734ea7f4604be59a2585c29bcf03a2b447269e824e712759d893c"],
   ["oripa-storefront-client-2.0.0-alpha.33.tgz", "846b0e036ebf76dd46ab1a2c9d6b67b786f9d2dfe5672d8b3a0eb31b7ad675a2"],
   ["oripa-storefront-testkit-2.0.0-alpha.33.tgz", "720d8cc6a0b1c786267de34af0f1fddefc5a517d5d064491f4a78af2e492df4d"],
   ["public.openapi.json", "9670bc769080da605c97cb9849b61f342cf0111bc39e91c09dbbf62fc4bcc720"],
 ]);
-const retainedExpected = new Map([
-  ["SHA256SUMS", "1a0a4295106e8e7bc951b9caf907c9cf844a913bf820e896312889ca3749a127"],
-  ["artifact-manifest.json", "c11894fbfadaf3dd4e00c7f94973ede1bb00f580ece5e109d0118c74c3b69f74"],
-  ["oripa-storefront-client-2.0.0-alpha.31.tgz", "0caf5e8ac829a1f13d1790298ba4a2fef3c50fe6ae11cad63329ab327cea40cf"],
-  ["oripa-storefront-testkit-2.0.0-alpha.31.tgz", "932cc4cc6560aa595e01bb5d929320f8d2f70dda32d5a8dd70ec91e84acb8716"],
-  ["public.openapi.json", "60a14073f7ee52d91b919c69fbc7444bf6afe391a887121bb4af5e45fbb85626"],
-]);
 const publishedPackages = new Map([
   ["@oripa/storefront-client", {
-    file: "oripa-storefront-client-2.0.0-alpha.33.tgz",
+    file: "oripa-storefront-client-2.0.0-alpha.34.tgz",
     version: bundleVersion,
   }],
   ["@oripa/storefront-testkit", {
-    file: "oripa-storefront-testkit-2.0.0-alpha.33.tgz",
+    file: "oripa-storefront-testkit-2.0.0-alpha.34.tgz",
     version: bundleVersion,
   }],
 ]);
@@ -61,12 +61,12 @@ for (const [file, digest] of expected) {
   if (sha256(path.join(vendor, file)) !== digest) throw new Error(`Artifact digest mismatch: ${file}`);
 }
 for (const [file, digest] of retainedExpected) {
-  if (sha256(path.join(retainedVendor, file)) !== digest) throw new Error(`Retained alpha.31 digest mismatch: ${file}`);
+  if (sha256(path.join(retainedVendor, file)) !== digest) throw new Error(`Retained alpha.33 digest mismatch: ${file}`);
 }
 const retainedInventory = readdirSync(retainedVendor).sort();
 const expectedRetainedInventory = [...retainedExpected.keys(), "PROVENANCE.md"].sort();
 if (JSON.stringify(retainedInventory) !== JSON.stringify(expectedRetainedInventory)) {
-  throw new Error("Retained alpha.31 inventory mismatch");
+  throw new Error("Retained alpha.33 inventory mismatch");
 }
 const inventory = readdirSync(vendor).sort();
 const expectedInventory = [...expected.keys(), "PROVENANCE.md"].sort();
@@ -85,8 +85,8 @@ const sums = new Map(
     }),
 );
 for (const file of [
-  "oripa-storefront-client-2.0.0-alpha.33.tgz",
-  "oripa-storefront-testkit-2.0.0-alpha.33.tgz",
+  "oripa-storefront-client-2.0.0-alpha.34.tgz",
+  "oripa-storefront-testkit-2.0.0-alpha.34.tgz",
   "public.openapi.json",
 ]) {
   if (sums.get(file) !== expected.get(file)) throw new Error(`SHA256SUMS mismatch: ${file}`);
@@ -94,18 +94,18 @@ for (const file of [
 if (sums.size !== 3) throw new Error("SHA256SUMS entry set is invalid");
 
 const manifest = JSON.parse(readFileSync(path.join(vendor, "artifact-manifest.json"), "utf8"));
-if (manifest.task_id !== "GOV-025" || manifest.source_commit !== sourceCommit) {
+if (manifest.task_id !== "MIG-099" || manifest.source_commit !== sourceCommit) {
   throw new Error("Artifact provenance mismatch");
 }
 if (manifest.bundle?.version !== bundleVersion || manifest.bundle?.predecessor !== predecessorBundleVersion ||
-    manifest.bundle?.release_mode !== "package-only" || manifest.bundle?.immutable !== true) {
-  throw new Error("Package-only bundle declaration mismatch");
+    manifest.bundle?.release_mode !== "contract-breaking" || manifest.bundle?.immutable !== true) {
+  throw new Error("Contract-breaking bundle declaration mismatch");
 }
 if (manifest.public_openapi?.file !== "public.openapi.json" ||
     manifest.public_openapi?.version !== publicApiVersion ||
     manifest.public_openapi?.sha256 !== expected.get("public.openapi.json") ||
-    manifest.public_openapi?.operation_count !== 74 ||
-    manifest.public_openapi?.breaking_change !== false) {
+    manifest.public_openapi?.operation_count !== 75 ||
+    manifest.public_openapi?.breaking_change !== true) {
   throw new Error("Referenced Public OpenAPI manifest entry mismatch");
 }
 const manifestPackages = new Map((manifest.packages ?? []).map((entry) => [entry.name, entry]));
@@ -126,7 +126,7 @@ if (schemaEntry?.disposition !== "referenced" || schemaEntry.file !== undefined 
 if (manifestPackages.size !== 3 || manifest.packages?.length !== 3) throw new Error("Package manifest is incomplete");
 
 const provenance = readFileSync(path.join(vendor, "PROVENANCE.md"), "utf8");
-for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "GOV-025", "33318307918", "9734141503", ...expected.values(), referencedSiteSchema.sha256]) {
+for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "MIG-099", "33395772059", "9759273312", ...expected.values(), referencedSiteSchema.sha256]) {
   if (!provenance.includes(value)) throw new Error(`Artifact provenance is incomplete: ${value}`);
 }
 if (/\/(?:var\/(?:www|lib)|home)\//.test(provenance)) {
@@ -169,7 +169,7 @@ const constants = archiveText(clientArchive, "package/dist/constants.js");
 if (!constants.includes(`STOREFRONT_CLIENT_VERSION = "${bundleVersion}"`)) {
   throw new Error("Storefront Client runtime version mismatch");
 }
-const clientReadbackDirectory = mkdtempSync(path.join(tmpdir(), "site-alpha33-client-"));
+const clientReadbackDirectory = mkdtempSync(path.join(tmpdir(), "site-alpha34-client-"));
 try {
   execFileSync("tar", ["-xzf", clientArchive, "-C", clientReadbackDirectory]);
   const extractedPackage = path.join(clientReadbackDirectory, "package");
@@ -225,8 +225,25 @@ for (const declaration of [
   'next_action: "login";',
   "initiating_session_preserved: boolean;",
   "session_rotated: boolean;",
+  "GachaRankPresentation: {",
+  "rank_id: components[\"schemas\"][\"OpaqueId\"];",
+  "rank_name: string;",
+  "lineup_image: components[\"schemas\"][\"PresentationAsset\"];",
+  "show_total_stock: boolean;",
+  "total_stock: number | null;",
+  "display_order: number;",
+  "current_video: components[\"schemas\"][\"PresentationAsset\"];",
+  "DrawResult: {",
+  "rank_name_snapshot: string | null;",
+  "result_image_snapshot: components[\"schemas\"][\"NullablePresentationAsset\"];",
+  "video_snapshot: components[\"schemas\"][\"NullablePresentationAsset\"];",
 ]) {
   if (!generatedTypes.includes(declaration)) throw new Error(`Retained Client type is missing: ${declaration}`);
+}
+for (const legacyDeclaration of ["RankDisplay: {", "presentation_assets:"]) {
+  if (generatedTypes.includes(legacyDeclaration)) {
+    throw new Error(`Legacy Rank Client type remains: ${legacyDeclaration}`);
+  }
 }
 if (/limited_bonus\??:\s*[^;]*\|\s*null/.test(generatedTypes)) {
   throw new Error("Limited Bonus Client type must remain optional and non-nullable");
@@ -327,7 +344,7 @@ if (testkitPackage.dependencies?.["@oripa/storefront-client"] !== bundleVersion 
     testkitPackage.dependencies?.["@oripa/site-schema"] !== siteSchemaVersion ||
     testkitPackage.oripaCompatibility?.storefrontClientVersion !== bundleVersion ||
     testkitPackage.oripaCompatibility?.siteSchemaVersion !== siteSchemaVersion ||
-    testkitPackage.oripaCompatibility?.publicApiOperationCount !== 74) {
+    testkitPackage.oripaCompatibility?.publicApiOperationCount !== 75) {
   throw new Error("Testkit mixed-version dependency declaration mismatch");
 }
 const testkitFixtures = archiveText(testkitArchive, "package/dist/fixtures.d.ts");
@@ -394,6 +411,29 @@ for (const accountSecurityFixture of [
     throw new Error(`Canonical Account Security Testkit fixture is missing: ${accountSecurityFixture}`);
   }
 }
+for (const rankFixture of [
+  "PUBLIC_CATALOG_FIXTURE",
+  'readonly rank_name: "Sランク";',
+  'readonly alt_text: "Sランク景品ラインナップ";',
+  "readonly show_total_stock: true;",
+  "readonly total_stock: 100;",
+  "readonly display_order: 10;",
+  'readonly media_type: "video";',
+  'readonly alt_text: "Sランク抽選演出";',
+]) {
+  if (!testkitFixtures.includes(rankFixture)) {
+    throw new Error(`Canonical Rank Testkit fixture is missing: ${rankFixture}`);
+  }
+}
+const catalogFixtureDeclaration = testkitFixtures.slice(
+  testkitFixtures.indexOf("readonly ranks:"),
+  testkitFixtures.indexOf("readonly probability_stages:"),
+);
+for (const legacyFixtureField of ["readonly code:", "readonly prizes:", "readonly presentation_assets:"]) {
+  if (catalogFixtureDeclaration.includes(legacyFixtureField)) {
+    throw new Error(`Legacy Rank Testkit fixture remains: ${legacyFixtureField}`);
+  }
+}
 
 const schemaArchive = path.join(schemaVendor, referencedSiteSchema.file);
 if (sha256(schemaArchive) !== referencedSiteSchema.sha256) throw new Error("Referenced Site Schema digest mismatch");
@@ -409,17 +449,14 @@ const operationIds = (document) => new Set(Object.values(document.paths ?? {}).f
   Object.values(pathItem).flatMap((operation) => operation?.operationId ? [operation.operationId] : [])));
 const currentOperations = operationIds(openApi);
 const predecessorOperations = operationIds(predecessorOpenApi);
-const expectedAddedOperations = [
-  "changeUserPassword",
-  "completeEmailChange",
-  "createEmailChangeRequest",
-];
+const expectedAddedOperations = ["getCanonicalPresentationAssetContent"];
 const actualAddedOperations = [...currentOperations].filter((operation) => !predecessorOperations.has(operation)).sort();
 if ([...predecessorOperations].some((operation) => !currentOperations.has(operation)) ||
     JSON.stringify(actualAddedOperations) !== JSON.stringify(expectedAddedOperations)) {
-  throw new Error("Public OpenAPI additive operation set mismatch");
+  throw new Error("Public OpenAPI operation set mismatch");
 }
-if (openApi.info?.version !== publicApiVersion || currentOperations.size !== 74 ||
+if (openApi.info?.version !== publicApiVersion || currentOperations.size !== 75 ||
+    !openApi.paths?.["/catalog/presentation-assets/{asset_id}/content"]?.get ||
     !openApi.paths?.["/me/payment-card-ui-bootstrap"]?.get ||
     !openApi.paths?.["/payments"]?.post ||
     !openApi.paths?.["/payments/{payment_id}"]?.get ||
@@ -434,7 +471,24 @@ if (openApi.info?.version !== publicApiVersion || currentOperations.size !== 74 
     !openApi.paths?.["/me/email-change-requests"]?.post ||
     !openApi.paths?.["/me/email-change-requests/{email_change_request_id}/complete"]?.post ||
     !openApi.paths?.["/me/password"]?.put) {
-  throw new Error("Canonical Public OpenAPI Payment contract mismatch");
+  throw new Error("Canonical Public OpenAPI retained-operation contract mismatch");
+}
+const rankSchema = openApi.components?.schemas?.GachaRankPresentation;
+const gachaDetailSchema = openApi.components?.schemas?.GachaDetail;
+const rankReferenceSchema = openApi.components?.schemas?.RankReference;
+const drawResultSchema = openApi.components?.schemas?.DrawResult;
+if (rankSchema?.additionalProperties !== false ||
+    JSON.stringify(rankSchema?.required) !== JSON.stringify([
+      "rank_id", "rank_name", "lineup_image", "show_total_stock", "total_stock", "display_order", "current_video",
+    ]) ||
+    rankSchema?.properties?.total_stock?.type?.[1] !== "null" ||
+    gachaDetailSchema?.properties?.ranks?.items?.$ref !== "#/components/schemas/GachaRankPresentation" ||
+    rankReferenceSchema?.properties?.code !== undefined ||
+    openApi.components?.schemas?.RankDisplay !== undefined ||
+    drawResultSchema?.properties?.rank_name_snapshot === undefined ||
+    drawResultSchema?.properties?.result_image_snapshot?.$ref !== "#/components/schemas/NullablePresentationAsset" ||
+    drawResultSchema?.properties?.video_snapshot?.$ref !== "#/components/schemas/NullablePresentationAsset") {
+  throw new Error("Canonical Rank and Draw snapshot schema mismatch");
 }
 const registrationSchema = openApi.components?.schemas?.PaymentCardRegistration;
 const capacitySchema = openApi.components?.schemas?.PaymentCardCollection?.properties?.limits?.properties;
@@ -452,8 +506,8 @@ for (const content of [packageJsonText, lockfileText]) {
     throw new Error("Server-specific file dependency");
   }
   for (const required of [
-    "vendor/oripa/GOV-025/oripa-storefront-client-2.0.0-alpha.33.tgz",
-    "vendor/oripa/GOV-025/oripa-storefront-testkit-2.0.0-alpha.33.tgz",
+    "vendor/oripa/MIG-099/oripa-storefront-client-2.0.0-alpha.34.tgz",
+    "vendor/oripa/MIG-099/oripa-storefront-testkit-2.0.0-alpha.34.tgz",
     "vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
   ]) {
     if (!content.includes(required)) throw new Error(`Canonical package pin is missing: ${required}`);
@@ -465,6 +519,10 @@ if (JSON.parse(packageJsonText).dependencies?.["@fincode/js"] !== "1.1.0" ||
   throw new Error("Canonical fincode SDK dependency is not exactly pinned");
 }
 for (const obsolete of [
+  "vendor/oripa/GOV-025/oripa-storefront-client-2.0.0-alpha.33.tgz",
+  "vendor/oripa/GOV-025/oripa-storefront-testkit-2.0.0-alpha.33.tgz",
+  "oripa-storefront-client-2.0.0-alpha.33.tgz",
+  "oripa-storefront-testkit-2.0.0-alpha.33.tgz",
   "vendor/oripa/GOV-023/oripa-storefront-client-2.0.0-alpha.32.tgz",
   "vendor/oripa/GOV-023/oripa-storefront-testkit-2.0.0-alpha.32.tgz",
   "oripa-storefront-client-2.0.0-alpha.32.tgz",

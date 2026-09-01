@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type {
   GachaDetail,
   GachaPresentationState,
@@ -25,8 +25,6 @@ type DetailState =
       readonly presentation: GachaPresentationState;
     };
 
-type Prize = GachaDetail["ranks"][number]["prizes"][number];
-
 const number = new Intl.NumberFormat("ja-JP");
 function formatDateTime(value: string | null) {
   if (!value) return null;
@@ -41,52 +39,9 @@ function remainingPercentage(detail: GachaDetail) {
   if (detail.total_count <= 0) return 0;
   return Math.min(100, Math.max(0, (detail.remaining_count / detail.total_count) * 100));
 }
-
-
-function PrizeModal({ prize, onClose }: { readonly prize: Prize; readonly onClose: () => void }) {
-  const titleId = useId();
-  const closeRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeRef.current?.focus();
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [onClose]);
-
-  const asset = prize.presentation_asset?.media_type === "image" ? prize.presentation_asset : null;
-  return (
-    <div className="prize-modal" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }} role="presentation">
-      <section aria-labelledby={titleId} aria-modal="true" className="prize-modal__dialog" role="dialog">
-        <button aria-label="景品詳細を閉じる" className="prize-modal__close" onClick={onClose} ref={closeRef} type="button">×</button>
-        <div className="prize-modal__visual">
-          <CatalogAsset alt={asset?.alt_text ?? prize.name} fallbackLabel="PRIZE IMAGE" {...(asset?.path ? { src: asset.path } : {})} />
-        </div>
-        <div className="prize-modal__copy">
-          <p>PRIZE DETAIL</p>
-          <h2 id={titleId}>{prize.name}</h2>
-          {prize.description && <p>{prize.description}</p>}
-        </div>
-      </section>
-    </div>
-  );
-}
-
 function PrizeSections({ detail }: { readonly detail: GachaDetail }) {
-  const [selectedPrize, setSelectedPrize] = useState<Prize | null>(null);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-
-  function closeModal() {
-    setSelectedPrize(null);
-    requestAnimationFrame(() => triggerRef.current?.focus());
-  }
+  const ranks = [...detail.ranks].sort((left, right) =>
+    left.display_order - right.display_order || left.rank_id.localeCompare(right.rank_id));
 
   return (
     <section aria-labelledby="gacha-prizes" className="gacha-prizes">
@@ -94,38 +49,28 @@ function PrizeSections({ detail }: { readonly detail: GachaDetail }) {
         <p>PRIZE LINEUP</p>
         <h2 id="gacha-prizes">景品ラインナップ</h2>
       </header>
-      {detail.ranks.length === 0 ? (
+      {ranks.length === 0 ? (
         <p className="gacha-detail__neutral">公開中の景品情報はありません。</p>
-      ) : detail.ranks.map((rank) => (
-        <section aria-labelledby={`rank-${rank.id}`} className="prize-rank" key={rank.id}>
-          <header>
-            <div><span>{rank.code}</span><h3 id={`rank-${rank.id}`}>{rank.name}</h3></div>
-          </header>
-          <div className="prize-grid">
-            {rank.prizes.map((prize) => {
-              const asset = prize.presentation_asset?.media_type === "image" ? prize.presentation_asset : null;
-              return (
-                <button
-                  aria-label={`${prize.name}の詳細を見る`}
-                  className="prize-card"
-                  key={prize.id}
-                  onClick={(event) => {
-                    triggerRef.current = event.currentTarget;
-                    setSelectedPrize(prize);
-                  }}
-                  type="button"
-                >
-                  <div className="prize-card__image">
-                    <CatalogAsset alt={asset?.alt_text ?? prize.name} fallbackLabel="PRIZE IMAGE" {...(asset?.path ? { src: asset.path } : {})} />
-                  </div>
-                  <strong>{prize.name}</strong>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      ))}
-      {selectedPrize && <PrizeModal onClose={closeModal} prize={selectedPrize} />}
+      ) : ranks.map((rank) => {
+        const lineupImage = rank.lineup_image.media_type === "image" ? rank.lineup_image : null;
+        return (
+          <section aria-labelledby={`rank-${rank.rank_id}`} className="prize-rank" key={rank.rank_id}>
+            <header>
+              <h3 id={`rank-${rank.rank_id}`}>{rank.rank_name}</h3>
+              {rank.show_total_stock === true && rank.total_stock !== null && (
+                <p>設定総数 {number.format(rank.total_stock)}点</p>
+              )}
+            </header>
+            <div className="prize-rank__lineup">
+              <CatalogAsset
+                alt={lineupImage?.alt_text ?? `${rank.rank_name}の景品ラインナップ`}
+                fallbackLabel="LINEUP IMAGE"
+                {...(lineupImage?.path ? { src: lineupImage.path } : {})}
+              />
+            </div>
+          </section>
+        );
+      })}
     </section>
   );
 }

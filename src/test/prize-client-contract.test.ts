@@ -32,13 +32,13 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
   it("pins the canonical immutable versions and retains existing contracts", () => {
     for (const [packageName, version] of Object.entries({
       "site-schema": "2.0.0-alpha.23",
-      "storefront-client": "2.0.0-alpha.33",
-      "storefront-testkit": "2.0.0-alpha.33",
+      "storefront-client": "2.0.0-alpha.34",
+      "storefront-testkit": "2.0.0-alpha.34",
     })) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
       expect(packageJson.version).toBe(version);
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("9670bc769080da605c97cb9849b61f342cf0111bc39e91c09dbbf62fc4bcc720");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("27d0cdcee9194989058573d7e198066fa4af62017a0f301117ea4af034e733f0");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getUserSession",
       "loginUser",
@@ -89,7 +89,7 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
     });
     expect(data.items[0]?.allowed_actions).toEqual(fixture.allowed_actions);
     expect(data.next_cursor).toBe("next-page");
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.33", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.34", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -130,7 +130,7 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
     expect(harness.mock.requests[1]?.credentials).toBe("include");
     expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBe(key);
     expect(harness.mock.requests[1]?.headers["x-xsrf-token"]).toBe(csrf);
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.33", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.34", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 

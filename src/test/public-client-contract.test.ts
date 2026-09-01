@@ -15,7 +15,22 @@ const gachaCollection = {
   meta: { has_more: false, next_cursor: null, page_size: 1 },
 };
 
-describe("MIG-062Z retained public catalog contract", () => {
+describe("MIG-099 canonical public catalog contract", () => {
+  it("uses the canonical Prize-associated Rank fixture without legacy RankDisplay fields", () => {
+    const rank = PUBLIC_CATALOG_FIXTURE.data.ranks[0]!;
+    expect(rank).toMatchObject({
+      display_order: 10,
+      rank_name: "Sランク",
+      show_total_stock: true,
+      total_stock: 100,
+    });
+    expect(rank.lineup_image.media_type).toBe("image");
+    expect(rank.current_video.media_type).toBe("video");
+    expect(rank).not.toHaveProperty("code");
+    expect(rank).not.toHaveProperty("presentation_assets");
+    expect(rank).not.toHaveProperty("prizes");
+  });
+
   it("uses the canonical gacha list with category and cursor queries", async () => {
     const category = createPublicClientTestHarness();
     category.mock.enqueueJson(
@@ -24,7 +39,7 @@ describe("MIG-062Z retained public catalog contract", () => {
     );
     await expect(category.client.listGachas({ limit: 20, category: PUBLIC_CATALOG_FIXTURE.data.category.slug }))
       .resolves.toMatchObject({ data: gachaCollection });
-    assertBrowserRequestBoundary(category.mock.requests[0]!, { client_version: "2.0.0-alpha.33", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(category.mock.requests[0]!, { client_version: "2.0.0-alpha.34", site_version: "0.1.0" });
     category.mock.assertExhausted();
 
     const cursor = createPublicClientTestHarness();
@@ -51,7 +66,7 @@ describe("MIG-062Z retained public catalog contract", () => {
       .resolves.toMatchObject({ data: PUBLIC_CATALOG_FIXTURE });
     await expect(harness.client.getGachaPresentation(PUBLIC_CATALOG_FIXTURE.data.id))
       .resolves.toMatchObject({ data: PUBLIC_GACHA_PRESENTATION_FIXTURE });
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.33", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.34", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -127,7 +142,7 @@ describe("MIG-062Z retained public catalog contract", () => {
       data: PUBLIC_FOOTER_PAGES_FIXTURE.response,
     });
     assertBrowserRequestBoundary(harness.mock.requests[0]!, {
-      client_version: "2.0.0-alpha.33",
+      client_version: "2.0.0-alpha.34",
       site_version: "0.1.0",
     });
     harness.mock.assertExhausted();
