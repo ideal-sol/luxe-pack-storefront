@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@fincode/js": "1.1.0",
-    "@oripa/storefront-client": "file:vendor/oripa/MIG-099/oripa-storefront-client-2.0.0-alpha.34.tgz",
+    "@oripa/storefront-client": "file:vendor/oripa/SMS-001/oripa-storefront-client-2.0.0-alpha.35.tgz",
     "next": "16.3.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@oripa/site-schema": "file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
-    "@oripa/storefront-testkit": "file:vendor/oripa/MIG-099/oripa-storefront-testkit-2.0.0-alpha.34.tgz",
+    "@oripa/storefront-testkit": "file:vendor/oripa/SMS-001/oripa-storefront-testkit-2.0.0-alpha.35.tgz",
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "7.0.0",
@@ -62,7 +62,7 @@
   "pnpm": {
     "overrides": {
       "@oripa/site-schema@2.0.0-alpha.23": "file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
-      "@oripa/storefront-client@2.0.0-alpha.34": "file:vendor/oripa/MIG-099/oripa-storefront-client-2.0.0-alpha.34.tgz",
+      "@oripa/storefront-client@2.0.0-alpha.35": "file:vendor/oripa/SMS-001/oripa-storefront-client-2.0.0-alpha.35.tgz",
       "nanoid@<3.3.18": "3.3.18"
     }
   }

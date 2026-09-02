@@ -7,6 +7,9 @@ import { PrizeClientProvider } from "@/components/prizes/prize-client-provider";
 import { PrizeInventory } from "@/components/prizes/prize-inventory";
 import type { AuthClientAdapter, AuthSession, PrizeFulfillmentAdapter, UserPrize } from "@/lib/platform";
 
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 const authenticated = PUBLIC_AUTH_FIXTURE.authenticated_session;
 const base = PUBLIC_USER_PRIZE_FIXTURE as UserPrize;
@@ -15,7 +18,7 @@ function response<T>(data: T) {
   return { data, metadata };
 }
 
-function authClient(authenticatedSession: AuthSession = authenticated): AuthClientAdapter {
+function authClient(authenticatedSession: AuthSession = authenticated, overrides: Partial<AuthClientAdapter> = {}): AuthClientAdapter {
   return {
     changeUserPassword: vi.fn(),
     completeEmailChange: vi.fn(),
@@ -23,11 +26,17 @@ function authClient(authenticatedSession: AuthSession = authenticated): AuthClie
     confirmPasswordReset: vi.fn(),
     createEmailChangeRequest: vi.fn(),
     getCurrentSession: vi.fn().mockResolvedValue(response(authenticatedSession)),
+    getSmsVerificationStatus: vi.fn().mockResolvedValue(response({ challenge: null, phone: "+819012345678", phone_masked: "+819****5678", verified: true, verified_at: "2026-09-02T10:00:00Z" })),
     login: vi.fn(),
     logout: vi.fn(),
     register: vi.fn(),
+    reauthenticateUserPassword: vi.fn(),
     requestPasswordReset: vi.fn(),
     resendEmailVerification: vi.fn(),
+    resendSmsVerification: vi.fn(),
+    sendSmsVerification: vi.fn(),
+    verifySmsCode: vi.fn(),
+    ...overrides,
   } as AuthClientAdapter;
 }
 
@@ -173,6 +182,18 @@ describe("prize inventory UI", () => {
     expect(screen.getByRole("button", { name: "発送を依頼" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "リセット" }));
     expect(screen.queryByLabelText("選択した景品の操作")).not.toBeInTheDocument();
+  });
+
+  it("warns instead of starting a new shipping request when SMS is unverified", async () => {
+    const auth = authClient(authenticated, {
+      getSmsVerificationStatus: vi.fn().mockResolvedValue(response({ challenge: null, phone: null, phone_masked: null, verified: false, verified_at: null })),
+    });
+    const fulfillment = client();
+    renderInventory(fulfillment, auth);
+    fireEvent.click(await screen.findByRole("checkbox", { name: "両方可能な景品を選択" }));
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼" }));
+    expect(await screen.findByRole("dialog")).toHaveTextContent("配送依頼にはSMS認証が必要です");
+    expect(fulfillment.listShippingAddresses).not.toHaveBeenCalled();
   });
 
   it("renders no action when selected items have no Backend-common action", async () => {

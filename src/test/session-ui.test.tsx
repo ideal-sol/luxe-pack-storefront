@@ -9,6 +9,7 @@ import { ToastProvider } from "@/components/common/toast-provider";
 import { SiteHeader } from "@/components/layout/site-header";
 import { PointClientProvider } from "@/components/points/point-client-provider";
 import type { AuthClientAdapter, AuthSession } from "@/lib/platform";
+import { consumeSmsRegistrationPrompt } from "@/lib/sms-registration-prompt";
 
 const replace = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -199,6 +200,7 @@ describe("authentication UI", () => {
     await screen.findByText("メール認証が完了しました");
     expect(completeEmailVerification).toHaveBeenCalledTimes(1);
     expect(getCurrentSession).toHaveBeenCalledTimes(2);
+    expect(consumeSmsRegistrationPrompt("0198a001-0000-7000-8000-000000000502")).toBe(true);
   });
 
   it("renders a safe typed error when email verification fails", async () => {

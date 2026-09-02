@@ -39,7 +39,7 @@ describe("MIG-099 canonical public catalog contract", () => {
     );
     await expect(category.client.listGachas({ limit: 20, category: PUBLIC_CATALOG_FIXTURE.data.category.slug }))
       .resolves.toMatchObject({ data: gachaCollection });
-    assertBrowserRequestBoundary(category.mock.requests[0]!, { client_version: "2.0.0-alpha.34", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(category.mock.requests[0]!, { client_version: "2.0.0-alpha.35", site_version: "0.1.0" });
     category.mock.assertExhausted();
 
     const cursor = createPublicClientTestHarness();
@@ -66,7 +66,7 @@ describe("MIG-099 canonical public catalog contract", () => {
       .resolves.toMatchObject({ data: PUBLIC_CATALOG_FIXTURE });
     await expect(harness.client.getGachaPresentation(PUBLIC_CATALOG_FIXTURE.data.id))
       .resolves.toMatchObject({ data: PUBLIC_GACHA_PRESENTATION_FIXTURE });
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.34", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.35", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -142,7 +142,7 @@ describe("MIG-099 canonical public catalog contract", () => {
       data: PUBLIC_FOOTER_PAGES_FIXTURE.response,
     });
     assertBrowserRequestBoundary(harness.mock.requests[0]!, {
-      client_version: "2.0.0-alpha.34",
+      client_version: "2.0.0-alpha.35",
       site_version: "0.1.0",
     });
     harness.mock.assertExhausted();

@@ -13,6 +13,9 @@ import type {
   ShippingAddressInput,
 } from "@/lib/platform";
 
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 const authenticated: AuthSession = {
   authenticated: true,
@@ -53,7 +56,7 @@ function response<T>(data: T) {
   return { data, metadata };
 }
 
-function authClient(session: AuthSession = authenticated): AuthClientAdapter {
+function authClient(session: AuthSession = authenticated, overrides: Partial<AuthClientAdapter> = {}): AuthClientAdapter {
   return {
     changeUserPassword: vi.fn(),
     completeEmailChange: vi.fn(),
@@ -61,11 +64,17 @@ function authClient(session: AuthSession = authenticated): AuthClientAdapter {
     confirmPasswordReset: vi.fn(),
     createEmailChangeRequest: vi.fn(),
     getCurrentSession: vi.fn().mockResolvedValue(response(session)),
+    getSmsVerificationStatus: vi.fn().mockResolvedValue(response({ challenge: null, phone: "+819012345678", phone_masked: "+819****5678", verified: true, verified_at: "2026-09-02T10:00:00Z" })),
     login: vi.fn(),
     logout: vi.fn(),
     register: vi.fn(),
+    reauthenticateUserPassword: vi.fn(),
     requestPasswordReset: vi.fn(),
     resendEmailVerification: vi.fn(),
+    resendSmsVerification: vi.fn(),
+    sendSmsVerification: vi.fn(),
+    verifySmsCode: vi.fn(),
+    ...overrides,
   } as AuthClientAdapter;
 }
 
@@ -86,9 +95,9 @@ function fulfillmentClient(overrides: Partial<PrizeFulfillmentAdapter> = {}): Pr
   } as PrizeFulfillmentAdapter;
 }
 
-function renderManager(client: PrizeFulfillmentAdapter, session: AuthSession = authenticated) {
+function renderManager(client: PrizeFulfillmentAdapter, session: AuthSession = authenticated, authOverrides: Partial<AuthClientAdapter> = {}) {
   return render(
-    <SessionProvider client={authClient(session)}>
+    <SessionProvider client={authClient(session, authOverrides)}>
       <PrizeClientProvider client={client}>
         <ShippingAddressManager />
       </PrizeClientProvider>
@@ -125,12 +134,35 @@ describe("shipping address management", () => {
     expect(client.listShippingAddresses).not.toHaveBeenCalled();
   });
 
+  it("shows the SMS warning before any address read for an unverified user", async () => {
+    const client = fulfillmentClient();
+    renderManager(client, authenticated, {
+      getSmsVerificationStatus: vi.fn().mockResolvedValue(response({ challenge: null, phone: null, phone_masked: null, verified: false, verified_at: null })),
+    });
+    expect(await screen.findByRole("dialog")).toHaveTextContent("お届け先の登録にはSMS認証が必要です");
+    expect(client.listShippingAddresses).not.toHaveBeenCalled();
+  });
+
+  it("normalizes the Backend SMS-required address Problem to the same warning", async () => {
+    const required = new ApiProblemError({
+      code: "SMS_VERIFICATION_REQUIRED",
+      request_id: "request-address-sms-required",
+      retryable: false,
+      status: 403,
+      title: "SMS verification required",
+      type: "https://storefront.test/problems/sms-verification-required",
+    });
+    renderManager(fulfillmentClient({ listShippingAddresses: vi.fn().mockRejectedValue(required) }));
+    expect(await screen.findByRole("dialog")).toHaveTextContent("お届け先の登録にはSMS認証が必要です");
+    expect(document.body).not.toHaveTextContent("SMS_VERIFICATION_REQUIRED");
+  });
+
   it("renders loading and the canonical empty collection", async () => {
     let resolveList!: (value: ReturnType<typeof response>) => void;
     const listShippingAddresses = vi.fn(() => new Promise((resolve) => { resolveList = resolve; }));
     renderManager(fulfillmentClient({ listShippingAddresses: listShippingAddresses as PrizeFulfillmentAdapter["listShippingAddresses"] }));
-    expect(await screen.findByRole("status")).toHaveTextContent("お届け先を読み込み中");
     await waitFor(() => expect(listShippingAddresses).toHaveBeenCalledOnce());
+    expect(screen.getByRole("status")).toHaveTextContent("お届け先を読み込み中");
     resolveList(response({ items: [] }));
     expect(await screen.findByText("登録済みのお届け先はありません")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "新しいお届け先を登録" })).toBeInTheDocument();

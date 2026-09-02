@@ -25,11 +25,16 @@ function client(session: AuthSession, pending = false): AuthClientAdapter {
     getCurrentSession: pending
       ? vi.fn(() => new Promise(() => undefined))
       : vi.fn().mockResolvedValue({ data: session, metadata }),
+    getSmsVerificationStatus: vi.fn(),
     login: vi.fn(),
     logout: vi.fn(),
     register: vi.fn(),
+    reauthenticateUserPassword: vi.fn(),
     requestPasswordReset: vi.fn(),
     resendEmailVerification: vi.fn(),
+    resendSmsVerification: vi.fn(),
+    sendSmsVerification: vi.fn(),
+    verifySmsCode: vi.fn(),
   } as AuthClientAdapter;
 }
 

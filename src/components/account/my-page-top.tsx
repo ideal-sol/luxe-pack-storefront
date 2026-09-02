@@ -1,27 +1,37 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
+import { SmsVerificationRequiredDialog } from "@/components/account/sms-verification-required-dialog";
+import { ConfirmationDialog } from "@/components/common/confirmation-dialog";
 import { LoadingState } from "@/components/common/loading-state";
 import { ErrorState, LoginRequiredState } from "@/components/common/state-panel";
 import { useToast } from "@/components/common/toast-provider";
-import { presentAuthProblem } from "@/lib/platform";
+import { presentAuthProblem, presentSmsProblem } from "@/lib/platform";
 import {
   myPageAccountNavigation,
   myPageShortcutNavigation,
   myPageSupportNavigation,
+  smsVerificationRoute,
 } from "@/lib/routes/navigation";
+import { consumeSmsRegistrationPrompt } from "@/lib/sms-registration-prompt";
 
 export function MyPageTop({
   accountUpdated,
 }: {
   readonly accountUpdated?: "email" | "password";
 }) {
-  const { logout, state } = useSession();
+  const router = useRouter();
+  const { getSmsVerificationStatus, logout, state } = useSession();
   const { showToast } = useToast();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [addressGateOpen, setAddressGateOpen] = useState(false);
+  const [checkingAddress, setCheckingAddress] = useState(false);
+  const [registrationPromptOpen, setRegistrationPromptOpen] = useState(false);
   const successShown = useRef(false);
+  const promptUser = useRef<string | null>(null);
 
   useEffect(() => {
     if (!accountUpdated || successShown.current) return;
@@ -33,6 +43,13 @@ export function MyPageTop({
     );
   }, [accountUpdated, showToast]);
 
+  useEffect(() => {
+    const userId = state.status === "authenticated" ? state.session.user?.id : null;
+    if (!userId || promptUser.current === userId) return;
+    promptUser.current = userId;
+    setRegistrationPromptOpen(consumeSmsRegistrationPrompt(userId));
+  }, [state]);
+
   async function handleLogout() {
     if (loggingOut) return;
     setLoggingOut(true);
@@ -43,6 +60,25 @@ export function MyPageTop({
       showToast("ログアウトできませんでした", presentAuthProblem(error).message);
     } finally {
       setLoggingOut(false);
+    }
+  }
+
+  async function navigateFromAccount(event: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    if (href !== "/mypage/address" || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    if (checkingAddress) return;
+    setCheckingAddress(true);
+    try {
+      const sms = await getSmsVerificationStatus();
+      if (sms.verified) {
+        router.push(href);
+      } else {
+        setAddressGateOpen(true);
+      }
+    } catch (error) {
+      showToast("お届け先を開けませんでした", presentSmsProblem(error).message);
+    } finally {
+      setCheckingAddress(false);
     }
   }
 
@@ -78,12 +114,22 @@ export function MyPageTop({
         ))}
       </nav>
 
-      <MenuSection items={myPageAccountNavigation} label="アカウント" />
+      <MenuSection items={myPageAccountNavigation} label="アカウント" onNavigate={navigateFromAccount} />
       <MenuSection items={myPageSupportNavigation} label="お知らせ・サポート" />
 
       <button className="mypage-logout" disabled={loggingOut} onClick={handleLogout} type="button">
         {loggingOut ? "ログアウト中…" : "ログアウト"}
       </button>
+      <ConfirmationDialog
+        cancelLabel="あとで認証する"
+        confirmLabel="SMS認証する"
+        description="お届け先の登録や配送依頼を利用するには、携帯電話番号のSMS認証が必要です。"
+        onCancel={() => setRegistrationPromptOpen(false)}
+        onConfirm={() => router.push(smsVerificationRoute)}
+        open={registrationPromptOpen}
+        title="SMS認証のご案内"
+      />
+      <SmsVerificationRequiredDialog context="address" onCancel={() => setAddressGateOpen(false)} open={addressGateOpen} />
     </div>
   );
 }
@@ -91,9 +137,11 @@ export function MyPageTop({
 function MenuSection({
   items,
   label,
+  onNavigate,
 }: {
   readonly items: readonly { readonly description: string; readonly href: string; readonly label: string }[];
   readonly label: string;
+  readonly onNavigate?: (event: React.MouseEvent<HTMLAnchorElement>, href: string) => void;
 }) {
   return (
     <section className="mypage-menu">
@@ -106,7 +154,7 @@ function MenuSection({
               <span aria-hidden="true" className="mypage-chevron">›</span>
             </a>
           ) : (
-            <Link href={item.href} key={item.href}>
+            <Link href={item.href} key={item.href} onClick={(event) => onNavigate?.(event, item.href)}>
               <span><strong>{item.label}</strong><small>{item.description}</small></span>
               <span aria-hidden="true" className="mypage-chevron">›</span>
             </Link>

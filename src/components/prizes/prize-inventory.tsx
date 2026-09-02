@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
+import { SmsVerificationRequiredDialog } from "@/components/account/sms-verification-required-dialog";
 import { CatalogAsset } from "@/components/catalog/catalog-asset";
 import { CatalogLoading, CatalogMessage } from "@/components/catalog/catalog-message";
 import { LoginRequiredState } from "@/components/common/state-panel";
 import {
   presentPlatformProblem,
+  presentSmsProblem,
   type PlatformProblemPresentation,
   type UserPrize,
   type UserPrizeActionUnavailableReason,
@@ -123,7 +125,7 @@ function availableBulkActions(items: readonly UserPrize[], selected: ReadonlySet
   );
 }
 
-function BulkActionTray({ actions, count, onAction }: { readonly actions: readonly BulkAction[]; readonly count: number; readonly onAction: (action: BulkAction) => void }) {
+function BulkActionTray({ actions, count, onAction, shippingChecking }: { readonly actions: readonly BulkAction[]; readonly count: number; readonly onAction: (action: BulkAction) => void; readonly shippingChecking: boolean }) {
   if (count === 0) return null;
   return (
     <aside aria-label="選択した景品の操作" className="inventory-action-tray">
@@ -131,7 +133,7 @@ function BulkActionTray({ actions, count, onAction }: { readonly actions: readon
         <p><strong>{number.format(count)}</strong>件を選択中</p>
         <div>
           {actions.includes("point_exchange") && <button onClick={() => onAction("point_exchange")} type="button">コインに交換</button>}
-          {actions.includes("shipping") && <button onClick={() => onAction("shipping")} type="button">発送を依頼</button>}
+          {actions.includes("shipping") && <button disabled={shippingChecking} onClick={() => onAction("shipping")} type="button">{shippingChecking ? "SMS認証を確認中…" : "発送を依頼"}</button>}
           {actions.length === 0 && <span>選択中の景品に共通して利用できる操作はありません。</span>}
         </div>
         <small>操作可否と完了結果はPlatformが実行時に再検証します。</small>
@@ -141,12 +143,15 @@ function BulkActionTray({ actions, count, onAction }: { readonly actions: readon
 }
 
 export function PrizeInventory() {
-  const { state: session } = useSession();
+  const { getSmsVerificationStatus, state: session } = useSession();
   const { client, configurationAvailable } = usePrizeClient();
   const [requestKey, setRequestKey] = useState(0);
   const [state, setState] = useState<InventoryState>({ status: "idle" });
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [fulfillmentAction, setFulfillmentAction] = useState<FulfillmentAction | null>(null);
+  const [shippingChecking, setShippingChecking] = useState(false);
+  const [shippingGateProblem, setShippingGateProblem] = useState<string | null>(null);
+  const [smsDialogOpen, setSmsDialogOpen] = useState(false);
   const sessionUserId = session.status === "authenticated" ? session.session.user?.id ?? null : null;
 
   useEffect(() => {
@@ -201,6 +206,33 @@ export function PrizeInventory() {
       });
     }
   }, [client, state]);
+
+  const startFulfillment = useCallback(async (action: FulfillmentAction) => {
+    if (action === "point_exchange") {
+      setFulfillmentAction(action);
+      return;
+    }
+    if (shippingChecking) return;
+    setShippingChecking(true);
+    setShippingGateProblem(null);
+    try {
+      const sms = await getSmsVerificationStatus();
+      if (sms.verified) {
+        setFulfillmentAction("shipping");
+      } else {
+        setSmsDialogOpen(true);
+      }
+    } catch (error) {
+      setShippingGateProblem(presentSmsProblem(error).message);
+    } finally {
+      setShippingChecking(false);
+    }
+  }, [getSmsVerificationStatus, shippingChecking]);
+
+  const requireSmsVerification = useCallback(() => {
+    setFulfillmentAction(null);
+    setSmsDialogOpen(true);
+  }, []);
 
   if (session.status === "loading" || state.status === "idle" && session.status === "authenticated" && configurationAvailable) {
     return <CatalogLoading label="獲得景品を読み込み中" />;
@@ -260,21 +292,24 @@ export function PrizeInventory() {
         ))}
       </div>
       {state.continuationProblem && <p className="inventory__continuation-error">{state.continuationProblem.message}</p>}
+      {shippingGateProblem && <p className="inventory__continuation-error" role="alert">{shippingGateProblem}</p>}
       {state.nextCursor && (
         <button className="button button--ghost inventory__more" disabled={state.loadingMore} onClick={() => void loadMore()} type="button">
           {state.loadingMore ? "読み込み中" : "さらに表示"}
         </button>
       )}
-      <BulkActionTray actions={actions} count={selected.size} onAction={setFulfillmentAction} />
+      <BulkActionTray actions={actions} count={selected.size} onAction={(action) => void startFulfillment(action)} shippingChecking={shippingChecking} />
       {client && (
         <PrizeFulfillmentDialog
           action={fulfillmentAction}
           client={client}
           onClose={() => setFulfillmentAction(null)}
           onReconcile={reconcileInventory}
+          onSmsVerificationRequired={requireSmsVerification}
           selectedItems={selectedItems}
         />
       )}
+      <SmsVerificationRequiredDialog context="shipping" onCancel={() => setSmsDialogOpen(false)} open={smsDialogOpen} />
     </section>
   );
 }

@@ -12,9 +12,12 @@ import {
   myPageShortcutNavigation,
   myPageSupportNavigation,
   publicRoutes,
+  smsVerificationRoute,
 } from "@/lib/routes/navigation";
+import { markSmsRegistrationPrompt } from "@/lib/sms-registration-prompt";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/mypage" }));
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock("next/navigation", () => ({ usePathname: () => "/mypage", useRouter: () => ({ push }) }));
 
 const authenticated: AuthSession = {
   authenticated: true,
@@ -27,7 +30,7 @@ const authenticated: AuthSession = {
 const anonymous: AuthSession = { authenticated: false, user: null };
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 
-function response(data: AuthSession) {
+function response<T>(data: T) {
   return { data, metadata };
 }
 
@@ -35,6 +38,7 @@ function client(session: AuthSession = authenticated, overrides: Partial<AuthCli
   return {
     completeEmailVerification: vi.fn(),
     getCurrentSession: vi.fn().mockResolvedValue(response(session)),
+    getSmsVerificationStatus: vi.fn().mockResolvedValue(response({ challenge: null, phone: "+819012345678", phone_masked: "+819****5678", verified: true, verified_at: "2026-09-02T10:00:00Z" })),
     login: vi.fn(),
     logout: vi.fn().mockResolvedValue({ data: undefined, metadata: { ...metadata, status: 204 } }),
     register: vi.fn(),
@@ -54,6 +58,10 @@ function renderMyPage(authClient: AuthClientAdapter | null, accountUpdated?: "em
 }
 
 describe("my page top", () => {
+  beforeEach(() => {
+    push.mockReset();
+    window.sessionStorage.clear();
+  });
   it("renders only the canonical Session summary for an authenticated member", async () => {
     renderMyPage(client());
     expect(await screen.findByRole("heading", { name: "会員メニュー" })).toBeInTheDocument();
@@ -77,6 +85,7 @@ describe("my page top", () => {
     expect(screen.getByRole("link", { name: /ガチャ履歴/ })).toHaveAttribute("href", "/mypage/draws");
     expect(screen.getByRole("link", { name: /獲得アイテム/ })).toHaveAttribute("href", "/mypage/prizes");
     expect(screen.getByRole("link", { name: /お届け先登録/ })).toHaveAttribute("href", "/mypage/address");
+    expect(screen.getByRole("link", { name: /SMS認証/ })).toHaveAttribute("href", smsVerificationRoute);
     expect(screen.getByRole("link", { name: /メールアドレス変更/ })).toHaveAttribute("href", "/mypage/email");
     expect(screen.getByRole("link", { name: /パスワード変更/ })).toHaveAttribute("href", "/mypage/password");
     expect(screen.queryByRole("link", { name: /LINE連携/ })).not.toBeInTheDocument();
@@ -122,12 +131,14 @@ describe("my page top", () => {
     const links = Array.from(account.querySelectorAll("a"));
     expect(links.map((link) => link.getAttribute("href"))).toEqual([
       "/mypage/address",
+      "/mypage/sms-verification",
       "/mypage/email",
       "/mypage/password",
     ]);
     expect(links[0]).toHaveTextContent("お届け先登録");
-    expect(links[1]).toHaveTextContent("メールアドレス変更");
-    expect(links[2]).toHaveTextContent("パスワード変更");
+    expect(links[1]).toHaveTextContent("SMS認証");
+    expect(links[2]).toHaveTextContent("メールアドレス変更");
+    expect(links[3]).toHaveTextContent("パスワード変更");
     expect(account).not.toHaveTextContent("LINE連携");
     expect(screen.getAllByRole("link")).toHaveLength(
       myPageShortcutNavigation.length + myPageAccountNavigation.length + myPageSupportNavigation.length,
@@ -138,6 +149,29 @@ describe("my page top", () => {
     expect(accountNavigation).toContainEqual({ href: "/mypage/line", label: "LINE連携" });
     expect(lineAccountRoute).toBe("/mypage/line");
     expect(publicRoutes).toContain("/mypage/line");
+    expect(publicRoutes).toContain(smsVerificationRoute);
+  });
+
+  it("consumes the user-scoped registration SMS prompt only once", async () => {
+    markSmsRegistrationPrompt(authenticated.user!.id);
+    const first = renderMyPage(client());
+    expect(await screen.findByRole("dialog")).toHaveTextContent("SMS認証のご案内");
+    fireEvent.click(screen.getByRole("button", { name: "あとで認証する" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    first.unmount();
+
+    renderMyPage(client());
+    await screen.findByRole("heading", { name: "会員メニュー" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("guards the address navigation for an unverified phone", async () => {
+    const getSmsVerificationStatus = vi.fn().mockResolvedValue(response({ challenge: null, phone: null, phone_masked: null, verified: false, verified_at: null }));
+    renderMyPage(client(authenticated, { getSmsVerificationStatus }));
+    fireEvent.click(await screen.findByRole("link", { name: /お届け先登録/ }));
+    expect(await screen.findByRole("dialog")).toHaveTextContent("お届け先の登録にはSMS認証が必要です");
+    fireEvent.click(screen.getByRole("button", { name: "SMS認証する" }));
+    expect(push).toHaveBeenCalledWith(smsVerificationRoute);
   });
 
   it("distinguishes Session loading and unauthenticated states", async () => {
@@ -173,7 +207,7 @@ describe("my page top", () => {
   it("keeps unconfirmed member products and profile fields out of the page", async () => {
     renderMyPage(client());
     await screen.findByRole("heading", { name: "会員メニュー" });
-    for (const label of ["Premium Plan", "Jackpot", "Coupon", "招待", "SMS", "Rank", "ランク", "プロフィール"]) {
+    for (const label of ["Premium Plan", "Jackpot", "Coupon", "招待", "Rank", "ランク", "プロフィール"]) {
       expect(screen.queryByText(label)).not.toBeInTheDocument();
     }
   });

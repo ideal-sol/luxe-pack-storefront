@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   isSameShippingAddress,
   ShippingAddressFields,
@@ -25,6 +25,7 @@ interface FulfillmentDialogProps {
   readonly client: PrizeFulfillmentAdapter;
   readonly onClose: () => void;
   readonly onReconcile: () => Promise<void>;
+  readonly onSmsVerificationRequired: () => void;
   readonly selectedItems: readonly UserPrize[];
 }
 
@@ -37,6 +38,7 @@ export function PrizeFulfillmentDialog({
   client,
   onClose,
   onReconcile,
+  onSmsVerificationRequired,
   selectedItems,
 }: FulfillmentDialogProps) {
   const titleId = useId();
@@ -52,6 +54,15 @@ export function PrizeFulfillmentDialog({
   const submittingRef = useRef(false);
   const pendingExchange = useRef<string | null>(null);
   const pendingShipping = useRef<string | null>(null);
+
+  const handleShippingProblem = useCallback((error: unknown) => {
+    const presented = presentFulfillmentProblem(error);
+    if (presented.smsVerificationRequired) {
+      onSmsVerificationRequired();
+      return null;
+    }
+    return presented;
+  }, [onSmsVerificationRequired]);
 
   const prizeIds = useMemo(() => selectedItems.map((item) => item.id), [selectedItems]);
   const exchangeEstimate = useMemo(
@@ -88,11 +99,13 @@ export function PrizeFulfillmentDialog({
         setSelectedAddressId(data.items[0]?.id ?? null);
       })
       .catch((error: unknown) => {
-        if (active) setProblem(presentFulfillmentProblem(error).message);
+        if (!active) return;
+        const presented = handleShippingProblem(error);
+        if (presented) setProblem(presented.message);
       })
       .finally(() => { if (active) setAddressesLoading(false); });
     return () => { active = false; };
-  }, [action, client]);
+  }, [action, client, handleShippingProblem]);
 
   function closeDialog() {
     pendingExchange.current = null;
@@ -156,7 +169,8 @@ export function PrizeFulfillmentDialog({
       pendingShipping.current = null;
       setSuccess(`発送依頼を受け付けました。受付番号: ${data.id}`);
     } catch (error) {
-      const presented = presentFulfillmentProblem(error);
+      const presented = handleShippingProblem(error);
+      if (!presented) return;
       setProblem(presented.message);
       if (!presented.retryable) pendingShipping.current = null;
     } finally {
@@ -174,7 +188,8 @@ export function PrizeFulfillmentDialog({
       setAddressInput(toShippingAddressInput(data));
       setEditingAddressId(addressId);
     } catch (error) {
-      setProblem(presentFulfillmentProblem(error).message);
+      const presented = handleShippingProblem(error);
+      if (presented) setProblem(presented.message);
     } finally {
       setSubmitting(false);
     }
@@ -202,7 +217,8 @@ export function PrizeFulfillmentDialog({
       setAddressInput(null);
       await refreshAddresses(editingAddressId);
     } catch (error) {
-      const presented = presentFulfillmentProblem(error);
+      const presented = handleShippingProblem(error);
+      if (!presented) return;
       setFieldErrors(presented.fieldErrors);
       setProblem(presented.message);
     } finally {
@@ -233,7 +249,8 @@ export function PrizeFulfillmentDialog({
       setSelectedAddressId(null);
       await refreshAddresses();
     } catch (error) {
-      setProblem(presentFulfillmentProblem(error).message);
+      const presented = handleShippingProblem(error);
+      if (presented) setProblem(presented.message);
     } finally {
       submittingRef.current = false;
       setSubmitting(false);

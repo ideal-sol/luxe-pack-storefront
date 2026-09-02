@@ -38,7 +38,7 @@ mutations. It stores the typed session response only in memory and does not cach
 credentials or authentication material.
 
 SITE-050 extends that adapter with the Account Security operations now retained by
-the exact-pinned alpha.34 Client.
+the exact-pinned alpha.35 Client.
 Password Reset request／completion never refreshes into an authenticated Session.
 Email Address Change refreshes only when the canonical completion result says the
 current browser is authenticated; cross-browser completion explicitly remains
@@ -46,6 +46,15 @@ anonymous. Password Change refreshes the canonical Session after the immediate
 mutation so rotated Session／CSRF state replaces stale client state. Shared password
 fields own only visibility, confirmation, loading, and presentation validation;
 Platform remains the Password Policy and credential authority.
+
+SMS-001 extends the same adapter and Session Provider with the exact-pinned
+alpha.35 Phone Ownership Verification operations. The My Page SMS route renders
+the canonical delivery lifecycle, retry timing, verified phone, and Fresh
+Reauthentication phone-change flow. A user-scoped `sessionStorage` marker is
+consumed once for the post-registration prompt; it is not a verification-state
+authority. Address mutations and new shipping requests use a presentation guard
+plus the canonical Backend Problem fallback, while Platform remains authoritative
+for phone validity, OTP, uniqueness, rate limits, and required gates.
 
 Platform-generated Password Reset and Email Change links land on `/` with query
 parameters. `src/proxy.ts` runs only for that landing path and redirects before

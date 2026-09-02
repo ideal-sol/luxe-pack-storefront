@@ -11,11 +11,17 @@ export {
   type PendingRegistration,
   type PasswordChangeRequest,
   type PasswordChanged,
+  type PasswordReauthenticationRequest,
   type PasswordResetAccepted,
   type PasswordResetCompleted,
   type PasswordResetConfirmRequest,
   type PasswordResetRequest,
   type RegistrationRequest,
+  type SmsVerificationAccepted,
+  type SmsVerificationConfirmRequest,
+  type SmsVerificationSendRequest,
+  type SmsVerificationStatus,
+  type UserReauthentication,
   type VerificationResendRequest,
 } from "./auth-client";
 export {
@@ -127,6 +133,10 @@ export {
   presentContactProblem,
   type ContactProblemPresentation,
 } from "./contact-problem";
+export {
+  presentSmsProblem,
+  type SmsProblemPresentation,
+} from "./sms-problem";
 export {
   createBrowserPaymentClient,
   createIdempotencyKey as createPaymentIdempotencyKey,

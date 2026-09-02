@@ -11,7 +11,9 @@ const directApi = "/api" + "/v2";
 const forbiddenBrowserStorage = ["local" + "Storage", "session" + "Storage"];
 const nonAuthStorageFiles = new Set([
   "src/components/payment/card-registration-resume.ts",
+  "src/lib/sms-registration-prompt.ts",
   "src/test/card-registration-resume.test.ts",
+  "src/test/mypage-ui.test.tsx",
   "src/test/payment-purchase-ui.test.tsx",
 ]);
 const browserProtocolDetails = ["X-XSRF" + "-TOKEN", "__Host-" + "oripa_user"];
