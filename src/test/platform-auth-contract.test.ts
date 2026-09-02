@@ -5,6 +5,7 @@ import {
   PUBLIC_ACCOUNT_SECURITY_FIXTURE,
   PUBLIC_ACCOUNT_SECURITY_PROBLEM_FIXTURES,
   PUBLIC_AUTH_FIXTURE,
+  PUBLIC_SMS_VERIFICATION_FIXTURES,
 } from "@oripa/storefront-testkit";
 import { createAuthClientTestHarness } from "@/lib/platform/testing";
 
@@ -30,12 +31,12 @@ function enqueueCsrf(harness: ReturnType<typeof createAuthClientTestHarness>) {
   );
 }
 
-describe("alpha.34 authentication and account security contract", () => {
+describe("alpha.35 authentication, account security, and SMS contract", () => {
   it("imports the canonical immutable Client, Schema, and Testkit versions", () => {
     for (const [packageName, version] of Object.entries({
       "site-schema": "2.0.0-alpha.23",
-      "storefront-client": "2.0.0-alpha.34",
-      "storefront-testkit": "2.0.0-alpha.34",
+      "storefront-client": "2.0.0-alpha.35",
+      "storefront-testkit": "2.0.0-alpha.35",
     })) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
       expect(packageJson.version).toBe(version);
@@ -52,7 +53,7 @@ describe("alpha.34 authentication and account security contract", () => {
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/auth/session` }, { body: session, status: 200 });
 
     await expect(harness.client.getCurrentSession()).resolves.toMatchObject({ data: session });
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.34", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.35", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -81,7 +82,7 @@ describe("alpha.34 authentication and account security contract", () => {
     );
     await expect(login.client.login({ email: "fixture@example.test", password: "fixture-password" }))
       .resolves.toMatchObject({ data: PUBLIC_AUTH_FIXTURE.authenticated_session });
-    assertBrowserRequestBoundary(login.mock.requests[1]!, { client_version: "2.0.0-alpha.34", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(login.mock.requests[1]!, { client_version: "2.0.0-alpha.35", site_version: "0.1.0" });
     login.mock.assertExhausted();
   });
 
@@ -177,7 +178,7 @@ describe("alpha.34 authentication and account security contract", () => {
       redirect_path: "/",
     });
     assertBrowserRequestBoundary(request.mock.requests[1]!, {
-      client_version: "2.0.0-alpha.34",
+      client_version: "2.0.0-alpha.35",
       site_version: "0.1.0",
     });
 
@@ -286,5 +287,77 @@ describe("alpha.34 authentication and account security contract", () => {
       token: "e".repeat(64),
     }, {})).rejects.toMatchObject({ code: "INVALID_EMAIL_CHANGE_REQUEST" });
     expect(email.mock.requests).toHaveLength(2);
+  });
+
+  it("uses the canonical SMS status, send, resend, and verify operations", async () => {
+    const status = createAuthClientTestHarness();
+    status.mock.enqueueJson(
+      { method: "GET", url: `${origin}/me/sms-verification` },
+      { body: PUBLIC_SMS_VERIFICATION_FIXTURES.unverified, status: 200 },
+    );
+    await expect(status.client.getSmsVerificationStatus()).resolves.toMatchObject({
+      data: PUBLIC_SMS_VERIFICATION_FIXTURES.unverified,
+    });
+    assertBrowserRequestBoundary(status.mock.requests[0]!, { client_version: "2.0.0-alpha.35", site_version: "0.1.0" });
+
+    const send = createAuthClientTestHarness(csrf);
+    enqueueCsrf(send);
+    send.mock.enqueueJson(
+      { method: "POST", url: `${origin}/me/sms-verification` },
+      { body: PUBLIC_SMS_VERIFICATION_FIXTURES.send_pending, status: 202 },
+    );
+    await expect(send.client.sendSmsVerification({ phone: "09012345678" }, {})).resolves.toMatchObject({
+      data: PUBLIC_SMS_VERIFICATION_FIXTURES.send_pending,
+    });
+    expect(JSON.parse(send.mock.requests[1]?.body ?? "null")).toEqual({ phone: "09012345678" });
+
+    const resend = createAuthClientTestHarness(csrf);
+    enqueueCsrf(resend);
+    resend.mock.enqueueJson(
+      { method: "POST", url: `${origin}/me/sms-verification/resend` },
+      { body: PUBLIC_SMS_VERIFICATION_FIXTURES.send_pending, status: 202 },
+    );
+    await expect(resend.client.resendSmsVerification({})).resolves.toMatchObject({
+      data: PUBLIC_SMS_VERIFICATION_FIXTURES.send_pending,
+    });
+    expect(JSON.parse(resend.mock.requests[1]?.body ?? "null")).toEqual({});
+
+    const verify = createAuthClientTestHarness(csrf);
+    enqueueCsrf(verify);
+    verify.mock.enqueueJson(
+      { method: "POST", url: `${origin}/me/sms-verification/verify` },
+      { body: PUBLIC_SMS_VERIFICATION_FIXTURES.verified, status: 200 },
+    );
+    await expect(verify.client.verifySmsCode({
+      challenge_id: PUBLIC_SMS_VERIFICATION_FIXTURES.accepted.challenge.id,
+      code: "123456",
+    }, {})).resolves.toMatchObject({ data: PUBLIC_SMS_VERIFICATION_FIXTURES.verified });
+    expect(JSON.parse(verify.mock.requests[1]?.body ?? "null")).toEqual({
+      challenge_id: PUBLIC_SMS_VERIFICATION_FIXTURES.accepted.challenge.id,
+      code: "123456",
+    });
+  });
+
+  it("uses canonical password Fresh Reauthentication and exposes server retry timing", async () => {
+    const reauthentication = createAuthClientTestHarness(csrf);
+    enqueueCsrf(reauthentication);
+    reauthentication.mock.enqueueJson(
+      { method: "POST", url: `${origin}/me/password/reauthenticate` },
+      { body: { method: "password", reauthenticated: true }, status: 200 },
+    );
+    await expect(reauthentication.client.reauthenticateUserPassword({ password: "fixture-password" }, {}))
+      .resolves.toMatchObject({ data: { method: "password", reauthenticated: true } });
+
+    const limited = createAuthClientTestHarness(csrf);
+    enqueueCsrf(limited);
+    limited.mock.enqueueProblem(
+      { method: "POST", url: `${origin}/me/sms-verification/resend` },
+      PUBLIC_SMS_VERIFICATION_FIXTURES.problems.cooldown,
+    );
+    await expect(limited.client.resendSmsVerification({})).rejects.toMatchObject({
+      code: "RATE_LIMITED",
+      retry_after_seconds: 59,
+      status: 429,
+    });
   });
 });

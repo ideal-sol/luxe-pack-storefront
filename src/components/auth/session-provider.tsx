@@ -23,11 +23,17 @@ import {
   type PendingRegistration,
   type PasswordChangeRequest,
   type PasswordChanged,
+  type PasswordReauthenticationRequest,
   type PasswordResetAccepted,
   type PasswordResetCompleted,
   type PasswordResetConfirmRequest,
   type PasswordResetRequest,
   type RegistrationRequest,
+  type SmsVerificationAccepted,
+  type SmsVerificationConfirmRequest,
+  type SmsVerificationSendRequest,
+  type SmsVerificationStatus,
+  type UserReauthentication,
   type VerificationResendRequest,
 } from "@/lib/platform";
 
@@ -51,13 +57,18 @@ interface SessionContextValue {
   readonly completeEmailVerification: (input: { readonly user_id: string; readonly hash: string }) => Promise<void>;
   readonly confirmPasswordReset: (input: PasswordResetConfirmRequest) => Promise<PasswordResetCompleted>;
   readonly createEmailChangeRequest: (input: EmailChangeRequest) => Promise<EmailChangePending>;
+  readonly getSmsVerificationStatus: () => Promise<SmsVerificationStatus>;
   readonly login: (input: LoginRequest) => Promise<void>;
   readonly logout: () => Promise<void>;
   readonly refreshSession: () => Promise<void>;
   readonly register: (input: RegistrationRequest) => Promise<PendingRegistration>;
+  readonly reauthenticatePassword: (input: PasswordReauthenticationRequest) => Promise<UserReauthentication>;
   readonly requestPasswordReset: (input: PasswordResetRequest) => Promise<PasswordResetAccepted>;
   readonly resendEmailVerification: (input: VerificationResendRequest) => Promise<void>;
+  readonly resendSmsVerification: () => Promise<SmsVerificationAccepted>;
+  readonly sendSmsVerification: (input: SmsVerificationSendRequest) => Promise<SmsVerificationAccepted>;
   readonly state: SessionState;
+  readonly verifySmsCode: (input: SmsVerificationConfirmRequest) => Promise<SmsVerificationStatus>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -163,6 +174,10 @@ export function SessionProvider({
       const { data } = await requireClient().createEmailChangeRequest(input, {});
       return data;
     },
+    async getSmsVerificationStatus() {
+      const { data } = await requireClient().getSmsVerificationStatus();
+      return data;
+    },
     async login(input) {
       await requireClient().login(input);
       await refreshSession();
@@ -181,6 +196,10 @@ export function SessionProvider({
       await refreshSession();
       return data;
     },
+    async reauthenticatePassword(input) {
+      const { data } = await requireClient().reauthenticateUserPassword(input, {});
+      return data;
+    },
     async requestPasswordReset(input) {
       const { data } = await requireClient().requestPasswordReset(input, {});
       return data;
@@ -188,7 +207,19 @@ export function SessionProvider({
     async resendEmailVerification(input) {
       await requireClient().resendEmailVerification(input);
     },
+    async resendSmsVerification() {
+      const { data } = await requireClient().resendSmsVerification({});
+      return data;
+    },
+    async sendSmsVerification(input) {
+      const { data } = await requireClient().sendSmsVerification(input, {});
+      return data;
+    },
     state,
+    async verifySmsCode(input) {
+      const { data } = await requireClient().verifySmsCode(input, {});
+      return data;
+    },
   }), [refreshSession, requireClient, state]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

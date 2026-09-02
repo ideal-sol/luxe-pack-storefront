@@ -67,11 +67,16 @@ function authClient(authenticated = true): AuthClientAdapter {
     confirmPasswordReset: vi.fn(),
     createEmailChangeRequest: vi.fn(),
     getCurrentSession: vi.fn().mockResolvedValue(response(session)),
+    getSmsVerificationStatus: vi.fn(),
     login: vi.fn(),
     logout: vi.fn(),
     register: vi.fn(),
+    reauthenticateUserPassword: vi.fn(),
     requestPasswordReset: vi.fn(),
     resendEmailVerification: vi.fn(),
+    resendSmsVerification: vi.fn(),
+    sendSmsVerification: vi.fn(),
+    verifySmsCode: vi.fn(),
   } as AuthClientAdapter;
 }
 

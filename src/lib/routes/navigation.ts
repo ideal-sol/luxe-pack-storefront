@@ -23,6 +23,9 @@ export const mobileNavigation = [
   { href: "/mypage", icon: "account", label: "マイページ" },
 ] as const satisfies readonly NavigationItem[];
 
+export const smsVerificationRoute = "/mypage/sms-verification";
+export const lineAccountRoute = "/mypage/line";
+
 export const accountNavigation = [
   { href: "/mypage", label: "マイページ" },
   { href: "/mypage/purchases", label: "購入履歴" },
@@ -30,12 +33,11 @@ export const accountNavigation = [
   { href: "/mypage/draws", label: "ガチャ履歴" },
   { href: "/mypage/prizes", label: "獲得アイテム" },
   { href: "/mypage/address", label: "お届け先登録" },
+  { href: smsVerificationRoute, label: "SMS認証" },
   { href: "/mypage/email", label: "メールアドレス変更" },
   { href: "/mypage/password", label: "パスワード変更" },
-  { href: "/mypage/line", label: "LINE連携" },
+  { href: lineAccountRoute, label: "LINE連携" },
 ] as const;
-
-export const lineAccountRoute = accountNavigation[8].href;
 
 export function drawResultRoute(drawRequestId: string) {
   return `/draws/${encodeURIComponent(drawRequestId)}/result`;
@@ -72,8 +74,9 @@ export const myPageShortcutNavigation = [
 
 export const myPageAccountNavigation = [
   { ...accountNavigation[5], description: "景品のお届け先を登録・変更する" },
-  { ...accountNavigation[6], description: "ログインに使用するメールアドレスを変更する" },
-  { ...accountNavigation[7], description: "ログインに使用するパスワードを変更する" },
+  { ...accountNavigation[6], description: "電話番号をSMSで認証・変更する" },
+  { ...accountNavigation[7], description: "ログインに使用するメールアドレスを変更する" },
+  { ...accountNavigation[8], description: "ログインに使用するパスワードを変更する" },
 ] as const;
 
 export const myPageSupportNavigation = [
@@ -112,5 +115,6 @@ export const publicRoutes = [
   "/mypage/address",
   "/mypage/email",
   "/mypage/password",
+  "/mypage/sms-verification",
   "/mypage/line",
 ] as const;

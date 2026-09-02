@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
+import { SmsVerificationRequiredDialog } from "@/components/account/sms-verification-required-dialog";
 import { CatalogLoading, CatalogMessage } from "@/components/catalog/catalog-message";
 import { LoginRequiredState } from "@/components/common/state-panel";
 import {
@@ -28,7 +29,7 @@ type AddressState =
   | { readonly items: readonly ShippingAddressSummary[]; readonly sessionUserId: string; readonly status: "ready" };
 
 export function ShippingAddressManager() {
-  const { state: session } = useSession();
+  const { getSmsVerificationStatus, state: session } = useSession();
   const { client, configurationAvailable } = usePrizeClient();
   const [state, setState] = useState<AddressState>({ status: "idle" });
   const [mode, setMode] = useState<AddressMode | null>(null);
@@ -37,6 +38,8 @@ export function ShippingAddressManager() {
   const [problem, setProblem] = useState<string | null>(null);
   const [requestKey, setRequestKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [smsGate, setSmsGate] = useState<"checking" | "error" | "required" | "verified">("checking");
+  const [smsDialogOpen, setSmsDialogOpen] = useState(false);
   const submittingRef = useRef(false);
   const pendingCreate = useRef<{ readonly fingerprint: string; readonly key: string } | null>(null);
   const sessionUserId = session.status === "authenticated" ? session.session.user?.id ?? null : null;
@@ -44,14 +47,26 @@ export function ShippingAddressManager() {
   useEffect(() => {
     if (!sessionUserId || !client) return;
     let active = true;
+    let smsVerified = false;
     pendingCreate.current = null;
     void Promise.resolve()
-      .then(() => {
+      .then(async () => {
         if (!active) return null;
+        setSmsGate("checking");
         setMode(null);
         setInput(emptyShippingAddress);
         setFieldErrors({});
         setProblem(null);
+        const sms = await getSmsVerificationStatus();
+        if (!active) return null;
+        if (!sms.verified) {
+          setSmsGate("required");
+          setSmsDialogOpen(true);
+          return null;
+        }
+        smsVerified = true;
+        setSmsGate("verified");
+        setState({ status: "loading" });
         return client.listShippingAddresses();
       })
       .then((response) => {
@@ -60,10 +75,30 @@ export function ShippingAddressManager() {
         if (active) setState({ items: data.items, sessionUserId, status: "ready" });
       })
       .catch((error: unknown) => {
-        if (active) setState({ message: presentFulfillmentProblem(error).message, status: "error" });
+        if (!active) return;
+        const presented = presentFulfillmentProblem(error);
+        if (presented.smsVerificationRequired) {
+          setSmsGate("required");
+          setSmsDialogOpen(true);
+        } else if (smsVerified) {
+          setState({ message: presented.message, status: "error" });
+        } else {
+          setSmsGate("error");
+        }
       });
     return () => { active = false; };
-  }, [client, requestKey, sessionUserId]);
+  }, [client, getSmsVerificationStatus, requestKey, sessionUserId]);
+
+  function handleFulfillmentProblem(error: unknown) {
+    const presented = presentFulfillmentProblem(error);
+    if (presented.smsVerificationRequired) {
+      setSmsGate("required");
+      setSmsDialogOpen(true);
+      setProblem(null);
+      return null;
+    }
+    return presented;
+  }
 
   async function refreshAddresses() {
     const currentSessionUserId = sessionUserId;
@@ -91,7 +126,8 @@ export function ShippingAddressManager() {
       setFieldErrors({});
       setMode({ id: addressId, kind: "edit" });
     } catch (error) {
-      setProblem(presentFulfillmentProblem(error).message);
+      const presented = handleFulfillmentProblem(error);
+      if (presented) setProblem(presented.message);
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
@@ -130,11 +166,13 @@ export function ShippingAddressManager() {
       setInput(emptyShippingAddress);
       try {
         await refreshAddresses();
-      } catch {
-        setProblem("お届け先を保存しましたが、最新の一覧を取得できませんでした。ページを再読み込みしてください。");
+      } catch (error) {
+        const presented = handleFulfillmentProblem(error);
+        if (presented) setProblem("お届け先を保存しましたが、最新の一覧を取得できませんでした。ページを再読み込みしてください。");
       }
     } catch (error) {
-      const presented = presentFulfillmentProblem(error);
+      const presented = handleFulfillmentProblem(error);
+      if (!presented) return;
       setFieldErrors(presented.fieldErrors);
       setProblem(presented.message);
       if (!presented.retryable) pendingCreate.current = null;
@@ -168,7 +206,8 @@ export function ShippingAddressManager() {
       setState({ status: "loading" });
       await refreshAddresses();
     } catch (error) {
-      const presented = presentFulfillmentProblem(error);
+      const presented = handleFulfillmentProblem(error);
+      if (!presented) return;
       if (deletionCompleted) {
         setState({ message: "お届け先を削除しましたが、最新の一覧を取得できませんでした。再読み込みしてください。", status: "error" });
       } else {
@@ -189,6 +228,18 @@ export function ShippingAddressManager() {
     return <CatalogMessage description="Sessionを確認できませんでした。時間をおいて再度お試しください。" eyebrow="ERROR" title="お届け先を表示できません" tone="error" />;
   }
   if (!sessionUserId) return <LoginRequiredState />;
+  if (smsGate === "checking") return <CatalogLoading label="SMS認証状態を確認中" />;
+  if (smsGate === "required") {
+    return (
+      <>
+        <CatalogMessage description="お届け先の登録・変更・削除にはSMS認証が必要です。" eyebrow="SMS VERIFICATION" title="SMS認証を完了してください" />
+        <SmsVerificationRequiredDialog context="address" onCancel={() => setSmsDialogOpen(false)} open={smsDialogOpen} />
+      </>
+    );
+  }
+  if (smsGate === "error") {
+    return <CatalogMessage action={() => setRequestKey((value) => value + 1)} description="SMS認証状態を確認できませんでした。時間をおいて再度お試しください。" eyebrow="ERROR" title="お届け先を表示できません" tone="error" />;
+  }
   if (state.status === "idle" || state.status === "loading") {
     return <CatalogLoading label="お届け先を読み込み中" />;
   }
@@ -202,7 +253,8 @@ export function ShippingAddressManager() {
   if (state.sessionUserId !== sessionUserId) return <CatalogLoading label="お届け先を読み込み中" />;
 
   return (
-    <section aria-labelledby="shipping-address-heading" className="shipping-address-manager">
+    <>
+      <section aria-labelledby="shipping-address-heading" className="shipping-address-manager">
       {mode ? (
         <form className="shipping-address-form" onSubmit={(event) => { event.preventDefault(); void saveAddress(); }}>
           <div className="shipping-address-manager__heading">
@@ -248,6 +300,8 @@ export function ShippingAddressManager() {
           {problem && <p className="fulfillment-dialog__error" role="alert">{problem}</p>}
         </div>
       )}
-    </section>
+      </section>
+      <SmsVerificationRequiredDialog context="address" onCancel={() => setSmsDialogOpen(false)} open={smsDialogOpen} />
+    </>
   );
 }

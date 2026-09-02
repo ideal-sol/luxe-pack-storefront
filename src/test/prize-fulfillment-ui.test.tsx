@@ -87,16 +87,18 @@ function fulfillmentProblem(code: string, retryable: boolean) {
 function renderDialog(action: "point_exchange" | "shipping", fulfillmentClient: PrizeFulfillmentAdapter) {
   const onClose = vi.fn();
   const onReconcile = vi.fn().mockResolvedValue(undefined);
+  const onSmsVerificationRequired = vi.fn();
   render(
     <PrizeFulfillmentDialog
       action={action}
       client={fulfillmentClient}
       onClose={onClose}
       onReconcile={onReconcile}
+      onSmsVerificationRequired={onSmsVerificationRequired}
       selectedItems={[prize]}
     />,
   );
-  return { onClose, onReconcile };
+  return { onClose, onReconcile, onSmsVerificationRequired };
 }
 
 describe("prize fulfillment UI", () => {
@@ -106,6 +108,13 @@ describe("prize fulfillment UI", () => {
   });
 
   afterEach(() => document.removeEventListener("storefront:wallet-refresh", refreshWallet));
+
+  it("normalizes a Backend SMS-required shipping Problem to the shared gate callback", async () => {
+    const listShippingAddresses = vi.fn().mockRejectedValue(fulfillmentProblem("SMS_VERIFICATION_REQUIRED", false));
+    const { onSmsVerificationRequired } = renderDialog("shipping", client({ listShippingAddresses }));
+    await waitFor(() => expect(onSmsVerificationRequired).toHaveBeenCalledOnce());
+    expect(document.body).not.toHaveTextContent("SMS_VERIFICATION_REQUIRED");
+  });
 
   it("reuses one idempotency key for the same point-exchange retry and reconciles canonical reads", async () => {
     const exchangePrizes = vi.fn()

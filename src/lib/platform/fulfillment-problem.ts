@@ -5,6 +5,7 @@ export interface FulfillmentProblemPresentation {
   readonly fieldErrors: Readonly<Record<string, readonly string[]>>;
   readonly message: string;
   readonly retryable: boolean;
+  readonly smsVerificationRequired: boolean;
   readonly uncertain: boolean;
 }
 
@@ -50,6 +51,7 @@ export function presentFulfillmentProblem(error: unknown): FulfillmentProblemPre
       fieldErrors: error.errors ?? {},
       message: message ?? "操作を完了できませんでした。最新の状態を確認して、もう一度お試しください。",
       retryable: error.retryable,
+      smsVerificationRequired: isFulfillmentProblemError(error, "SMS_VERIFICATION_REQUIRED"),
       uncertain: false,
     };
   }
@@ -58,6 +60,7 @@ export function presentFulfillmentProblem(error: unknown): FulfillmentProblemPre
       fieldErrors: {},
       message: "通信結果を確認できませんでした。同じ操作のまま、もう一度お試しください。",
       retryable: true,
+      smsVerificationRequired: false,
       uncertain: true,
     };
   }
@@ -65,6 +68,7 @@ export function presentFulfillmentProblem(error: unknown): FulfillmentProblemPre
     fieldErrors: {},
     message: "予期しない問題が発生しました。時間をおいて、もう一度お試しください。",
     retryable: false,
+    smsVerificationRequired: false,
     uncertain: false,
   };
 }

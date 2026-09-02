@@ -6,35 +6,35 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const root = process.cwd();
-const vendor = path.join(root, "vendor/oripa/MIG-099");
-const retainedVendor = path.join(root, "vendor/oripa/GOV-025");
+const vendor = path.join(root, "vendor/oripa/SMS-001");
+const retainedVendor = path.join(root, "vendor/oripa/MIG-099");
 const schemaVendor = path.join(root, "vendor/oripa/MIG-063B");
-const bundleVersion = "2.0.0-alpha.34";
-const predecessorBundleVersion = "2.0.0-alpha.33";
-const publicApiVersion = "2.0.0-alpha.30";
+const bundleVersion = "2.0.0-alpha.35";
+const predecessorBundleVersion = "2.0.0-alpha.34";
+const publicApiVersion = "2.0.0-alpha.31";
 const siteSchemaVersion = "2.0.0-alpha.23";
-const sourceCommit = "576c35137946e5effcda63d6bf750d5ecc41150f";
+const sourceCommit = "7942268281450257dcb76f38c8be8743b1c66be6";
 const expected = new Map([
+  ["SHA256SUMS", "867db27d8766937dcc9763fe4dad2d05f7fa66d00ab42296b5f7c0b187e9f8a8"],
+  ["artifact-manifest.json", "32e0eefdba8695e20efa7800262318284fd91f9715eb98586865d9eb6a46cad7"],
+  ["oripa-storefront-client-2.0.0-alpha.35.tgz", "c868df05c32c19bd7a9b203bfe30dd9a28d1ff0000fe5c5d58f884692389575c"],
+  ["oripa-storefront-testkit-2.0.0-alpha.35.tgz", "381c433729a10bb047df24090bd1a168179db2652ab24cb073d303caec7def0f"],
+  ["public.openapi.json", "aadcd0d68230edd995f28f0eb303ccea196b686215d39d2fc0da7558a82243f5"],
+]);
+const retainedExpected = new Map([
   ["SHA256SUMS", "555ae3637e71a57bff447aa084d21e649b598c878f64766b9f044d1e59f75355"],
   ["artifact-manifest.json", "42f4bee68b787dac16d07accee1c6154c7cea392c521c41b14461d6b56221464"],
   ["oripa-storefront-client-2.0.0-alpha.34.tgz", "3363ebf849e3c7165b89ea9f037c681ab889d16539ce290383cad41d31c134c6"],
   ["oripa-storefront-testkit-2.0.0-alpha.34.tgz", "07916ff69e2e6882aa0e62ee676a65652382413f14f65459ba4e773a41f8a440"],
   ["public.openapi.json", "27d0cdcee9194989058573d7e198066fa4af62017a0f301117ea4af034e733f0"],
 ]);
-const retainedExpected = new Map([
-  ["SHA256SUMS", "10252bf2cb15f80e2c26fd329c15092517d667267a9cc105ab74b9f5c3649328"],
-  ["artifact-manifest.json", "b6522d16230734ea7f4604be59a2585c29bcf03a2b447269e824e712759d893c"],
-  ["oripa-storefront-client-2.0.0-alpha.33.tgz", "846b0e036ebf76dd46ab1a2c9d6b67b786f9d2dfe5672d8b3a0eb31b7ad675a2"],
-  ["oripa-storefront-testkit-2.0.0-alpha.33.tgz", "720d8cc6a0b1c786267de34af0f1fddefc5a517d5d064491f4a78af2e492df4d"],
-  ["public.openapi.json", "9670bc769080da605c97cb9849b61f342cf0111bc39e91c09dbbf62fc4bcc720"],
-]);
 const publishedPackages = new Map([
   ["@oripa/storefront-client", {
-    file: "oripa-storefront-client-2.0.0-alpha.34.tgz",
+    file: "oripa-storefront-client-2.0.0-alpha.35.tgz",
     version: bundleVersion,
   }],
   ["@oripa/storefront-testkit", {
-    file: "oripa-storefront-testkit-2.0.0-alpha.34.tgz",
+    file: "oripa-storefront-testkit-2.0.0-alpha.35.tgz",
     version: bundleVersion,
   }],
 ]);
@@ -61,12 +61,12 @@ for (const [file, digest] of expected) {
   if (sha256(path.join(vendor, file)) !== digest) throw new Error(`Artifact digest mismatch: ${file}`);
 }
 for (const [file, digest] of retainedExpected) {
-  if (sha256(path.join(retainedVendor, file)) !== digest) throw new Error(`Retained alpha.33 digest mismatch: ${file}`);
+  if (sha256(path.join(retainedVendor, file)) !== digest) throw new Error(`Retained alpha.34 digest mismatch: ${file}`);
 }
 const retainedInventory = readdirSync(retainedVendor).sort();
 const expectedRetainedInventory = [...retainedExpected.keys(), "PROVENANCE.md"].sort();
 if (JSON.stringify(retainedInventory) !== JSON.stringify(expectedRetainedInventory)) {
-  throw new Error("Retained alpha.33 inventory mismatch");
+  throw new Error("Retained alpha.34 inventory mismatch");
 }
 const inventory = readdirSync(vendor).sort();
 const expectedInventory = [...expected.keys(), "PROVENANCE.md"].sort();
@@ -85,8 +85,8 @@ const sums = new Map(
     }),
 );
 for (const file of [
-  "oripa-storefront-client-2.0.0-alpha.34.tgz",
-  "oripa-storefront-testkit-2.0.0-alpha.34.tgz",
+  "oripa-storefront-client-2.0.0-alpha.35.tgz",
+  "oripa-storefront-testkit-2.0.0-alpha.35.tgz",
   "public.openapi.json",
 ]) {
   if (sums.get(file) !== expected.get(file)) throw new Error(`SHA256SUMS mismatch: ${file}`);
@@ -94,25 +94,26 @@ for (const file of [
 if (sums.size !== 3) throw new Error("SHA256SUMS entry set is invalid");
 
 const manifest = JSON.parse(readFileSync(path.join(vendor, "artifact-manifest.json"), "utf8"));
-if (manifest.task_id !== "MIG-099" || manifest.source_commit !== sourceCommit) {
+if (manifest.task_id !== "SMS-001" || manifest.source_commit !== sourceCommit) {
   throw new Error("Artifact provenance mismatch");
 }
 if (manifest.bundle?.version !== bundleVersion || manifest.bundle?.predecessor !== predecessorBundleVersion ||
-    manifest.bundle?.release_mode !== "contract-breaking" || manifest.bundle?.immutable !== true) {
-  throw new Error("Contract-breaking bundle declaration mismatch");
+    manifest.bundle?.release_mode !== "contract-additive" || manifest.bundle?.immutable !== true) {
+  throw new Error("Contract-additive bundle declaration mismatch");
 }
 if (manifest.public_openapi?.file !== "public.openapi.json" ||
     manifest.public_openapi?.version !== publicApiVersion ||
     manifest.public_openapi?.sha256 !== expected.get("public.openapi.json") ||
     manifest.public_openapi?.operation_count !== 75 ||
-    manifest.public_openapi?.breaking_change !== true) {
+    manifest.public_openapi?.breaking_change !== false) {
   throw new Error("Referenced Public OpenAPI manifest entry mismatch");
 }
 const manifestPackages = new Map((manifest.packages ?? []).map((entry) => [entry.name, entry]));
 for (const [name, expectedPackage] of publishedPackages) {
   const entry = manifestPackages.get(name);
   if (entry?.disposition !== "published" || entry.browser_compatible !== true || entry.file !== expectedPackage.file ||
-      entry.version !== expectedPackage.version || entry.sha256 !== expected.get(expectedPackage.file)) {
+      entry.version !== expectedPackage.version || entry.sha256 !== expected.get(expectedPackage.file) ||
+      name === "@oripa/storefront-client" && !entry.required_capabilities?.includes("identity.sms-phone-ownership.v2")) {
     throw new Error(`Published package manifest entry mismatch: ${name}`);
   }
 }
@@ -126,7 +127,7 @@ if (schemaEntry?.disposition !== "referenced" || schemaEntry.file !== undefined 
 if (manifestPackages.size !== 3 || manifest.packages?.length !== 3) throw new Error("Package manifest is incomplete");
 
 const provenance = readFileSync(path.join(vendor, "PROVENANCE.md"), "utf8");
-for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "MIG-099", "33395772059", "9759273312", ...expected.values(), referencedSiteSchema.sha256]) {
+for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "SMS-001", "33617554113", "9841577025", ...expected.values(), referencedSiteSchema.sha256]) {
   if (!provenance.includes(value)) throw new Error(`Artifact provenance is incomplete: ${value}`);
 }
 if (/\/(?:var\/(?:www|lib)|home)\//.test(provenance)) {
@@ -169,7 +170,7 @@ const constants = archiveText(clientArchive, "package/dist/constants.js");
 if (!constants.includes(`STOREFRONT_CLIENT_VERSION = "${bundleVersion}"`)) {
   throw new Error("Storefront Client runtime version mismatch");
 }
-const clientReadbackDirectory = mkdtempSync(path.join(tmpdir(), "site-alpha34-client-"));
+const clientReadbackDirectory = mkdtempSync(path.join(tmpdir(), "site-alpha35-client-"));
 try {
   execFileSync("tar", ["-xzf", clientArchive, "-C", clientReadbackDirectory]);
   const extractedPackage = path.join(clientReadbackDirectory, "package");
@@ -222,6 +223,15 @@ for (const declaration of [
   "PasswordResetConfirmRequest: {",
   "EmailChangeCompleted: {",
   "UserPasswordChangeRequest: {",
+  "UserPasswordReauthenticationRequest: {",
+  "SmsVerificationSendRequest: {",
+  "SmsVerificationConfirmRequest: {",
+  "SmsVerificationChallenge: {",
+  "SmsVerificationAccepted: {",
+  "SmsVerificationStatus: {",
+  'status: "pending" | "accepted" | "failed" | "expired";',
+  'delivery_state?: "pending" | "accepted" | "failed";',
+  "verified_at?: string | null;",
   'next_action: "login";',
   "initiating_session_preserved: boolean;",
   "session_rotated: boolean;",
@@ -319,6 +329,11 @@ for (const operation of [
   "createEmailChangeRequest",
   "completeEmailChange",
   "changeUserPassword",
+  "reauthenticateUserPassword",
+  "getSmsVerificationStatus",
+  "sendSmsVerification",
+  "resendSmsVerification",
+  "verifySmsCode",
 ]) {
   if (!identityDeclarations.includes(operation) || !identityRuntime.includes(operation)) {
     throw new Error(`Canonical Account Security Client operation is missing: ${operation}`);
@@ -329,6 +344,10 @@ for (const route of [
   '"/auth/password/reset"',
   '"/me/email-change-requests"',
   '"/me/password"',
+  '"/me/password/reauthenticate"',
+  '"/me/sms-verification"',
+  '"/me/sms-verification/resend"',
+  '"/me/sms-verification/verify"',
 ]) {
   if (!identityRuntime.includes(route)) throw new Error(`Canonical Account Security route is missing: ${route}`);
 }
@@ -411,6 +430,21 @@ for (const accountSecurityFixture of [
     throw new Error(`Canonical Account Security Testkit fixture is missing: ${accountSecurityFixture}`);
   }
 }
+for (const smsFixture of [
+  "PUBLIC_SMS_VERIFICATION_FIXTURES",
+  'readonly delivery_state: "pending";',
+  'readonly delivery_state: "accepted";',
+  'readonly delivery_state: "failed";',
+  'readonly phone: "+819012345678";',
+  'readonly code: "PHONE_NUMBER_UNAVAILABLE";',
+  'readonly code: "INVALID_SMS_VERIFICATION";',
+  'readonly code: "SMS_VERIFICATION_REQUIRED";',
+  "readonly retry_after_seconds: 59;",
+]) {
+  if (!testkitFixtures.includes(smsFixture)) {
+    throw new Error(`Canonical SMS Verification Testkit fixture is missing: ${smsFixture}`);
+  }
+}
 for (const rankFixture of [
   "PUBLIC_CATALOG_FIXTURE",
   'readonly rank_name: "Sランク";',
@@ -449,7 +483,7 @@ const operationIds = (document) => new Set(Object.values(document.paths ?? {}).f
   Object.values(pathItem).flatMap((operation) => operation?.operationId ? [operation.operationId] : [])));
 const currentOperations = operationIds(openApi);
 const predecessorOperations = operationIds(predecessorOpenApi);
-const expectedAddedOperations = ["getCanonicalPresentationAssetContent"];
+const expectedAddedOperations = [];
 const actualAddedOperations = [...currentOperations].filter((operation) => !predecessorOperations.has(operation)).sort();
 if ([...predecessorOperations].some((operation) => !currentOperations.has(operation)) ||
     JSON.stringify(actualAddedOperations) !== JSON.stringify(expectedAddedOperations)) {
@@ -470,7 +504,12 @@ if (openApi.info?.version !== publicApiVersion || currentOperations.size !== 75 
     !openApi.paths?.["/auth/password/reset"]?.post ||
     !openApi.paths?.["/me/email-change-requests"]?.post ||
     !openApi.paths?.["/me/email-change-requests/{email_change_request_id}/complete"]?.post ||
-    !openApi.paths?.["/me/password"]?.put) {
+    !openApi.paths?.["/me/password"]?.put ||
+    !openApi.paths?.["/me/password/reauthenticate"]?.post ||
+    !openApi.paths?.["/me/sms-verification"]?.get ||
+    !openApi.paths?.["/me/sms-verification"]?.post ||
+    !openApi.paths?.["/me/sms-verification/resend"]?.post ||
+    !openApi.paths?.["/me/sms-verification/verify"]?.post) {
   throw new Error("Canonical Public OpenAPI retained-operation contract mismatch");
 }
 const rankSchema = openApi.components?.schemas?.GachaRankPresentation;
@@ -498,6 +537,19 @@ if (JSON.stringify(openApi.components?.schemas?.PaymentCardRegistrationStatus?.e
     !capacitySchema?.registration_remaining || !capacitySchema?.next_capacity_at) {
   throw new Error("Canonical Card Registration schema mismatch");
 }
+const smsChallengeSchema = openApi.components?.schemas?.SmsVerificationChallenge;
+const smsStatusSchema = openApi.components?.schemas?.SmsVerificationStatus;
+if (JSON.stringify(smsChallengeSchema?.properties?.status?.enum) !==
+      JSON.stringify(["pending", "accepted", "failed", "expired"]) ||
+    JSON.stringify(smsChallengeSchema?.properties?.delivery_state?.enum) !==
+      JSON.stringify(["pending", "accepted", "failed"]) ||
+    !smsStatusSchema?.properties?.phone ||
+    !smsStatusSchema?.properties?.verified_at ||
+    !openApi.components?.schemas?.PublicAuthProblemCode?.enum?.includes("PHONE_NUMBER_UNAVAILABLE") ||
+    !openApi.components?.schemas?.PublicAuthProblemCode?.enum?.includes("SMS_DELIVERY_UNAVAILABLE") ||
+    !openApi.components?.schemas?.FulfillmentProblemCode?.enum?.includes("SMS_VERIFICATION_REQUIRED")) {
+  throw new Error("Canonical SMS Verification contract mismatch");
+}
 
 const packageJsonText = readFileSync(path.join(root, "package.json"), "utf8");
 const lockfileText = readFileSync(path.join(root, "pnpm-lock.yaml"), "utf8");
@@ -506,8 +558,8 @@ for (const content of [packageJsonText, lockfileText]) {
     throw new Error("Server-specific file dependency");
   }
   for (const required of [
-    "vendor/oripa/MIG-099/oripa-storefront-client-2.0.0-alpha.34.tgz",
-    "vendor/oripa/MIG-099/oripa-storefront-testkit-2.0.0-alpha.34.tgz",
+    "vendor/oripa/SMS-001/oripa-storefront-client-2.0.0-alpha.35.tgz",
+    "vendor/oripa/SMS-001/oripa-storefront-testkit-2.0.0-alpha.35.tgz",
     "vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
   ]) {
     if (!content.includes(required)) throw new Error(`Canonical package pin is missing: ${required}`);
@@ -519,6 +571,10 @@ if (JSON.parse(packageJsonText).dependencies?.["@fincode/js"] !== "1.1.0" ||
   throw new Error("Canonical fincode SDK dependency is not exactly pinned");
 }
 for (const obsolete of [
+  "vendor/oripa/MIG-099/oripa-storefront-client-2.0.0-alpha.34.tgz",
+  "vendor/oripa/MIG-099/oripa-storefront-testkit-2.0.0-alpha.34.tgz",
+  "oripa-storefront-client-2.0.0-alpha.34.tgz",
+  "oripa-storefront-testkit-2.0.0-alpha.34.tgz",
   "vendor/oripa/GOV-025/oripa-storefront-client-2.0.0-alpha.33.tgz",
   "vendor/oripa/GOV-025/oripa-storefront-testkit-2.0.0-alpha.33.tgz",
   "oripa-storefront-client-2.0.0-alpha.33.tgz",

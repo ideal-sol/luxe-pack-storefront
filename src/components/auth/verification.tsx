@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { presentAuthProblem, type AuthProblemPresentation } from "@/lib/platform";
+import { markSmsRegistrationPrompt } from "@/lib/sms-registration-prompt";
 import { AuthProblem } from "./auth-problem";
 import { useSession } from "./session-provider";
 
@@ -61,7 +62,10 @@ export function EmailVerificationCompletion({
     if (started.current) return;
     started.current = true;
     void completeEmailVerification({ hash, user_id: userId })
-      .then(() => setStatus("complete"))
+      .then(() => {
+        markSmsRegistrationPrompt(userId);
+        setStatus("complete");
+      })
       .catch((error: unknown) => {
         setProblem(presentAuthProblem(error));
         setStatus("error");

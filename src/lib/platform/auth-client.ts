@@ -26,6 +26,12 @@ export type EmailChangeCompleteRequest = Schemas["EmailChangeCompleteRequest"] &
 export type EmailChangeCompleted = Schemas["EmailChangeCompleted"];
 export type PasswordChangeRequest = Schemas["UserPasswordChangeRequest"];
 export type PasswordChanged = Schemas["UserPasswordChanged"];
+export type PasswordReauthenticationRequest = Schemas["UserPasswordReauthenticationRequest"];
+export type UserReauthentication = Schemas["UserReauthentication"];
+export type SmsVerificationSendRequest = Schemas["SmsVerificationSendRequest"];
+export type SmsVerificationConfirmRequest = Schemas["SmsVerificationConfirmRequest"];
+export type SmsVerificationAccepted = Schemas["SmsVerificationAccepted"];
+export type SmsVerificationStatus = Schemas["SmsVerificationStatus"];
 
 export interface AuthClientAdapter {
   readonly changeUserPassword: StorefrontIdentityClient["changeUserPassword"];
@@ -34,11 +40,16 @@ export interface AuthClientAdapter {
   readonly confirmPasswordReset: StorefrontIdentityClient["confirmPasswordReset"];
   readonly createEmailChangeRequest: StorefrontIdentityClient["createEmailChangeRequest"];
   readonly getCurrentSession: StorefrontIdentityClient["getCurrentSession"];
+  readonly getSmsVerificationStatus: StorefrontIdentityClient["getSmsVerificationStatus"];
   readonly login: StorefrontIdentityClient["login"];
   readonly logout: StorefrontIdentityClient["logout"];
   readonly register: StorefrontIdentityClient["register"];
+  readonly reauthenticateUserPassword: StorefrontIdentityClient["reauthenticateUserPassword"];
   readonly requestPasswordReset: StorefrontIdentityClient["requestPasswordReset"];
   readonly resendEmailVerification: StorefrontIdentityClient["resendEmailVerification"];
+  readonly resendSmsVerification: StorefrontIdentityClient["resendSmsVerification"];
+  readonly sendSmsVerification: StorefrontIdentityClient["sendSmsVerification"];
+  readonly verifySmsCode: StorefrontIdentityClient["verifySmsCode"];
 }
 
 export function createAuthClientAdapter(transport: StorefrontTransport): AuthClientAdapter {
@@ -50,11 +61,16 @@ export function createAuthClientAdapter(transport: StorefrontTransport): AuthCli
     confirmPasswordReset: identity.confirmPasswordReset,
     createEmailChangeRequest: identity.createEmailChangeRequest,
     getCurrentSession: identity.getCurrentSession,
+    getSmsVerificationStatus: identity.getSmsVerificationStatus,
     login: identity.login,
     logout: identity.logout,
     register: identity.register,
+    reauthenticateUserPassword: identity.reauthenticateUserPassword,
     requestPasswordReset: identity.requestPasswordReset,
     resendEmailVerification: identity.resendEmailVerification,
+    resendSmsVerification: identity.resendSmsVerification,
+    sendSmsVerification: identity.sendSmsVerification,
+    verifySmsCode: identity.verifySmsCode,
   };
 }
 

@@ -3,6 +3,7 @@
 import { useId } from "react";
 
 interface ConfirmationDialogProps {
+  readonly cancelLabel?: string;
   readonly confirmDisabled?: boolean;
   readonly confirmLabel?: string;
   readonly description: string;
@@ -13,6 +14,7 @@ interface ConfirmationDialogProps {
 }
 
 export function ConfirmationDialog({
+  cancelLabel = "キャンセル",
   confirmDisabled = false,
   confirmLabel = "確認する",
   description,
@@ -32,7 +34,7 @@ export function ConfirmationDialog({
         <p>{description}</p>
         <div className="dialog-card__actions">
           <button className="button button--ghost" onClick={onCancel} type="button">
-            キャンセル
+            {cancelLabel}
           </button>
           <button className="button button--dark" disabled={confirmDisabled} onClick={onConfirm} type="button">
             {confirmLabel}

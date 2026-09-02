@@ -1,7 +1,7 @@
 # API dependency map
 
-Storefront operations use the MIG-099 Artifact: `@oripa/storefront-client` and
-`@oripa/storefront-testkit` alpha.34 with referenced Public OpenAPI alpha.30 and
+Storefront operations use the SMS-001 Artifact: `@oripa/storefront-client` and
+`@oripa/storefront-testkit` alpha.35 with referenced Public OpenAPI alpha.31 and
 Site Schema alpha.23. This map does not invent absent operations or response
 shapes.
 
@@ -23,6 +23,8 @@ shapes.
 | Email Address Change | Authenticated request and same-browser／cross-browser one-time completion with canonical Session rotation result | **Resolved — GOV-025 alpha.33 Account Security Client; SITE-050 implemented** |
 | Password Change | Current-password-authorized immediate update with canonical Session rotation result | **Resolved — GOV-025 alpha.33 Account Security Client; SITE-050 implemented** |
 | My Page top | Current browser Session user verification and account state | **Resolved — existing identity Session; SITE-006 implemented** |
+| SMS ownership verification | Current verification state, send／resend delivery lifecycle, OTP verification, verified phone, and retry timing | **Resolved — SMS-001 alpha.35 Identity Client; Storefront presents the canonical Platform state without becoming the verification or rate-limit authority** |
+| Verified phone change | Fresh password reauthentication, replacement-phone challenge, and canonical current-Session／CSRF rotation | **Resolved — SMS-001 alpha.35 Identity Client; current Session and SMS state refresh after completion** |
 | LINE link state | Current user's linked External Identity collection | **Resolved — alpha.4 `listExternalIdentities`; SITE-011 implemented** |
 | LINE link start | Session-bound canonical LINE authorization transaction | **Resolved — alpha.4 `startLineIdentityLink`; SITE-011 implemented** |
 | LINE callback | One-time generated `completeLineLogin` boundary and canonical return path | **Resolved Contract — Platform callback owns code/state validation; real external ceremony not yet run** |
@@ -48,8 +50,8 @@ shapes.
 | Catalog presentation | Sale state, anonymous/authenticated eligibility, reason, CTA, and display-fact flags | **Resolved — MIG-062G alpha.9 generated `GachaSummary.presentation`** |
 | Gacha detail Point insufficiency | Backend-authoritative Point affordability before Draw | **Presentation remains pending; SITE-005 uses only the typed Draw mutation rejection** |
 | Prize inventory | User-prize presentation, cursor, and Backend-authoritative allowed actions | **Resolved — MIG-062A `listPrizes` / `getPrize`; SITE-007 implemented** |
-| Prize address | Browser-safe address list/detail/create/update/delete, typed validation, and uncertain-result reconciliation | **Resolved — MIG-062E Prize Shipping Client; SITE-012 implemented; SITE-036 reuses it at `/mypage/address`** |
-| Prize shipping | Caller-keyed shipping mutation, typed Backend revalidation, and Shipping/Prize/Address reads | **Resolved — MIG-062E `createShippingRequest`; SITE-012 implemented** |
+| Prize address | Browser-safe address list/detail/create/update/delete, typed validation, uncertain-result reconciliation, and SMS ownership gate | **Resolved — MIG-062E Prize Shipping Client with SMS-001 Backend gate; entry guard and typed Problem fallback at `/mypage/address`** |
+| Prize shipping | Caller-keyed shipping mutation, typed Backend revalidation, Shipping/Prize/Address reads, and SMS ownership gate | **Resolved — MIG-062E `createShippingRequest` with SMS-001 entry guard and typed Problem fallback; history／state reads remain available** |
 | Prize point exchange | Caller-keyed exchange mutation, typed Backend revalidation, and canonical read reconciliation | **Resolved — MIG-062E `exchangePrizes`; SITE-012 implemented** |
 | Prize status tabs | Canonical grouping or status filter | **Pending Contract — SITE-007 does not infer grouping** |
 | Prize expiry lifecycle | Grace period, automatic conversion, and final expiry semantics | **Pending Contract — display-only deadline** |
