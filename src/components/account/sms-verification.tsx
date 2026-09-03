@@ -18,6 +18,22 @@ type Stage = "phone" | "reauthentication" | "otp" | "verified";
 
 const LOCAL_COOLDOWN_SECONDS = 60;
 const POLL_INTERVAL_MS = 2_000;
+const smsExpiryDateTime = new Intl.DateTimeFormat("ja-JP", {
+  day: "numeric",
+  hour: "2-digit",
+  hourCycle: "h23",
+  minute: "2-digit",
+  month: "long",
+  timeZone: "Asia/Tokyo",
+});
+
+function expiryForStatus(status: SmsVerificationStatus | null) {
+  const challenge = status?.challenge;
+  if (!challenge || (challenge.status !== "pending" && challenge.status !== "accepted") || challenge.delivery_state === "failed") return null;
+  const expiry = new Date(challenge.expires_at);
+  if (Number.isNaN(expiry.getTime())) return null;
+  return { dateTime: challenge.expires_at, label: smsExpiryDateTime.format(expiry) };
+}
 
 function stageForStatus(status: SmsVerificationStatus): Stage {
   if (status.challenge) return "otp";
@@ -284,6 +300,7 @@ export function SmsVerification({ pollIntervalMs = POLL_INTERVAL_MS }: { readonl
 
   const delivery = deliveryMessage(status);
   const acceptedForVerification = status?.challenge?.status === "accepted";
+  const expiry = expiryForStatus(status);
 
   return (
     <div className="sms-verification">
@@ -377,7 +394,7 @@ export function SmsVerification({ pollIntervalMs = POLL_INTERVAL_MS }: { readonl
             <span>認証コード</span>
             <input
               aria-label="認証コード"
-              aria-describedby={problem?.fieldErrors.code ? "sms-code-error" : "sms-code-hint"}
+              aria-describedby={problem?.fieldErrors.code ? "sms-code-error" : expiry ? "sms-code-hint" : undefined}
               aria-invalid={Boolean(problem?.fieldErrors.code)}
               autoComplete="one-time-code"
               disabled={submitting}
@@ -390,7 +407,7 @@ export function SmsVerification({ pollIntervalMs = POLL_INTERVAL_MS }: { readonl
               type="text"
               value={code}
             />
-            <small id="sms-code-hint">認証コードの有効期限は5分です。</small>
+            {expiry && <small id="sms-code-hint">認証コードは<time dateTime={expiry.dateTime}>{expiry.label}</time>まで有効です。</small>}
           </label>
           <span id="sms-code-error"><FieldProblem field="code" problem={problem} /></span>
           <button className="button button--dark" disabled={submitting || code.length !== 6 || !acceptedForVerification} type="submit">
