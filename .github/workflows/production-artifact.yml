@@ -1,0 +1,457 @@
+name: Storefront Production Artifact
+
+run-name: Production artifact ${{ inputs.source_sha }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Approved Storefront application source commit (full SHA)
+        required: true
+        type: string
+        default: 39ba749914aec1142e5618aa7f5688f93feff5f7
+
+permissions:
+  contents: read
+
+concurrency:
+  group: storefront-production-artifact-${{ inputs.source_sha }}
+  cancel-in-progress: false
+
+env:
+  APPROVED_SOURCE_SHA: 39ba749914aec1142e5618aa7f5688f93feff5f7
+  ARTIFACT_RETENTION_DAYS: 90
+  NEXT_PUBLIC_PLATFORM_API_BASE_URL: /api/v2
+  NEXT_PUBLIC_SITE_URL: https://oripa-z.com
+  NODE_VERSION: 22.22.3
+  PNPM_VERSION: 10.12.1
+
+jobs:
+  build-publish-verify:
+    name: build-publish-verify-arm64
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout workflow authority
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Validate and checkout approved application source
+        id: source
+        shell: bash
+        env:
+          REQUESTED_SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          set -euo pipefail
+
+          source_sha="$REQUESTED_SOURCE_SHA"
+          if [[ ! "$source_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "source_sha must be a full lowercase 40-character commit SHA" >&2
+            exit 1
+          fi
+          if [[ "$source_sha" != "$APPROVED_SOURCE_SHA" ]]; then
+            echo "source_sha is not the Human-approved application source" >&2
+            exit 1
+          fi
+
+          workflow_sha="$(git rev-parse HEAD)"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$workflow_sha" = "$GITHUB_SHA"
+          git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor "$workflow_sha" refs/remotes/origin/main
+          git cat-file -e "${source_sha}^{commit}"
+          git merge-base --is-ancestor "$source_sha" refs/remotes/origin/main
+          git checkout --detach "$source_sha"
+          test "$(git rev-parse HEAD)" = "$source_sha"
+          test -z "$(git status --porcelain)"
+
+          {
+            echo "source_sha=$source_sha"
+            echo "git_tree=$(git rev-parse 'HEAD^{tree}')"
+            echo "workflow_sha=$workflow_sha"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up exact Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Set up exact pnpm and frozen dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare "pnpm@$PNPM_VERSION" --activate
+          test "$(node --version)" = "v$NODE_VERSION"
+          test "$(pnpm --version)" = "$PNPM_VERSION"
+          pnpm install --frozen-lockfile
+          test "$(node -p "require('./node_modules/next/package.json').version")" = "16.3.0"
+
+      - name: Validate source and contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm artifact:check
+          pnpm security:check
+          pnpm audit --audit-level high
+          pnpm lint
+          pnpm typecheck
+          pnpm exec vitest run src/test/sms-verification-ui.test.tsx
+          pnpm test
+
+      - name: Build exact production application
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$NEXT_PUBLIC_SITE_URL" = "https://oripa-z.com"
+          test "$NEXT_PUBLIC_PLATFORM_API_BASE_URL" = "/api/v2"
+          pnpm build
+          test -s .next/BUILD_ID
+          test -s .next/required-server-files.json
+
+      - name: Guard SMS TTL production bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R --binary-files=without-match --exclude-dir=cache -F '5分' .next; then
+            echo "Fixed five-minute user-facing SMS TTL text was found" >&2
+            exit 1
+          fi
+          grep -R --binary-files=without-match --exclude-dir=cache -q 'expires_at' .next
+          grep -R --binary-files=without-match --exclude-dir=cache -Eq '認証コードは.*まで有効です' .next
+          grep -R --binary-files=without-match --exclude-dir=cache -Eq '再送信（.*秒）' .next
+          grep -Fq 'const LOCAL_COOLDOWN_SECONDS = 60;' src/components/account/sms-verification.tsx
+
+      - name: Package filesystem release
+        id: package
+        shell: bash
+        env:
+          GIT_TREE: ${{ steps.source.outputs.git_tree }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+          WORKFLOW_SHA: ${{ steps.source.outputs.workflow_sha }}
+        run: |
+          set -euo pipefail
+
+          test "$(uname -s)" = "Linux"
+          test "$(uname -m)" = "aarch64"
+
+          pnpm prune --prod
+          find node_modules -xtype l -delete
+          test -x node_modules/.bin/next
+          test ! -e node_modules/.bin/vitest
+          test ! -e node_modules/.bin/eslint
+          test -z "$(find node_modules -xtype l -print -quit)"
+
+          release_root="$RUNNER_TEMP/storefront-release"
+          publication_root="$RUNNER_TEMP/storefront-publication"
+          mkdir -p "$release_root" "$publication_root"
+
+          cp -a .next public node_modules package.json pnpm-lock.yaml next.config.ts "$release_root/"
+          rm -rf -- "$release_root/.next/cache" "$release_root/.next/dev" "$release_root/node_modules/.cache"
+
+          test ! -e "$release_root/.git"
+          test ! -e "$release_root/src"
+          test ! -e "$release_root/.env"
+          test ! -e "$release_root/.env.production"
+
+          build_id="$(tr -d '\n' < "$release_root/.next/BUILD_ID")"
+          next_version="$(node -p "require('./node_modules/next/package.json').version")"
+          client_pin="$(node -e "const m=require('./vendor/oripa/SMS-001/artifact-manifest.json'); process.stdout.write(m.packages.find((p)=>p.name==='@oripa/storefront-client').version)")"
+          testkit_pin="$(node -e "const m=require('./vendor/oripa/SMS-001/artifact-manifest.json'); process.stdout.write(m.packages.find((p)=>p.name==='@oripa/storefront-testkit').version)")"
+          public_openapi_pin="$(node -e "const m=require('./vendor/oripa/SMS-001/artifact-manifest.json'); process.stdout.write(m.public_openapi.version)")"
+
+          test "$next_version" = "16.3.0"
+          test "$client_pin" = "2.0.0-alpha.35"
+          test "$testkit_pin" = "2.0.0-alpha.35"
+          test "$public_openapi_pin" = "2.0.0-alpha.31"
+
+          (
+            cd "$release_root"
+            find . -type f \
+              ! -name artifact-manifest.json \
+              ! -name FILE_SHA256SUMS \
+              -print0 \
+              | LC_ALL=C sort -z \
+              | xargs -0 sha256sum
+          ) > "$release_root/FILE_SHA256SUMS"
+          file_manifest_sha="$(sha256sum "$release_root/FILE_SHA256SUMS" | cut -d' ' -f1)"
+          build_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+          export BUILD_ID="$build_id"
+          export BUILD_UTC="$build_utc"
+          export CLIENT_PIN="$client_pin"
+          export FILE_MANIFEST_SHA="$file_manifest_sha"
+          export NEXT_VERSION_ACTUAL="$next_version"
+          export PUBLIC_OPENAPI_PIN="$public_openapi_pin"
+          export TESTKIT_PIN="$testkit_pin"
+
+          node --input-type=module <<'NODE'
+          import { writeFileSync } from "node:fs";
+          import { join } from "node:path";
+
+          const required = [
+            "BUILD_ID",
+            "BUILD_UTC",
+            "CLIENT_PIN",
+            "FILE_MANIFEST_SHA",
+            "GIT_TREE",
+            "NEXT_PUBLIC_PLATFORM_API_BASE_URL",
+            "NEXT_PUBLIC_SITE_URL",
+            "NEXT_VERSION_ACTUAL",
+            "NODE_VERSION",
+            "PNPM_VERSION",
+            "PUBLIC_OPENAPI_PIN",
+            "RUNNER_TEMP",
+            "SOURCE_SHA",
+            "TESTKIT_PIN",
+            "WORKFLOW_SHA",
+          ];
+          for (const name of required) {
+            if (!process.env[name]) throw new Error(`Missing non-secret build metadata: ${name}`);
+          }
+
+          const manifest = {
+            schema_version: "1.0",
+            artifact_format: "tar.gz",
+            architecture: "linux/arm64",
+            build_id: process.env.BUILD_ID,
+            build_utc: process.env.BUILD_UTC,
+            client_pin: process.env.CLIENT_PIN,
+            file_manifest: "FILE_SHA256SUMS",
+            file_manifest_scope: "regular payload files excluding artifact-manifest.json and FILE_SHA256SUMS",
+            file_manifest_sha256: process.env.FILE_MANIFEST_SHA,
+            git_tree: process.env.GIT_TREE,
+            next_version: process.env.NEXT_VERSION_ACTUAL,
+            node_version: process.env.NODE_VERSION,
+            platform_api_base: process.env.NEXT_PUBLIC_PLATFORM_API_BASE_URL,
+            pnpm_version: process.env.PNPM_VERSION,
+            public_openapi_pin: process.env.PUBLIC_OPENAPI_PIN,
+            release_layout: "archive root is the release directory",
+            runtime_command: "pnpm exec next start --hostname 127.0.0.1 --port 3200",
+            site_url: process.env.NEXT_PUBLIC_SITE_URL,
+            source_sha: process.env.SOURCE_SHA,
+            testkit_pin: process.env.TESTKIT_PIN,
+            workflow_sha: process.env.WORKFLOW_SHA,
+          };
+          writeFileSync(
+            join(process.env.RUNNER_TEMP, "storefront-release", "artifact-manifest.json"),
+            `${JSON.stringify(manifest, null, 2)}\n`,
+            { mode: 0o644 },
+          );
+          NODE
+
+          archive_name="luxe-pack-storefront-production-${SOURCE_SHA}-arm64.tar.gz"
+          archive="$publication_root/$archive_name"
+          tar \
+            --sort=name \
+            --mtime='UTC 1970-01-01' \
+            --owner=0 \
+            --group=0 \
+            --numeric-owner \
+            -czf "$archive" \
+            -C "$release_root" \
+            .
+
+          artifact_sha="$(sha256sum "$archive" | cut -d' ' -f1)"
+          manifest_sha="$(sha256sum "$release_root/artifact-manifest.json" | cut -d' ' -f1)"
+          artifact_size="$(stat -c '%s' "$archive")"
+          artifact_name="luxe-pack-storefront-production-${SOURCE_SHA}-arm64-run-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
+          printf '%s  %s\n' "$artifact_sha" "$archive_name" > "$publication_root/$archive_name.sha256"
+          printf '%s  artifact-manifest.json\n' "$manifest_sha" > "$publication_root/artifact-manifest.json.sha256"
+          cp "$release_root/artifact-manifest.json" "$publication_root/artifact-manifest.json"
+          cp "$release_root/FILE_SHA256SUMS" "$publication_root/FILE_SHA256SUMS"
+
+          {
+            echo "archive_name=$archive_name"
+            echo "artifact_name=$artifact_name"
+            echo "artifact_sha256=$artifact_sha"
+            echo "artifact_size=$artifact_size"
+            echo "build_id=$build_id"
+            echo "file_manifest_sha256=$file_manifest_sha"
+            echo "manifest_sha256=$manifest_sha"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Verify package before publication
+        shell: bash
+        env:
+          ARCHIVE_NAME: ${{ steps.package.outputs.archive_name }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          publication_root="$RUNNER_TEMP/storefront-publication"
+          verify_root="$RUNNER_TEMP/storefront-preupload-verify"
+
+          cd "$publication_root"
+          sha256sum --check "$ARCHIVE_NAME.sha256"
+          sha256sum --check artifact-manifest.json.sha256
+          mkdir -p "$verify_root"
+          tar -xzf "$ARCHIVE_NAME" -C "$verify_root"
+
+          test -s "$verify_root/.next/BUILD_ID"
+          test -s "$verify_root/.next/required-server-files.json"
+          test -d "$verify_root/public"
+          test -x "$verify_root/node_modules/.bin/next"
+          test -f "$verify_root/package.json"
+          test -f "$verify_root/pnpm-lock.yaml"
+          test -f "$verify_root/next.config.ts"
+          test ! -e "$verify_root/.git"
+          test ! -e "$verify_root/src"
+          test ! -e "$verify_root/.env"
+          test ! -e "$verify_root/.env.production"
+          test ! -e "$verify_root/.next/cache"
+
+          cd "$verify_root"
+          sha256sum --check FILE_SHA256SUMS
+          test "$(node -p "require('./artifact-manifest.json').source_sha")" = "$SOURCE_SHA"
+          test "$(node -p "require('./artifact-manifest.json').architecture")" = "linux/arm64"
+          test "$(node -p "require('./artifact-manifest.json').file_manifest_sha256")" = "$(sha256sum FILE_SHA256SUMS | cut -d' ' -f1)"
+
+          node --input-type=module <<'NODE'
+          import { lstatSync, readdirSync, realpathSync } from "node:fs";
+          import { join, relative, sep } from "node:path";
+
+          const root = realpathSync(".");
+          const visit = (directory) => {
+            for (const entry of readdirSync(directory)) {
+              const path = join(directory, entry);
+              const stat = lstatSync(path);
+              if (stat.isDirectory()) visit(path);
+              if (stat.isSymbolicLink()) {
+                const target = realpathSync(path);
+                if (target !== root && !target.startsWith(`${root}${sep}`)) {
+                  throw new Error(`Release symlink escapes archive root: ${relative(root, path)}`);
+                }
+              }
+            }
+          };
+          visit(root);
+          NODE
+
+      - name: Upload immutable workflow artifact
+        id: upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ steps.package.outputs.artifact_name }}
+          path: ${{ runner.temp }}/storefront-publication/
+          if-no-files-found: error
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          overwrite: false
+          include-hidden-files: false
+
+      - name: Remove pre-download package bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf -- \
+            "$RUNNER_TEMP/storefront-publication" \
+            "$RUNNER_TEMP/storefront-preupload-verify" \
+            "$RUNNER_TEMP/storefront-release"
+
+      - name: Re-download exact artifact by ID
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          artifact-ids: ${{ steps.upload.outputs.artifact-id }}
+          path: ${{ runner.temp }}/storefront-redownload
+          digest-mismatch: error
+
+      - name: Verify re-download and ARM64 runtime
+        shell: bash
+        env:
+          ARCHIVE_NAME: ${{ steps.package.outputs.archive_name }}
+          EXPECTED_ARTIFACT_SHA: ${{ steps.package.outputs.artifact_sha256 }}
+          EXPECTED_BUILD_ID: ${{ steps.package.outputs.build_id }}
+          EXPECTED_FILE_MANIFEST_SHA: ${{ steps.package.outputs.file_manifest_sha256 }}
+          EXPECTED_GIT_TREE: ${{ steps.source.outputs.git_tree }}
+          EXPECTED_MANIFEST_SHA: ${{ steps.package.outputs.manifest_sha256 }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          download_root="$RUNNER_TEMP/storefront-redownload"
+          extracted_root="$RUNNER_TEMP/storefront-redownload-extracted"
+
+          cd "$download_root"
+          test "$(sha256sum "$ARCHIVE_NAME" | cut -d' ' -f1)" = "$EXPECTED_ARTIFACT_SHA"
+          test "$(sha256sum artifact-manifest.json | cut -d' ' -f1)" = "$EXPECTED_MANIFEST_SHA"
+          sha256sum --check "$ARCHIVE_NAME.sha256"
+          sha256sum --check artifact-manifest.json.sha256
+
+          mkdir -p "$extracted_root"
+          tar -xzf "$ARCHIVE_NAME" -C "$extracted_root"
+          cmp artifact-manifest.json "$extracted_root/artifact-manifest.json"
+
+          cd "$extracted_root"
+          sha256sum --check FILE_SHA256SUMS
+          test "$(sha256sum FILE_SHA256SUMS | cut -d' ' -f1)" = "$EXPECTED_FILE_MANIFEST_SHA"
+          test "$(tr -d '\n' < .next/BUILD_ID)" = "$EXPECTED_BUILD_ID"
+          test "$(node -p "require('./artifact-manifest.json').source_sha")" = "$SOURCE_SHA"
+          test "$(node -p "require('./artifact-manifest.json').git_tree")" = "$EXPECTED_GIT_TREE"
+          test "$(node -p "require('./artifact-manifest.json').node_version")" = "$NODE_VERSION"
+          test "$(node -p "require('./artifact-manifest.json').pnpm_version")" = "$PNPM_VERSION"
+          test "$(node -p "require('./artifact-manifest.json').next_version")" = "16.3.0"
+          test "$(node -p "require('./artifact-manifest.json').client_pin")" = "2.0.0-alpha.35"
+          test "$(node -p "require('./artifact-manifest.json').testkit_pin")" = "2.0.0-alpha.35"
+          test "$(node -p "require('./artifact-manifest.json').public_openapi_pin")" = "2.0.0-alpha.31"
+          test "$(uname -m)" = "aarch64"
+          test "$(node --version)" = "v$NODE_VERSION"
+          test "$(pnpm --version)" = "$PNPM_VERSION"
+
+          runtime_log="$RUNNER_TEMP/storefront-runtime.log"
+          pnpm exec next start --hostname 127.0.0.1 --port 3299 > "$runtime_log" 2>&1 &
+          runtime_pid=$!
+          cleanup() {
+            kill "$runtime_pid" 2>/dev/null || true
+            wait "$runtime_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          ready=0
+          for _ in $(seq 1 30); do
+            if curl --fail --silent --show-error --output /dev/null http://127.0.0.1:3299/; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [[ "$ready" != 1 ]]; then
+            cat "$runtime_log" >&2
+            exit 1
+          fi
+          test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3299/)" = "200"
+          test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3299/points)" = "200"
+
+      - name: Record artifact handoff
+        shell: bash
+        env:
+          ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+          ARTIFACT_NAME: ${{ steps.package.outputs.artifact_name }}
+          ARTIFACT_SHA256: ${{ steps.package.outputs.artifact_sha256 }}
+          ARTIFACT_SIZE: ${{ steps.package.outputs.artifact_size }}
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+          BUILD_ID: ${{ steps.package.outputs.build_id }}
+          FILE_MANIFEST_SHA256: ${{ steps.package.outputs.file_manifest_sha256 }}
+          MANIFEST_SHA256: ${{ steps.package.outputs.manifest_sha256 }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## Storefront production artifact"
+            echo
+            echo "- Source SHA: \`$SOURCE_SHA\`"
+            echo "- Artifact name: \`$ARTIFACT_NAME\`"
+            echo "- Artifact ID: \`$ARTIFACT_ID\`"
+            echo "- Artifact URL: $ARTIFACT_URL"
+            echo "- Artifact archive SHA-256: \`$ARTIFACT_SHA256\`"
+            echo "- GitHub artifact digest: \`$ARTIFACT_DIGEST\`"
+            echo "- Manifest SHA-256: \`$MANIFEST_SHA256\`"
+            echo "- File manifest SHA-256: \`$FILE_MANIFEST_SHA256\`"
+            echo "- Build ID: \`$BUILD_ID\`"
+            echo "- Archive size: \`$ARTIFACT_SIZE\` bytes"
+            echo "- Retention: \`$ARTIFACT_RETENTION_DAYS days\`"
+            echo "- Architecture: \`linux/arm64\`"
+            echo "- Runtime smoke: \`HTTP 200 /\`, \`HTTP 200 /points\`"
+          } >> "$GITHUB_STEP_SUMMARY"
