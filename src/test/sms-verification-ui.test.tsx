@@ -104,12 +104,76 @@ describe("SMS phone ownership verification UI", () => {
   });
 
   it("shows safe delivery failure without claiming the SMS was sent", async () => {
-    renderSms(authClient({
+    const first = renderSms(authClient({
       getSmsVerificationStatus: vi.fn().mockResolvedValue(response(PUBLIC_SMS_VERIFICATION_FIXTURES.failed)),
     }));
     expect(await screen.findByText(/認証コードを送信できませんでした/)).toBeInTheDocument();
     expect(screen.queryByText("認証コードを送信しました。")).not.toBeInTheDocument();
+    expect(screen.queryByText(/まで有効です/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "SMS認証を完了" })).toBeDisabled();
+    first.unmount();
+
+    renderSms(authClient({
+      getSmsVerificationStatus: vi.fn().mockResolvedValue(response(PUBLIC_SMS_VERIFICATION_FIXTURES.expired)),
+    }));
+    expect(await screen.findByText(/認証コードの有効期限が切れました/)).toBeInTheDocument();
+    expect(screen.queryByText(/まで有効です/)).not.toBeInTheDocument();
+  });
+
+  it("shows the challenge expiry in JST and refreshes it after resend", async () => {
+    const resendExpiry = "2026-09-03T07:45:00Z";
+    const resendSmsVerification = vi.fn().mockResolvedValue(response({
+      ...PUBLIC_SMS_VERIFICATION_FIXTURES.send_pending,
+      expires_at: resendExpiry,
+    }, 202));
+    renderSms(authClient({
+      getSmsVerificationStatus: vi.fn().mockResolvedValue(response(PUBLIC_SMS_VERIFICATION_FIXTURES.accepted)),
+      resendSmsVerification,
+    }), 60_000);
+
+    const initialExpiry = await screen.findByText("9月2日 19:05");
+    expect(initialExpiry).toHaveAttribute("datetime", PUBLIC_SMS_VERIFICATION_FIXTURES.accepted.challenge.expires_at);
+    expect(initialExpiry.closest("small")).toHaveTextContent("認証コードは9月2日 19:05まで有効です。");
+    expect(initialExpiry.closest("small")).not.toHaveTextContent("5分");
+
+    fireEvent.click(screen.getByRole("button", { name: "認証コードを再送信" }));
+
+    const refreshedExpiry = await screen.findByText("9月3日 16:45");
+    expect(refreshedExpiry).toHaveAttribute("datetime", resendExpiry);
+    expect(screen.queryByText("9月2日 19:05")).not.toBeInTheDocument();
+  });
+
+  it("hides the expiry when expires_at is missing or invalid", async () => {
+    const acceptedWithoutExpiry = {
+      ...PUBLIC_SMS_VERIFICATION_FIXTURES.accepted,
+      challenge: {
+        ...PUBLIC_SMS_VERIFICATION_FIXTURES.accepted.challenge,
+        expires_at: undefined,
+      },
+    } as unknown as SmsVerificationStatus;
+    const first = renderSms(authClient({
+      getSmsVerificationStatus: vi.fn().mockResolvedValue(response(acceptedWithoutExpiry)),
+    }));
+
+    expect(await screen.findByRole("button", { name: "SMS認証を完了" })).toBeInTheDocument();
+    expect(screen.queryByText(/まで有効です/)).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/undefined|Invalid Date/);
+    first.unmount();
+
+    const acceptedWithInvalidExpiry = {
+      ...PUBLIC_SMS_VERIFICATION_FIXTURES.accepted,
+      challenge: {
+        ...PUBLIC_SMS_VERIFICATION_FIXTURES.accepted.challenge,
+        expires_at: "not-a-date",
+      },
+    } satisfies SmsVerificationStatus;
+    renderSms(authClient({
+      getSmsVerificationStatus: vi.fn().mockResolvedValue(response(acceptedWithInvalidExpiry)),
+    }));
+
+    expect(await screen.findByRole("button", { name: "SMS認証を完了" })).toBeInTheDocument();
+    expect(screen.queryByText(/まで有効です/)).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Invalid Date");
   });
 
   it("starts the 60-second resend countdown and applies server retry timing", async () => {
