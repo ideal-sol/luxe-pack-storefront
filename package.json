@@ -63,6 +63,7 @@
     "overrides": {
       "@oripa/site-schema@2.0.0-alpha.23": "file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
       "@oripa/storefront-client@2.0.0-alpha.35": "file:vendor/oripa/SMS-001/oripa-storefront-client-2.0.0-alpha.35.tgz",
+      "fast-uri@<3.1.6": "3.1.6",
       "nanoid@<3.3.18": "3.3.18"
     }
   }
