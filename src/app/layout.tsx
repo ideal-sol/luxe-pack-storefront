@@ -9,10 +9,10 @@ import { PointClientProvider } from "@/components/points/point-client-provider";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
-  description: "Luxe Pack customer storefront.",
+  description: "OripaZ customer storefront.",
   title: {
-    default: "Luxe Pack",
-    template: "%s | Luxe Pack",
+    default: "OripaZ",
+    template: "%s | OripaZ",
   },
 };
 

@@ -95,7 +95,7 @@ export function MyPageTop({
     <div className="mypage-dashboard">
       <section aria-labelledby="member-summary-heading" className="mypage-summary">
         <div className="mypage-summary__heading">
-          <span aria-hidden="true" className="mypage-summary__mark">LP</span>
+          <span aria-hidden="true" className="mypage-summary__mark">OZ</span>
           <div>
             <p>MEMBER ACCOUNT</p>
             <h2 id="member-summary-heading">会員メニュー</h2>

@@ -92,6 +92,7 @@ describe("my page top", () => {
   it("renders only the canonical Session summary for an authenticated member", async () => {
     renderMyPage(client());
     expect(await screen.findByRole("heading", { name: "会員メニュー" })).toBeInTheDocument();
+    expect(document.querySelector(".mypage-summary__mark")).toHaveTextContent("OZ");
     expect(screen.getByText("メール認証")).toBeInTheDocument();
     expect(screen.getByText("確認済み")).toBeInTheDocument();
     expect(screen.getByText("アカウント状態")).toBeInTheDocument();

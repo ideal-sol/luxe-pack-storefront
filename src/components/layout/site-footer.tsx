@@ -10,9 +10,9 @@ export function SiteFooter() {
     <footer className="site-footer">
       <div className="page-container site-footer__grid">
         <div className="site-footer__brand">
-          <span className="wordmark__seal" aria-hidden="true">LP</span>
+          <span className="wordmark__seal" aria-hidden="true">OZ</span>
           <div>
-            <strong>LUXE PACK</strong>
+            <strong>OripaZ</strong>
             <p>選ぶ時間から、届く瞬間まで。</p>
           </div>
         </div>
@@ -30,7 +30,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="page-container site-footer__bottom">
-        <p>© LUXE PACK</p>
+        <p>© OripaZ</p>
         <p>Customer storefront foundation</p>
       </div>
     </footer>
