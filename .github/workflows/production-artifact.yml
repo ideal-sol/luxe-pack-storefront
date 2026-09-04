@@ -1,25 +1,18 @@
 name: Storefront Production Artifact
 
-run-name: Production artifact ${{ inputs.source_sha }}
+run-name: Production artifact ${{ github.sha }}
 
 on:
   workflow_dispatch:
-    inputs:
-      source_sha:
-        description: Approved Storefront application source commit (full SHA)
-        required: true
-        type: string
-        default: 39ba749914aec1142e5618aa7f5688f93feff5f7
 
 permissions:
   contents: read
 
 concurrency:
-  group: storefront-production-artifact-${{ inputs.source_sha }}
+  group: storefront-production-artifact-${{ github.sha }}
   cancel-in-progress: false
 
 env:
-  APPROVED_SOURCE_SHA: 39ba749914aec1142e5618aa7f5688f93feff5f7
   ARTIFACT_RETENTION_DAYS: 90
   NEXT_PUBLIC_PLATFORM_API_BASE_URL: /api/v2
   NEXT_PUBLIC_SITE_URL: https://oripa-z.com
@@ -39,31 +32,25 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.sha }}
 
-      - name: Validate and checkout approved application source
+      - name: Validate exact protected-main source
         id: source
         shell: bash
-        env:
-          REQUESTED_SOURCE_SHA: ${{ inputs.source_sha }}
         run: |
           set -euo pipefail
 
-          source_sha="$REQUESTED_SOURCE_SHA"
+          source_sha="$GITHUB_SHA"
           if [[ ! "$source_sha" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "source_sha must be a full lowercase 40-character commit SHA" >&2
-            exit 1
-          fi
-          if [[ "$source_sha" != "$APPROVED_SOURCE_SHA" ]]; then
-            echo "source_sha is not the Human-approved application source" >&2
+            echo "GITHUB_SHA must be a full lowercase 40-character commit SHA" >&2
             exit 1
           fi
 
           workflow_sha="$(git rev-parse HEAD)"
+          test "$GITHUB_REPOSITORY" = "ideal-sol/luxe-pack-storefront"
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
           test "$GITHUB_REF" = "refs/heads/main"
           test "$workflow_sha" = "$GITHUB_SHA"
           git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main
           git merge-base --is-ancestor "$workflow_sha" refs/remotes/origin/main
-          git cat-file -e "${source_sha}^{commit}"
-          git merge-base --is-ancestor "$source_sha" refs/remotes/origin/main
           git checkout --detach "$source_sha"
           test "$(git rev-parse HEAD)" = "$source_sha"
           test -z "$(git status --porcelain)"
