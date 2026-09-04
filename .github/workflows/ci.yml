@@ -11,6 +11,7 @@ permissions:
 env:
   NODE_VERSION: 22.22.3
   PNPM_VERSION: 10.12.1
+  PNPM_AUDIT_VERSION: 11.25.0
 
 jobs:
   policy-gate:
@@ -69,7 +70,17 @@ jobs:
       - run: pnpm point-boundary:check
       - run: pnpm payment-boundary:check
       - run: pnpm security:check
-      - run: pnpm audit --audit-level high
+      - name: Audit dependencies with pnpm 11
+        env:
+          PNPM_CONFIG_FETCH_TIMEOUT: 300000
+        run: |
+          corepack prepare pnpm@${PNPM_AUDIT_VERSION} --activate
+          audit_root="$(mktemp -d)"
+          trap 'rm -rf -- "$audit_root"' EXIT
+          cp pnpm-lock.yaml "$audit_root/pnpm-lock.yaml"
+          cd "$audit_root"
+          test "$(pnpm --version)" = "$PNPM_AUDIT_VERSION"
+          pnpm audit --audit-level high
 
   integration-gate:
     name: integration-gate
