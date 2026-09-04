@@ -11,17 +11,19 @@ import { ErrorState, LoginRequiredState } from "@/components/common/state-panel"
 import { useToast } from "@/components/common/toast-provider";
 import { presentAuthProblem, presentSmsProblem } from "@/lib/platform";
 import {
+  createMyPageSupportNavigation,
   myPageAccountNavigation,
   myPageShortcutNavigation,
-  myPageSupportNavigation,
   smsVerificationRoute,
 } from "@/lib/routes/navigation";
 import { consumeSmsRegistrationPrompt } from "@/lib/sms-registration-prompt";
 
 export function MyPageTop({
   accountUpdated,
+  contactHref,
 }: {
   readonly accountUpdated?: "email" | "password";
+  readonly contactHref?: string;
 }) {
   const router = useRouter();
   const { getSmsVerificationStatus, logout, state } = useSession();
@@ -115,7 +117,7 @@ export function MyPageTop({
       </nav>
 
       <MenuSection items={myPageAccountNavigation} label="アカウント" onNavigate={navigateFromAccount} />
-      <MenuSection items={myPageSupportNavigation} label="お知らせ・サポート" />
+      <MenuSection items={createMyPageSupportNavigation(contactHref)} label="お知らせ・サポート" />
 
       <button className="mypage-logout" disabled={loggingOut} onClick={handleLogout} type="button">
         {loggingOut ? "ログアウト中…" : "ログアウト"}
