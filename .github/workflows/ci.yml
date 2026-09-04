@@ -71,6 +71,8 @@ jobs:
       - run: pnpm payment-boundary:check
       - run: pnpm security:check
       - name: Audit dependencies with pnpm 11
+        env:
+          PNPM_CONFIG_FETCH_TIMEOUT: 300000
         run: |
           corepack prepare pnpm@${PNPM_AUDIT_VERSION} --activate
           audit_root="$(mktemp -d)"
