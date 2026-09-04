@@ -11,10 +11,11 @@ export default async function MyPage({
   const accountUpdated = query?.["account-updated"] === "email" || query?.["account-updated"] === "password"
     ? query["account-updated"]
     : undefined;
+  const contactHref = process.env.APP_CONTACT?.trim() || undefined;
   return (
     <PageContainer className="route-page mypage-page" size="narrow">
       <PageTitle description="会員向けの履歴、獲得景品、アカウント情報へ移動できます。" eyebrow="MY PAGE" title="マイページ" />
-      <MyPageTop {...(accountUpdated ? { accountUpdated } : {})} />
+      <MyPageTop {...(accountUpdated ? { accountUpdated } : {})} {...(contactHref ? { contactHref } : {})} />
     </PageContainer>
   );
 }

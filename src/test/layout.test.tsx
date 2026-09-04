@@ -18,9 +18,12 @@ describe("shared layout", () => {
     const client = {
       getCurrentSession: vi.fn().mockResolvedValue({ data: { authenticated: false, user: null }, metadata: { status: 200, idempotency_replayed: false } }),
     } as unknown as AuthClientAdapter;
-    render(<ToastProvider><SessionProvider client={client}><PointClientProvider client={null}><SiteHeader /></PointClientProvider></SessionProvider></ToastProvider>);
+    const view = render(<ToastProvider><SessionProvider client={client}><PointClientProvider client={null}><SiteHeader /></PointClientProvider></SessionProvider></ToastProvider>);
     expect(screen.getByRole("banner")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Luxe Pack ホーム" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "OripaZ ホーム" })).toBeInTheDocument();
+    expect(screen.getByText("OripaZ")).toBeInTheDocument();
+    expect(view.container.querySelector(".wordmark__seal")).toHaveTextContent("OZ");
+    expect(view.container).not.toHaveTextContent("LUXE PACK");
     expect((await screen.findAllByRole("link", { name: "新規登録" })).length).toBeGreaterThan(0);
   });
 
@@ -38,6 +41,10 @@ describe("shared layout", () => {
     } as unknown as PublicCatalogAdapter;
     const view = render(<PublicClientProvider client={client}><SiteFooter /></PublicClientProvider>);
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
+    expect(screen.getByText("OripaZ")).toBeInTheDocument();
+    expect(view.container.querySelector(".wordmark__seal")).toHaveTextContent("OZ");
+    expect(view.container).toHaveTextContent("© OripaZ");
+    expect(view.container).not.toHaveTextContent("LUXE PACK");
     expect(screen.getByText("Information")).toBeInTheDocument();
     expect(await screen.findByRole("link", { name: "利用規約" })).toHaveAttribute("href", "/pages/terms");
     expect(screen.getByRole("link", { name: "プライバシーポリシー" })).toHaveAttribute("href", "/pages/privacy");
@@ -72,7 +79,7 @@ describe("shared layout", () => {
     render(<PublicClientProvider client={client}><SiteFooter /></PublicClientProvider>);
     await waitFor(() => expect(client.listFooterPages).toHaveBeenCalledOnce());
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
-    expect(screen.getByText("LUXE PACK")).toBeInTheDocument();
+    expect(screen.getByText("OripaZ")).toBeInTheDocument();
     expect(screen.getByText("Explore")).toBeInTheDocument();
     expect(screen.getByText("Account")).toBeInTheDocument();
   });

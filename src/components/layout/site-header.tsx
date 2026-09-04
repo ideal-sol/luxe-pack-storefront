@@ -34,10 +34,10 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="page-container site-header__main">
-        <Link aria-label="Luxe Pack ホーム" className="wordmark" href="/">
-          <span className="wordmark__seal" aria-hidden="true">LP</span>
+        <Link aria-label="OripaZ ホーム" className="wordmark" href="/">
+          <span className="wordmark__seal" aria-hidden="true">OZ</span>
           <span>
-            <strong>LUXE PACK</strong>
+            <strong>OripaZ</strong>
             <small>STORE FRONT</small>
           </span>
         </Link>

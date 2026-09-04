@@ -1,5 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { Children, isValidElement } from "react";
 import { vi } from "vitest";
+import MyPage from "@/app/mypage/page";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { MyPageTop } from "@/components/account/my-page-top";
 import { ToastProvider } from "@/components/common/toast-provider";
@@ -7,10 +9,10 @@ import { MobileBottomNavigation } from "@/components/layout/mobile-bottom-naviga
 import type { AuthClientAdapter, AuthSession } from "@/lib/platform";
 import {
   accountNavigation,
+  createMyPageSupportNavigation,
   lineAccountRoute,
   myPageAccountNavigation,
   myPageShortcutNavigation,
-  myPageSupportNavigation,
   publicRoutes,
   smsVerificationRoute,
 } from "@/lib/routes/navigation";
@@ -29,6 +31,7 @@ const authenticated: AuthSession = {
 };
 const anonymous: AuthSession = { authenticated: false, user: null };
 const metadata = { idempotency_replayed: false, status: 200 } as const;
+const contactHref = "https://contact.example.test/";
 
 function response<T>(data: T) {
   return { data, metadata };
@@ -47,14 +50,26 @@ function client(session: AuthSession = authenticated, overrides: Partial<AuthCli
   } as AuthClientAdapter;
 }
 
-function renderMyPage(authClient: AuthClientAdapter | null, accountUpdated?: "email" | "password") {
+function renderMyPage(
+  authClient: AuthClientAdapter | null,
+  accountUpdated?: "email" | "password",
+  configuredContactHref: string | null = contactHref,
+) {
   return render(
     <ToastProvider>
       <SessionProvider client={authClient}>
-        <MyPageTop {...(accountUpdated ? { accountUpdated } : {})} />
+        <MyPageTop {...(accountUpdated ? { accountUpdated } : {})} {...(configuredContactHref ? { contactHref: configuredContactHref } : {})} />
       </SessionProvider>
     </ToastProvider>,
   );
+}
+
+async function configuredContactHref() {
+  const page = await MyPage({});
+  const myPageTop = Children.toArray(page.props.children).find(
+    (child) => isValidElement(child) && child.type === MyPageTop,
+  );
+  return isValidElement<{ readonly contactHref?: string }>(myPageTop) ? myPageTop.props.contactHref : undefined;
 }
 
 describe("my page top", () => {
@@ -62,9 +77,22 @@ describe("my page top", () => {
     push.mockReset();
     window.sessionStorage.clear();
   });
+  it("reads the contact destination from server-side APP_CONTACT", async () => {
+    const original = process.env.APP_CONTACT;
+    try {
+      process.env.APP_CONTACT = `  ${contactHref}  `;
+      expect(await configuredContactHref()).toBe(contactHref);
+      process.env.APP_CONTACT = "   ";
+      expect(await configuredContactHref()).toBeUndefined();
+    } finally {
+      if (original === undefined) delete process.env.APP_CONTACT;
+      else process.env.APP_CONTACT = original;
+    }
+  });
   it("renders only the canonical Session summary for an authenticated member", async () => {
     renderMyPage(client());
     expect(await screen.findByRole("heading", { name: "会員メニュー" })).toBeInTheDocument();
+    expect(document.querySelector(".mypage-summary__mark")).toHaveTextContent("OZ");
     expect(screen.getByText("メール認証")).toBeInTheDocument();
     expect(screen.getByText("確認済み")).toBeInTheDocument();
     expect(screen.getByText("アカウント状態")).toBeInTheDocument();
@@ -77,7 +105,7 @@ describe("my page top", () => {
   it("uses the centralized member and support routes", async () => {
     renderMyPage(client());
     await screen.findByRole("heading", { name: "会員メニュー" });
-    for (const item of [...myPageShortcutNavigation, ...myPageAccountNavigation, ...myPageSupportNavigation]) {
+    for (const item of [...myPageShortcutNavigation, ...myPageAccountNavigation, ...createMyPageSupportNavigation(contactHref)]) {
       expect(screen.getByRole("link", { name: new RegExp(item.label) })).toHaveAttribute("href", item.href);
     }
     expect(screen.getByRole("link", { name: /コイン履歴/ })).toHaveAttribute("href", "/mypage/points");
@@ -90,7 +118,7 @@ describe("my page top", () => {
     expect(screen.getByRole("link", { name: /パスワード変更/ })).toHaveAttribute("href", "/mypage/password");
     expect(screen.queryByRole("link", { name: /LINE連携/ })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /お知らせ/ })).toHaveAttribute("href", "/notices");
-    expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("href", "https://support.luxe-pack.biz/");
+    expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("href", contactHref);
     expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("target", "_blank");
     expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("rel", "noopener noreferrer");
   });
@@ -116,8 +144,20 @@ describe("my page top", () => {
       "利用規約",
       "プライバシーポリシー",
     ]);
-    expect(links[0]).toHaveAttribute("href", "https://support.luxe-pack.biz/");
+    expect(links[0]).toHaveAttribute("href", contactHref);
     expect(links.some((link) => link.getAttribute("href") === "/contact")).toBe(false);
+  });
+
+  it("hides the contact link when APP_CONTACT is unavailable", async () => {
+    renderMyPage(client(), undefined, null);
+    const support = await screen.findByRole("navigation", { name: "お知らせ・サポート" });
+    expect(screen.queryByRole("link", { name: /お問い合わせ/ })).not.toBeInTheDocument();
+    expect(Array.from(support.querySelectorAll("a")).map((link) => link.querySelector("strong")?.textContent)).toEqual([
+      "お知らせ",
+      "ご利用ガイド",
+      "利用規約",
+      "プライバシーポリシー",
+    ]);
   });
 
   it.each([
@@ -141,7 +181,7 @@ describe("my page top", () => {
     expect(links[3]).toHaveTextContent("パスワード変更");
     expect(account).not.toHaveTextContent("LINE連携");
     expect(screen.getAllByRole("link")).toHaveLength(
-      myPageShortcutNavigation.length + myPageAccountNavigation.length + myPageSupportNavigation.length,
+      myPageShortcutNavigation.length + myPageAccountNavigation.length + createMyPageSupportNavigation(contactHref).length,
     );
   });
 

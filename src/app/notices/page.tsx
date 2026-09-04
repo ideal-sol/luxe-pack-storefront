@@ -6,7 +6,7 @@ export default function NoticesPage() {
   return (
     <section className="route-page content-route">
       <PageContainer size="narrow">
-        <PageTitle description="Luxe Packからの最新情報をご案内します。" eyebrow="INFORMATION" title="お知らせ" />
+        <PageTitle description="OripaZからの最新情報をご案内します。" eyebrow="INFORMATION" title="お知らせ" />
         <NoticeList />
       </PageContainer>
     </section>

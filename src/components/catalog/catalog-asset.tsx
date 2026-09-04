@@ -31,7 +31,7 @@ export function CatalogAsset({
         />
       ) : (
         <div aria-label={alt ?? "画像は準備中です"} className="catalog-asset__fallback" role="img">
-          <span aria-hidden="true">LP</span>
+          <span aria-hidden="true">OZ</span>
           <small>{fallbackLabel}</small>
         </div>
       )}
