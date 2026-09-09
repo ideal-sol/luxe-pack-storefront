@@ -1,3 +1,4 @@
+import { advertisingRegistrationFields } from "@/lib/advertising-last-click";
 import {
   createStorefrontIdentityClient,
   isAuthProblemError,
@@ -37,7 +38,9 @@ export function createExternalIdentityAdapter(transport: StorefrontTransport): E
     completeLineLogin: identity.completeLineLogin,
     getLineFriendState: identity.getLineFriendState,
     listExternalIdentities: identity.listExternalIdentities,
-    startLineIdentityLink: identity.startLineIdentityLink,
+    startLineIdentityLink: (input, options) => identity.startLineIdentityLink(
+      { ...input, ...advertisingRegistrationFields() }, options,
+    ),
     startLineReauthentication: identity.startLineReauthentication,
     unlinkLineIdentity: identity.unlinkLineIdentity,
   };

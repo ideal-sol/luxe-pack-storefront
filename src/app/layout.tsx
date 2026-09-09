@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { AdvertisingCapture } from "@/components/advertising/advertising-capture";
 import type { Metadata, Viewport } from "next";
 import { MobileBottomNavigation } from "@/components/layout/mobile-bottom-navigation";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -25,6 +27,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="ja">
       <body>
+        <Suspense fallback={null}><AdvertisingCapture /></Suspense>
         <ToastProvider>
           <SessionProvider>
             <PointClientProvider>
