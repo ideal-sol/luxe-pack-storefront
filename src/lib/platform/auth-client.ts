@@ -1,3 +1,4 @@
+import { advertisingRegistrationFields } from "@/lib/advertising-last-click";
 import { createStorefrontIdentityClient } from "@oripa/storefront-client";
 import type {
   PublicComponents,
@@ -64,7 +65,7 @@ export function createAuthClientAdapter(transport: StorefrontTransport): AuthCli
     getSmsVerificationStatus: identity.getSmsVerificationStatus,
     login: identity.login,
     logout: identity.logout,
-    register: identity.register,
+    register: (input, options) => identity.register({ ...input, ...advertisingRegistrationFields() }, options),
     reauthenticateUserPassword: identity.reauthenticateUserPassword,
     requestPasswordReset: identity.requestPasswordReset,
     resendEmailVerification: identity.resendEmailVerification,
