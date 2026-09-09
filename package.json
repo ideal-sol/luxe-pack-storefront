@@ -36,7 +36,7 @@
   "dependencies": {
     "@fincode/js": "1.1.0",
     "@oripa/storefront-client": "file:vendor/oripa/AGENCY-004A/oripa-storefront-client-2.0.0-alpha.36.tgz",
-    "next": "16.3.0",
+    "next": "16.3.3",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "sanitize-html": "2.17.6"
@@ -53,7 +53,7 @@
     "@types/react-dom": "19.2.4",
     "@types/sanitize-html": "2.16.1",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.3.0",
+    "eslint-config-next": "16.3.3",
     "jsdom": "30.0.1",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
@@ -64,7 +64,9 @@
       "@oripa/site-schema@2.0.0-alpha.23": "file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
       "@oripa/storefront-client@2.0.0-alpha.36": "file:vendor/oripa/AGENCY-004A/oripa-storefront-client-2.0.0-alpha.36.tgz",
       "fast-uri@<3.1.6": "3.1.6",
-      "nanoid@<3.3.18": "3.3.18"
+      "nanoid@<3.3.18": "3.3.18",
+      "sharp@<0.35.4": "0.35.4",
+      "js-yaml@>=4.0.0 <4.3.2": "4.3.2"
     }
   }
 }

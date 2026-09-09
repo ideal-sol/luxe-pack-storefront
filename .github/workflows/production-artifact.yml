@@ -75,7 +75,7 @@ jobs:
           test "$(node --version)" = "v$NODE_VERSION"
           test "$(pnpm --version)" = "$PNPM_VERSION"
           pnpm install --frozen-lockfile
-          test "$(node -p "require('./node_modules/next/package.json').version")" = "16.3.0"
+          test "$(node -p "require('./node_modules/next/package.json').version")" = "16.3.3"
 
       - name: Validate source and contracts
         shell: bash
@@ -150,7 +150,7 @@ jobs:
           testkit_pin="$(node -e "const m=require('./vendor/oripa/AGENCY-004A/artifact-manifest.json'); process.stdout.write(m.packages.find((p)=>p.name==='@oripa/storefront-testkit').version)")"
           public_openapi_pin="$(node -e "const m=require('./vendor/oripa/AGENCY-004A/artifact-manifest.json'); process.stdout.write(m.public_openapi.version)")"
 
-          test "$next_version" = "16.3.0"
+          test "$next_version" = "16.3.3"
           test "$client_pin" = "2.0.0-alpha.36"
           test "$testkit_pin" = "2.0.0-alpha.36"
           test "$public_openapi_pin" = "2.0.0-alpha.32"
@@ -378,7 +378,7 @@ jobs:
           test "$(node -p "require('./artifact-manifest.json').git_tree")" = "$EXPECTED_GIT_TREE"
           test "$(node -p "require('./artifact-manifest.json').node_version")" = "$NODE_VERSION"
           test "$(node -p "require('./artifact-manifest.json').pnpm_version")" = "$PNPM_VERSION"
-          test "$(node -p "require('./artifact-manifest.json').next_version")" = "16.3.0"
+          test "$(node -p "require('./artifact-manifest.json').next_version")" = "16.3.3"
           test "$(node -p "require('./artifact-manifest.json').client_pin")" = "2.0.0-alpha.36"
           test "$(node -p "require('./artifact-manifest.json').testkit_pin")" = "2.0.0-alpha.36"
           test "$(node -p "require('./artifact-manifest.json').public_openapi_pin")" = "2.0.0-alpha.32"
