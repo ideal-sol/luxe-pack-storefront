@@ -4,6 +4,11 @@ run-name: Production artifact ${{ github.sha }}
 
 on:
   workflow_dispatch:
+    inputs:
+      site_url:
+        description: Canonical HTTPS origin for the production artifact (no trailing slash)
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -15,7 +20,7 @@ concurrency:
 env:
   ARTIFACT_RETENTION_DAYS: 90
   NEXT_PUBLIC_PLATFORM_API_BASE_URL: /api/v2
-  NEXT_PUBLIC_SITE_URL: https://oripa-z.com
+  NEXT_PUBLIC_SITE_URL: ${{ inputs.site_url }}
   NODE_VERSION: 22.22.3
   PNPM_VERSION: 10.12.1
 
@@ -66,6 +71,31 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Validate production site URL
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const value = process.env.NEXT_PUBLIC_SITE_URL;
+          let url;
+          try {
+            url = new URL(value);
+          } catch {
+            throw new Error("NEXT_PUBLIC_SITE_URL must be an absolute HTTPS origin");
+          }
+          if (
+            url.protocol !== "https:"
+            || !url.hostname
+            || url.username
+            || url.password
+            || url.pathname !== "/"
+            || url.search
+            || url.hash
+            || value !== url.origin
+          ) {
+            throw new Error("NEXT_PUBLIC_SITE_URL must be a canonical HTTPS origin without credentials, path, query, fragment, or trailing slash");
+          }
+          NODE
+
       - name: Set up exact pnpm and frozen dependencies
         shell: bash
         run: |
@@ -93,7 +123,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$NEXT_PUBLIC_SITE_URL" = "https://oripa-z.com"
           test "$NEXT_PUBLIC_PLATFORM_API_BASE_URL" = "/api/v2"
           pnpm build
           test -s .next/BUILD_ID
@@ -294,6 +323,8 @@ jobs:
           cd "$verify_root"
           sha256sum --check FILE_SHA256SUMS
           test "$(node -p "require('./artifact-manifest.json').source_sha")" = "$SOURCE_SHA"
+          test "$(node -p "require('./artifact-manifest.json').site_url")" = "$NEXT_PUBLIC_SITE_URL"
+          test "$(node -p "require('./artifact-manifest.json').platform_api_base")" = "$NEXT_PUBLIC_PLATFORM_API_BASE_URL"
           test "$(node -p "require('./artifact-manifest.json').architecture")" = "linux/arm64"
           test "$(node -p "require('./artifact-manifest.json').file_manifest_sha256")" = "$(sha256sum FILE_SHA256SUMS | cut -d' ' -f1)"
 
@@ -375,6 +406,8 @@ jobs:
           test "$(sha256sum FILE_SHA256SUMS | cut -d' ' -f1)" = "$EXPECTED_FILE_MANIFEST_SHA"
           test "$(tr -d '\n' < .next/BUILD_ID)" = "$EXPECTED_BUILD_ID"
           test "$(node -p "require('./artifact-manifest.json').source_sha")" = "$SOURCE_SHA"
+          test "$(node -p "require('./artifact-manifest.json').site_url")" = "$NEXT_PUBLIC_SITE_URL"
+          test "$(node -p "require('./artifact-manifest.json').platform_api_base")" = "$NEXT_PUBLIC_PLATFORM_API_BASE_URL"
           test "$(node -p "require('./artifact-manifest.json').git_tree")" = "$EXPECTED_GIT_TREE"
           test "$(node -p "require('./artifact-manifest.json').node_version")" = "$NODE_VERSION"
           test "$(node -p "require('./artifact-manifest.json').pnpm_version")" = "$PNPM_VERSION"
@@ -440,5 +473,7 @@ jobs:
             echo "- Archive size: \`$ARTIFACT_SIZE\` bytes"
             echo "- Retention: \`$ARTIFACT_RETENTION_DAYS days\`"
             echo "- Architecture: \`linux/arm64\`"
+            echo "- Site URL: $NEXT_PUBLIC_SITE_URL"
+            echo "- Platform API base: $NEXT_PUBLIC_PLATFORM_API_BASE_URL"
             echo "- Runtime smoke: \`HTTP 200 /\`, \`HTTP 200 /points\`"
-          } >> "$GITHUB_STEP_SUMMARY"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
