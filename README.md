@@ -107,3 +107,19 @@ SITE-012 connects those actions to the MIG-062E Browser-safe Prize fulfillment
 client for address, shipping, and point-exchange operations. Caller Idempotency
 Keys, typed problems, and canonical read reconciliation are used without
 inferring actions from status/dates or optimistically updating Prize/Point state.
+
+## Production artifact inputs
+
+Dispatch the existing `production-artifact.yml` workflow on protected `main`
+with both required non-secret inputs: `site_url` (canonical HTTPS origin without
+trailing slash) and `app_name` (public application name). Each build explicitly
+sets `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_APP_NAME` from these inputs; an absent,
+empty, or whitespace-only application name fails before dependency install/build.
+Do not use a GitHub Variable, Secret, or a production runtime env file as the
+application-name build authority.
+
+The existing artifact manifest records the effective value as `app_name`, alongside
+`site_url`, source/tree/workflow SHAs, Build ID, architecture, and timestamp. Package
+and re-download verification compare both public inputs with the manifest, and the
+handoff summary records `NEXT_PUBLIC_APP_NAME`. Artifact creation does not activate
+Production; activation requires a separate Human-authorized operation.

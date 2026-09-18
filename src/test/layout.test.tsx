@@ -17,7 +17,7 @@ describe("shared layout", () => {
   beforeEach(() => vi.stubEnv("NEXT_PUBLIC_APP_NAME", "OripaZ"));
   afterEach(() => vi.unstubAllEnvs());
 
-  it.each(["OripaZ", "Test Store"])("renders the public header with app name %s", async (appName) => {
+  it.each(["OripaZ", "Test Store", "オリポケ"])("renders the public header with app name %s", async (appName) => {
     vi.stubEnv("NEXT_PUBLIC_APP_NAME", appName);
     const client = {
       getCurrentSession: vi.fn().mockResolvedValue({ data: { authenticated: false, user: null }, metadata: { status: 200, idempotency_replayed: false } }),
@@ -31,7 +31,7 @@ describe("shared layout", () => {
     expect((await screen.findAllByRole("link", { name: "新規登録" })).length).toBeGreaterThan(0);
   });
 
-  it.each(["OripaZ", "Test Store"])("renders Backend-ordered Footer pages with app name %s", async (appName) => {
+  it.each(["OripaZ", "Test Store", "オリポケ"])("renders Backend-ordered Footer pages with app name %s", async (appName) => {
     vi.stubEnv("NEXT_PUBLIC_APP_NAME", appName);
     const secondPage = {
       id: "0198a001-0000-7000-8000-000000000304",
