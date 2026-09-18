@@ -14,7 +14,6 @@ function Banner({ banner, priority }: { readonly banner: ContentBanner; readonly
         priority={priority}
         src={banner.image_url ?? null}
       />
-      <div className="home-banner__caption"><span>FEATURED</span><strong>{banner.title}</strong></div>
     </>
   );
 

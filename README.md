@@ -13,6 +13,11 @@ pnpm validate
 
 Required runtime versions are Node `22.22.3` and pnpm `10.12.1`.
 
+Set `NEXT_PUBLIC_APP_NAME=OripaZ` in the existing environment used to start
+development and to build the Storefront. Header and Footer use this public name
+without a brand-name fallback. Next.js embeds it in the client bundle at build
+time, so changing a deployed name requires a new build and artifact activation.
+
 ## Platform client
 
 The current AGENCY-004A Client/Testkit artifacts are vendored at

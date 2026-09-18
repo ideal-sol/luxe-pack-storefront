@@ -6,13 +6,14 @@ import {
 import { FooterInformationNavigation } from "./footer-information-navigation";
 
 export function SiteFooter() {
+  const appName = process.env.NEXT_PUBLIC_APP_NAME;
   return (
     <footer className="site-footer">
       <div className="page-container site-footer__grid">
         <div className="site-footer__brand">
           <span className="wordmark__seal" aria-hidden="true">OZ</span>
           <div>
-            <strong>OripaZ</strong>
+            <strong>{appName}</strong>
             <p>選ぶ時間から、届く瞬間まで。</p>
           </div>
         </div>
@@ -30,7 +31,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="page-container site-footer__bottom">
-        <p>© OripaZ</p>
+        <p>© {appName}</p>
         <p>Customer storefront foundation</p>
       </div>
     </footer>
