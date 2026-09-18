@@ -14,20 +14,25 @@ import { PointClientProvider } from "@/components/points/point-client-provider";
 vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
 
 describe("shared layout", () => {
-  it("renders the public header", async () => {
+  beforeEach(() => vi.stubEnv("NEXT_PUBLIC_APP_NAME", "OripaZ"));
+  afterEach(() => vi.unstubAllEnvs());
+
+  it.each(["OripaZ", "Test Store"])("renders the public header with app name %s", async (appName) => {
+    vi.stubEnv("NEXT_PUBLIC_APP_NAME", appName);
     const client = {
       getCurrentSession: vi.fn().mockResolvedValue({ data: { authenticated: false, user: null }, metadata: { status: 200, idempotency_replayed: false } }),
     } as unknown as AuthClientAdapter;
     const view = render(<ToastProvider><SessionProvider client={client}><PointClientProvider client={null}><SiteHeader /></PointClientProvider></SessionProvider></ToastProvider>);
     expect(screen.getByRole("banner")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "OripaZ ホーム" })).toBeInTheDocument();
-    expect(screen.getByText("OripaZ")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: `${appName} ホーム` })).toBeInTheDocument();
+    expect(screen.getByText(appName)).toBeInTheDocument();
     expect(view.container.querySelector(".wordmark__seal")).toHaveTextContent("OZ");
     expect(view.container).not.toHaveTextContent("LUXE PACK");
     expect((await screen.findAllByRole("link", { name: "新規登録" })).length).toBeGreaterThan(0);
   });
 
-  it("renders Backend-ordered Footer pages without excluded pages", async () => {
+  it.each(["OripaZ", "Test Store"])("renders Backend-ordered Footer pages with app name %s", async (appName) => {
+    vi.stubEnv("NEXT_PUBLIC_APP_NAME", appName);
     const secondPage = {
       id: "0198a001-0000-7000-8000-000000000304",
       slug: "privacy",
@@ -41,9 +46,9 @@ describe("shared layout", () => {
     } as unknown as PublicCatalogAdapter;
     const view = render(<PublicClientProvider client={client}><SiteFooter /></PublicClientProvider>);
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
-    expect(screen.getByText("OripaZ")).toBeInTheDocument();
+    expect(screen.getByText(appName)).toBeInTheDocument();
     expect(view.container.querySelector(".wordmark__seal")).toHaveTextContent("OZ");
-    expect(view.container).toHaveTextContent("© OripaZ");
+    expect(view.container).toHaveTextContent(`© ${appName}`);
     expect(view.container).not.toHaveTextContent("LUXE PACK");
     expect(screen.getByText("Information")).toBeInTheDocument();
     expect(await screen.findByRole("link", { name: "利用規約" })).toHaveAttribute("href", "/pages/terms");

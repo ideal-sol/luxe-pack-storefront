@@ -11,6 +11,7 @@ import { usePointClient } from "@/components/points/point-client-provider";
 const pointNumber = new Intl.NumberFormat("ja-JP");
 
 export function SiteHeader() {
+  const appName = process.env.NEXT_PUBLIC_APP_NAME;
   const { logout, state } = useSession();
   const { showToast } = useToast();
   const { wallet } = usePointClient();
@@ -34,10 +35,10 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="page-container site-header__main">
-        <Link aria-label="OripaZ ホーム" className="wordmark" href="/">
+        <Link aria-label={appName ? `${appName} ホーム` : "ホーム"} className="wordmark" href="/">
           <span className="wordmark__seal" aria-hidden="true">OZ</span>
           <span>
-            <strong>OripaZ</strong>
+            <strong>{appName}</strong>
             <small>STORE FRONT</small>
           </span>
         </Link>

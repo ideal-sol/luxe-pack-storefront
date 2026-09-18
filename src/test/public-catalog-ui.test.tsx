@@ -159,7 +159,7 @@ describe("public catalog UI", () => {
 
   it("renders home sections and links to the full catalog", async () => {
     renderPublic(<PublicHome />, publicClient());
-    await screen.findByText(PUBLIC_TOP_BANNERS_FIXTURE.response.items[0].title);
+    await screen.findByRole("img", { name: PUBLIC_TOP_BANNERS_FIXTURE.response.items[0].title });
     expect(screen.getByRole("link", { name: "トップ表示バナーを見る" })).toHaveAttribute("href", "/gachas");
     expect(screen.getByRole("heading", { name: "ガチャラインナップ" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /もっと見る/ })).toHaveAttribute("href", "/gachas");
@@ -230,6 +230,8 @@ describe("public catalog UI", () => {
     renderPublic(<PublicHome />, publicClient());
     expect(await screen.findByRole("img", { name: banner.title })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: `${banner.title}を見る` })).toHaveAttribute("href", banner.link_url);
+    expect(screen.queryByText(banner.title)).not.toBeInTheDocument();
+    expect(screen.queryByText("FEATURED")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "次のバナー" })).not.toBeInTheDocument();
   });
 
