@@ -46,12 +46,12 @@ function enqueueCsrf(harness: ReturnType<typeof createPaymentClientTestHarness>)
   );
 }
 
-describe("alpha.36 canonical Payment browser client", () => {
-  it("pins alpha.36 and retains Payment across the additive 76-operation Public OpenAPI", () => {
+describe("alpha.37 canonical Payment browser client", () => {
+  it("pins alpha.37 and retains Payment across the 76-operation Public OpenAPI", () => {
     for (const name of ["storefront-client", "storefront-testkit"]) {
-      expect(JSON.parse(readFileSync(`node_modules/@oripa/${name}/package.json`, "utf8")).version).toBe("2.0.0-alpha.36");
+      expect(JSON.parse(readFileSync(`node_modules/@oripa/${name}/package.json`, "utf8")).version).toBe("2.0.0-alpha.37");
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("18233166690c6433582f3528f09e329d7cd0ea5c62d14e86faccbc8072810d9a");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("08a170fbb27a452d02532a2d066aca1203f25db6f0ff528e5c2fdbf847b22cbd");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_count).toBe(76);
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getPaymentCardUiBootstrap", "createPayment", "getPayment", "resumeUnpaidPayment",
@@ -84,7 +84,7 @@ describe("alpha.36 canonical Payment browser client", () => {
       data: { limits: { next_capacity_at: expect.any(String), registration_remaining: 0 } },
     });
     expect(harness.mock.requests.map((request) => request.method)).toEqual(["GET", "GET", "GET"]);
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.36", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.37", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -125,7 +125,7 @@ describe("alpha.36 canonical Payment browser client", () => {
     expect(harness.mock.requests[4]?.body).toBe("{}");
     expect(harness.mock.requests.slice(1).map((request) => request.headers["x-xsrf-token"]))
       .toEqual([csrf, undefined, csrf, csrf]);
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.36", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.37", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -165,7 +165,7 @@ describe("alpha.36 canonical Payment browser client", () => {
     expect(harness.mock.requests[1]?.headers["content-type"]).toBe("application/json");
     expect(harness.mock.requests[1]?.headers["x-xsrf-token"]).toBe(csrf);
     expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBeUndefined();
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.36", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.37", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 

@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { LoadingState } from "@/components/common/loading-state";
 import { ContactClientProvider } from "@/components/contact/contact-client-provider";
 import { ContactAccessBoundary } from "@/components/contact/contact-access-boundary";
 import { ContactForm } from "@/components/contact/contact-form";
@@ -12,11 +14,13 @@ export default function ContactPage() {
         eyebrow="CONTACT"
         title="お問い合わせ"
       />
-      <ContactAccessBoundary>
-        <ContactClientProvider>
-          <ContactForm />
-        </ContactClientProvider>
-      </ContactAccessBoundary>
+      <Suspense fallback={<LoadingState />}>
+        <ContactAccessBoundary>
+          <ContactClientProvider>
+            <ContactForm />
+          </ContactClientProvider>
+        </ContactAccessBoundary>
+      </Suspense>
     </PageContainer>
   );
 }

@@ -1,10 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { ApiProblemError, StorefrontTransportError } from "@oripa/storefront-client";
 import { cloneElement, useRef, useState, type ReactElement } from "react";
 import { useSession } from "@/components/auth/session-provider";
 import {
+  createIdempotencyKey,
   presentContactProblem,
+  type ContactInquiryInput,
   type ContactInquiryReceipt,
   type ContactProblemPresentation,
 } from "@/lib/platform";
@@ -13,6 +17,7 @@ import { useContactClient } from "./contact-client-provider";
 const fieldIds = {
   body: "contact-body",
   email: "contact-email",
+  inquiry_id: "contact-inquiry-id",
   name: "contact-name",
   phone: "contact-phone",
   subject: "contact-subject",
@@ -21,6 +26,8 @@ const fieldIds = {
 export function ContactForm() {
   const { state: session } = useSession();
   const { client, configurationAvailable } = useContactClient();
+  const inquiryId = useSearchParams().get("inquiry_id") ?? "";
+  const pendingOperation = useRef<{ input: ContactInquiryInput; key: string } | null>(null);
   const submittingRef = useRef(false);
   const [submitting, setSubmitting] = useState(false);
   const [problem, setProblem] = useState<ContactProblemPresentation | null>(null);
@@ -35,17 +42,30 @@ export function ContactForm() {
     setSubmitting(true);
     setProblem(null);
     try {
-      const response = await client.submitContact({
+      const input: ContactInquiryInput = {
+        ...(inquiryId ? { inquiry_id: inquiryId } : {}),
         body: String(data.get("body") ?? ""),
         email: String(data.get("email") ?? ""),
         name: String(data.get("name") ?? ""),
         phone: String(data.get("phone") ?? "") || null,
         subject: String(data.get("subject") ?? ""),
         website: "",
-      });
+      };
+      // Retain the operation only while its result is uncertain. Editing starts a new operation.
+      const operation = pendingOperation.current
+        && JSON.stringify(pendingOperation.current.input) === JSON.stringify(input)
+        ? pendingOperation.current
+        : { input, key: createIdempotencyKey() };
+      pendingOperation.current = operation;
+      const response = await client.submitContact(operation.input, { idempotency_key: operation.key });
+      pendingOperation.current = null;
       form.reset();
       setReceipt(response.data);
     } catch (error) {
+      if (!(error instanceof StorefrontTransportError)
+        && !(error instanceof ApiProblemError && error.status >= 500)) {
+        pendingOperation.current = null;
+      }
       setProblem(presentContactProblem(error));
     } finally {
       submittingRef.current = false;
@@ -81,8 +101,11 @@ export function ContactForm() {
           <p>{unavailable ? "現在の環境ではお問い合わせ接続が設定されていません。" : problem?.message}</p>
         </div>
       )}
-      <form className="contact-form" onSubmit={submit}>
+      <form className="contact-form" onChange={() => { pendingOperation.current = null; }} onSubmit={submit}>
         <div className="contact-form__fields">
+          <ContactField field="inquiry_id" label="お問い合わせID" problem={problem}>
+            <input id={fieldIds.inquiry_id} name="inquiry_id" readOnly type="text" value={inquiryId} />
+          </ContactField>
           <ContactField field="name" label="お名前" problem={problem}>
             <input autoComplete="name" disabled={submitting || unavailable} id={fieldIds.name} maxLength={120} name="name" required type="text" />
           </ContactField>

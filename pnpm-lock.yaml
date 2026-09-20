@@ -6,7 +6,7 @@ settings:
 
 overrides:
   '@oripa/site-schema@2.0.0-alpha.23': file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
-  '@oripa/storefront-client@2.0.0-alpha.36': file:vendor/oripa/AGENCY-004A/oripa-storefront-client-2.0.0-alpha.36.tgz
+  '@oripa/storefront-client@2.0.0-alpha.37': file:vendor/oripa/CONTACT-REPLY-001/oripa-storefront-client-2.0.0-alpha.37.tgz
   fast-uri@<3.1.6: 3.1.6
   nanoid@<3.3.18: 3.3.18
   sharp@<0.35.4: 0.35.4
@@ -20,8 +20,8 @@ importers:
         specifier: 1.1.0
         version: 1.1.0
       '@oripa/storefront-client':
-        specifier: file:vendor/oripa/AGENCY-004A/oripa-storefront-client-2.0.0-alpha.36.tgz
-        version: file:vendor/oripa/AGENCY-004A/oripa-storefront-client-2.0.0-alpha.36.tgz
+        specifier: file:vendor/oripa/CONTACT-REPLY-001/oripa-storefront-client-2.0.0-alpha.37.tgz
+        version: file:vendor/oripa/CONTACT-REPLY-001/oripa-storefront-client-2.0.0-alpha.37.tgz
       next:
         specifier: 16.3.3
         version: 16.3.3(@babel/core@7.29.7)(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -39,8 +39,8 @@ importers:
         specifier: file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
         version: file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
       '@oripa/storefront-testkit':
-        specifier: file:vendor/oripa/AGENCY-004A/oripa-storefront-testkit-2.0.0-alpha.36.tgz
-        version: file:vendor/oripa/AGENCY-004A/oripa-storefront-testkit-2.0.0-alpha.36.tgz
+        specifier: file:vendor/oripa/CONTACT-REPLY-001/oripa-storefront-testkit-2.0.0-alpha.37.tgz
+        version: file:vendor/oripa/CONTACT-REPLY-001/oripa-storefront-testkit-2.0.0-alpha.37.tgz
       '@tailwindcss/postcss':
         specifier: 4.3.3
         version: 4.3.3
@@ -544,14 +544,14 @@ packages:
     version: 2.0.0-alpha.23
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-client@file:vendor/oripa/AGENCY-004A/oripa-storefront-client-2.0.0-alpha.36.tgz':
-    resolution: {integrity: sha512-gt233i4tK8Wp9eo0qQnnfWJjB3Gr1c1GKdPy0fcFTtbW6JCZ9Nb31kEePSRYMdmgW9z2Qu1ZlvG6ON7BPErY/w==, tarball: file:vendor/oripa/AGENCY-004A/oripa-storefront-client-2.0.0-alpha.36.tgz}
-    version: 2.0.0-alpha.36
+  '@oripa/storefront-client@file:vendor/oripa/CONTACT-REPLY-001/oripa-storefront-client-2.0.0-alpha.37.tgz':
+    resolution: {integrity: sha512-9/QproQ4/LW3x7XzwlL15A6qlCs/Cwcf/mkx9f8Vb2JWpVo8PcJp6s0oJa9igBWstgm34Y8Gzv6OsQM30XrRhA==, tarball: file:vendor/oripa/CONTACT-REPLY-001/oripa-storefront-client-2.0.0-alpha.37.tgz}
+    version: 2.0.0-alpha.37
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/AGENCY-004A/oripa-storefront-testkit-2.0.0-alpha.36.tgz':
-    resolution: {integrity: sha512-Ofd/Xd//EFXkHiM/Pu1kQOikeph3ySqbxvZrxARxxRiJYlbXCXYBRg84KlNQnJtvIH3DAhUlLHhXiWfEl1h0Rg==, tarball: file:vendor/oripa/AGENCY-004A/oripa-storefront-testkit-2.0.0-alpha.36.tgz}
-    version: 2.0.0-alpha.36
+  '@oripa/storefront-testkit@file:vendor/oripa/CONTACT-REPLY-001/oripa-storefront-testkit-2.0.0-alpha.37.tgz':
+    resolution: {integrity: sha512-YF2mlqBJ1xRakHHbdOnHUzjt5icd+ozY2JNRNbSLCMJA1RX+Gli0b0WJxqnLhid07BWkD8a0C7dP+gnB4x26tg==, tarball: file:vendor/oripa/CONTACT-REPLY-001/oripa-storefront-testkit-2.0.0-alpha.37.tgz}
+    version: 2.0.0-alpha.37
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
   '@oxc-project/types@0.143.0':
@@ -3120,12 +3120,12 @@ snapshots:
       ajv: 8.20.0
       semver: 7.8.5
 
-  '@oripa/storefront-client@file:vendor/oripa/AGENCY-004A/oripa-storefront-client-2.0.0-alpha.36.tgz': {}
+  '@oripa/storefront-client@file:vendor/oripa/CONTACT-REPLY-001/oripa-storefront-client-2.0.0-alpha.37.tgz': {}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/AGENCY-004A/oripa-storefront-testkit-2.0.0-alpha.36.tgz':
+  '@oripa/storefront-testkit@file:vendor/oripa/CONTACT-REPLY-001/oripa-storefront-testkit-2.0.0-alpha.37.tgz':
     dependencies:
       '@oripa/site-schema': file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
-      '@oripa/storefront-client': file:vendor/oripa/AGENCY-004A/oripa-storefront-client-2.0.0-alpha.36.tgz
+      '@oripa/storefront-client': file:vendor/oripa/CONTACT-REPLY-001/oripa-storefront-client-2.0.0-alpha.37.tgz
 
   '@oxc-project/types@0.143.0': {}
 
