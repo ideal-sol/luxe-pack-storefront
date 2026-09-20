@@ -4,10 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
 import { presentAuthProblem, type AuthProblemPresentation } from "@/lib/platform";
+import { contactLoginReturn } from "@/lib/contact-return";
 import { AuthProblem, FieldProblem } from "./auth-problem";
 import { useSession } from "./session-provider";
 
-export function LoginForm({ passwordUpdated = false }: { readonly passwordUpdated?: boolean }) {
+export function LoginForm({ passwordUpdated = false, returnTo }: {
+  readonly passwordUpdated?: boolean;
+  readonly returnTo?: string | readonly string[] | undefined;
+}) {
   const router = useRouter();
   const { login, state } = useSession();
   const [submitting, setSubmitting] = useState(false);
@@ -30,7 +34,7 @@ export function LoginForm({ passwordUpdated = false }: { readonly passwordUpdate
         password: String(data.get("password") ?? ""),
       });
       form.reset();
-      router.replace("/mypage");
+      router.replace(contactLoginReturn(returnTo));
     } catch (error) {
       setProblem(presentAuthProblem(error));
     } finally {
