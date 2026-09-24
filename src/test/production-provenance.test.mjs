@@ -10,18 +10,11 @@ let root;
 let authority;
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), "contact-production-provenance-"));
+  root = mkdtempSync(join(tmpdir(), "alpha39-production-provenance-"));
   authority = structuredClone(approvedSource);
-  for (const file of ["package.json", "pnpm-lock.yaml", "vendor/oripa/CONTACT-PREFILL-001"]) {
+  for (const file of ["package.json", "pnpm-lock.yaml", "vendor/oripa/PRIZEIMAGE-20260924"]) {
     mkdirSync(dirname(join(root, file)), { recursive: true });
     cpSync(file, join(root, file), { recursive: true });
-  }
-  // These tests exercise the approved alpha.38 source, independently of the Preview pin.
-  for (const file of ["package.json", "pnpm-lock.yaml"]) {
-    const path = join(root, file);
-    writeFileSync(path, readFileSync(path, "utf8")
-      .replaceAll("PRIZEIMAGE-20260924", "CONTACT-PREFILL-001")
-      .replaceAll("2.0.0-alpha.39", "2.0.0-alpha.38"));
   }
 });
 
@@ -39,26 +32,28 @@ function mutateManifest(mutation) {
   authority.manifest_sha256 = createHash("sha256").update(readFileSync(join(root, authority.manifest_path))).digest("hex");
 }
 
-describe("exact alpha.38 Production provenance", () => {
+describe("exact alpha.39 Production provenance", () => {
   it("accepts approved source pins, immutable artifact identity and every digest", () => {
     expect(validateProvenance(root)).toMatchObject({
-      source_sha: "342341a82131a7f80a4e7508172f1e764ec7ad84",
-      contract_version: "2.0.0-alpha.38", contract_artifact_id: "10786577343",
-      contract_manifest_sha256: "585cb98b83f7396b2f1a214c24c039dfadedc6f29667b471aa5902951045ddd1",
-      client_pin: "2.0.0-alpha.38", testkit_pin: "2.0.0-alpha.38", public_openapi_pin: "2.0.0-alpha.34",
-      client_sha256: approvedSource.client_sha256, testkit_sha256: approvedSource.testkit_sha256,
-      public_openapi_sha256: approvedSource.public_openapi_sha256,
+      source_sha: "c911155f2fff5aea0f0b3df4f3184aa4081b6203",
+      contract_version: "2.0.0-alpha.39", contract_artifact_id: "10800178238",
+      contract_manifest_sha256: "888f90b53caa20e5920f23705f69510fe73b689223c8915503915aaa83432668",
+      client_pin: "2.0.0-alpha.39", testkit_pin: "2.0.0-alpha.39", public_openapi_pin: "2.0.0-alpha.35",
+      platform_source_sha: "be1a8f3f822d23f3251d32e616fb0b2fe422714e",
+      client_sha256: "ebae587d09f6f03a2d6234bf91e495dbc8634f34d7ec8c63608f5cae34345b15",
+      testkit_sha256: "57def53c2353d55fea9aee73caba1e688646be49eb876e3f26dac90f2e3a214a",
+      public_openapi_sha256: "ab7d2c51f99e3634aaf499effd61212e1e9156a572c56363cd8c0b16abae7140",
     });
   });
 
-  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.39"])("rejects %s source pins", (version) => {
+  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38"])("rejects %s source pins", (version) => {
     mutateJson("package.json", (value) => {
-      value.dependencies["@oripa/storefront-client"] = `file:vendor/oripa/CONTACT-PREFILL-001/oripa-storefront-client-${version}.tgz`;
+      value.dependencies["@oripa/storefront-client"] = `file:vendor/oripa/PRIZEIMAGE-20260924/oripa-storefront-client-${version}.tgz`;
     });
     expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
   });
 
-  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.39"])("rejects %s manifest contract", (version) => {
+  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38"])("rejects %s manifest contract", (version) => {
     mutateManifest((manifest) => { manifest.bundle.version = version; });
     expect(() => validateProvenance(root, authority)).toThrow("source and manifest contract mismatch");
   });
@@ -70,13 +65,55 @@ describe("exact alpha.38 Production provenance", () => {
 
   it("rejects a stale Artifact ID in source provenance", () => {
     const path = join(root, dirname(authority.manifest_path), "PROVENANCE.md");
-    writeFileSync(path, readFileSync(path, "utf8").replace("10786577343", "10786577344"));
+    writeFileSync(path, readFileSync(path, "utf8").replace("10800178238", "10786577344"));
     expect(() => validateProvenance(root)).toThrow("Artifact ID mismatch");
   });
 
   it("rejects a wrong manifest digest", () => {
     authority.manifest_sha256 = "0".repeat(64);
     expect(() => validateProvenance(root, authority)).toThrow("manifest digest mismatch");
+  });
+
+  it("rejects alpha.38 authority even with the current artifact directory", () => {
+    authority.contract_version = "2.0.0-alpha.38";
+    expect(() => validateProvenance(root, authority)).toThrow("unapproved contract version");
+  });
+
+  it("rejects the old Platform source", () => {
+    authority.platform_source_sha = "e16f65504dc5286de2fcd70988b770d1a16d1eaf";
+    expect(() => validateProvenance(root, authority)).toThrow("Platform source mismatch");
+  });
+
+  it("rejects a mismatched manifest Platform source", () => {
+    mutateManifest((manifest) => { manifest.source_commit = "f".repeat(40); });
+    expect(() => validateProvenance(root, authority)).toThrow("Platform source mismatch");
+  });
+
+  it("rejects a mutable manifest", () => {
+    mutateManifest((manifest) => { manifest.bundle.immutable = false; });
+    expect(() => validateProvenance(root, authority)).toThrow("source and manifest contract mismatch");
+  });
+
+  it.each(["client", "testkit"])("rejects an incorrect %s authority digest", (name) => {
+    authority[`${name}_sha256`] = "0".repeat(64);
+    expect(() => validateProvenance(root, authority)).toThrow("Client/Testkit mismatch");
+  });
+
+  it("rejects an incorrect Public OpenAPI authority digest", () => {
+    authority.public_openapi_sha256 = "0".repeat(64);
+    expect(() => validateProvenance(root, authority)).toThrow("Public OpenAPI digest mismatch");
+  });
+
+  it.each(["sha256", "file"])("rejects a mismatched Public OpenAPI manifest %s", (field) => {
+    mutateManifest((manifest) => { manifest.public_openapi[field] = "wrong"; });
+    expect(() => validateProvenance(root, authority)).toThrow("Public OpenAPI digest mismatch");
+  });
+
+  it.each(["missing", "duplicate"])("rejects %s Artifact ID evidence", (kind) => {
+    const path = join(root, dirname(authority.manifest_path), "PROVENANCE.md");
+    const content = readFileSync(path, "utf8");
+    writeFileSync(path, kind === "missing" ? "missing" : `${content}\n${content}`);
+    expect(() => validateProvenance(root)).toThrow("Artifact ID mismatch");
   });
 
   it.each(["client", "testkit"])("rejects a mixed %s manifest version", (name) => {
@@ -89,21 +126,21 @@ describe("exact alpha.38 Production provenance", () => {
     expect(() => validateProvenance(root, authority)).toThrow("Client/Testkit mismatch");
   });
 
-  it.each(["oripa-storefront-client-2.0.0-alpha.38.tgz", "oripa-storefront-testkit-2.0.0-alpha.38.tgz", "public.openapi.json"])(
+  it.each(["oripa-storefront-client-2.0.0-alpha.39.tgz", "oripa-storefront-testkit-2.0.0-alpha.39.tgz", "public.openapi.json"])(
     "rejects changed artifact bytes: %s", (file) => {
       writeFileSync(join(root, dirname(authority.manifest_path), file), "tampered");
       expect(() => validateProvenance(root)).toThrow(/digest mismatch/);
     },
   );
 
-  it("rejects stale AGENCY-004A authority", () => {
-    authority.manifest_path = "vendor/oripa/AGENCY-004A/artifact-manifest.json";
+  it.each(["AGENCY-004A", "CONTACT-PREFILL-001"])("rejects stale %s authority", (directory) => {
+    authority.manifest_path = `vendor/oripa/${directory}/artifact-manifest.json`;
     expect(() => validateProvenance(root, authority)).toThrow("stale provenance authority");
   });
 
   it("rejects a mismatched lockfile pin", () => {
     const path = join(root, "pnpm-lock.yaml");
-    writeFileSync(path, readFileSync(path, "utf8").replaceAll("alpha.38", "alpha.37"));
+    writeFileSync(path, readFileSync(path, "utf8").replaceAll("alpha.39", "alpha.37"));
     expect(() => validateProvenance(root)).toThrow("lockfile pin mismatch");
   });
 
@@ -160,7 +197,7 @@ describe("Production source authority", () => {
     const pull = (sha, head) => ({ merged: true, merge_commit_sha: sha, base: { ref: "main" }, head: { sha: head, repo: { full_name: approvedSource.repository } } });
     responses = {
       "branches/main": { protected: true, commit: { sha: workflow } },
-      "pulls/110": pull(source, sourceHead),
+      [`pulls/${approvedSource.source_pr}`]: pull(source, sourceHead),
       "pulls/111": pull(workflow, workflowHead),
       [`git/commits/${source}`]: { tree: { sha: sourceTree } },
       [`git/commits/${sourceHead}`]: { tree: { sha: sourceTree } },
@@ -185,12 +222,21 @@ describe("Production source authority", () => {
     });
   });
 
-  it.each(["main", "abc", "A".repeat(40), "0".repeat(40)])("rejects invalid or unapproved source %s", async (sha) => {
+  it.each(["main", "abc", "A".repeat(40), "0".repeat(40), "f".repeat(40),
+    "342341a82131a7f80a4e7508172f1e764ec7ad84"])("rejects invalid or unapproved source %s", async (sha) => {
     await expect(authorize(root, sha, workflow, get)).rejects.toThrow();
   });
 
   it("does not substitute current main for approved source", async () => {
     await expect(authorize(root, workflow, workflow, get)).rejects.toThrow("Human-approved source mismatch");
+  });
+
+  it("rejects a nonexistent SHA even when named in metadata", async () => {
+    const missing = "f".repeat(40);
+    mutateJson("docs/production-approved-source.json", (value) => { value.source_sha = missing; });
+    git("add", ".");
+    git("commit", "-qm", "nonexistent source metadata");
+    await expect(authorize(root, missing, git("rev-parse", "HEAD"), get)).rejects.toThrow();
   });
 
   it("rejects reviewed tree mismatch", async () => {

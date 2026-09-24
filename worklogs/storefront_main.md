@@ -1432,3 +1432,29 @@ application of Platform migrations `000069`／`000070`.
 - PR #110 final/reviewed head 68c4a869655797189d8f928c65290f7c81f9fc0c has all five checks PASS in run 35947415604 and matching self-review. Reviewed/squash tree eb6a989bfe037e07574661db7046c68c205371f9 is identical and content diff zero. No historical-source checks rerun.
 - Local focused provenance/workflow plus Contact regressions: 114 tests / 5 files PASS. Lint, typecheck, artifact, policy and secret checks PASS. Dependency audit at high threshold PASS (three moderate findings, no high/critical); no dependency changes. Full application tests/build are delegated to required CI, not a local Production artifact build. Browser/E2E and Production runtime key-presence checks NOT RUN.
 - Source, application, package bytes, Production Runtime, ENV, Migration, Worker, Nginx and Mail unchanged. Canonical Production Artifact generation/activation NOT RUN. Exact-head Required Checks, fresh self-review, squash and cleanup evidence are recorded in the PR. Next Human step: Production Runtime Artifact Build GO only.
+
+## Production Release Authority — alpha.39
+
+- Scope: authority/provenance only. Starting protected main and Human-approved
+  Runtime Source: `c911155f2fff5aea0f0b3df4f3184aa4081b6203` (PR #113).
+  The authority merge commit must never replace this Runtime Source.
+- Exact Platform Runtime Source: `be1a8f3f822d23f3251d32e616fb0b2fe422714e`;
+  Client/Testkit alpha.39, immutable Artifact `10800178238`, Public OpenAPI alpha.35.
+  Approved JSON records the four exact digests from Platform's final Human handoff.
+  Existing artifact bytes and package/lockfile pins match; no artifact is reissued.
+- The verifier selects PRIZEIMAGE provenance and its canonical Artifact ID line.
+  Alpha.38, old Platform/Storefront sources, arbitrary/nonexistent SHAs, mutable or
+  mismatched manifests, mixed packages, missing/duplicate IDs and wrong digests
+  fail closed. Workflow/runtime checkout separation and all workflow gates remain.
+- Local focused provenance/release tests: 2 files / 84 tests PASS. Artifact, policy,
+  secret check and lint PASS. CLI validation against a clean exact Runtime Source
+  checkout PASS. Typecheck, audit and automatic candidate tests/build remain with
+  existing Required CI; no extra full application suite or Production Build runs.
+- Storefront has no dated Security/ESLint baseline authority. Canonical evidence
+  is its security/quality gates; no expiry date is borrowed from Platform. Source
+  PR #113 has five successful gates in run `35987409719`. CodeQL is not configured.
+- Runtime application, contract implementation, dependency, ENV, Secret and
+  migration delta: NONE. Existing dirty checkouts and unrelated worktrees preserved.
+  Fresh fixed-head machine-readable self-review, Required Checks, Squash Merge and
+  read-only post-merge authorization evidence are recorded in the authority PR.
+  Production Build dispatch, Activation and new-server operations: NOT RUN.

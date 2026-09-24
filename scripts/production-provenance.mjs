@@ -28,8 +28,8 @@ export function validateProvenance(root, authority = approvedSource) {
   const clientPin = packageJson.dependencies?.["@oripa/storefront-client"];
   const testkitPin = packageJson.devDependencies?.["@oripa/storefront-testkit"];
   const directory = dirname(authority.manifest_path);
-  requireValue(directory === "vendor/oripa/CONTACT-PREFILL-001", "stale provenance authority");
-  requireValue(authority.contract_version === "2.0.0-alpha.38", "unapproved contract version");
+  requireValue(directory === "vendor/oripa/PRIZEIMAGE-20260924", "stale provenance authority");
+  requireValue(authority.contract_version === "2.0.0-alpha.39", "unapproved contract version");
   const manifestPath = join(root, directory, "artifact-manifest.json");
   requireValue(digest(manifestPath) === authority.manifest_sha256, "manifest digest mismatch");
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
@@ -37,7 +37,7 @@ export function validateProvenance(root, authority = approvedSource) {
     "source and manifest contract mismatch");
   requireValue(manifest.source_commit === authority.platform_source_sha, "Platform source mismatch");
   const provenance = readFileSync(join(root, directory, "PROVENANCE.md"), "utf8");
-  const identifiers = [...provenance.matchAll(/immutable Artifact ID: `([0-9]+)`/g)].map((match) => match[1]);
+  const identifiers = [...provenance.matchAll(/^- Canonical workflow: `[0-9]+`; Artifact ID: `([0-9]+)`\.$/gm)].map((match) => match[1]);
   requireValue(identifiers.length === 1 && identifiers[0] === authority.artifact_id, "Artifact ID mismatch");
   const lockfile = readFileSync(join(root, "pnpm-lock.yaml"), "utf8");
   for (const [name, pin, expectedDigest] of [
