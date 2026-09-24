@@ -26,6 +26,7 @@ function authClient(session: AuthSession, overrides: Partial<AuthClientAdapter> 
   return {
     completeEmailVerification: vi.fn(),
     getCurrentSession: vi.fn().mockResolvedValue({ data: session, metadata }),
+    getSmsVerificationStatus: vi.fn().mockResolvedValue({ data: { verified: false, phone: null, phone_masked: null, challenge: null }, metadata }),
     login: vi.fn(),
     logout: vi.fn(),
     register: vi.fn(),
@@ -41,20 +42,24 @@ function contactClient(submitContact = vi.fn().mockResolvedValue({
   return { submitContact } as ContactClientAdapter;
 }
 
-function renderForm(
+async function renderForm(
   session: AuthSession = PUBLIC_AUTH_FIXTURE.authenticated_session,
   client: ContactClientAdapter = contactClient(),
+  overrides: Partial<AuthClientAdapter> = {},
 ) {
-  return render(
-    <SessionProvider client={authClient(session)}>
+  const view = render(
+    <SessionProvider client={authClient(session, overrides)}>
       <ContactClientProvider client={client}>
         <ContactForm />
       </ContactClientProvider>
     </SessionProvider>,
   );
+  await screen.findByLabelText("お名前");
+  return view;
 }
 
 function fillRequiredFields() {
+  fireEvent.change(screen.getByLabelText("電話番号"), { target: { value: "09000000000" } });
   fireEvent.change(screen.getByLabelText("お名前"), { target: { value: "テスト利用者" } });
   fireEvent.change(screen.getByLabelText("メールアドレス"), { target: { value: "user@example.test" } });
   fireEvent.change(screen.getByLabelText("件名"), { target: { value: "商品について" } });
@@ -71,7 +76,7 @@ describe("Contact page and form", () => {
   it("renders /contact only for an authenticated Session", async () => {
     render(<SessionProvider client={authClient(PUBLIC_AUTH_FIXTURE.authenticated_session)}><ContactPage /></SessionProvider>);
     expect(screen.getByRole("heading", { name: "お問い合わせ", level: 1 })).toBeInTheDocument();
-    expect(await screen.findByText("ログイン中のアカウントからお問い合わせいただけます。氏名とメールアドレスを入力してください。")).toBeInTheDocument();
+    expect(await screen.findByText("お名前・メールアドレス・電話番号は必須です。入力内容を変更しても会員登録情報は変更されません。")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "お問い合わせを送信" })).toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
   });
@@ -99,19 +104,19 @@ describe("Contact page and form", () => {
     expect(await screen.findByRole("button", { name: "お問い合わせを送信" })).toBeInTheDocument();
   });
 
-  it("renders empty normal inputs for the authenticated presentation", async () => {
-    renderForm();
-    expect(await screen.findByText("ログイン中のアカウントからお問い合わせいただけます。氏名とメールアドレスを入力してください。")).toBeInTheDocument();
-    expect(screen.getByLabelText("お名前")).toHaveValue("");
-    expect(screen.getByLabelText("メールアドレス")).toHaveValue("");
+  it("prefills current registered name and email for the authenticated presentation", async () => {
+    await renderForm();
+    expect(await screen.findByText("お名前・メールアドレス・電話番号は必須です。入力内容を変更しても会員登録情報は変更されません。")).toBeInTheDocument();
+    expect(screen.getByLabelText("お名前")).toHaveValue(PUBLIC_AUTH_FIXTURE.authenticated_session.user.display_name);
+    expect(screen.getByLabelText("メールアドレス")).toHaveValue(PUBLIC_AUTH_FIXTURE.authenticated_session.user.email);
   });
 
-  it("marks canonical required fields, keeps phone optional, and exposes no honeypot input", () => {
-    const view = renderForm();
+  it("marks all three identity fields required and exposes no honeypot input", async () => {
+    const view = await renderForm();
     for (const label of ["お名前", "メールアドレス", "件名", "お問い合わせ内容"]) {
       expect(screen.getByLabelText(label)).toBeRequired();
     }
-    expect(screen.getByLabelText("電話番号（任意）")).not.toBeRequired();
+    expect(screen.getByLabelText("電話番号")).toBeRequired();
     const id = screen.getByLabelText("お問い合わせID");
     expect(id).toHaveValue("");
     expect(id).not.toBeRequired();
@@ -120,12 +125,12 @@ describe("Contact page and form", () => {
     expect(view.container.querySelector('[name="website"]')).toBeNull();
   });
 
-  it("maps empty optional phone and the canonical honeypot on authenticated submit", async () => {
+  it("maps required phone and the canonical honeypot on authenticated submit", async () => {
     const submitContact = vi.fn().mockResolvedValue({
       data: PUBLIC_CONTACT_FIXTURE.receipt,
       metadata: { ...metadata, status: 202 },
     });
-    renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
+    await renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
 
@@ -134,7 +139,7 @@ describe("Contact page and form", () => {
       body: "問い合わせ本文です。",
       email: "user@example.test",
       name: "テスト利用者",
-      phone: null,
+      phone: "09000000000",
       subject: "商品について",
       website: "",
     }, { idempotency_key: expect.any(String) });
@@ -143,14 +148,14 @@ describe("Contact page and form", () => {
     expect(screen.getByRole("link", { name: "マイページへ戻る" })).toHaveAttribute("href", "/mypage");
   });
 
-  it("submits optional phone for an authenticated member and offers the My Page return", async () => {
+  it("submits edited phone for an authenticated member and offers the My Page return", async () => {
     const submitContact = vi.fn().mockResolvedValue({
       data: PUBLIC_CONTACT_FIXTURE.receipt,
       metadata: { ...metadata, status: 202 },
     });
-    renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
+    await renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
     fillRequiredFields();
-    fireEvent.change(screen.getByLabelText("電話番号（任意）"), { target: { value: "000-0000-0000" } });
+    fireEvent.change(screen.getByLabelText("電話番号"), { target: { value: "000-0000-0000" } });
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
 
     await waitFor(() => expect(submitContact).toHaveBeenCalledWith(expect.objectContaining({ phone: "000-0000-0000" }), { idempotency_key: expect.any(String) }));
@@ -159,7 +164,7 @@ describe("Contact page and form", () => {
 
   it("presents typed 422 field validation without exposing Backend detail", async () => {
     const submitContact = vi.fn().mockRejectedValue(problem(PUBLIC_CONTACT_PROBLEM_FIXTURES.validation));
-    renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
+    await renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("入力内容を確認してください。");
@@ -169,7 +174,7 @@ describe("Contact page and form", () => {
 
   it("presents typed 429 rate limiting", async () => {
     const submitContact = vi.fn().mockRejectedValue(problem(PUBLIC_CONTACT_PROBLEM_FIXTURES.rate_limited));
-    renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
+    await renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("送信回数が上限に達しました");
@@ -178,7 +183,7 @@ describe("Contact page and form", () => {
 
   it("presents a typed network error and does not automatically resubmit", async () => {
     const submitContact = vi.fn().mockRejectedValue(new StorefrontTransportError("NETWORK_ERROR", "fixture network failure"));
-    renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
+    await renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("自動再送されていません");
@@ -187,7 +192,7 @@ describe("Contact page and form", () => {
 
   it("presents an unknown error safely", async () => {
     const submitContact = vi.fn().mockRejectedValue(new Error("sensitive fixture detail"));
-    renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
+    await renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("予期しない問題が発生しました");
@@ -197,7 +202,7 @@ describe("Contact page and form", () => {
   it("disables the form and prevents a double submit while the request is pending", async () => {
     let resolveSubmission!: (value: unknown) => void;
     const submitContact = vi.fn(() => new Promise((resolve) => { resolveSubmission = resolve; }));
-    renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
+    await renderForm(PUBLIC_AUTH_FIXTURE.authenticated_session, contactClient(submitContact));
     fillRequiredFields();
     const submit = screen.getByRole("button", { name: "お問い合わせを送信" });
     fireEvent.click(submit);
@@ -213,7 +218,7 @@ describe("Contact page and form", () => {
     query.value = new URLSearchParams({ inquiry_id: id }).toString();
     const originalQuery = query.value;
     const submitContact = vi.fn().mockResolvedValue({ data: PUBLIC_CONTACT_FIXTURE.receipt, metadata });
-    renderForm(undefined, contactClient(submitContact));
+    await renderForm(undefined, contactClient(submitContact));
     const field = screen.getByLabelText("お問い合わせID");
     expect(field).toHaveValue(id);
     expect(field).toHaveAttribute("readonly");
@@ -230,7 +235,7 @@ describe("Contact page and form", () => {
   it("omits an empty inquiry_id query from the payload", async () => {
     query.value = "inquiry_id=";
     const submitContact = vi.fn().mockResolvedValue({ data: PUBLIC_CONTACT_FIXTURE.receipt, metadata });
-    renderForm(undefined, contactClient(submitContact));
+    await renderForm(undefined, contactClient(submitContact));
     expect(screen.getByLabelText("お問い合わせID")).toHaveValue("");
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
@@ -244,7 +249,7 @@ describe("Contact page and form", () => {
       ...PUBLIC_CONTACT_PROBLEM_FIXTURES.validation,
       errors: { inquiry_id: ["The inquiry id field must be a valid UUID."] },
     }));
-    renderForm(undefined, contactClient(submitContact));
+    await renderForm(undefined, contactClient(submitContact));
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("入力内容を確認してください。");
@@ -257,7 +262,7 @@ describe("Contact page and form", () => {
     const submitContact = vi.fn()
       .mockRejectedValueOnce(new StorefrontTransportError("NETWORK_ERROR", "fixture"))
       .mockResolvedValue({ data: PUBLIC_CONTACT_FIXTURE.receipt, metadata });
-    const view = renderForm(undefined, contactClient(submitContact));
+    const view = await renderForm(undefined, contactClient(submitContact));
     expect(submitContact).not.toHaveBeenCalled();
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
@@ -269,7 +274,7 @@ describe("Contact page and form", () => {
     await screen.findByText("お問い合わせを受け付けました");
     expect(submitContact.mock.calls[1]!).toEqual(first);
     view.unmount();
-    renderForm(undefined, contactClient(submitContact));
+    await renderForm(undefined, contactClient(submitContact));
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
     await screen.findByText("お問い合わせを受け付けました");
@@ -279,7 +284,7 @@ describe("Contact page and form", () => {
 
   it("starts a new operation after editing even when the final body is identical", async () => {
     const submitContact = vi.fn().mockRejectedValue(new StorefrontTransportError("NETWORK_ERROR", "fixture"));
-    renderForm(undefined, contactClient(submitContact));
+    await renderForm(undefined, contactClient(submitContact));
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
     await screen.findByRole("alert");
@@ -311,6 +316,10 @@ describe("Contact page and form", () => {
     query.value = new URL(replace.mock.calls.at(-1)![0], "https://storefront.test").search;
     render(<SessionProvider client={authClient(PUBLIC_AUTH_FIXTURE.authenticated_session)}><ContactPage /></SessionProvider>);
     expect(await screen.findByLabelText("お問い合わせID")).toHaveValue(id);
+    expect(screen.getByLabelText("お名前")).toHaveValue(PUBLIC_AUTH_FIXTURE.authenticated_session.user.display_name);
+    expect(screen.getByLabelText("メールアドレス")).toHaveValue(PUBLIC_AUTH_FIXTURE.authenticated_session.user.email);
+    expect(screen.getByLabelText("電話番号")).toHaveValue("");
+    expect(screen.getByLabelText("電話番号")).toBeRequired();
   });
 
   it.each([undefined, ["/contact"], "https://outside.test/contact", "//outside.test", "/contact/../login", "/contact#fragment", "/contact?x=\nheader", "/contact?x=\\outside"])("rejects unsafe or unrelated login destinations %s", (value) => {
@@ -321,7 +330,7 @@ describe("Contact page and form", () => {
     const submitContact = vi.fn()
       .mockRejectedValueOnce(problem({ ...PUBLIC_CONTACT_PROBLEM_FIXTURES.validation, status }))
       .mockResolvedValue({ data: PUBLIC_CONTACT_FIXTURE.receipt, metadata });
-    renderForm(undefined, contactClient(submitContact));
+    await renderForm(undefined, contactClient(submitContact));
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
     await screen.findByRole("alert");

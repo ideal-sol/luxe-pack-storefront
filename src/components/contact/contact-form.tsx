@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ApiProblemError, StorefrontTransportError } from "@oripa/storefront-client";
-import { cloneElement, useRef, useState, type ReactElement } from "react";
+import { cloneElement, useEffect, useRef, useState, type ReactElement } from "react";
+import { LoadingState } from "@/components/common/loading-state";
 import { useSession } from "@/components/auth/session-provider";
 import {
   createIdempotencyKey,
@@ -23,7 +24,36 @@ const fieldIds = {
   subject: "contact-subject",
 } as const;
 
+interface ContactDefaults {
+  readonly name: string;
+  readonly email: string;
+  readonly phone: string;
+  readonly phoneUnavailable?: boolean;
+}
+
 export function ContactForm() {
+  const { state: session, getSmsVerificationStatus } = useSession();
+  const [defaults, setDefaults] = useState<ContactDefaults | null>(null);
+  const user = session.status === "authenticated" ? session.session.user : null;
+
+  useEffect(() => {
+    if (!user || defaults) return;
+    let active = true;
+    const identity = { name: user.display_name ?? "", email: user.email ?? "" };
+    void getSmsVerificationStatus().then((status) => {
+      if (active) setDefaults({ ...identity, phone: status.verified ? status.phone ?? "" : "" });
+    }).catch(() => {
+      if (active) setDefaults({ ...identity, phone: "", phoneUnavailable: true });
+    });
+    return () => { active = false; };
+  }, [defaults, getSmsVerificationStatus, user]);
+
+  // Mount native inputs once with their initial values; refetches cannot reset edits.
+  if (!defaults) return <LoadingState />;
+  return <ContactFields defaults={defaults} />;
+}
+
+function ContactFields({ defaults }: { readonly defaults: ContactDefaults }) {
   const { state: session } = useSession();
   const { client, configurationAvailable } = useContactClient();
   const inquiryId = useSearchParams().get("inquiry_id") ?? "";
@@ -37,6 +67,7 @@ export function ContactForm() {
     event.preventDefault();
     if (!client || submittingRef.current) return;
     const form = event.currentTarget;
+    if (!form.reportValidity()) return;
     const data = new FormData(form);
     submittingRef.current = true;
     setSubmitting(true);
@@ -47,7 +78,7 @@ export function ContactForm() {
         body: String(data.get("body") ?? ""),
         email: String(data.get("email") ?? ""),
         name: String(data.get("name") ?? ""),
-        phone: String(data.get("phone") ?? "") || null,
+        phone: String(data.get("phone") ?? ""),
         subject: String(data.get("subject") ?? ""),
         website: "",
       };
@@ -85,16 +116,12 @@ export function ContactForm() {
     );
   }
 
-  const sessionMessage = session.status === "authenticated"
-    ? "ログイン中のアカウントからお問い合わせいただけます。氏名とメールアドレスを入力してください。"
-    : session.status === "unauthenticated" || session.status === "session-expired"
-      ? "会員登録やログインなしでお問い合わせいただけます。"
-      : "ログイン状態にかかわらずお問い合わせいただけます。";
   const unavailable = !configurationAvailable;
 
   return (
     <div className="contact-panel">
-      <p className="contact-panel__session">{sessionMessage}</p>
+      <p className="contact-panel__session">お名前・メールアドレス・電話番号は必須です。入力内容を変更しても会員登録情報は変更されません。</p>
+      {defaults.phoneUnavailable && <p role="alert">登録電話番号を取得できませんでした。電話番号を入力してください。</p>}
       {(unavailable || problem) && (
         <div className="contact-problem" role="alert">
           <strong>お問い合わせを送信できませんでした</strong>
@@ -107,13 +134,13 @@ export function ContactForm() {
             <input id={fieldIds.inquiry_id} name="inquiry_id" readOnly type="text" value={inquiryId} />
           </ContactField>
           <ContactField field="name" label="お名前" problem={problem}>
-            <input autoComplete="name" disabled={submitting || unavailable} id={fieldIds.name} maxLength={120} name="name" required type="text" />
+            <input autoComplete="name" defaultValue={defaults.name} disabled={submitting || unavailable} id={fieldIds.name} maxLength={120} name="name" required type="text" />
           </ContactField>
           <ContactField field="email" label="メールアドレス" problem={problem}>
-            <input autoComplete="email" disabled={submitting || unavailable} id={fieldIds.email} maxLength={320} name="email" required type="email" />
+            <input autoComplete="email" defaultValue={defaults.email} disabled={submitting || unavailable} id={fieldIds.email} maxLength={320} name="email" required type="email" />
           </ContactField>
-          <ContactField field="phone" label="電話番号（任意）" problem={problem}>
-            <input autoComplete="tel" disabled={submitting || unavailable} id={fieldIds.phone} maxLength={32} name="phone" type="tel" />
+          <ContactField field="phone" label="電話番号" problem={problem}>
+            <input autoComplete="tel" defaultValue={defaults.phone} disabled={submitting || unavailable} id={fieldIds.phone} maxLength={32} name="phone" required type="tel" />
           </ContactField>
           <ContactField className="contact-field--wide" field="subject" label="件名" problem={problem}>
             <input disabled={submitting || unavailable} id={fieldIds.subject} maxLength={191} name="subject" required type="text" />

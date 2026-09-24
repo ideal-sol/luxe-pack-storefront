@@ -45,7 +45,7 @@ shapes.
 | Notice detail | Public notice detail by opaque ID | **Resolved — MIG-061U content client** |
 | Static pages | Public canonical HTML page by slug | **Resolved — MIG-061U content client; sanitized renderer required** |
 | Footer Page navigation | Backend-filtered public Footer Pages in canonical order | **Resolved — MIG-062O alpha.11 `listFooterPages`; SITE-022 implemented** |
-| Contact | Anonymous／authenticated Browser-safe first submission, canonical request, `202` receipt, typed validation／rate limit, and no automatic retry | **Resolved — STORE-SITE-034 alpha.24 `createBrowserStorefrontContentContactClient`; SITE-034 implemented** |
+| Contact | Existing login-required form; editable required name/email/phone, current session registration defaults and verified active phone from SMS status; inquiry ID, follow-up and idempotency preserved | **Resolved — PREFILL-20260924 alpha.38 Client/Testkit; existing current-session and SMS status APIs; Contact values never update Account data or reply-recipient authority** |
 | Platform API in Preview | Public route, Origin, HTTPS, and same-Origin proxy | **Resolved by MIG-061Z; Storefront application deployment remains pending** |
 | Catalog presentation | Sale state, anonymous/authenticated eligibility, reason, CTA, and display-fact flags | **Resolved — MIG-062G alpha.9 generated `GachaSummary.presentation`** |
 | Gacha detail Point insufficiency | Backend-authoritative Point affordability before Draw | **Presentation remains pending; SITE-005 uses only the typed Draw mutation rejection** |
