@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "repository": "ideal-sol/luxe-pack-storefront",
+  "source_sha": "342341a82131a7f80a4e7508172f1e764ec7ad84",
+  "source_pr": 110,
+  "authority": "Human-approved exact Runtime Source: Contact Production Preparation",
+  "activation_authorized": false,
+  "contract_version": "2.0.0-alpha.38",
+  "artifact_id": "10786577343",
+  "manifest_path": "vendor/oripa/CONTACT-PREFILL-001/artifact-manifest.json",
+  "manifest_sha256": "585cb98b83f7396b2f1a214c24c039dfadedc6f29667b471aa5902951045ddd1",
+  "platform_source_sha": "e16f65504dc5286de2fcd70988b770d1a16d1eaf",
+  "client_sha256": "caf546a8797d844dbd4661ae5e5a30ac9ddf86c4d0f946bd8fffa144e3d215b1",
+  "testkit_sha256": "8b7d75a8d0c64f841709a852a5b71235f2e6cf3342175d134fc9b758b861e7fc",
+  "public_openapi_sha256": "ded40adeae1998ed26169c469c8c40492a6ff677b0e6777d904221f326fa0077"
+}

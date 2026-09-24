@@ -1,10 +1,14 @@
 name: Storefront Production Artifact
 
-run-name: Production artifact ${{ github.sha }}
+run-name: Production artifact ${{ inputs.source_sha }}
 
 on:
   workflow_dispatch:
     inputs:
+      source_sha:
+        description: Exact Human-approved Runtime Source SHA
+        required: true
+        type: string
       app_name:
         description: Public application name embedded in the production artifact
         required: true
@@ -15,10 +19,12 @@ on:
         type: string
 
 permissions:
+  checks: read
   contents: read
+  pull-requests: read
 
 concurrency:
-  group: storefront-production-artifact-${{ github.sha }}
+  group: storefront-production-artifact-${{ inputs.source_sha }}
   cancel-in-progress: false
 
 env:
@@ -34,6 +40,9 @@ jobs:
     name: build-publish-verify-arm64
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: runtime
 
     steps:
       - name: Checkout workflow authority
@@ -41,40 +50,32 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.sha }}
-
-      - name: Validate exact protected-main source
-        id: source
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          source_sha="$GITHUB_SHA"
-          if [[ ! "$source_sha" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "GITHUB_SHA must be a full lowercase 40-character commit SHA" >&2
-            exit 1
-          fi
-
-          workflow_sha="$(git rev-parse HEAD)"
-          test "$GITHUB_REPOSITORY" = "ideal-sol/luxe-pack-storefront"
-          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
-          test "$GITHUB_REF" = "refs/heads/main"
-          test "$workflow_sha" = "$GITHUB_SHA"
-          git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main
-          git merge-base --is-ancestor "$workflow_sha" refs/remotes/origin/main
-          git checkout --detach "$source_sha"
-          test "$(git rev-parse HEAD)" = "$source_sha"
-          test -z "$(git status --porcelain)"
-
-          {
-            echo "source_sha=$source_sha"
-            echo "git_tree=$(git rev-parse 'HEAD^{tree}')"
-            echo "workflow_sha=$workflow_sha"
-          } >> "$GITHUB_OUTPUT"
+          path: build-authority
+          persist-credentials: false
 
       - name: Set up exact Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: ${{ env.NODE_VERSION }}
+
+      - name: Validate exact approved source and current checks
+        id: source
+        working-directory: build-authority
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_SOURCE_SHA: ${{ inputs.source_sha }}
+        run: node scripts/production-provenance.mjs authorize .
+
+      - name: Checkout exact Runtime Source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ steps.source.outputs.source_sha }}
+          path: runtime
+          persist-credentials: false
+
+      - name: Validate approved Contract provenance
+        run: |
+          node "$GITHUB_WORKSPACE/build-authority/scripts/production-provenance.mjs" validate . "$RUNNER_TEMP/contract-provenance.json"
 
       - name: Validate production site URL
         shell: bash
@@ -189,14 +190,8 @@ jobs:
 
           build_id="$(tr -d '\n' < "$release_root/.next/BUILD_ID")"
           next_version="$(node -p "require('./node_modules/next/package.json').version")"
-          client_pin="$(node -e "const m=require('./vendor/oripa/AGENCY-004A/artifact-manifest.json'); process.stdout.write(m.packages.find((p)=>p.name==='@oripa/storefront-client').version)")"
-          testkit_pin="$(node -e "const m=require('./vendor/oripa/AGENCY-004A/artifact-manifest.json'); process.stdout.write(m.packages.find((p)=>p.name==='@oripa/storefront-testkit').version)")"
-          public_openapi_pin="$(node -e "const m=require('./vendor/oripa/AGENCY-004A/artifact-manifest.json'); process.stdout.write(m.public_openapi.version)")"
-
           test "$next_version" = "16.3.3"
-          test "$client_pin" = "2.0.0-alpha.36"
-          test "$testkit_pin" = "2.0.0-alpha.36"
-          test "$public_openapi_pin" = "2.0.0-alpha.32"
+          node "$GITHUB_WORKSPACE/build-authority/scripts/production-provenance.mjs" validate . "$RUNNER_TEMP/contract-provenance.json"
 
           (
             cd "$release_root"
@@ -212,20 +207,16 @@ jobs:
 
           export BUILD_ID="$build_id"
           export BUILD_UTC="$build_utc"
-          export CLIENT_PIN="$client_pin"
           export FILE_MANIFEST_SHA="$file_manifest_sha"
           export NEXT_VERSION_ACTUAL="$next_version"
-          export PUBLIC_OPENAPI_PIN="$public_openapi_pin"
-          export TESTKIT_PIN="$testkit_pin"
 
           node --input-type=module <<'NODE'
-          import { writeFileSync } from "node:fs";
+          import { writeFileSync, readFileSync } from "node:fs";
           import { join } from "node:path";
 
           const required = [
             "BUILD_ID",
             "BUILD_UTC",
-            "CLIENT_PIN",
             "FILE_MANIFEST_SHA",
             "GIT_TREE",
             "NEXT_PUBLIC_APP_NAME",
@@ -234,24 +225,24 @@ jobs:
             "NEXT_VERSION_ACTUAL",
             "NODE_VERSION",
             "PNPM_VERSION",
-            "PUBLIC_OPENAPI_PIN",
             "RUNNER_TEMP",
             "SOURCE_SHA",
-            "TESTKIT_PIN",
             "WORKFLOW_SHA",
           ];
           for (const name of required) {
             if (!process.env[name]) throw new Error(`Missing non-secret build metadata: ${name}`);
           }
 
+          const provenance = JSON.parse(readFileSync(join(process.env.RUNNER_TEMP, "contract-provenance.json"), "utf8"));
+          if (provenance.source_sha !== process.env.SOURCE_SHA) throw new Error("Contract provenance source mismatch");
           const manifest = {
+            ...provenance,
             schema_version: "1.0",
             artifact_format: "tar.gz",
             architecture: "linux/arm64",
             app_name: process.env.NEXT_PUBLIC_APP_NAME,
             build_id: process.env.BUILD_ID,
             build_utc: process.env.BUILD_UTC,
-            client_pin: process.env.CLIENT_PIN,
             file_manifest: "FILE_SHA256SUMS",
             file_manifest_scope: "regular payload files excluding artifact-manifest.json and FILE_SHA256SUMS",
             file_manifest_sha256: process.env.FILE_MANIFEST_SHA,
@@ -260,12 +251,10 @@ jobs:
             node_version: process.env.NODE_VERSION,
             platform_api_base: process.env.NEXT_PUBLIC_PLATFORM_API_BASE_URL,
             pnpm_version: process.env.PNPM_VERSION,
-            public_openapi_pin: process.env.PUBLIC_OPENAPI_PIN,
             release_layout: "archive root is the release directory",
             runtime_command: "pnpm exec next start --hostname 127.0.0.1 --port 3200",
             site_url: process.env.NEXT_PUBLIC_SITE_URL,
             source_sha: process.env.SOURCE_SHA,
-            testkit_pin: process.env.TESTKIT_PIN,
             workflow_sha: process.env.WORKFLOW_SHA,
           };
           writeFileSync(
@@ -344,6 +333,15 @@ jobs:
           test "$(node -p "require('./artifact-manifest.json').platform_api_base")" = "$NEXT_PUBLIC_PLATFORM_API_BASE_URL"
           test "$(node -p "require('./artifact-manifest.json').architecture")" = "linux/arm64"
           test "$(node -p "require('./artifact-manifest.json').file_manifest_sha256")" = "$(sha256sum FILE_SHA256SUMS | cut -d' ' -f1)"
+          node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs";
+          import { join } from "node:path";
+          const expected = JSON.parse(readFileSync(join(process.env.RUNNER_TEMP, "contract-provenance.json"), "utf8"));
+          const manifest = JSON.parse(readFileSync("artifact-manifest.json", "utf8"));
+          for (const [key, value] of Object.entries(expected)) {
+            if (manifest[key] !== value) throw new Error(`Contract provenance mismatch: ${key}`);
+          }
+          NODE
 
           node --input-type=module <<'NODE'
           import { lstatSync, readdirSync, realpathSync } from "node:fs";
@@ -430,9 +428,15 @@ jobs:
           test "$(node -p "require('./artifact-manifest.json').node_version")" = "$NODE_VERSION"
           test "$(node -p "require('./artifact-manifest.json').pnpm_version")" = "$PNPM_VERSION"
           test "$(node -p "require('./artifact-manifest.json').next_version")" = "16.3.3"
-          test "$(node -p "require('./artifact-manifest.json').client_pin")" = "2.0.0-alpha.36"
-          test "$(node -p "require('./artifact-manifest.json').testkit_pin")" = "2.0.0-alpha.36"
-          test "$(node -p "require('./artifact-manifest.json').public_openapi_pin")" = "2.0.0-alpha.32"
+          node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs";
+          import { join } from "node:path";
+          const expected = JSON.parse(readFileSync(join(process.env.RUNNER_TEMP, "contract-provenance.json"), "utf8"));
+          const manifest = JSON.parse(readFileSync("artifact-manifest.json", "utf8"));
+          for (const [key, value] of Object.entries(expected)) {
+            if (manifest[key] !== value) throw new Error(`Contract provenance mismatch: ${key}`);
+          }
+          NODE
           test "$(uname -m)" = "aarch64"
           test "$(node --version)" = "v$NODE_VERSION"
           test "$(pnpm --version)" = "$PNPM_VERSION"
