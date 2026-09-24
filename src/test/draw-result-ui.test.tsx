@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
 import {
   PUBLIC_AUTH_FIXTURE,
@@ -32,6 +32,9 @@ const drawSnapshot = {
     mime_type: "image/png",
     alt_text: "当時の1等結果画像",
   },
+  rank_lineup_image: {
+    id: "lineup", path: "/fixtures/rank.png", checksum_sha256: "4".repeat(64), media_type: "image", mime_type: "image/png", alt_text: "ランク見出し画像",
+  },
   video_snapshot: {
     id: "0198a001-0000-7000-8000-000000000303",
     path: snapshotVideoPath,
@@ -40,7 +43,7 @@ const drawSnapshot = {
     mime_type: "video/mp4",
     alt_text: "当時のgold-v1演出",
   },
-  prize: result.prize_counts[0]!.prize,
+  prize: { ...result.prize_counts[0]!.prize, presentation_asset: { id: "prize", path: "/fixtures/prize-a.png", checksum_sha256: "5".repeat(64), media_type: "image", mime_type: "image/png", alt_text: "景品Aサムネイル" } },
   point_back: null,
 } satisfies DrawResponse["high_rank_results"][number];
 const snapshotResult = {
@@ -111,7 +114,7 @@ describe("Draw Result recovery UI", () => {
     expect(screen.getByText(`${result.executed_count.toLocaleString()}回`)).toBeInTheDocument();
     expect(screen.getByText(`${result.point_cost_total.toLocaleString()} コイン`)).toBeInTheDocument();
     expect(screen.getByText(result.prize_counts[0]!.prize.name)).toBeInTheDocument();
-    expect(screen.getByText("PRIZE IMAGE")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: result.prize_counts[0]!.prize.presentation_asset!.alt_text! })).toBeInTheDocument();
     expect(getDrawRequest).toHaveBeenCalledWith(result.id);
     expect(createDraw).not.toHaveBeenCalled();
   });
@@ -129,14 +132,14 @@ describe("Draw Result recovery UI", () => {
     expect(createDraw).not.toHaveBeenCalled();
   });
 
-  it("renders the immutable Rank name, result image, and video snapshots without current Master fallback", async () => {
+  it("renders the prize thumbnail, rank lineup image, and existing video snapshot", async () => {
     const getDrawRequest = vi.fn().mockResolvedValue(response(snapshotResult));
     renderResult(drawClient({ getDrawRequest }));
 
-    expect(await screen.findByText(drawSnapshot.rank_name_snapshot)).toBeInTheDocument();
+    expect(await screen.findByRole("img", { name: drawSnapshot.rank_lineup_image.alt_text })).toHaveAttribute("src", expect.stringContaining(drawSnapshot.rank_lineup_image.path));
     expect(screen.queryByText(drawSnapshot.rank.name)).not.toBeInTheDocument();
-    expect(screen.getByRole("img", { name: drawSnapshot.result_image_snapshot.alt_text! }).getAttribute("src")
-      ?.endsWith(drawSnapshot.result_image_snapshot.path)).toBe(true);
+    expect(screen.getByRole("img", { name: drawSnapshot.prize.presentation_asset.alt_text }).getAttribute("src")
+      ?.endsWith(drawSnapshot.prize.presentation_asset.path)).toBe(true);
     expect(screen.getByLabelText(drawSnapshot.video_snapshot.alt_text!))
       .toHaveAttribute("src", drawSnapshot.video_snapshot.path);
     expect(getDrawRequest).toHaveBeenCalledTimes(1);
@@ -149,9 +152,36 @@ describe("Draw Result recovery UI", () => {
     const video = await screen.findByLabelText(drawSnapshot.video_snapshot.alt_text!);
     fireEvent.error(video);
     await waitFor(() => expect(screen.queryByLabelText(drawSnapshot.video_snapshot.alt_text!)).not.toBeInTheDocument());
-    expect(screen.getByText(drawSnapshot.rank_name_snapshot)).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: drawSnapshot.result_image_snapshot.alt_text! })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: drawSnapshot.rank_lineup_image.alt_text })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: drawSnapshot.prize.presentation_asset.alt_text })).toBeInTheDocument();
     expect(screen.getAllByText(drawSnapshot.prize!.name)).toHaveLength(2);
+  });
+
+  it("keeps distinct thumbnails for two prizes of the same rank in result order with no stock badge", async () => {
+    const second = { ...drawSnapshot, id: "result-b", sequence_number: 2, prize: { ...drawSnapshot.prize, id: "prize-b", name: "景品B", presentation_asset: { ...drawSnapshot.prize.presentation_asset, path: "/fixtures/prize-b.png", alt_text: "景品Bサムネイル" } } };
+    const multiple = { ...snapshotResult, results: [drawSnapshot, second] } satisfies DrawResponse;
+    renderResult(drawClient({ getDrawRequest: vi.fn().mockResolvedValue(response(multiple)) }));
+    await screen.findByRole("heading", { level: 1, name: "抽選結果" });
+    const cards = [...document.querySelectorAll<HTMLElement>(".draw-snapshot-card")];
+    expect(cards).toHaveLength(2);
+    [drawSnapshot, second].forEach((item, index) => {
+      const card = cards[index]!;
+      expect(card.querySelector(".draw-snapshot-card__image img")).toHaveAttribute("src", expect.stringContaining(item.prize.presentation_asset.path));
+      expect(within(card).getByRole("img", { name: item.rank_lineup_image.alt_text })).toHaveAttribute("src", expect.stringContaining(item.rank_lineup_image.path));
+      expect(within(card).getByText(`抽選順 ${index + 1}`)).toBeInTheDocument();
+    });
+    expect(screen.getByText(`× ${result.prize_counts[0]!.count}`)).toBeInTheDocument();
+    expect(document.querySelector(".prize-rank__stock")).toBeNull();
+    expect(screen.queryByText(/^\d+点$/)).not.toBeInTheDocument();
+  });
+
+  it("falls back to prize placeholder and rank name when their images are absent", async () => {
+    const noImages = { ...drawSnapshot, rank_lineup_image: null, prize: { ...drawSnapshot.prize, presentation_asset: null } };
+    renderResult(drawClient({ getDrawRequest: vi.fn().mockResolvedValue(response({ ...snapshotResult, results: [noImages] })) }));
+    expect(await screen.findByText(drawSnapshot.rank.name)).toBeInTheDocument();
+    const card = document.querySelector<HTMLElement>(".draw-snapshot-card")!;
+    expect(within(card).getByText("PRIZE IMAGE")).toBeInTheDocument();
+    expect(card.querySelector("img")).toBeNull();
   });
 
   it("distinguishes the selected count from the canonical partial executed count", async () => {
@@ -177,14 +207,14 @@ describe("Draw Result recovery UI", () => {
   it("renders multiple canonical Prize aggregates and image fallback", async () => {
     const second = {
       ...result.prize_counts[0]!,
-      prize: { ...result.prize_counts[0]!.prize, id: "0198a001-0000-7000-8000-000000000010", name: "Fixture A景品" },
+      prize: { ...result.prize_counts[0]!.prize, presentation_asset: null, id: "0198a001-0000-7000-8000-000000000010", name: "Fixture A景品" },
       rank: { id: "0198a001-0000-7000-8000-000000000004", name: "Aランク" },
     };
     const multiple = { ...result, prize_counts: [result.prize_counts[0]!, second] } satisfies DrawResponse;
     renderResult(drawClient({ getDrawRequest: vi.fn().mockResolvedValue(response(multiple)) }));
     expect(await screen.findByText("Fixture A景品")).toBeInTheDocument();
     expect(screen.getByText(result.prize_counts[0]!.prize.name)).toBeInTheDocument();
-    expect(screen.getAllByText("PRIZE IMAGE")).toHaveLength(2);
+    expect(screen.getAllByText("PRIZE IMAGE")).toHaveLength(1);
   });
 
   it("distinguishes login, missing configuration, not found, and error states", async () => {

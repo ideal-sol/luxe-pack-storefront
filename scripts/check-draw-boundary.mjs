@@ -26,7 +26,7 @@ const forbidden = new Map([
   ["result-current-rank-read", /(?:getGacha|listGachas|getGachaPresentation)/.test(result)],
   ["result-current-rank-video", /\bcurrent_video\b/.test(result)],
   ["result-lineup-image-fallback", /\blineup_image\b/.test(result)],
-  ["result-rank-reference-name", /\brank\.name\b/.test(result)],
+  ["result-inventory-badge", /total_inventory|show_total_stock|total_stock/.test(result)],
 ]);
 
 for (const [name, present] of forbidden) {
@@ -42,7 +42,9 @@ for (const required of [
   ["draw-mutation", panel.includes("client.createDraw")],
   ["result-recovery", result.includes("client.getDrawRequest")],
   ["snapshot-rank-name", result.includes("snapshot.rank_name_snapshot")],
-  ["snapshot-result-image", result.includes("snapshot.result_image_snapshot")],
+  ["rank-lineup-image", result.includes("snapshot.rank_lineup_image")],
+  ["rank-name-fallback", result.includes("name={snapshot.rank.name}")],
+  ["prize-thumbnail", result.includes("snapshot.prize?.presentation_asset")],
   ["snapshot-video", result.includes("snapshot.video_snapshot")],
   ["snapshot-video-playback", result.includes("<video")],
   ["snapshot-video-failure", result.includes("onError={() => setFailed(true)}")],

@@ -31,12 +31,12 @@ function enqueueCsrf(harness: ReturnType<typeof createAuthClientTestHarness>) {
   );
 }
 
-describe("alpha.38 authentication, account security, and SMS contract", () => {
+describe("alpha.39 authentication, account security, and SMS contract", () => {
   it("imports the canonical immutable Client, Schema, and Testkit versions", () => {
     for (const [packageName, version] of Object.entries({
       "site-schema": "2.0.0-alpha.23",
-      "storefront-client": "2.0.0-alpha.38",
-      "storefront-testkit": "2.0.0-alpha.38",
+      "storefront-client": "2.0.0-alpha.39",
+      "storefront-testkit": "2.0.0-alpha.39",
     })) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
       expect(packageJson.version).toBe(version);
@@ -53,7 +53,7 @@ describe("alpha.38 authentication, account security, and SMS contract", () => {
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/auth/session` }, { body: session, status: 200 });
 
     await expect(harness.client.getCurrentSession()).resolves.toMatchObject({ data: session });
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.38", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.39", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -82,7 +82,7 @@ describe("alpha.38 authentication, account security, and SMS contract", () => {
     );
     await expect(login.client.login({ email: "fixture@example.test", password: "fixture-password" }))
       .resolves.toMatchObject({ data: PUBLIC_AUTH_FIXTURE.authenticated_session });
-    assertBrowserRequestBoundary(login.mock.requests[1]!, { client_version: "2.0.0-alpha.38", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(login.mock.requests[1]!, { client_version: "2.0.0-alpha.39", site_version: "0.1.0" });
     login.mock.assertExhausted();
   });
 
@@ -178,7 +178,7 @@ describe("alpha.38 authentication, account security, and SMS contract", () => {
       redirect_path: "/",
     });
     assertBrowserRequestBoundary(request.mock.requests[1]!, {
-      client_version: "2.0.0-alpha.38",
+      client_version: "2.0.0-alpha.39",
       site_version: "0.1.0",
     });
 
@@ -298,7 +298,7 @@ describe("alpha.38 authentication, account security, and SMS contract", () => {
     await expect(status.client.getSmsVerificationStatus()).resolves.toMatchObject({
       data: PUBLIC_SMS_VERIFICATION_FIXTURES.unverified,
     });
-    assertBrowserRequestBoundary(status.mock.requests[0]!, { client_version: "2.0.0-alpha.38", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(status.mock.requests[0]!, { client_version: "2.0.0-alpha.39", site_version: "0.1.0" });
 
     const send = createAuthClientTestHarness(csrf);
     enqueueCsrf(send);

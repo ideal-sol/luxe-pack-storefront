@@ -8,6 +8,7 @@ import type {
   PlatformProblemPresentation,
 } from "@/lib/platform";
 import { isPlatformNotFound, presentPlatformProblem } from "@/lib/platform";
+import { RankLineupImage } from "./rank-lineup-image";
 import { CatalogAsset } from "./catalog-asset";
 import { CatalogLoading, CatalogMessage } from "./catalog-message";
 import { gachaSaleStateLabels } from "./gacha-presentation";
@@ -52,21 +53,26 @@ function PrizeSections({ detail }: { readonly detail: GachaDetail }) {
       {ranks.length === 0 ? (
         <p className="gacha-detail__neutral">公開中の景品情報はありません。</p>
       ) : ranks.map((rank) => {
-        const lineupImage = rank.lineup_image.media_type === "image" ? rank.lineup_image : null;
+        const prizes = (detail.prizes ?? []).filter((prize) => prize.rank_id === rank.rank_id);
         return (
           <section aria-labelledby={`rank-${rank.rank_id}`} className="prize-rank" key={rank.rank_id}>
             <header>
-              <h3 id={`rank-${rank.rank_id}`}>{rank.rank_name}</h3>
-              {rank.show_total_stock === true && rank.total_stock !== null && (
-                <p>設定総数 {number.format(rank.total_stock)}点</p>
-              )}
+              <h3 aria-label={rank.rank_name} id={`rank-${rank.rank_id}`}>
+                <RankLineupImage image={rank.lineup_image} name={rank.rank_name} />
+              </h3>
             </header>
-            <div className="prize-rank__lineup">
-              <CatalogAsset
-                alt={lineupImage?.alt_text ?? `${rank.rank_name}の景品ラインナップ`}
-                fallbackLabel="LINEUP IMAGE"
-                {...(lineupImage?.path ? { src: lineupImage.path } : {})}
-              />
+            <div className="prize-rank__grid">
+              {prizes.map((prize) => {
+                const asset = prize.presentation_asset?.media_type === "image" ? prize.presentation_asset : null;
+                return (
+                  <div aria-label={prize.name} className="prize-rank__prize" key={prize.id}>
+                    <CatalogAsset alt={asset?.alt_text ?? prize.name} fallbackLabel="PRIZE IMAGE" {...(asset?.path ? { src: asset.path } : {})} />
+                    {rank.show_total_stock === true && prize.total_inventory != null && (
+                      <span className="prize-rank__stock">{number.format(prize.total_inventory)}点</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </section>
         );

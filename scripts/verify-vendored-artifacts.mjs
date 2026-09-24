@@ -6,34 +6,34 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const root = process.cwd();
-const vendor = path.join(root, "vendor/oripa/CONTACT-PREFILL-001");
+const vendor = path.join(root, "vendor/oripa/PRIZEIMAGE-20260924");
 const retainedVendor = path.join(root, "vendor/oripa/AGENCY-004A");
 const schemaVendor = path.join(root, "vendor/oripa/MIG-063B");
-const bundleVersion = "2.0.0-alpha.38";
-const predecessorBundleVersion = "2.0.0-alpha.37";
-const publicApiVersion = "2.0.0-alpha.34";
+const bundleVersion = "2.0.0-alpha.39";
+const predecessorBundleVersion = "2.0.0-alpha.38";
+const publicApiVersion = "2.0.0-alpha.35";
 const siteSchemaVersion = "2.0.0-alpha.23";
-const sourceCommit = "e16f65504dc5286de2fcd70988b770d1a16d1eaf";
+const sourceCommit = "be1a8f3f822d23f3251d32e616fb0b2fe422714e";
 const expected = new Map([
   [
     "SHA256SUMS",
-    "e7724d0d0814cd7f135139870c44f2c31ed7bffbd3a46b0e2e1ce4089785c770"
+    "f2e5407e27926d8d61912f18733557830499e47b23808b8abbaf82afed36f630"
   ],
   [
     "artifact-manifest.json",
-    "585cb98b83f7396b2f1a214c24c039dfadedc6f29667b471aa5902951045ddd1"
+    "888f90b53caa20e5920f23705f69510fe73b689223c8915503915aaa83432668"
+  ],
+  [
+    "oripa-storefront-client-2.0.0-alpha.39.tgz",
+    "ebae587d09f6f03a2d6234bf91e495dbc8634f34d7ec8c63608f5cae34345b15"
+  ],
+  [
+    "oripa-storefront-testkit-2.0.0-alpha.39.tgz",
+    "57def53c2353d55fea9aee73caba1e688646be49eb876e3f26dac90f2e3a214a"
   ],
   [
     "public.openapi.json",
-    "ded40adeae1998ed26169c469c8c40492a6ff677b0e6777d904221f326fa0077"
-  ],
-  [
-    "oripa-storefront-client-2.0.0-alpha.38.tgz",
-    "caf546a8797d844dbd4661ae5e5a30ac9ddf86c4d0f946bd8fffa144e3d215b1"
-  ],
-  [
-    "oripa-storefront-testkit-2.0.0-alpha.38.tgz",
-    "8b7d75a8d0c64f841709a852a5b71235f2e6cf3342175d134fc9b758b861e7fc"
+    "ab7d2c51f99e3634aaf499effd61212e1e9156a572c56363cd8c0b16abae7140"
   ]
 ]);
 const retainedExpected = new Map([
@@ -60,11 +60,11 @@ const retainedExpected = new Map([
 ]);
 const publishedPackages = new Map([
   ["@oripa/storefront-client", {
-    file: "oripa-storefront-client-2.0.0-alpha.38.tgz",
+    file: "oripa-storefront-client-2.0.0-alpha.39.tgz",
     version: bundleVersion,
   }],
   ["@oripa/storefront-testkit", {
-    file: "oripa-storefront-testkit-2.0.0-alpha.38.tgz",
+    file: "oripa-storefront-testkit-2.0.0-alpha.39.tgz",
     version: bundleVersion,
   }],
 ]);
@@ -115,8 +115,8 @@ const sums = new Map(
     }),
 );
 for (const file of [
-  "oripa-storefront-client-2.0.0-alpha.38.tgz",
-  "oripa-storefront-testkit-2.0.0-alpha.38.tgz",
+  "oripa-storefront-client-2.0.0-alpha.39.tgz",
+  "oripa-storefront-testkit-2.0.0-alpha.39.tgz",
   "public.openapi.json",
 ]) {
   if (sums.get(file) !== expected.get(file)) throw new Error(`SHA256SUMS mismatch: ${file}`);
@@ -124,18 +124,18 @@ for (const file of [
 if (sums.size !== 3) throw new Error("SHA256SUMS entry set is invalid");
 
 const manifest = JSON.parse(readFileSync(path.join(vendor, "artifact-manifest.json"), "utf8"));
-if (manifest.task_id !== "PREFILL-20260924" || manifest.source_commit !== sourceCommit) {
+if (manifest.task_id !== "PRIZEIMAGE-20260924" || manifest.source_commit !== sourceCommit) {
   throw new Error("Artifact provenance mismatch");
 }
 if (manifest.bundle?.version !== bundleVersion || manifest.bundle?.predecessor !== predecessorBundleVersion ||
-    manifest.bundle?.release_mode !== "contract-breaking" || manifest.bundle?.immutable !== true) {
+    manifest.bundle?.release_mode !== "contract-additive" || manifest.bundle?.immutable !== true) {
   throw new Error("Contract-breaking bundle declaration mismatch");
 }
 if (manifest.public_openapi?.file !== "public.openapi.json" ||
     manifest.public_openapi?.version !== publicApiVersion ||
     manifest.public_openapi?.sha256 !== expected.get("public.openapi.json") ||
     manifest.public_openapi?.operation_count !== 76 ||
-    manifest.public_openapi?.breaking_change !== true) {
+    manifest.public_openapi?.breaking_change !== false) {
   throw new Error("Referenced Public OpenAPI manifest entry mismatch");
 }
 const manifestPackages = new Map((manifest.packages ?? []).map((entry) => [entry.name, entry]));
@@ -157,7 +157,7 @@ if (schemaEntry?.disposition !== "referenced" || schemaEntry.file !== undefined 
 if (manifestPackages.size !== 3 || manifest.packages?.length !== 3) throw new Error("Package manifest is incomplete");
 
 const provenance = readFileSync(path.join(vendor, "PROVENANCE.md"), "utf8");
-for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "PREFILL-20260924", "35946192378", "10786577343", ...expected.values(), referencedSiteSchema.sha256]) {
+for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "PRIZEIMAGE-20260924", "35981484873", "10800178238", ...expected.values(), referencedSiteSchema.sha256]) {
   if (!provenance.includes(value)) throw new Error(`Artifact provenance is incomplete: ${value}`);
 }
 if (/\/(?:var\/(?:www|lib)|home)\//.test(provenance)) {
@@ -486,7 +486,7 @@ for (const rankFixture of [
   'readonly rank_name: "Sランク";',
   'readonly alt_text: "Sランク景品ラインナップ";',
   "readonly show_total_stock: true;",
-  "readonly total_stock: 100;",
+  "readonly total_stock: 10;",
   "readonly display_order: 10;",
   'readonly media_type: "video";',
   'readonly alt_text: "Sランク抽選演出";',
@@ -497,7 +497,7 @@ for (const rankFixture of [
 }
 const catalogFixtureDeclaration = testkitFixtures.slice(
   testkitFixtures.indexOf("readonly ranks:"),
-  testkitFixtures.indexOf("readonly probability_stages:"),
+  testkitFixtures.indexOf("readonly prizes:", testkitFixtures.indexOf("readonly ranks:")),
 );
 for (const legacyFixtureField of ["readonly code:", "readonly prizes:", "readonly presentation_assets:"]) {
   if (catalogFixtureDeclaration.includes(legacyFixtureField)) {
@@ -587,6 +587,19 @@ if (rankSchema?.additionalProperties !== false ||
     drawResultSchema?.properties?.video_snapshot?.$ref !== "#/components/schemas/NullablePresentationAsset") {
   throw new Error("Canonical Rank and Draw snapshot schema mismatch");
 }
+const lineupPrizeSchema = openApi.components?.schemas?.GachaLineupPrize;
+if (gachaDetailSchema?.properties?.prizes?.items?.$ref !== "#/components/schemas/GachaLineupPrize" ||
+    JSON.stringify(lineupPrizeSchema?.required) !== JSON.stringify(["id", "name", "rank_id", "presentation_asset", "total_inventory", "display_order"]) ||
+    lineupPrizeSchema?.properties?.total_inventory?.type !== "integer" ||
+    lineupPrizeSchema?.properties?.total_inventory?.minimum !== 0 ||
+    lineupPrizeSchema?.properties?.presentation_asset?.$ref !== "#/components/schemas/NullablePresentationAsset" ||
+    drawResultSchema?.properties?.rank_lineup_image?.$ref !== "#/components/schemas/NullablePresentationAsset" ||
+    openApi.components?.schemas?.DrawPrizeReference?.properties?.presentation_asset?.$ref !== "#/components/schemas/NullablePresentationAsset" ||
+    !generatedTypes.includes('prizes?: components["schemas"]["GachaLineupPrize"][];') ||
+    !generatedTypes.includes('rank_lineup_image?: components["schemas"]["NullablePresentationAsset"];')) {
+  throw new Error("Canonical Prize image, quantity and Rank lineup contract mismatch");
+}
+
 const registrationSchema = openApi.components?.schemas?.PaymentCardRegistration;
 const capacitySchema = openApi.components?.schemas?.PaymentCardCollection?.properties?.limits?.properties;
 if (JSON.stringify(openApi.components?.schemas?.PaymentCardRegistrationStatus?.enum) !==
@@ -616,8 +629,8 @@ for (const content of [packageJsonText, lockfileText]) {
     throw new Error("Server-specific file dependency");
   }
   for (const required of [
-    "vendor/oripa/CONTACT-PREFILL-001/oripa-storefront-client-2.0.0-alpha.38.tgz",
-    "vendor/oripa/CONTACT-PREFILL-001/oripa-storefront-testkit-2.0.0-alpha.38.tgz",
+    "vendor/oripa/PRIZEIMAGE-20260924/oripa-storefront-client-2.0.0-alpha.39.tgz",
+    "vendor/oripa/PRIZEIMAGE-20260924/oripa-storefront-testkit-2.0.0-alpha.39.tgz",
     "vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
   ]) {
     if (!content.includes(required)) throw new Error(`Canonical package pin is missing: ${required}`);

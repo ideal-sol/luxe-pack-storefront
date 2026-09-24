@@ -11,10 +11,10 @@ shapes.
 | Home and pack list | Backend-visible mixed-state summary collection and cursor | **Resolved — MIG-062G alpha.9 Catalog presentation; SITE-014 implemented** |
 | Catalog filter/order | Public categories, tags, opaque cursor, and Backend-stable ordering | **Resolved — MIG-062G preserves existing query/cursor contract** |
 | Home notices | Public notice summary collection | **Resolved — MIG-061U content client** |
-| Pack detail | Public gacha detail by slug with Prize-associated canonical Rank lineup image, configured stock disclosure, and display order | **Resolved — MIG-099 alpha.34 Rank contract; SITE-051 implemented without Rank reconstruction** |
+| Pack detail | Public version Prize snapshots grouped by Rank, Rank lineup headers, per-Prize total inventory gated by Rank disclosure, and API collection order | **Resolved — PRIZEIMAGE alpha.39 `prizes`, `total_inventory`, and existing `show_total_stock`; no inventory computation** |
 | Pack detail CTA | User-specific presentation state and Backend-configured requested Draw counts | **Resolved — alpha.10 `getGachaPresentation`; SITE-021 preserves all returned counts** |
 | Draw execution | Browser-owned CSRF, caller Idempotency Key, typed Backend rejection, requested count, and completed response | **Resolved — alpha.10 `createBrowserStorefrontDrawClient`; partial remaining remains Backend-owned** |
-| Draw result | Completed Draw Request read by public ID with distinct requested/executed counts and immutable Rank name／result image／video snapshots | **Resolved — MIG-099 alpha.34 `getDrawRequest`; SITE-051 uses Draw snapshots without current Rank／video fallback** |
+| Draw result | Completed Draw Request read with Prize thumbnails, Rank lineup headers, requested/executed counts, and existing video snapshots | **Resolved — PRIZEIMAGE alpha.39 `getDrawRequest`, `prize.presentation_asset`, and `rank_lineup_image`; no current Master lookup or stock display** |
 | Login | Password login and current browser session | **Resolved — MIG-061U identity client** |
 | Registration | Registration and pending email verification | **Resolved — MIG-061U identity client** |
 | Logout | Browser session invalidation | **Resolved — MIG-061U identity client** |
