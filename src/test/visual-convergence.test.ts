@@ -30,7 +30,8 @@ describe("visual and responsive convergence", () => {
   it("contains canonical Rank lineup and snapshot media while clearing the fixed Draw tray from the Footer", () => {
     expect(css).toMatch(/\.prize-rank > header \{[^}]*flex-wrap: wrap/);
     expect(css).toMatch(/\.prize-rank h3 \{[^}]*overflow-wrap: anywhere/);
-    expect(css).toMatch(/\.prize-rank__lineup \{[^}]*aspect-ratio: 16 \/ 9[^}]*overflow: hidden/);
+    expect(css).toMatch(/\.rank-lineup-image \{[^}]*height: 96px[^}]*max-width: 100%/);
+    expect(css).toMatch(/\.prize-rank__prize \{[^}]*aspect-ratio: 1[^}]*overflow: hidden[^}]*position: relative/);
     expect(css).toMatch(/\.draw-snapshot-card__video \{[^}]*max-height: 420px[^}]*width: 100%/);
     expect(css).toMatch(/\.draw-snapshot-card__image \{[^}]*aspect-ratio: 16 \/ 9[^}]*overflow: hidden/);
     expect(css).toMatch(/body:has\(\.gacha-draw-tray\) \.site-footer \{[^}]*padding-bottom: calc\(370px \+ env\(safe-area-inset-bottom\)\)/);

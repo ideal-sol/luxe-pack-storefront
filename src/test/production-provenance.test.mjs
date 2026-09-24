@@ -16,6 +16,13 @@ beforeEach(() => {
     mkdirSync(dirname(join(root, file)), { recursive: true });
     cpSync(file, join(root, file), { recursive: true });
   }
+  // These tests exercise the approved alpha.38 source, independently of the Preview pin.
+  for (const file of ["package.json", "pnpm-lock.yaml"]) {
+    const path = join(root, file);
+    writeFileSync(path, readFileSync(path, "utf8")
+      .replaceAll("PRIZEIMAGE-20260924", "CONTACT-PREFILL-001")
+      .replaceAll("2.0.0-alpha.39", "2.0.0-alpha.38"));
+  }
 });
 
 afterEach(() => rmSync(root, { recursive: true, force: true }));
@@ -44,14 +51,14 @@ describe("exact alpha.38 Production provenance", () => {
     });
   });
 
-  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37"])("rejects %s source pins", (version) => {
+  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.39"])("rejects %s source pins", (version) => {
     mutateJson("package.json", (value) => {
       value.dependencies["@oripa/storefront-client"] = `file:vendor/oripa/CONTACT-PREFILL-001/oripa-storefront-client-${version}.tgz`;
     });
     expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
   });
 
-  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37"])("rejects %s manifest contract", (version) => {
+  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.39"])("rejects %s manifest contract", (version) => {
     mutateManifest((manifest) => { manifest.bundle.version = version; });
     expect(() => validateProvenance(root, authority)).toThrow("source and manifest contract mismatch");
   });

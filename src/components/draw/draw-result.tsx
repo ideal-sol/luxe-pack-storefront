@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ApiProblemError } from "@oripa/storefront-client";
 import { useSession } from "@/components/auth/session-provider";
+import { RankLineupImage } from "@/components/catalog/rank-lineup-image";
 import { CatalogAsset } from "@/components/catalog/catalog-asset";
 import { LoadingState } from "@/components/common/loading-state";
 import { LoginRequiredState } from "@/components/common/state-panel";
@@ -78,8 +79,8 @@ function SnapshotResults({ result }: { readonly result: DrawResponse }) {
       </div>
       <div className="draw-snapshot-grid">
         {snapshots.map((snapshot) => {
-          const image = snapshot.result_image_snapshot?.media_type === "image"
-            ? snapshot.result_image_snapshot
+          const image = snapshot.prize?.presentation_asset?.media_type === "image"
+            ? snapshot.prize.presentation_asset
             : null;
           const title = snapshot.prize?.name ?? `${number.format(snapshot.point_back?.amount ?? 0)} コイン還元`;
           return (
@@ -88,14 +89,14 @@ function SnapshotResults({ result }: { readonly result: DrawResponse }) {
               {snapshot.result_type === "prize" && (
                 <div className="draw-snapshot-card__image">
                   <CatalogAsset
-                    alt={image?.alt_text ?? snapshot.rank_name_snapshot ?? title}
-                    fallbackLabel="RANK IMAGE"
+                    alt={image?.alt_text ?? title}
+                    fallbackLabel="PRIZE IMAGE"
                     {...(image?.path ? { src: image.path } : {})}
                   />
                 </div>
               )}
               <div className="draw-snapshot-card__copy">
-                {snapshot.rank_name_snapshot !== null && <span>{snapshot.rank_name_snapshot}</span>}
+                {snapshot.rank && <RankLineupImage image={snapshot.rank_lineup_image} name={snapshot.rank.name} />}
                 <h3>{title}</h3>
                 <p>抽選順 {number.format(snapshot.sequence_number)}</p>
               </div>

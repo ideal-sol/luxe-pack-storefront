@@ -366,10 +366,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .prize-rank { display: grid; gap: 15px; }
 .prize-rank > header { align-items: end; display: flex; flex-wrap: wrap; gap: 18px; justify-content: space-between; }
 .prize-rank h3 { flex: 1 1 220px; font-family: Georgia, "Yu Mincho", serif; font-size: 1.35rem; font-weight: 400; margin: 0; min-width: 0; overflow-wrap: anywhere; }
-.prize-rank > header > p { color: var(--muted); font-size: .62rem; margin: 0; }
-.prize-rank__lineup { aspect-ratio: 16 / 9; background: var(--paper-deep); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-.prize-rank__lineup .catalog-asset { height: 100%; }
-.prize-rank__lineup .catalog-asset img { object-fit: contain; }
+.rank-lineup-image { display: block; height: 96px; max-width: 100%; position: relative; width: 320px; }
+.rank-lineup-image img { object-fit: contain; object-position: left center; }
+.prize-rank__grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr)); }
+.prize-rank__prize { aspect-ratio: 1; background: var(--paper-deep); border: 1px solid var(--line); border-radius: 10px; min-width: 0; overflow: hidden; position: relative; }
+.prize-rank__prize .catalog-asset { height: 100%; }
+.prize-rank__prize .catalog-asset img { object-fit: contain; }
+.prize-rank__stock { background: rgb(0 0 0 / 78%); border-radius: 4px; bottom: 8px; color: white; font-size: .75rem; line-height: 1.4; padding: 3px 7px; position: absolute; right: 8px; }
+.draw-snapshot-card__copy .rank-lineup-image { height: 64px; width: 240px; }
 .payment-save-confirmation { align-items: center; background: rgba(23,22,20,.78); display: flex; inset: 0; justify-content: center; padding: 16px; position: fixed; z-index: 100; }
 .payment-save-confirmation__dialog { background: var(--white); border-radius: 14px; box-shadow: var(--shadow); max-width: 560px; padding: 28px; width: 100%; }
 .payment-save-confirmation__dialog h2 { font-family: Georgia, "Yu Mincho", serif; font-size: 1.45rem; font-weight: 400; margin: 0 0 12px; }
@@ -435,7 +439,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .draw-result__grid { display: grid; gap: 12px; }
 .draw-result-card { align-items: center; background: var(--white); border: 1px solid var(--line); display: grid; gap: 16px; grid-template-columns: 96px minmax(0, 1fr); padding: 12px; }
 .draw-result-card__image { aspect-ratio: 1; background: var(--paper-strong); overflow: hidden; }
-.draw-result-card__image img { height: 100%; object-fit: cover; width: 100%; }
+.draw-result-card__image .catalog-asset { height: 100%; }
+.draw-result-card__image img { height: 100%; object-fit: contain; width: 100%; }
 .draw-result-card > div:last-child { display: grid; gap: 4px; }
 .draw-result-card span { color: var(--bronze); font-size: .62rem; font-weight: 800; letter-spacing: .08em; }
 .draw-result-card h3 { font-size: .9rem; line-height: 1.5; margin: 0; }
@@ -883,7 +888,6 @@ body:has(.gacha-draw-tray) .site-footer { padding-bottom: calc(370px + env(safe-
   .gacha-detail__summary { padding: 40px 34px; }
   .gacha-description { padding: 32px 34px; }
   .gacha-eligibility { align-items: start; grid-template-columns: 1fr minmax(250px, .8fr); padding: 28px; }
-  .prize-rank__lineup { aspect-ratio: 16 / 7; }
   .gacha-draw-tray { bottom: 0; padding: 14px 24px; }
   .gacha-draw-tray__inner { align-items: center; grid-template-columns: minmax(210px, .8fr) minmax(220px, 1fr) minmax(200px, .7fr); }
   .gacha-draw-tray__action small { text-align: left; }

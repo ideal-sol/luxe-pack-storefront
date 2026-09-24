@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
 import {
   PUBLIC_CATALOG_FIXTURE,
@@ -71,7 +71,7 @@ describe("gacha detail UI", () => {
     expect(screen.getByRole("heading", { name: rank.rank_name })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: rank.lineup_image.alt_text! }).getAttribute("src")
       ?.endsWith(rank.lineup_image.path)).toBe(true);
-    expect(screen.getByText(`設定総数 ${rank.total_stock!.toLocaleString()}点`)).toBeInTheDocument();
+    expect(screen.queryByText(/設定総数/)).not.toBeInTheDocument();
     expect(screen.queryByText(/提供割合/)).not.toBeInTheDocument();
     expect(screen.queryByText(rank.rank_id)).not.toBeInTheDocument();
     expect(screen.getAllByText("販売中")).toHaveLength(2);
@@ -113,31 +113,44 @@ describe("gacha detail UI", () => {
     expect(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("shows only valid opted-in total_stock values and preserves zero", async () => {
-    const stockOn = { ...rank, rank_name: "在庫表示ON", total_stock: 0 };
-    const stockOff = {
-      ...rank,
-      rank_id: "0198a001-0000-7000-8000-000000000012",
-      rank_name: "在庫表示OFF",
-      show_total_stock: false,
-      total_stock: null,
-    };
-    const stockNull = {
-      ...rank,
-      rank_id: "0198a001-0000-7000-8000-000000000013",
-      rank_name: "在庫Null",
-      show_total_stock: true,
-      total_stock: null,
-    };
-    const stocks = { ...detail, ranks: [stockOn, stockOff, stockNull] } satisfies GachaDetail;
-    renderDetail(publicClient({
-      getGachaBySlug: vi.fn().mockResolvedValue(response({ data: stocks })),
-    }));
+  it("groups every prize in API order and shows its own total inventory only for opted-in ranks", async () => {
+    renderDetail();
+    await screen.findByRole("heading", { level: 1, name: detail.title });
+    const tiles = [...document.querySelectorAll(".prize-rank__prize")];
+    expect(tiles).toHaveLength(detail.prizes!.length);
+    expect(tiles.map((tile) => tile.getAttribute("aria-label"))).toEqual(detail.prizes!.map((prize) => prize.name));
+    detail.prizes!.forEach((prize, index) => {
+      const tile = tiles[index]! as HTMLElement;
+      expect(tile.closest(".prize-rank")).toHaveAttribute("aria-labelledby", `rank-${prize.rank_id}`);
+      if (index < 3) {
+        expect(within(tile).getByText(`${prize.total_inventory}点`)).toBeInTheDocument();
+        expect(tile.querySelector("img")).toHaveAttribute("src", expect.stringContaining(prize.presentation_asset!.path));
+      } else {
+        expect(tile.querySelector(".prize-rank__stock")).toBeNull();
+        expect(within(tile).getByText("PRIZE IMAGE")).toBeInTheDocument();
+      }
+    });
+    expect(screen.queryByText(/設定総数/)).not.toBeInTheDocument();
+    expect(screen.queryByText("10点")).not.toBeInTheDocument();
+    expect(screen.queryByText("4点")).not.toBeInTheDocument();
+  });
 
-    expect(await screen.findByText("設定総数 0点")).toBeInTheDocument();
-    expect(screen.getAllByText(/^設定総数 /)).toHaveLength(1);
-    expect(screen.getByRole("heading", { name: "在庫表示OFF" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "在庫Null" })).toBeInTheDocument();
+  it("keeps API prize order, zero inventory, and rank text for an absent image path", async () => {
+    const prizes = [...detail.prizes!].reverse().map((prize) => ({ ...prize, total_inventory: 0 }));
+    const changed = { ...detail, prizes, ranks: [{ ...rank, lineup_image: { ...rank.lineup_image, path: "" } }] } satisfies GachaDetail;
+    renderDetail(publicClient({ getGachaBySlug: vi.fn().mockResolvedValue(response({ data: changed })) }));
+    expect(await screen.findByText(rank.rank_name)).toBeInTheDocument();
+    const tiles = [...document.querySelectorAll(".prize-rank__prize")];
+    expect(tiles.map((tile) => tile.getAttribute("aria-label"))).toEqual(prizes.filter((prize) => prize.rank_id === rank.rank_id).map((prize) => prize.name));
+    expect(screen.getAllByText("0点")).toHaveLength(3);
+  });
+
+  it("accepts an omitted additive prize collection without inventing quantities", async () => {
+    const legacy = { ...detail };
+    delete legacy.prizes;
+    renderDetail(publicClient({ getGachaBySlug: vi.fn().mockResolvedValue(response({ data: legacy })) }));
+    await screen.findByRole("heading", { level: 1, name: detail.title });
+    expect(document.querySelectorAll(".prize-rank__stock")).toHaveLength(0);
   });
 
   it("moves the canonical description directly after the Prize lineup without duplication", async () => {
@@ -207,7 +220,7 @@ describe("gacha detail UI", () => {
     renderDetail(publicClient({ getGachaBySlug: vi.fn().mockResolvedValue(response({ data: missingAssets })) }));
     expect(await screen.findByText("PACK IMAGE")).toBeInTheDocument();
     fireEvent.error(screen.getByRole("img", { name: rank.lineup_image.alt_text! }));
-    expect(await screen.findByText("LINEUP IMAGE")).toBeInTheDocument();
+    expect(await screen.findByText(rank.rank_name)).toBeInTheDocument();
   });
 
   it("renders only Backend-returned draw counts and opens the execution confirmation", async () => {

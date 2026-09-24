@@ -18,6 +18,7 @@ const forbidden = new Map([
   ["date-derived-state", /publish_(?:start|end)_at\s*(?:===|!==|<=|>=|<|>)/.test(content) || /\bDate\.now\s*\(/.test(content)],
   ["fixed-draw-count-policy", /\[\s*1\s*,\s*5\s*,\s*10\s*,\s*100\s*,\s*1000\s*\]/.test(content)],
   ["point-insufficiency-rule", /(?:point|balance)[^\n]*(?:<=|>=|<|>)[^\n]*(?:price|cost)/i.test(content)],
+  ["rank-aggregate-stock", /rank\.total_stock/.test(detail)],
   ["legacy-rank-code", /\brank\.code\b/.test(detail)],
   ["legacy-rank-assets", /presentation_assets/.test(detail)],
   ["legacy-nested-rank-prizes", /\brank\.prizes\b/.test(detail)],
@@ -37,7 +38,9 @@ for (const required of [
   "rank.rank_name",
   "rank.lineup_image",
   "rank.show_total_stock === true",
-  "rank.total_stock !== null",
+  "prize.total_inventory != null",
+  "prize.rank_id === rank.rank_id",
+  "prize.presentation_asset",
   "left.display_order - right.display_order",
 ]) {
   if (!content.includes(required)) violations.push(`missing-canonical-field:${required}`);
