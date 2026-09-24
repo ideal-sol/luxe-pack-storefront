@@ -1,43 +1,65 @@
-# Contact Production Build provenance
+# Production release authority — alpha.39
 
-CONTACTBUILD-002: R4 / Strict Change / Application Runtime Activation: none.
-Build-path preparation only; no Production artifact generation or activation.
+Authority/provenance preparation only. Application implementation is Human
+accepted. Production Build dispatch and Production Activation are not authorized
+by this change; `activation_authorized` remains false.
+
+## Separate runtime and workflow sources
+
+The approved Storefront Runtime Source is
+`c911155f2fff5aea0f0b3df4f3184aa4081b6203` (merged PR #113).
+The Platform Runtime Source is
+`be1a8f3f822d23f3251d32e616fb0b2fe422714e`.
+The authority PR's merge SHA is workflow/metadata authority only and must never
+replace the approved Runtime Source.
 
 The existing `production-artifact.yml` accepts explicit `source_sha`. Its
-workflow/approval code comes from protected current main, while the separate
+workflow and approval code come from protected current main, while the separate
 Runtime checkout remains the exact approved source. Both Source PR and current
 workflow Required Checks must pass; empty squash checks are handled only with
 the merged internal PR, identical reviewed/merge trees and reviewed-head checks.
-Failed current checks never fall back to another commit.
+Failed current checks never fall back to another commit. The workflow is unchanged.
+
+## Exact contract authority
 
 `production-approved-source.json` records the Human-approved exact source and
-Contract authority. Free-form dispatch input does not approve a different SHA.
-The source must exist, be an ancestor of protected main and match that metadata.
+Platform's final canonical alpha.39 authority. The source must exist, be an
+ancestor of protected main and match the metadata; free-form dispatch input
+does not authorize another source.
 
-The verifier derives package paths from source's exact package/lockfile pins,
-checks the corresponding immutable CONTACT-PREFILL-001 manifest, Artifact ID
-and approved manifest/client/testkit/OpenAPI digests, then copies those validated
-fields into Build metadata. Packaging and re-download check the same fields.
-It rejects alpha.36/37, stale AGENCY-004A authority, mixed packages, wrong ID,
-wrong digests, source/manifest mismatch and unapproved sources. Retained
-historical vendor artifacts remain subject to the existing artifact integrity
-check, but supply no Production provenance. No dependency or package bytes change.
+Client and Testkit are `2.0.0-alpha.39`, from immutable Artifact `10800178238`.
+The manifest is `vendor/oripa/PRIZEIMAGE-20260924/artifact-manifest.json`.
+Public OpenAPI has its independent version `2.0.0-alpha.35`.
+The manifest, Client, Testkit and Public OpenAPI SHA-256 values in the approved
+JSON are the exact Human-supplied Platform authority. Artifact bytes are checked
+against those values; computed digests never replace the approved values.
 
-Contract bundle, Client and Testkit are alpha.38. Public OpenAPI's own version is
-alpha.34; its approved digest is verified. No Contract version is downgraded.
+The verifier checks source package/lockfile pins, immutable manifest identity,
+Platform source, Client/Testkit alignment, one canonical Artifact ID declaration
+and every approved digest. PRIZEIMAGE provenance uses `Artifact ID:` on its
+canonical workflow line; missing, duplicate or mismatched declarations fail.
+Validated fields propagate into Build metadata and are checked before publication
+and after re-download. Alpha.38, old sources, arbitrary/nonexistent SHAs, mixed
+packages and wrong IDs/digests fail closed. Historical vendor bundles and
+predecessor references are retained and confer no Production authority.
 
-PR #110 final/reviewed/pre-merge head is
-`68c4a869655797189d8f928c65290f7c81f9fc0c`; its five Required Checks passed in
-[run 35947415604](https://github.com/ideal-sol/luxe-pack-storefront/actions/runs/35947415604).
-The [exact-head self-review](https://github.com/ideal-sol/luxe-pack-storefront/pull/110#issuecomment-5806420179)
-matches. Reviewed and approved squash `342341a82131a7f80a4e7508172f1e764ec7ad84`
-share tree `eb6a989bfe037e07574661db7046c68c205371f9`; direct diff is zero.
-Those checks do not need rerunning for historical source acceptance.
+## Validation and rollout boundary
 
-The existing application checkout overlays are excluded from this Change.
-Focused provenance/workflow tests, lint/typecheck, artifact/policy/security
-checks and all final-head Required Checks gate merge. Runtime/ENV/migration/mail
-operations and canonical Production workflow dispatch remain NOT RUN. The next
-Human step after merged technical acceptance is Production Runtime Artifact
-Build GO. Rollback of this preparation is a reviewed workflow/metadata revert;
-there is no application or database rollback to perform.
+Focused provenance/workflow tests cover the exact authority and rejection cases.
+Artifact, policy, security and lint checks run locally; all five existing Required
+Checks, including CI's automatic application tests/build, must pass on the final
+PR head. A fresh machine-readable self-review binds that same head and exact paths.
+Storefront has no dated Security/ESLint baseline files or expiry/refresh mechanism;
+its canonical evidence is the current security/quality gates, not Platform's
+baseline dates. CodeQL default setup is not configured in this repository.
+
+After Squash Merge, validate approved provenance against the exact Runtime Source
+and run the authorization function using live protected-main, merged-PR and check
+readback. This performs no Build or workflow dispatch. The metadata merge must
+have zero application, dependency, ENV, Secret or migration delta from the
+approved Runtime Source. Application Runtime Acceptance is already Human accepted;
+no additional Runtime E2E or activation is part of this authority-only change.
+
+Production Build dispatch, artifact placement, service restart, traffic changes
+and new-server operations remain NOT RUN. Rollback is a reviewed metadata/verifier
+revert; this change performs no application or database rollout.

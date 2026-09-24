@@ -34,5 +34,7 @@ JSON evidence to stdout and screenshots to `.local/browser` (override with
 `BROWSER_TEST_OUTPUT`). Generated fixture images are browser responses only, not
 application fallback assets.
 
-Production approval remains pinned separately to its existing alpha.38 source.
-This Preview adoption does not update or authorize Production.
+Production release authority now separately approves exact Runtime Source
+`c911155f2fff5aea0f0b3df4f3184aa4081b6203` with alpha.39; see
+[Production provenance](../production-build-provenance.md).
+The authority update does not authorize a Production Build or Activation.

@@ -113,12 +113,20 @@ describe("production artifact application name authority", () => {
           "SOURCE_SHA", "TESTKIT_PIN", "WORKFLOW_SHA",
         ]) env[name] = `fixture-${name}`;
         Object.assign(env, {
+          SOURCE_SHA: "c911155f2fff5aea0f0b3df4f3184aa4081b6203",
+          WORKFLOW_SHA: "b".repeat(40),
           RUNNER_TEMP: root, NEXT_PUBLIC_APP_NAME: appName,
           NEXT_PUBLIC_SITE_URL: "https://example.com", NEXT_PUBLIC_PLATFORM_API_BASE_URL: apiBase,
         });
         const provenance = {
-          source_sha: env.SOURCE_SHA, contract_version: "2.0.0-alpha.38", contract_artifact_id: "10786577343",
-          contract_manifest_sha256: "585cb98b83f7396b2f1a214c24c039dfadedc6f29667b471aa5902951045ddd1",
+          source_sha: env.SOURCE_SHA, contract_version: "2.0.0-alpha.39", contract_artifact_id: "10800178238",
+          contract_manifest_sha256: "888f90b53caa20e5920f23705f69510fe73b689223c8915503915aaa83432668",
+          contract_manifest_path: "vendor/oripa/PRIZEIMAGE-20260924/artifact-manifest.json",
+          platform_source_sha: "be1a8f3f822d23f3251d32e616fb0b2fe422714e",
+          client_pin: "2.0.0-alpha.39", testkit_pin: "2.0.0-alpha.39", public_openapi_pin: "2.0.0-alpha.35",
+          client_sha256: "ebae587d09f6f03a2d6234bf91e495dbc8634f34d7ec8c63608f5cae34345b15",
+          testkit_sha256: "57def53c2353d55fea9aee73caba1e688646be49eb876e3f26dac90f2e3a214a",
+          public_openapi_sha256: "ab7d2c51f99e3634aaf499effd61212e1e9156a572c56363cd8c0b16abae7140",
         };
         writeFileSync(join(root, "contract-provenance.json"), JSON.stringify(provenance));
         const result = spawnSync(process.execPath, ["--input-type=module"], {
@@ -134,6 +142,15 @@ describe("production artifact application name authority", () => {
           build_id: env.BUILD_ID, build_utc: env.BUILD_UTC, file_manifest_sha256: env.FILE_MANIFEST_SHA,
           platform_api_base: apiBase,
         });
+        writeFileSync(join(root, "contract-provenance.json"), JSON.stringify({
+          ...provenance, source_sha: "342341a82131a7f80a4e7508172f1e764ec7ad84",
+        }));
+        const mismatch = spawnSync(process.execPath, ["--input-type=module"], {
+          input: manifestScript, encoding: "utf8", env,
+        });
+        expect(mismatch.status).not.toBe(0);
+        expect(mismatch.stderr).toContain("Contract provenance source mismatch");
+        writeFileSync(join(root, "contract-provenance.json"), JSON.stringify(provenance));
         delete env.NEXT_PUBLIC_APP_NAME;
         expect(spawnSync(process.execPath, ["--input-type=module"], {
           input: manifestScript, encoding: "utf8", env,
