@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -60,7 +60,7 @@ const appNameValidation = workflow.match(
   /- name: Validate production app name\n[\s\S]*?node --input-type=module <<'NODE'\n([\s\S]*?)\n          NODE/,
 )?.[1];
 const manifestScript = workflow.match(
-  /node --input-type=module <<'NODE'\n(          import \{ writeFileSync \}[\s\S]*?)\n          NODE/,
+  /node --input-type=module <<'NODE'\n(          import \{ writeFileSync, readFileSync \}[\s\S]*?)\n          NODE/,
 )?.[1];
 
 function validateAppName(value?: string) {
@@ -116,6 +116,11 @@ describe("production artifact application name authority", () => {
           RUNNER_TEMP: root, NEXT_PUBLIC_APP_NAME: appName,
           NEXT_PUBLIC_SITE_URL: "https://example.com", NEXT_PUBLIC_PLATFORM_API_BASE_URL: apiBase,
         });
+        const provenance = {
+          source_sha: env.SOURCE_SHA, contract_version: "2.0.0-alpha.38", contract_artifact_id: "10786577343",
+          contract_manifest_sha256: "585cb98b83f7396b2f1a214c24c039dfadedc6f29667b471aa5902951045ddd1",
+        };
+        writeFileSync(join(root, "contract-provenance.json"), JSON.stringify(provenance));
         const result = spawnSync(process.execPath, ["--input-type=module"], {
           input: manifestScript, encoding: "utf8", env,
         });
@@ -123,6 +128,7 @@ describe("production artifact application name authority", () => {
         expect(result.status).toBe(0);
         const manifest = JSON.parse(readFileSync(join(root, "storefront-release", "artifact-manifest.json"), "utf8"));
         expect(manifest).toMatchObject({
+          ...provenance,
           app_name: appName, site_url: "https://example.com", architecture: "linux/arm64",
           source_sha: env.SOURCE_SHA, git_tree: env.GIT_TREE, workflow_sha: env.WORKFLOW_SHA,
           build_id: env.BUILD_ID, build_utc: env.BUILD_UTC, file_manifest_sha256: env.FILE_MANIFEST_SHA,

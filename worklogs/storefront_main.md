@@ -1424,3 +1424,11 @@ Merge, and cleanup remain required at this record point. Shared Preview／
 Production Activation are zero. Shared Preview E2E and Human Browser Acceptance
 remain HOLD pending Preview／Production API target isolation and Shared Preview
 application of Platform migrations `000069`／`000070`.
+
+## CONTACTBUILD-002 — Contact Production Build provenance
+
+- R4 / Strict Change / Application Runtime Activation: none. Base and approved Runtime Source: 342341a82131a7f80a4e7508172f1e764ec7ad84. A dedicated clean worktree preserves all existing main-checkout overlays and other worktrees. One coordination Issue binds the installed GitHub App transport and cross-Repository Build GO handoff; no unrelated Issue or framework changes.
+- Existing Production workflow accepts an explicit exact source backed by protected-main approved metadata. Workflow and runtime checkouts are separate. Exact package/lockfile pins resolve the CONTACT-PREFILL-001 alpha.38 manifest; immutable Artifact 10786577343 and all four approved SHA-256 digests are verified and propagated to the Build manifest. Public OpenAPI's own version is alpha.34. AGENCY-004A is removed as Production provenance, while retained historical vendor integrity checks remain intact.
+- PR #110 final/reviewed head 68c4a869655797189d8f928c65290f7c81f9fc0c has all five checks PASS in run 35947415604 and matching self-review. Reviewed/squash tree eb6a989bfe037e07574661db7046c68c205371f9 is identical and content diff zero. No historical-source checks rerun.
+- Local focused provenance/workflow plus Contact regressions: 114 tests / 5 files PASS. Lint, typecheck, artifact, policy and secret checks PASS. Dependency audit at high threshold PASS (three moderate findings, no high/critical); no dependency changes. Full application tests/build are delegated to required CI, not a local Production artifact build. Browser/E2E and Production runtime key-presence checks NOT RUN.
+- Source, application, package bytes, Production Runtime, ENV, Migration, Worker, Nginx and Mail unchanged. Canonical Production Artifact generation/activation NOT RUN. Exact-head Required Checks, fresh self-review, squash and cleanup evidence are recorded in the PR. Next Human step: Production Runtime Artifact Build GO only.
