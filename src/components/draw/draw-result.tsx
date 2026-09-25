@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { PublicComponents } from "@oripa/storefront-client/types";
 import { ApiProblemError } from "@oripa/storefront-client";
 import { useSession } from "@/components/auth/session-provider";
 import { RankLineupImage } from "@/components/catalog/rank-lineup-image";
@@ -15,10 +16,11 @@ type ResultState =
   | { readonly status: "loading" }
   | { readonly status: "not-found" }
   | { readonly status: "error"; readonly problem: PlatformProblemPresentation }
+  | { readonly status: "presentation"; readonly result: DrawResponse; readonly presentation: DrawPresentation }
   | { readonly status: "ready"; readonly result: DrawResponse };
 
 const number = new Intl.NumberFormat("ja-JP");
-type DrawSnapshot = DrawResponse["high_rank_results"][number];
+type DrawPresentation = PublicComponents["schemas"]["DrawPresentation"];
 
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("ja-JP", {
@@ -48,34 +50,46 @@ function ResultMessage({
   );
 }
 
-function SnapshotVideo({ snapshot }: { readonly snapshot: DrawSnapshot }) {
-  const [failed, setFailed] = useState(false);
-  const video = snapshot.video_snapshot;
-  const usable = video?.media_type === "video" && video.path.startsWith("/") && !video.path.startsWith("//");
-  if (!usable || failed) return null;
+// Keep the existing same-origin snapshot URL convention; never select another asset.
+function usablePresentation(presentation: DrawResponse["presentation"]): presentation is DrawPresentation {
+  const video = presentation?.video_snapshot;
+  return video?.media_type === "video" && video.path.startsWith("/") && !video.path.startsWith("//");
+}
 
+function RepresentativeVideo({ presentation, onFinished }: {
+  readonly presentation: DrawPresentation;
+  readonly onFinished: () => void;
+}) {
+  const video = presentation.video_snapshot;
+  const finish = onFinished;
   return (
-    <video
-      aria-label={video.alt_text ?? `${snapshot.rank_name_snapshot ?? "抽選結果"}の演出動画`}
-      className="draw-snapshot-card__video"
-      controls
-      onError={() => setFailed(true)}
-      playsInline
-      preload="metadata"
-      src={video.path}
-    />
+    <section aria-labelledby="draw-presentation-title" className="draw-presentation">
+      <h1 id="draw-presentation-title">抽選演出</h1>
+      <video
+        aria-label={video.alt_text ?? "抽選演出動画"}
+        className="draw-presentation__video"
+        controls
+        onEnded={finish}
+        onError={finish}
+        playsInline
+        preload="metadata"
+        src={video.path}
+      />
+      <button className="button button--dark" onClick={finish} type="button">スキップ</button>
+    </section>
   );
 }
 
 function SnapshotResults({ result }: { readonly result: DrawResponse }) {
+  // Compact legacy responses alone may lack results. Preserve every new result in API order.
   const snapshots = result.results ?? result.high_rank_results;
   if (snapshots.length === 0) return null;
 
   return (
     <section aria-labelledby="draw-snapshots" className="draw-result__snapshots">
       <div className="section-heading">
-        <p>DRAW PRESENTATION</p>
-        <h2 id="draw-snapshots">抽選演出・ランク結果</h2>
+        <p>DRAW RESULTS</p>
+        <h2 id="draw-snapshots">抽選結果一覧</h2>
       </div>
       <div className="draw-snapshot-grid">
         {snapshots.map((snapshot) => {
@@ -85,7 +99,6 @@ function SnapshotResults({ result }: { readonly result: DrawResponse }) {
           const title = snapshot.prize?.name ?? `${number.format(snapshot.point_back?.amount ?? 0)} コイン還元`;
           return (
             <article className="draw-snapshot-card" key={snapshot.id}>
-              <SnapshotVideo key={snapshot.video_snapshot?.id ?? "no-video"} snapshot={snapshot} />
               {snapshot.result_type === "prize" && (
                 <div className="draw-snapshot-card__image">
                   <CatalogAsset
@@ -162,16 +175,29 @@ function DrawResultContent({ result }: { readonly result: DrawResponse }) {
 }
 
 export function DrawResultView({ drawRequestId }: { readonly drawRequestId: string }) {
+  return <DrawResultRequest key={drawRequestId} drawRequestId={drawRequestId} />;
+}
+
+function DrawResultRequest({ drawRequestId }: { readonly drawRequestId: string }) {
   const { state: session } = useSession();
   const { client, configurationAvailable } = useDrawClient();
   const [requestKey, setRequestKey] = useState(0);
+  const presentationFinished = useRef(false);
   const [state, setState] = useState<ResultState>({ status: "loading" });
 
   useEffect(() => {
     if (session.status !== "authenticated" || !client) return;
     let active = true;
     void client.getDrawRequest(drawRequestId)
-      .then(({ data }) => { if (active) setState({ result: data, status: "ready" }); })
+      .then(({ data }) => {
+        if (!active) return;
+        if (!presentationFinished.current && usablePresentation(data.presentation)) {
+          setState({ result: data, status: "presentation", presentation: data.presentation });
+        } else {
+          presentationFinished.current = true;
+          setState({ result: data, status: "ready" });
+        }
+      })
       .catch((error: unknown) => {
         if (!active) return;
         setState(error instanceof ApiProblemError && error.status === 404
@@ -195,6 +221,12 @@ export function DrawResultView({ drawRequestId }: { readonly drawRequestId: stri
       setState({ status: "loading" });
       setRequestKey((current) => current + 1);
     }} title="抽選結果を取得できませんでした" />;
+  }
+  if (state.status === "presentation") {
+    return <RepresentativeVideo presentation={state.presentation} onFinished={() => {
+      presentationFinished.current = true;
+      setState({ result: state.result, status: "ready" });
+    }} />;
   }
   return <DrawResultContent result={state.result} />;
 }

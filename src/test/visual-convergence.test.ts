@@ -32,7 +32,7 @@ describe("visual and responsive convergence", () => {
     expect(css).toMatch(/\.prize-rank h3 \{[^}]*overflow-wrap: anywhere/);
     expect(css).toMatch(/\.rank-lineup-image \{[^}]*height: 96px[^}]*max-width: 100%/);
     expect(css).toMatch(/\.prize-rank__prize \{[^}]*aspect-ratio: 1[^}]*overflow: hidden[^}]*position: relative/);
-    expect(css).toMatch(/\.draw-snapshot-card__video \{[^}]*max-height: 420px[^}]*width: 100%/);
+    expect(css).toMatch(/\.draw-presentation__video \{[^}]*max-height: min\(60dvh, 420px\)[^}]*width: 100%/);
     expect(css).toMatch(/\.draw-snapshot-card__image \{[^}]*aspect-ratio: 16 \/ 9[^}]*overflow: hidden/);
     expect(css).toMatch(/body:has\(\.gacha-draw-tray\) \.site-footer \{[^}]*padding-bottom: calc\(370px \+ env\(safe-area-inset-bottom\)\)/);
     expect(css).toMatch(/@media \(min-width: 720px\)[\s\S]*body:has\(\.gacha-draw-tray\) \.site-footer \{[^}]*padding-bottom: 194px/);

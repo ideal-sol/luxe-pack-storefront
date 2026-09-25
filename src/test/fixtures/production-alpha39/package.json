@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@oripa/storefront-client": "file:vendor/oripa/PRIZEIMAGE-20260924/oripa-storefront-client-2.0.0-alpha.39.tgz"
+  },
+  "devDependencies": {
+    "@oripa/storefront-testkit": "file:vendor/oripa/PRIZEIMAGE-20260924/oripa-storefront-testkit-2.0.0-alpha.39.tgz"
+  }
+}
