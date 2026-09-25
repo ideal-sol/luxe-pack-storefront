@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FocusEvent } from "react";
 import type {
   ContentBanner,
   ContentNoticeSummary,
@@ -18,7 +18,7 @@ import { HomeBannerCarousel } from "./home-banner-carousel";
 
 interface HomeData {
   readonly categories: readonly GachaCategory[];
-  readonly gachas: readonly GachaSummary[];
+  readonly tags: GachaSummary["tags"];
   readonly notices: readonly ContentNoticeSummary[];
 }
 
@@ -33,14 +33,27 @@ type BannerState =
   | { readonly status: "error"; readonly problem: PlatformProblemPresentation }
   | { readonly status: "ready"; readonly banners: readonly ContentBanner[] };
 
+type GachaState =
+  | { readonly status: "loading" }
+  | { readonly status: "error"; readonly problem: PlatformProblemPresentation }
+  | { readonly status: "ready"; readonly gachas: readonly GachaSummary[] };
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("ja-JP", { dateStyle: "medium", timeZone: "Asia/Tokyo" }).format(new Date(value));
+}
+
+function revealFilter(event: FocusEvent<HTMLButtonElement>) {
+  event.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
 
 export function PublicHome() {
   const { client, configurationAvailable } = usePublicClient();
   const [requestKey, setRequestKey] = useState(0);
   const [bannerRequestKey, setBannerRequestKey] = useState(0);
+  const [category, setCategory] = useState("");
+  const [tag, setTag] = useState("");
+  const [gachaRequestKey, setGachaRequestKey] = useState(0);
+  const [gachaState, setGachaState] = useState<GachaState>({ status: "loading" });
   const [state, setState] = useState<HomeState>(
     configurationAvailable ? { status: "loading" } : { status: "configuration-unavailable" },
   );
@@ -51,15 +64,15 @@ export function PublicHome() {
     let active = true;
     void Promise.all([
       client.listGachaCategories(),
-      client.listGachas({ limit: 6 }),
+      client.listGachaTags(),
       client.listNotices({ limit: 3 }),
-    ]).then(([categories, gachas, notices]) => {
+    ]).then(([categories, tags, notices]) => {
       if (!active) return;
       setState({
         status: "ready",
         data: {
           categories: categories.data.data,
-          gachas: gachas.data.data,
+          tags: tags.data.data,
           notices: notices.data.items,
         },
       });
@@ -68,6 +81,21 @@ export function PublicHome() {
     });
     return () => { active = false; };
   }, [client, requestKey]);
+
+  useEffect(() => {
+    if (!client) return;
+    let active = true;
+    void client.listGachas({
+      limit: 6,
+      ...(category ? { category } : {}),
+      ...(tag ? { tag } : {}),
+    }).then(({ data }) => {
+      if (active) setGachaState({ status: "ready", gachas: data.data });
+    }).catch((error: unknown) => {
+      if (active) setGachaState({ status: "error", problem: presentPlatformProblem(error) });
+    });
+    return () => { active = false; };
+  }, [category, client, gachaRequestKey, tag]);
 
   useEffect(() => {
     if (!client) return;
@@ -92,6 +120,23 @@ export function PublicHome() {
     setBannerRequestKey((current) => current + 1);
   }
 
+  function selectCategory(slug: string) {
+    if (slug === category) return;
+    setCategory(slug);
+    setGachaState({ status: "loading" });
+  }
+
+  function selectTag(slug: string) {
+    if (slug === tag) return;
+    setTag(slug);
+    setGachaState({ status: "loading" });
+  }
+
+  function retryGachas() {
+    setGachaState({ status: "loading" });
+    setGachaRequestKey((current) => current + 1);
+  }
+
   if (state.status === "loading") {
     return <PageContainer className="public-home-state"><CatalogLoading label="トップページを読み込み中" /></PageContainer>;
   }
@@ -102,7 +147,7 @@ export function PublicHome() {
     return <PageContainer className="public-home-state"><CatalogMessage action={retry} description={state.problem.message} eyebrow="ERROR" title="公開情報を取得できませんでした" tone="error" /></PageContainer>;
   }
 
-  const { categories, gachas, notices } = state.data;
+  const { categories, tags, notices } = state.data;
   return (
     <>
       <section className="home-banners" aria-label="メインビジュアル">
@@ -122,21 +167,26 @@ export function PublicHome() {
 
       <section className="home-categories">
         <PageContainer className="home-content">
-          <header className="catalog-section-heading"><div><p>FIND YOUR PACK</p><h2>カテゴリーから探す</h2></div><Link href="/gachas">すべて見る <span>→</span></Link></header>
           {categories.length > 0 ? (
             <nav aria-label="ガチャカテゴリー" className="category-links">
-              {categories.map((category) => <Link href={`/gachas?category=${encodeURIComponent(category.slug)}`} key={category.id}><span>{category.name}</span><small>{category.description ?? "PACK CATEGORY"}</small></Link>)}
+              {categories.map((item) => <button aria-pressed={category === item.slug} key={item.id} onClick={() => selectCategory(item.slug)} onFocus={revealFilter} type="button">{item.name}</button>)}
             </nav>
           ) : <CatalogMessage description="利用できるカテゴリーはありません。" eyebrow="EMPTY" title="カテゴリーを準備中です" />}
+          {tags.length > 0 && (
+            <nav aria-label="ガチャタグ" className="home-tag-links">
+              {tags.map((item) => <button aria-pressed={tag === item.slug} key={item.id} onClick={() => selectTag(item.slug)} onFocus={revealFilter} type="button">#{item.name}</button>)}
+            </nav>
+          )}
         </PageContainer>
       </section>
 
-      <section className="home-gachas">
+      <section aria-label="ガチャ一覧" aria-busy={gachaState.status === "loading"} className="home-gachas">
         <PageContainer className="home-content">
-          <header className="catalog-section-heading"><div><p>PACK LINEUP</p><h2>ガチャラインナップ</h2></div><Link href="/gachas">もっと見る <span>→</span></Link></header>
-          {gachas.length > 0 ? (
-            <div className="gacha-grid">{gachas.map((gacha, index) => <GachaCard gacha={gacha} key={gacha.id} priority={index < 2} />)}</div>
-          ) : <CatalogMessage description="現在表示できるガチャはありません。" eyebrow="EMPTY" title="ラインナップを準備中です" />}
+          {gachaState.status === "loading" && <CatalogLoading label="ガチャを読み込み中" />}
+          {gachaState.status === "error" && <CatalogMessage action={retryGachas} description={gachaState.problem.message} eyebrow="ERROR" title="ガチャを取得できませんでした" tone="error" />}
+          {gachaState.status === "ready" && (gachaState.gachas.length > 0 ? (
+            <div className="gacha-grid">{gachaState.gachas.map((gacha, index) => <GachaCard gacha={gacha} key={gacha.id} priority={index < 2} />)}</div>
+          ) : <CatalogMessage description="現在表示できるガチャはありません。" eyebrow="EMPTY" title="ラインナップを準備中です" />)}
         </PageContainer>
       </section>
 

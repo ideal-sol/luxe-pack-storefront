@@ -111,6 +111,8 @@ describe("Draw Result recovery UI", () => {
     const createDraw = vi.fn();
     renderResult(drawClient({ createDraw, getDrawRequest }));
     expect(await screen.findByRole("heading", { level: 1, name: "抽選結果" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "トップに戻る" })).toHaveAttribute("href", "/");
+    expect(screen.queryByRole("link", { name: "ガチャ一覧へ" })).not.toBeInTheDocument();
     expect(screen.getByText(`${result.executed_count.toLocaleString()}回`)).toBeInTheDocument();
     expect(screen.getByText(`${result.point_cost_total.toLocaleString()} コイン`)).toBeInTheDocument();
     expect(screen.getByText(result.prize_counts[0]!.prize.name)).toBeInTheDocument();
@@ -224,6 +226,7 @@ describe("Draw Result recovery UI", () => {
 
     const configuration = renderResult(null);
     expect(await screen.findByText("抽選結果を表示できません")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "トップに戻る" })).toHaveAttribute("href", "/");
     expect(screen.getByText("エラーが発生しました、運営までお問い合わせください")).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent(/Platform接続/);
     configuration.unmount();
@@ -238,6 +241,7 @@ describe("Draw Result recovery UI", () => {
     });
     const notFound = renderResult(drawClient({ getDrawRequest: vi.fn().mockRejectedValue(notFoundProblem) }));
     expect(await screen.findByText("抽選結果が見つかりません")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "トップに戻る" })).toHaveAttribute("href", "/");
     notFound.unmount();
 
     const errorProblem = new ApiProblemError({
@@ -250,6 +254,8 @@ describe("Draw Result recovery UI", () => {
     });
     renderResult(drawClient({ getDrawRequest: vi.fn().mockRejectedValue(errorProblem) }));
     expect(await screen.findByText("抽選結果を取得できませんでした")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "トップに戻る" })).toHaveAttribute("href", "/");
+    expect(screen.queryByRole("link", { name: "ガチャ一覧へ" })).not.toBeInTheDocument();
     expect(screen.queryByText("backend title")).not.toBeInTheDocument();
   });
 

@@ -24,6 +24,9 @@ describe("shared layout", () => {
     } as unknown as AuthClientAdapter;
     const view = render(<ToastProvider><SessionProvider client={client}><PointClientProvider client={null}><SiteHeader /></PointClientProvider></SessionProvider></ToastProvider>);
     expect(screen.getByRole("banner")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "パック" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "コイン" })).toHaveAttribute("href", "/points");
+    expect(screen.getByRole("link", { name: "お知らせ" })).toHaveAttribute("href", "/notices");
     expect(screen.getByRole("link", { name: `${appName} ホーム` })).toBeInTheDocument();
     expect(screen.getByText(appName)).toBeInTheDocument();
     expect(view.container.querySelector(".wordmark__seal")).toHaveTextContent("OZ");
@@ -46,6 +49,9 @@ describe("shared layout", () => {
     } as unknown as PublicCatalogAdapter;
     const view = render(<PublicClientProvider client={client}><SiteFooter /></PublicClientProvider>);
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "パック" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "コイン" })).toHaveAttribute("href", "/points");
+    expect(screen.getByRole("link", { name: "お知らせ" })).toHaveAttribute("href", "/notices");
     expect(screen.getByText(appName)).toBeInTheDocument();
     expect(view.container.querySelector(".wordmark__seal")).toHaveTextContent("OZ");
     expect(view.container).toHaveTextContent(`© ${appName}`);
@@ -91,6 +97,7 @@ describe("shared layout", () => {
 
   it("renders mobile navigation", () => {
     render(<MobileBottomNavigation />);
+    expect(screen.getByRole("link", { name: "パック" })).toHaveAttribute("href", "/gachas");
     expect(screen.getByRole("navigation", { name: "モバイルナビゲーション" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /ホーム/ })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: /コイン/ })).toHaveAttribute("href", "/points");
