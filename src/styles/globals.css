@@ -215,20 +215,22 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .home-banner-carousel__indicators button[aria-current="true"]::before { background: var(--bronze); width: 18px; }
 .home-banner-carousel:focus-visible, .home-banner-carousel__controls button:focus-visible { outline: 3px solid rgba(185,133,66,.45); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .home-banners__rail { scroll-behavior: auto; } }
-.home-categories, .home-gachas, .home-notices { padding-block: 62px; }
-.home-gachas { background: var(--white); border-block: 1px solid var(--line); }
-.home-notices { background: var(--paper-deep); }
+.home-categories { background: var(--white); padding-block: 20px 12px; }
+.home-gachas { background: var(--white); padding-block: 12px 40px; }
+.home-notices { background: var(--paper-deep); padding-block: 62px; }
 .catalog-section-heading { align-items: end; display: flex; justify-content: space-between; margin-bottom: 28px; }
 .catalog-section-heading p { color: var(--bronze); font-size: .58rem; font-weight: 800; letter-spacing: .18em; margin: 0 0 8px; }
 .catalog-section-heading h2 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.8rem, 7vw, 3rem); font-weight: 400; letter-spacing: -.04em; margin: 0; }
 .catalog-section-heading > a { border-bottom: 1px solid currentColor; font-size: .68rem; font-weight: 800; padding-bottom: 4px; white-space: nowrap; }
 .catalog-section-heading > a span { color: var(--bronze); margin-left: 8px; }
-.category-links { display: grid; gap: 10px; grid-auto-columns: minmax(164px, 72vw); grid-auto-flow: column; margin-inline: -20px; overflow-x: auto; overscroll-behavior-inline: contain; padding: 2px 20px 12px; scroll-snap-type: x proximity; scrollbar-width: thin; }
-.category-links a { background: var(--white); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 7px 20px rgba(35,28,18,.06); display: flex; flex-direction: column; gap: 7px; min-height: 88px; padding: 18px; transition: border-color .2s ease, translate .2s ease; }
-.category-links a { scroll-snap-align: start; }
-.category-links a:hover { border-color: var(--bronze); translate: 0 -2px; }
-.category-links span { font-size: .82rem; font-weight: 800; }
-.category-links small { color: var(--muted); font-size: .58rem; letter-spacing: .05em; line-height: 1.5; }
+.category-links { display: flex; flex-wrap: nowrap; gap: 24px; max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; padding: 6px; scrollbar-width: none; }
+.home-tag-links { display: flex; flex-wrap: nowrap; gap: 8px; margin-top: 8px; max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; padding: 6px; scrollbar-width: none; }
+.category-links::-webkit-scrollbar, .home-tag-links::-webkit-scrollbar { display: none; }
+.category-links button, .home-tag-links button { cursor: pointer; flex: 0 0 auto; font-size: .82rem; font-weight: 700; min-height: 44px; scroll-margin-inline: 6px; white-space: nowrap; }
+.category-links button { background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--ink); padding: 8px 0; }
+.category-links button[aria-pressed="true"] { border-bottom-color: var(--bronze); color: #8a5c29; }
+.home-tag-links button { background: var(--white); border: 1px solid var(--line); border-radius: 999px; color: var(--ink); font-size: .72rem; padding: 8px 12px; }
+.home-tag-links button[aria-pressed="true"] { border-color: var(--bronze); color: #8a5c29; }
 .gacha-grid { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
 .gacha-card { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: 0 8px 24px rgba(35,28,18,.07); min-width: 0; overflow: hidden; transition: box-shadow .2s ease, translate .2s ease; }
 .gacha-card:hover { box-shadow: 0 14px 34px rgba(35,28,18,.13); translate: 0 -3px; }
@@ -865,8 +867,9 @@ body:has(.gacha-draw-tray) .site-footer { padding-bottom: calc(370px + env(safe-
   .home-banners { padding-block: 28px; }
   .home-banners__rail { padding: 2px; scroll-padding-inline: 2px; }
   .home-banner { aspect-ratio: 16 / 6.8; border-radius: 22px; }
-  .home-categories, .home-gachas, .home-notices { padding-block: 88px; }
-  .category-links { grid-auto-columns: minmax(180px, 1fr); margin-inline: 0; padding-inline: 0; }
+  .home-categories { padding-block: 28px 12px; }
+  .home-gachas { padding-block: 12px 56px; }
+  .home-notices { padding-block: 88px; }
   .gacha-grid { gap: 24px 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .gacha-card__image { aspect-ratio: 4 / 3; }
   .gacha-card__body { padding: 17px 16px 18px; }

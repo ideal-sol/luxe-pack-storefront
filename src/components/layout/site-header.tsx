@@ -43,7 +43,7 @@ export function SiteHeader() {
           </span>
         </Link>
         <nav aria-label="メインナビゲーション" className="site-header__nav">
-          {primaryNavigation.map((item) => (
+          {primaryNavigation.filter((item) => item.href !== "/gachas").map((item) => (
             <Link href={item.href} key={item.href}>
               {item.label}
             </Link>

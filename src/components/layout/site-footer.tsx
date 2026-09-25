@@ -19,7 +19,7 @@ export function SiteFooter() {
         </div>
         <div>
           <h2>Explore</h2>
-          {primaryNavigation.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+          {primaryNavigation.filter((item) => item.href !== "/gachas").map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
         </div>
         <div>
           <h2>Account</h2>

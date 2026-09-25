@@ -43,7 +43,7 @@ function ResultMessage({
       <h1>{title}</h1>
       <p>{description}</p>
       {retry && <button className="button button--dark" onClick={retry} type="button">もう一度確認する</button>}
-      <Link className="button button--ghost" href="/gachas">ガチャ一覧へ</Link>
+      <Link className="button button--ghost" href="/">トップに戻る</Link>
     </section>
   );
 }
@@ -155,7 +155,7 @@ function DrawResultContent({ result }: { readonly result: DrawResponse }) {
       </section>
       <nav aria-label="抽選結果の次の操作" className="draw-result__actions">
         <Link className="button button--dark" href="/mypage/prizes">獲得アイテムを確認</Link>
-        <Link className="button button--ghost" href="/gachas">ガチャ一覧へ</Link>
+        <Link className="button button--ghost" href="/">トップに戻る</Link>
       </nav>
     </article>
   );

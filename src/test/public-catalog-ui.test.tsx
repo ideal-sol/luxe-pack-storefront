@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
 import {
   PUBLIC_AUTH_FIXTURE,
@@ -157,12 +157,112 @@ describe("public catalog UI", () => {
     expect(replace).toHaveBeenCalledWith(`/gachas?category=${summary.category.slug}`);
   });
 
+  it("starts home filters unselected and requests the unchanged six-item lineup", async () => {
+    const client = publicClient();
+    renderPublic(<PublicHome />, client);
+    const categories = await screen.findByRole("navigation", { name: "ガチャカテゴリー" });
+    const tags = screen.getByRole("navigation", { name: "ガチャタグ" });
+    for (const control of [...within(categories).getAllByRole("button"), ...within(tags).getAllByRole("button")]) {
+      expect(control).toHaveAttribute("aria-pressed", "false");
+    }
+    expect(within(categories).queryByRole("button", { name: "すべて" })).not.toBeInTheDocument();
+    expect(within(tags).getByRole("button", { name: `#${summary.tags[0]!.name}` })).toBeInTheDocument();
+    expect(client.listGachaTags).toHaveBeenCalledOnce();
+    expect(client.listGachas).toHaveBeenCalledWith({ limit: 6 });
+  });
+
+  it("filters home by tag alone without navigating or deriving results locally", async () => {
+    replace.mockClear();
+    const client = publicClient();
+    renderPublic(<PublicHome />, client);
+    const tag = summary.tags[0]!;
+    fireEvent.click(await screen.findByRole("button", { name: `#${tag.name}` }));
+    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 6, tag: tag.slug }));
+    expect(screen.getByRole("button", { name: summary.category.name })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: `#${tag.name}` })).toHaveAttribute("aria-pressed", "true");
+    expect(await screen.findByRole("link", { name: summary.title })).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("switches independent category and tag selections using the combined API filter", async () => {
+    replace.mockClear();
+    const secondCategory = { ...summary.category, id: "category-2", slug: "category-2", name: "別カテゴリー" };
+    const secondTag = { id: "tag-2", slug: "tag-2", name: "別タグ" };
+    const client = publicClient({
+      listGachaCategories: vi.fn().mockResolvedValue(response({ data: [summary.category, secondCategory] })),
+      listGachaTags: vi.fn().mockResolvedValue(response({ data: [summary.tags[0]!, secondTag] })),
+    });
+    renderPublic(<PublicHome />, client);
+    fireEvent.click(await screen.findByRole("button", { name: summary.category.name }));
+    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 6, category: summary.category.slug }));
+    fireEvent.click(screen.getByRole("button", { name: `#${summary.tags[0]!.name}` }));
+    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 6, category: summary.category.slug, tag: summary.tags[0]!.slug }));
+    fireEvent.click(screen.getByRole("button", { name: secondCategory.name }));
+    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 6, category: secondCategory.slug, tag: summary.tags[0]!.slug }));
+    fireEvent.click(screen.getByRole("button", { name: `#${secondTag.name}` }));
+    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 6, category: secondCategory.slug, tag: secondTag.slug }));
+    expect(screen.getByRole("button", { name: summary.category.name })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: secondCategory.name })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: `#${summary.tags[0]!.name}` })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: `#${secondTag.name}` })).toHaveAttribute("aria-pressed", "true");
+    expect(client.listGachaCategories).toHaveBeenCalledOnce();
+    expect(client.listGachaTags).toHaveBeenCalledOnce();
+    expect(client.listNotices).toHaveBeenCalledOnce();
+    expect(client.listBanners).toHaveBeenCalledOnce();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it.each(["resolve", "reject"] as const)("ignores an obsolete filter request that later %ss", async (outcome) => {
+    let resolveOld!: (value: ReturnType<typeof response<typeof gachaCollection>>) => void;
+    let rejectOld!: (error: Error) => void;
+    const oldRequest = new Promise<ReturnType<typeof response<typeof gachaCollection>>>((resolve, reject) => {
+      resolveOld = resolve;
+      rejectOld = reject;
+    });
+    const latest = { ...summary, id: "latest", slug: "latest", title: "最新の絞り込み結果" };
+    const listGachas = vi.fn()
+      .mockResolvedValueOnce(response(gachaCollection))
+      .mockReturnValueOnce(oldRequest)
+      .mockResolvedValueOnce(response({ ...gachaCollection, data: [latest] }));
+    renderPublic(<PublicHome />, publicClient({ listGachas }));
+    await screen.findByRole("link", { name: summary.title });
+    fireEvent.click(screen.getByRole("button", { name: summary.category.name }));
+    expect(screen.queryByRole("link", { name: summary.title })).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "ガチャ一覧" })).toHaveAttribute("aria-busy", "true");
+    fireEvent.click(screen.getByRole("button", { name: `#${summary.tags[0]!.name}` }));
+    await screen.findByRole("link", { name: latest.title });
+    await act(async () => {
+      if (outcome === "resolve") resolveOld(response(gachaCollection));
+      else rejectOld(new Error("obsolete response"));
+    });
+    expect(screen.queryByRole("link", { name: summary.title })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: latest.title })).toBeInTheDocument();
+    expect(screen.queryByText("ガチャを取得できませんでした")).not.toBeInTheDocument();
+  });
+
+  it("keeps filters available after an error and retries the selected query to an empty result", async () => {
+    const listGachas = vi.fn().mockResolvedValueOnce(response(gachaCollection))
+      .mockRejectedValueOnce(new Error("temporary failure"))
+      .mockResolvedValueOnce(response({ ...gachaCollection, data: [] }));
+    renderPublic(<PublicHome />, publicClient({ listGachas }));
+    fireEvent.click(await screen.findByRole("button", { name: `#${summary.tags[0]!.name}` }));
+    await screen.findByText("ガチャを取得できませんでした");
+    expect(screen.getByRole("button", { name: `#${summary.tags[0]!.name}` })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "再読み込み" }));
+    await screen.findByText("ラインナップを準備中です");
+    expect(listGachas).toHaveBeenLastCalledWith({ limit: 6, tag: summary.tags[0]!.slug });
+    expect(screen.queryByRole("link", { name: summary.title })).not.toBeInTheDocument();
+  });
+
   it("renders home sections and links to the full catalog", async () => {
     renderPublic(<PublicHome />, publicClient());
     await screen.findByRole("img", { name: PUBLIC_TOP_BANNERS_FIXTURE.response.items[0].title });
     expect(screen.getByRole("link", { name: "トップ表示バナーを見る" })).toHaveAttribute("href", "/gachas");
-    expect(screen.getByRole("heading", { name: "ガチャラインナップ" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /もっと見る/ })).toHaveAttribute("href", "/gachas");
+    expect(screen.getByRole("link", { name: summary.title })).toHaveAttribute("href", `/gachas/${summary.slug}`);
+    for (const text of ["FIND YOUR PACK", "カテゴリーから探す", "PACK LINEUP", "ガチャラインナップ", "PACK CATEGORY"]) {
+      expect(screen.queryByText(text)).not.toBeInTheDocument();
+    }
+    expect(screen.queryByRole("link", { name: /もっと見る|すべて見る/ })).not.toBeInTheDocument();
     expect(screen.getByText(PUBLIC_CONTENT_FIXTURE.notice.title)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /一覧を見る/ })).toHaveAttribute("href", "/notices");
     expect(screen.getByRole("link", { name: new RegExp(PUBLIC_CONTENT_FIXTURE.notice.title) }))
@@ -195,7 +295,7 @@ describe("public catalog UI", () => {
       title: "Catalog unavailable",
       type: "https://storefront.test/problems/catalog-unavailable",
     });
-    const error = renderPublic(<PublicHome />, publicClient({ listGachas: vi.fn().mockRejectedValue(problem) }));
+    const error = renderPublic(<PublicHome />, publicClient({ listGachaCategories: vi.fn().mockRejectedValue(problem) }));
     await screen.findByText("公開情報を取得できませんでした");
     error.unmount();
 
@@ -208,7 +308,7 @@ describe("public catalog UI", () => {
   it("keeps home content available while the Banner request is loading or fails", async () => {
     const pending = new Promise<never>(() => undefined);
     const loading = renderPublic(<PublicHome />, publicClient({ listBanners: vi.fn(() => pending) }));
-    expect(await screen.findByRole("heading", { name: "ガチャラインナップ" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: summary.title })).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("バナーを読み込み中");
     loading.unmount();
 
@@ -222,7 +322,7 @@ describe("public catalog UI", () => {
     });
     renderPublic(<PublicHome />, publicClient({ listBanners: vi.fn().mockRejectedValue(problem) }));
     expect(await screen.findByText("バナーを取得できませんでした")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "ガチャラインナップ" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: summary.title })).toHaveAttribute("href", `/gachas/${summary.slug}`);
   });
 
   it("renders one canonical Banner without unnecessary Carousel controls", async () => {
