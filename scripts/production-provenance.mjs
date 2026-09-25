@@ -28,8 +28,11 @@ export function validateProvenance(root, authority = approvedSource) {
   const clientPin = packageJson.dependencies?.["@oripa/storefront-client"];
   const testkitPin = packageJson.devDependencies?.["@oripa/storefront-testkit"];
   const directory = dirname(authority.manifest_path);
-  requireValue(directory === "vendor/oripa/PRIZEIMAGE-20260924", "stale provenance authority");
-  requireValue(authority.contract_version === "2.0.0-alpha.39", "unapproved contract version");
+  requireValue(directory === "vendor/oripa/DRAW-20260925", "stale provenance authority");
+  requireValue(authority.contract_version === "2.0.0-alpha.40", "unapproved contract version");
+  requireValue(authority.platform_runtime_source_sha === "e4361ece51fc1249a5cfb2c64cf56d3aa4bb0c29"
+    && authority.platform_authority_merge_sha === "d823c2f80c1500990289b06da8e5504d7b48c2e5",
+  "Platform runtime authority mismatch");
   const manifestPath = join(root, directory, "artifact-manifest.json");
   requireValue(digest(manifestPath) === authority.manifest_sha256, "manifest digest mismatch");
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
@@ -39,6 +42,9 @@ export function validateProvenance(root, authority = approvedSource) {
   const provenance = readFileSync(join(root, directory, "PROVENANCE.md"), "utf8");
   const identifiers = [...provenance.matchAll(/^- Canonical workflow: `[0-9]+`; Artifact ID: `([0-9]+)`\.$/gm)].map((match) => match[1]);
   requireValue(identifiers.length === 1 && identifiers[0] === authority.artifact_id, "Artifact ID mismatch");
+  const archives = [...provenance.matchAll(/^- Archive SHA-256: `([0-9a-f]{64})`\.$/gm)].map((match) => match[1]);
+  requireValue(archives.length === 1 && archives[0] === authority.contract_archive_sha256,
+    "Contract archive authority mismatch");
   const lockfile = readFileSync(join(root, "pnpm-lock.yaml"), "utf8");
   for (const [name, pin, expectedDigest] of [
     ["@oripa/storefront-client", clientPin, authority.client_sha256],
@@ -58,6 +64,8 @@ export function validateProvenance(root, authority = approvedSource) {
   const testkit = manifest.packages.find((entry) => entry.name === "@oripa/storefront-testkit");
   requireValue(testkit.storefront_client_version === authority.contract_version, "Client/Testkit mismatch");
   requireValue(manifest.public_openapi?.file === "public.openapi.json"
+    && authority.public_openapi_version === "2.0.0-alpha.36"
+    && manifest.public_openapi.version === authority.public_openapi_version
     && manifest.public_openapi.sha256 === authority.public_openapi_sha256
     && digest(join(root, directory, "public.openapi.json")) === authority.public_openapi_sha256,
   "Public OpenAPI digest mismatch");
@@ -68,6 +76,9 @@ export function validateProvenance(root, authority = approvedSource) {
     contract_manifest_path: authority.manifest_path,
     contract_manifest_sha256: authority.manifest_sha256,
     platform_source_sha: authority.platform_source_sha,
+    platform_runtime_source_sha: authority.platform_runtime_source_sha,
+    platform_authority_merge_sha: authority.platform_authority_merge_sha,
+    contract_archive_sha256: authority.contract_archive_sha256,
     client_pin: manifest.bundle.version,
     testkit_pin: manifest.bundle.version,
     client_sha256: authority.client_sha256,
