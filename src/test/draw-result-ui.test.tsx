@@ -309,6 +309,12 @@ function RefreshSession() {
 }
 
 describe("canonical Draw presentation and full results", () => {
+  beforeEach(() => {
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
   it("keeps loading until the canonical GET completes, without revealing media or results", async () => {
     let resolve!: (value: ReturnType<typeof response<DrawResponse>>) => void;
     const getDrawRequest = vi.fn().mockReturnValue(new Promise((done) => { resolve = done; }));
@@ -328,7 +334,12 @@ describe("canonical Draw presentation and full results", () => {
     const video = await screen.findByLabelText("代表演出動画");
     expect(video).toHaveAttribute("src", representative.video_snapshot.path);
     expect(video).toHaveAttribute("playsinline");
-    expect(video).toHaveAttribute("controls");
+    expect(video).not.toHaveAttribute("controls");
+    expect(video).toHaveAttribute("autoplay");
+    expect(video).toHaveProperty("muted", false);
+    expect(video).toHaveProperty("defaultMuted", false);
+    expect(video.closest(".draw-presentation")).toHaveAccessibleName("抽選演出");
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
     expect(document.querySelectorAll("video")).toHaveLength(1);
     expect(document.querySelectorAll(".draw-snapshot-card, .draw-result")).toHaveLength(0);
     if (event === "skip") fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
@@ -337,6 +348,31 @@ describe("canonical Draw presentation and full results", () => {
     expect(screen.getByRole("link", { name: "獲得アイテムを確認" })).toHaveAttribute("href", "/mypage/prizes");
     expect(client.createDraw).not.toHaveBeenCalled();
     expect(client.getDrawRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["NotAllowedError", "AbortError", "NotSupportedError"])("keeps the presentation and usable Skip after a %s play rejection", async (name) => {
+    vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValue(new DOMException("Playback request rejected", name));
+    const data = fullResult(10);
+    renderResult(drawClient({ getDrawRequest: vi.fn().mockResolvedValue(response(data)) }));
+    await screen.findByLabelText("代表演出動画");
+    await act(async () => {});
+    expect(document.querySelectorAll("video")).toHaveLength(1);
+    expect(document.querySelectorAll(".draw-snapshot-card, .draw-result")).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
+    expectFullResults(data);
+  });
+
+  it("does not finish on mount, successful play, readiness, buffering, or progress events", async () => {
+    const data = fullResult(10);
+    renderResult(drawClient({ getDrawRequest: vi.fn().mockResolvedValue(response(data)) }));
+    const video = await screen.findByLabelText("代表演出動画");
+    for (const event of ["loadstart", "loadedmetadata", "loadeddata", "canplay", "play", "playing", "waiting", "progress", "pause", "stalled"]) {
+      fireEvent(video, new Event(event));
+      expect(document.querySelectorAll(".draw-snapshot-card, .draw-result")).toHaveLength(0);
+      expect(video).toBeInTheDocument();
+    }
+    fireEvent.ended(video);
+    expectFullResults(data);
   });
 
   it.each(["null", "absent", "image", "external", "protocol-relative"])("goes directly to results for %s presentation without inferring from card videos", async (kind) => {
