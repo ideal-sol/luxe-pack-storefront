@@ -1,0 +1,7 @@
+# Exact importer excerpts from approved source c911155f2fff5aea0f0b3df4f3184aa4081b6203.
+      '@oripa/storefront-client':
+        specifier: file:vendor/oripa/PRIZEIMAGE-20260924/oripa-storefront-client-2.0.0-alpha.39.tgz
+        version: file:vendor/oripa/PRIZEIMAGE-20260924/oripa-storefront-client-2.0.0-alpha.39.tgz
+      '@oripa/storefront-testkit':
+        specifier: file:vendor/oripa/PRIZEIMAGE-20260924/oripa-storefront-testkit-2.0.0-alpha.39.tgz
+        version: file:vendor/oripa/PRIZEIMAGE-20260924/oripa-storefront-testkit-2.0.0-alpha.39.tgz

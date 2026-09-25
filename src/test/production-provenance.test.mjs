@@ -12,9 +12,13 @@ let authority;
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), "alpha39-production-provenance-"));
   authority = structuredClone(approvedSource);
-  for (const file of ["package.json", "pnpm-lock.yaml", "vendor/oripa/PRIZEIMAGE-20260924"]) {
+  for (const file of ["vendor/oripa/PRIZEIMAGE-20260924"]) {
     mkdirSync(dirname(join(root, file)), { recursive: true });
     cpSync(file, join(root, file), { recursive: true });
+  }
+  // Frozen package inputs from the Human-approved production source (alpha.39).
+  for (const file of ["package.json", "pnpm-lock.yaml"]) {
+    cpSync(join("src/test/fixtures/production-alpha39", file), join(root, file));
   }
 });
 
@@ -33,6 +37,11 @@ function mutateManifest(mutation) {
 }
 
 describe("exact alpha.39 Production provenance", () => {
+  it("rejects the unapproved alpha.40 source dependency pins", () => {
+    cpSync("package.json", join(root, "package.json"));
+    expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
+  });
+
   it("accepts approved source pins, immutable artifact identity and every digest", () => {
     expect(validateProvenance(root)).toMatchObject({
       source_sha: "c911155f2fff5aea0f0b3df4f3184aa4081b6203",

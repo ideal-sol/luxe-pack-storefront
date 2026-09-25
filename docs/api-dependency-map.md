@@ -14,7 +14,7 @@ shapes.
 | Pack detail | Public version Prize snapshots grouped by Rank, Rank lineup headers, per-Prize total inventory gated by Rank disclosure, and API collection order | **Resolved — PRIZEIMAGE alpha.39 `prizes`, `total_inventory`, and existing `show_total_stock`; no inventory computation** |
 | Pack detail CTA | User-specific presentation state and Backend-configured requested Draw counts | **Resolved — alpha.10 `getGachaPresentation`; SITE-021 preserves all returned counts** |
 | Draw execution | Browser-owned CSRF, caller Idempotency Key, typed Backend rejection, requested count, and completed response | **Resolved — alpha.10 `createBrowserStorefrontDrawClient`; partial remaining remains Backend-owned** |
-| Draw result | Completed Draw Request read with Prize thumbnails, Rank lineup headers, requested/executed counts, and existing video snapshots | **Resolved — PRIZEIMAGE alpha.39 `getDrawRequest`, `prize.presentation_asset`, and `rank_lineup_image`; no current Master lookup or stock display** |
+| Draw result | Completed Draw Request read, one canonical presentation before all ordered results, Prize thumbnails and Rank lineup headers | **Resolved — DRAW alpha.40 `getDrawRequest`, top-level `presentation`, full `results` (up to 1000); no Rank inference, per-card video, or current Master lookup** |
 | Login | Password login and current browser session | **Resolved — MIG-061U identity client** |
 | Registration | Registration and pending email verification | **Resolved — MIG-061U identity client** |
 | Logout | Browser session invalidation | **Resolved — MIG-061U identity client** |

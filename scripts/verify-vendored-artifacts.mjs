@@ -6,34 +6,34 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const root = process.cwd();
-const vendor = path.join(root, "vendor/oripa/PRIZEIMAGE-20260924");
+const vendor = path.join(root, "vendor/oripa/DRAW-20260925");
 const retainedVendor = path.join(root, "vendor/oripa/AGENCY-004A");
 const schemaVendor = path.join(root, "vendor/oripa/MIG-063B");
-const bundleVersion = "2.0.0-alpha.39";
-const predecessorBundleVersion = "2.0.0-alpha.38";
-const publicApiVersion = "2.0.0-alpha.35";
+const bundleVersion = "2.0.0-alpha.40";
+const predecessorBundleVersion = "2.0.0-alpha.39";
+const publicApiVersion = "2.0.0-alpha.36";
 const siteSchemaVersion = "2.0.0-alpha.23";
-const sourceCommit = "be1a8f3f822d23f3251d32e616fb0b2fe422714e";
+const sourceCommit = "dadf79f3b0b2409a57e41b10a83c7b6570ea3507";
 const expected = new Map([
   [
     "SHA256SUMS",
-    "f2e5407e27926d8d61912f18733557830499e47b23808b8abbaf82afed36f630"
+    "0388b497e2f5e559de599949996cb1b1f1a22fb35e8f39f8e5fbf7a9ecce398b"
   ],
   [
     "artifact-manifest.json",
-    "888f90b53caa20e5920f23705f69510fe73b689223c8915503915aaa83432668"
+    "5fba7399e21cff0226e9ae43a9a3fa73dc7c61a0716ce00787b0f4b931778a59"
   ],
   [
-    "oripa-storefront-client-2.0.0-alpha.39.tgz",
-    "ebae587d09f6f03a2d6234bf91e495dbc8634f34d7ec8c63608f5cae34345b15"
+    "oripa-storefront-client-2.0.0-alpha.40.tgz",
+    "724ff53616a5c05fd73a0570fd2c1455fc762a64bfa9936e61b73131ed5d2d99"
   ],
   [
-    "oripa-storefront-testkit-2.0.0-alpha.39.tgz",
-    "57def53c2353d55fea9aee73caba1e688646be49eb876e3f26dac90f2e3a214a"
+    "oripa-storefront-testkit-2.0.0-alpha.40.tgz",
+    "555705b61664116144da8b7ea3a87dca1ff0066e4b027bdbba87e2e7750b052e"
   ],
   [
     "public.openapi.json",
-    "ab7d2c51f99e3634aaf499effd61212e1e9156a572c56363cd8c0b16abae7140"
+    "b469064b322d99b125995031aadfe765907651e014c003ccc82997a91843cd23"
   ]
 ]);
 const retainedExpected = new Map([
@@ -60,11 +60,11 @@ const retainedExpected = new Map([
 ]);
 const publishedPackages = new Map([
   ["@oripa/storefront-client", {
-    file: "oripa-storefront-client-2.0.0-alpha.39.tgz",
+    file: "oripa-storefront-client-2.0.0-alpha.40.tgz",
     version: bundleVersion,
   }],
   ["@oripa/storefront-testkit", {
-    file: "oripa-storefront-testkit-2.0.0-alpha.39.tgz",
+    file: "oripa-storefront-testkit-2.0.0-alpha.40.tgz",
     version: bundleVersion,
   }],
 ]);
@@ -115,8 +115,8 @@ const sums = new Map(
     }),
 );
 for (const file of [
-  "oripa-storefront-client-2.0.0-alpha.39.tgz",
-  "oripa-storefront-testkit-2.0.0-alpha.39.tgz",
+  "oripa-storefront-client-2.0.0-alpha.40.tgz",
+  "oripa-storefront-testkit-2.0.0-alpha.40.tgz",
   "public.openapi.json",
 ]) {
   if (sums.get(file) !== expected.get(file)) throw new Error(`SHA256SUMS mismatch: ${file}`);
@@ -124,7 +124,7 @@ for (const file of [
 if (sums.size !== 3) throw new Error("SHA256SUMS entry set is invalid");
 
 const manifest = JSON.parse(readFileSync(path.join(vendor, "artifact-manifest.json"), "utf8"));
-if (manifest.task_id !== "PRIZEIMAGE-20260924" || manifest.source_commit !== sourceCommit) {
+if (manifest.task_id !== "DRAW-20260925" || manifest.source_commit !== sourceCommit) {
   throw new Error("Artifact provenance mismatch");
 }
 if (manifest.bundle?.version !== bundleVersion || manifest.bundle?.predecessor !== predecessorBundleVersion ||
@@ -157,7 +157,7 @@ if (schemaEntry?.disposition !== "referenced" || schemaEntry.file !== undefined 
 if (manifestPackages.size !== 3 || manifest.packages?.length !== 3) throw new Error("Package manifest is incomplete");
 
 const provenance = readFileSync(path.join(vendor, "PROVENANCE.md"), "utf8");
-for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "PRIZEIMAGE-20260924", "35981484873", "10800178238", ...expected.values(), referencedSiteSchema.sha256]) {
+for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "DRAW-20260925", "36089413205", "10845475225", ...expected.values(), referencedSiteSchema.sha256]) {
   if (!provenance.includes(value)) throw new Error(`Artifact provenance is incomplete: ${value}`);
 }
 if (/\/(?:var\/(?:www|lib)|home)\//.test(provenance)) {
@@ -600,6 +600,21 @@ if (gachaDetailSchema?.properties?.prizes?.items?.$ref !== "#/components/schemas
   throw new Error("Canonical Prize image, quantity and Rank lineup contract mismatch");
 }
 
+const drawResponseSchema = openApi.components?.schemas?.DrawResponse;
+const drawPresentationSchema = openApi.components?.schemas?.DrawPresentation;
+if (drawResponseSchema?.properties?.results?.maxItems !== 1000 ||
+    drawResponseSchema?.properties?.high_rank_results?.maxItems !== 20 ||
+    drawResponseSchema?.required?.includes("presentation") ||
+    JSON.stringify(drawResponseSchema?.properties?.presentation?.oneOf) !== JSON.stringify([
+      { $ref: "#/components/schemas/DrawPresentation" }, { type: "null" },
+    ]) ||
+    drawPresentationSchema?.properties?.rank?.$ref !== "#/components/schemas/RankReference" ||
+    drawPresentationSchema?.properties?.video_snapshot?.$ref !== "#/components/schemas/PresentationAsset" ||
+    !generatedTypes.includes('presentation?: components["schemas"]["DrawPresentation"] | null;') ||
+    !generatedTypes.includes('results?: components["schemas"]["DrawResult"][];')) {
+  throw new Error("Canonical Draw presentation/full-results contract mismatch");
+}
+
 const registrationSchema = openApi.components?.schemas?.PaymentCardRegistration;
 const capacitySchema = openApi.components?.schemas?.PaymentCardCollection?.properties?.limits?.properties;
 if (JSON.stringify(openApi.components?.schemas?.PaymentCardRegistrationStatus?.enum) !==
@@ -629,8 +644,8 @@ for (const content of [packageJsonText, lockfileText]) {
     throw new Error("Server-specific file dependency");
   }
   for (const required of [
-    "vendor/oripa/PRIZEIMAGE-20260924/oripa-storefront-client-2.0.0-alpha.39.tgz",
-    "vendor/oripa/PRIZEIMAGE-20260924/oripa-storefront-testkit-2.0.0-alpha.39.tgz",
+    "vendor/oripa/DRAW-20260925/oripa-storefront-client-2.0.0-alpha.40.tgz",
+    "vendor/oripa/DRAW-20260925/oripa-storefront-testkit-2.0.0-alpha.40.tgz",
     "vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
   ]) {
     if (!content.includes(required)) throw new Error(`Canonical package pin is missing: ${required}`);
