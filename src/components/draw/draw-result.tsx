@@ -61,21 +61,30 @@ function RepresentativeVideo({ presentation, onFinished }: {
   readonly onFinished: () => void;
 }) {
   const video = presentation.video_snapshot;
+  const videoRef = useRef<HTMLVideoElement>(null);
   const finish = onFinished;
+
+  useEffect(() => {
+    // A rejected playback request (including autoplay policy) is not a media
+    // error. Keep the presentation and Skip available; only onError ends it.
+    void videoRef.current?.play().catch(() => {});
+  }, [video.path]);
+
   return (
-    <section aria-labelledby="draw-presentation-title" className="draw-presentation">
-      <h1 id="draw-presentation-title">抽選演出</h1>
+    <section aria-label="抽選演出" className="draw-presentation">
       <video
         aria-label={video.alt_text ?? "抽選演出動画"}
+        autoPlay
         className="draw-presentation__video"
-        controls
+        muted={false}
         onEnded={finish}
         onError={finish}
         playsInline
         preload="metadata"
+        ref={videoRef}
         src={video.path}
       />
-      <button className="button button--dark" onClick={finish} type="button">スキップ</button>
+      <button className="button button--dark draw-presentation__skip" onClick={finish} type="button">スキップ</button>
     </section>
   );
 }

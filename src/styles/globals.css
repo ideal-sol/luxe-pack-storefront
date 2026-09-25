@@ -428,9 +428,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .draw-result__snapshots .section-heading h2 { font-family: Georgia, serif; font-size: 1.7rem; font-weight: 400; margin: 5px 0 0; }
 .draw-snapshot-grid { display: grid; gap: 12px; }
 .draw-snapshot-card { background: var(--white); border: 1px solid var(--line); display: grid; min-width: 0; overflow: hidden; }
-.draw-presentation { display: grid; gap: 24px; min-width: 0; }
-.draw-presentation__video { background: var(--ink); display: block; max-height: min(60dvh, 420px); width: 100%; }
-.draw-presentation > button { justify-self: center; }
+body:has(.draw-presentation) { overflow: hidden; }
+.draw-presentation { background: #000; display: grid; inset: 0; overflow: hidden; place-items: center; position: fixed; z-index: 110; }
+.draw-presentation__video { display: block; height: 100%; min-height: 0; min-width: 0; object-fit: contain; width: 100%; }
+.draw-presentation__skip { border: 1px solid var(--white); min-height: 44px; min-width: 88px; position: absolute; right: max(16px, env(safe-area-inset-right)); top: max(16px, env(safe-area-inset-top)); z-index: 1; }
 .draw-snapshot-card__image { aspect-ratio: 16 / 9; background: var(--paper-strong); overflow: hidden; }
 .draw-snapshot-card__image .catalog-asset { height: 100%; }
 .draw-snapshot-card__image .catalog-asset img { object-fit: contain; }
