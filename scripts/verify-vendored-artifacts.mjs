@@ -6,15 +6,37 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const root = process.cwd();
-const vendor = path.join(root, "vendor/oripa/DRAW-20260925");
-const retainedVendor = path.join(root, "vendor/oripa/AGENCY-004A");
+const vendor = path.join(root, "vendor/oripa/SHIPONLY-20260926");
+const retainedVendor = path.join(root, "vendor/oripa/DRAW-20260925");
 const schemaVendor = path.join(root, "vendor/oripa/MIG-063B");
-const bundleVersion = "2.0.0-alpha.40";
-const predecessorBundleVersion = "2.0.0-alpha.39";
-const publicApiVersion = "2.0.0-alpha.36";
+const bundleVersion = "2.0.0-alpha.41";
+const predecessorBundleVersion = "2.0.0-alpha.40";
+const publicApiVersion = "2.0.0-alpha.37";
 const siteSchemaVersion = "2.0.0-alpha.23";
-const sourceCommit = "dadf79f3b0b2409a57e41b10a83c7b6570ea3507";
+const sourceCommit = "e2b30805704ed5b9c3fd54492fb86f8b8549bde5";
 const expected = new Map([
+  [
+    "SHA256SUMS",
+    "fd6601d8e73abda53188d198f5a1a200bc545ca9143b67510f8bdef37a817c81"
+  ],
+  [
+    "artifact-manifest.json",
+    "b3c7d2a28c0c8332eeea90ac43876245baf4a1e4ce6b7d4f646124212d99f7ee"
+  ],
+  [
+    "oripa-storefront-client-2.0.0-alpha.41.tgz",
+    "3565505ed851df91a1ee4b9eeef1a94caae706a6b47725ef1472e5d5048f6f72"
+  ],
+  [
+    "oripa-storefront-testkit-2.0.0-alpha.41.tgz",
+    "56892eafca206e8f504144937169a7ed2974da6f14082347616abafda013bd59"
+  ],
+  [
+    "public.openapi.json",
+    "2ef9d4d085ad29e4073f6e963d93b68b9e1ecfd8000dc84a330a8a016f30be4b"
+  ]
+]);
+const retainedExpected = new Map([
   [
     "SHA256SUMS",
     "0388b497e2f5e559de599949996cb1b1f1a22fb35e8f39f8e5fbf7a9ecce398b"
@@ -36,35 +58,13 @@ const expected = new Map([
     "b469064b322d99b125995031aadfe765907651e014c003ccc82997a91843cd23"
   ]
 ]);
-const retainedExpected = new Map([
-  [
-    "SHA256SUMS",
-    "bd7ba747a39b7776df089f3180c6a71f77149aa54eb706bf5b464cc5d1c8d34d"
-  ],
-  [
-    "artifact-manifest.json",
-    "101ec49daf4e30bcd2fecd10e3314d96604bd86ea0f6029de4b5fc2bf0a39292"
-  ],
-  [
-    "oripa-storefront-client-2.0.0-alpha.36.tgz",
-    "1f1b096c5e807ea89d1e316755c5f51d80a8aab7fb9597a775e20c2e7a3c84b9"
-  ],
-  [
-    "oripa-storefront-testkit-2.0.0-alpha.36.tgz",
-    "9b8a4b41a5b60efc6e6869ac9b9ecfea8a36119fff3244662ce83ead3eae4a82"
-  ],
-  [
-    "public.openapi.json",
-    "18233166690c6433582f3528f09e329d7cd0ea5c62d14e86faccbc8072810d9a"
-  ]
-]);
 const publishedPackages = new Map([
   ["@oripa/storefront-client", {
-    file: "oripa-storefront-client-2.0.0-alpha.40.tgz",
+    file: "oripa-storefront-client-2.0.0-alpha.41.tgz",
     version: bundleVersion,
   }],
   ["@oripa/storefront-testkit", {
-    file: "oripa-storefront-testkit-2.0.0-alpha.40.tgz",
+    file: "oripa-storefront-testkit-2.0.0-alpha.41.tgz",
     version: bundleVersion,
   }],
 ]);
@@ -91,12 +91,12 @@ for (const [file, digest] of expected) {
   if (sha256(path.join(vendor, file)) !== digest) throw new Error(`Artifact digest mismatch: ${file}`);
 }
 for (const [file, digest] of retainedExpected) {
-  if (sha256(path.join(retainedVendor, file)) !== digest) throw new Error(`Retained alpha.36 digest mismatch: ${file}`);
+  if (sha256(path.join(retainedVendor, file)) !== digest) throw new Error(`Retained alpha.40 digest mismatch: ${file}`);
 }
 const retainedInventory = readdirSync(retainedVendor).sort();
 const expectedRetainedInventory = [...retainedExpected.keys(), "PROVENANCE.md"].sort();
 if (JSON.stringify(retainedInventory) !== JSON.stringify(expectedRetainedInventory)) {
-  throw new Error("Retained alpha.36 inventory mismatch");
+  throw new Error("Retained alpha.40 inventory mismatch");
 }
 const inventory = readdirSync(vendor).sort();
 const expectedInventory = [...expected.keys(), "PROVENANCE.md"].sort();
@@ -115,8 +115,8 @@ const sums = new Map(
     }),
 );
 for (const file of [
-  "oripa-storefront-client-2.0.0-alpha.40.tgz",
-  "oripa-storefront-testkit-2.0.0-alpha.40.tgz",
+  "oripa-storefront-client-2.0.0-alpha.41.tgz",
+  "oripa-storefront-testkit-2.0.0-alpha.41.tgz",
   "public.openapi.json",
 ]) {
   if (sums.get(file) !== expected.get(file)) throw new Error(`SHA256SUMS mismatch: ${file}`);
@@ -124,7 +124,7 @@ for (const file of [
 if (sums.size !== 3) throw new Error("SHA256SUMS entry set is invalid");
 
 const manifest = JSON.parse(readFileSync(path.join(vendor, "artifact-manifest.json"), "utf8"));
-if (manifest.task_id !== "DRAW-20260925" || manifest.source_commit !== sourceCommit) {
+if (manifest.task_id !== "SHIPONLY-20260926" || manifest.source_commit !== sourceCommit) {
   throw new Error("Artifact provenance mismatch");
 }
 if (manifest.bundle?.version !== bundleVersion || manifest.bundle?.predecessor !== predecessorBundleVersion ||
@@ -157,7 +157,7 @@ if (schemaEntry?.disposition !== "referenced" || schemaEntry.file !== undefined 
 if (manifestPackages.size !== 3 || manifest.packages?.length !== 3) throw new Error("Package manifest is incomplete");
 
 const provenance = readFileSync(path.join(vendor, "PROVENANCE.md"), "utf8");
-for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "DRAW-20260925", "36089413205", "10845475225", ...expected.values(), referencedSiteSchema.sha256]) {
+for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "SHIPONLY-20260926", "36223277643", "10900150259", "6d4cf321249d46145f22ce9551ba709a51dd59453ccbe0bd5004d0782d2dfb50", ...expected.values(), referencedSiteSchema.sha256]) {
   if (!provenance.includes(value)) throw new Error(`Artifact provenance is incomplete: ${value}`);
 }
 if (/\/(?:var\/(?:www|lib)|home)\//.test(provenance)) {
@@ -600,6 +600,23 @@ if (gachaDetailSchema?.properties?.prizes?.items?.$ref !== "#/components/schemas
   throw new Error("Canonical Prize image, quantity and Rank lineup contract mismatch");
 }
 
+for (const schemaName of ["GachaLineupPrize", "UserPrize"]) {
+  const schema = openApi.components?.schemas?.[schemaName];
+  if (schema?.properties?.shipping_only?.type !== "boolean") {
+    throw new Error(`Shipping-only snapshot contract missing: ${schemaName}`);
+  }
+  const declaration = generatedTypes.split(`${schemaName}: {`)[1]?.split("\n        };")[0];
+  if (!declaration?.includes("shipping_only?: boolean;")) {
+    throw new Error(`Generated shipping-only field missing: ${schemaName}`);
+  }
+}
+if (!openApi.components?.schemas?.UserPrizeActionUnavailableReason?.enum?.includes("shipping_only") ||
+    !generatedTypes.includes('"exchange_points_unavailable" | "shipping_only"') ||
+    !testkitFixtures.includes("PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE") ||
+    !testkitFixtures.includes("readonly shipping_only: true;")) {
+  throw new Error("Shipping-only action reason or Testkit fixture missing");
+}
+
 const drawResponseSchema = openApi.components?.schemas?.DrawResponse;
 const drawPresentationSchema = openApi.components?.schemas?.DrawPresentation;
 if (drawResponseSchema?.properties?.results?.maxItems !== 1000 ||
@@ -644,8 +661,8 @@ for (const content of [packageJsonText, lockfileText]) {
     throw new Error("Server-specific file dependency");
   }
   for (const required of [
-    "vendor/oripa/DRAW-20260925/oripa-storefront-client-2.0.0-alpha.40.tgz",
-    "vendor/oripa/DRAW-20260925/oripa-storefront-testkit-2.0.0-alpha.40.tgz",
+    "vendor/oripa/SHIPONLY-20260926/oripa-storefront-client-2.0.0-alpha.41.tgz",
+    "vendor/oripa/SHIPONLY-20260926/oripa-storefront-testkit-2.0.0-alpha.41.tgz",
     "vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
   ]) {
     if (!content.includes(required)) throw new Error(`Canonical package pin is missing: ${required}`);
@@ -657,6 +674,8 @@ if (JSON.parse(packageJsonText).dependencies?.["@fincode/js"] !== "1.1.0" ||
   throw new Error("Canonical fincode SDK dependency is not exactly pinned");
 }
 for (const obsolete of [
+  "oripa-storefront-client-2.0.0-alpha.40.tgz",
+  "oripa-storefront-testkit-2.0.0-alpha.40.tgz",
   "oripa-storefront-client-2.0.0-alpha.36.tgz",
   "oripa-storefront-testkit-2.0.0-alpha.36.tgz",
   "oripa-storefront-client-2.0.0-alpha.35.tgz",

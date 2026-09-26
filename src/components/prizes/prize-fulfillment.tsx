@@ -18,7 +18,7 @@ import {
   type ShippingRequestSummary,
   type UserPrize,
 } from "@/lib/platform";
-export type FulfillmentAction = "point_exchange" | "shipping";
+import { actionablePrizes, type FulfillmentAction } from "./prize-actions";
 
 interface FulfillmentDialogProps {
   readonly action: FulfillmentAction | null;
@@ -64,10 +64,11 @@ export function PrizeFulfillmentDialog({
     return presented;
   }, [onSmsVerificationRequired]);
 
-  const prizeIds = useMemo(() => selectedItems.map((item) => item.id), [selectedItems]);
+  const actionItems = useMemo(() => action ? actionablePrizes(selectedItems, action) : [], [action, selectedItems]);
+  const prizeIds = useMemo(() => actionItems.map((item) => item.id), [actionItems]);
   const exchangeEstimate = useMemo(
-    () => selectedItems.reduce((total, item) => total + item.exchange_points, 0),
-    [selectedItems],
+    () => actionItems.reduce((total, item) => total + item.exchange_points, 0),
+    [actionItems],
   );
 
   async function refreshAddresses(preferredId?: string) {
@@ -133,7 +134,7 @@ export function PrizeFulfillmentDialog({
   }
 
   async function exchange() {
-    if (submittingRef.current) return;
+    if (prizeIds.length === 0 || submittingRef.current) return;
     const key = pendingExchange.current ?? createFulfillmentIdempotencyKey();
     pendingExchange.current = key;
     submittingRef.current = true;
@@ -157,7 +158,7 @@ export function PrizeFulfillmentDialog({
   }
 
   async function ship() {
-    if (!selectedAddressId || submittingRef.current) return;
+    if (prizeIds.length === 0 || !selectedAddressId || submittingRef.current) return;
     const key = pendingShipping.current ?? createFulfillmentIdempotencyKey();
     pendingShipping.current = key;
     submittingRef.current = true;
@@ -262,7 +263,7 @@ export function PrizeFulfillmentDialog({
       <section aria-labelledby={titleId} aria-modal="true" className="dialog-card fulfillment-dialog__card" role="dialog">
         <p className="dialog-card__eyebrow">FULFILLMENT</p>
         <h2 id={titleId}>{action === "shipping" ? "発送内容を確認" : "コイン交換を確認"}</h2>
-        <p>選択した景品: {number.format(selectedItems.length)}件</p>
+        <p>選択した景品: {number.format(actionItems.length)}件</p>
 
         {success ? (
           <div className="fulfillment-dialog__success" role="status">
@@ -319,7 +320,7 @@ export function PrizeFulfillmentDialog({
             {problem && <p className="fulfillment-dialog__error" role="alert">{problem}</p>}
             <div className="dialog-card__actions">
               <button className="button button--ghost" disabled={submitting} onClick={closeDialog} type="button">キャンセル</button>
-              <button className="button button--dark" disabled={submitting || action === "shipping" && !selectedAddressId} onClick={() => void (action === "shipping" ? ship() : exchange())} type="button">
+              <button className="button button--dark" disabled={submitting || prizeIds.length === 0 || action === "shipping" && !selectedAddressId} onClick={() => void (action === "shipping" ? ship() : exchange())} type="button">
                 {submitting ? "Platformへ確認中…" : action === "shipping" ? "発送を依頼する" : "コインに交換する"}
               </button>
             </div>

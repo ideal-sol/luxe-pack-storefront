@@ -159,7 +159,9 @@ const terminologyFiles = [
 ];
 for (const file of terminologyFiles) {
   const source = readFileSync(file, "utf8");
+  // Preserve the exact Human-approved shipping-only badge text.
   const presentationSource = source
+    .replaceAll("配送のみ・ポイント交換不可", "")
     .replace('split("ポイント")', 'split("")')
     .replaceAll("price_points", "")
     .replaceAll("total_points", "")

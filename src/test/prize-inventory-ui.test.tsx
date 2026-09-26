@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
-import { PUBLIC_AUTH_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
+import { PUBLIC_AUTH_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { PrizeClientProvider } from "@/components/prizes/prize-client-provider";
@@ -111,6 +111,56 @@ function renderInventory(prizeClient: PrizeFulfillmentAdapter | null = client(),
 }
 
 describe("prize inventory UI", () => {
+  it("excludes shipping-only snapshots from exchange selection, counts, totals and payload while retaining shipping", async () => {
+    const a = prize({ id: "A", name: "通常A", exchange_points: 100, shipping_only: false });
+    const b = prize({ id: "B", name: "通常B", exchange_points: 500, shipping_only: false });
+    const c = prize({ ...PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE, id: "C", name: "配送専用C", exchange_points: 9000 });
+    const fulfillment = client({
+      listPrizes: vi.fn().mockResolvedValue(response({ items: [a, b, c], next_cursor: null })),
+      exchangePrizes: vi.fn().mockResolvedValue(response({ exchanged_count: 2, exchange_point_total: 600 })),
+    });
+    renderInventory(fulfillment);
+    expect(await screen.findByText("配送のみ・ポイント交換不可")).toBeInTheDocument();
+    const cCheckbox = screen.getByRole("checkbox", { name: "配送専用Cを選択" });
+    expect(c.allowed_actions?.selection.allowed).toBe(true);
+    fireEvent.click(cCheckbox);
+    expect(screen.queryByRole("button", { name: "コインに交換" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "発送を依頼" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "配送対象を全選択" }));
+    expect(cCheckbox).toBeChecked();
+    fireEvent.click(screen.getByRole("button", { name: "コイン交換対象を全選択" }));
+    expect(cCheckbox).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "通常Aを選択" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "通常Bを選択" })).toBeChecked();
+    // A shared selection may still include C: the mutation must filter again.
+    fireEvent.click(cCheckbox);
+    expect(cCheckbox).toBeChecked();
+    expect(screen.getByText("交換対象: 2件 ／ 配送対象: 3件")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "コインに交換" }));
+    expect(await screen.findByRole("dialog")).toHaveTextContent("選択した景品: 2件");
+    expect(screen.getByRole("dialog")).toHaveTextContent("600 コイン");
+    fireEvent.click(screen.getByRole("button", { name: "コインに交換する" }));
+    await waitFor(() => expect(fulfillment.exchangePrizes).toHaveBeenCalledWith(["A", "B"], { idempotency_key: expect.any(String) }));
+    await screen.findByText("手続きが完了しました");
+  });
+
+  it("does not grant shipping to an expired shipping-only snapshot", async () => {
+    const expired = prize({
+      ...PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE, id: "expired", name: "期限切れ配送景品",
+      allowed_actions: {
+        selection: { allowed: false, unavailable_reason: "storage_expired" },
+        shipping: { allowed: false, unavailable_reason: "storage_expired" },
+        point_exchange: { allowed: false, unavailable_reason: "shipping_only" },
+      },
+    });
+    renderInventory(client({ listPrizes: vi.fn().mockResolvedValue(response({ items: [expired], next_cursor: null })) }));
+    expect(await screen.findByRole("checkbox")).toBeDisabled();
+    expect(screen.getByText("配送のみ・ポイント交換不可")).toBeInTheDocument();
+    expect(screen.getByText("保管期限を過ぎています。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "配送対象を全選択" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "コイン交換対象を全選択" })).toBeDisabled();
+  });
+
   it("renders generated presentation, status, rank, dates, Coin values, and image fallback", async () => {
     const view = renderInventory();
     expect(await screen.findByRole("heading", { name: "両方可能な景品" })).toBeInTheDocument();
@@ -165,7 +215,7 @@ describe("prize inventory UI", () => {
     expect(view.container).not.toHaveTextContent(/ポイント|\bpt\b/i);
   });
 
-  it("selects only selection.allowed items and resets selection", async () => {
+  it("uses action-specific select-all while retaining individual selection and reset", async () => {
     renderInventory();
     const bothCheckbox = await screen.findByRole("checkbox", { name: "両方可能な景品を選択" });
     const deniedCheckbox = screen.getByRole("checkbox", { name: "選択不可の景品を選択" });
@@ -175,10 +225,11 @@ describe("prize inventory UI", () => {
     expect(screen.getByRole("button", { name: "コインに交換" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "発送を依頼" })).toBeEnabled();
 
-    fireEvent.click(screen.getByRole("button", { name: "全て選択" }));
+    fireEvent.click(screen.getByRole("button", { name: "配送対象を全選択" }));
     expect(screen.getByRole("checkbox", { name: "発送のみ可能な景品を選択" })).toBeChecked();
     expect(deniedCheckbox).not.toBeChecked();
-    expect(screen.queryByRole("button", { name: "コインに交換" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "コインに交換" })).toBeEnabled();
+    expect(screen.getByText("交換対象: 1件 ／ 配送対象: 2件")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "発送を依頼" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "リセット" }));
     expect(screen.queryByLabelText("選択した景品の操作")).not.toBeInTheDocument();
@@ -196,11 +247,13 @@ describe("prize inventory UI", () => {
     expect(fulfillment.listShippingAddresses).not.toHaveBeenCalled();
   });
 
-  it("renders no action when selected items have no Backend-common action", async () => {
+  it("offers each action for its own eligible subset", async () => {
     renderInventory(client({ listPrizes: vi.fn().mockResolvedValue(response({ items: [shippingOnly, pointOnly], next_cursor: null })) }));
-    fireEvent.click(await screen.findByRole("button", { name: "全て選択" }));
-    expect(screen.getByText("選択中の景品に共通して利用できる操作はありません。")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "発送を依頼" })).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("checkbox", { name: "発送のみ可能な景品を選択" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "コイン交換のみ可能な景品を選択" }));
+    expect(screen.getByText("交換対象: 1件 ／ 配送対象: 1件")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "発送を依頼" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "コインに交換" })).toBeEnabled();
   });
 
   it("loads the next cursor without invoking a mutation", async () => {

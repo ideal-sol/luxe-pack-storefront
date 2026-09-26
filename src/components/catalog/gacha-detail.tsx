@@ -67,6 +67,7 @@ function PrizeSections({ detail }: { readonly detail: GachaDetail }) {
                 return (
                   <div aria-label={prize.name} className="prize-rank__prize" key={prize.id}>
                     <CatalogAsset alt={asset?.alt_text ?? prize.name} fallbackLabel="PRIZE IMAGE" {...(asset?.path ? { src: asset.path } : {})} />
+                    {prize.shipping_only === true && <div className="inventory-card__badges"><span>配送のみ・ポイント交換不可</span></div>}
                     {rank.show_total_stock === true && prize.total_inventory != null && (
                       <span className="prize-rank__stock">{number.format(prize.total_inventory)}点</span>
                     )}

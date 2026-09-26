@@ -16,9 +16,9 @@ beforeEach(() => {
     mkdirSync(dirname(join(root, file)), { recursive: true });
     cpSync(file, join(root, file), { recursive: true });
   }
-  // Current package inputs pin the Human-approved alpha.40 bundle.
+  // Production approval remains alpha.40 while Preview adopts a newer bundle.
   for (const file of ["package.json", "pnpm-lock.yaml"]) {
-    cpSync(file, join(root, file));
+    cpSync(`src/test/fixtures/production-alpha40/${file}`, join(root, file));
   }
 });
 
@@ -37,6 +37,11 @@ function mutateManifest(mutation) {
 }
 
 describe("exact alpha.40 Production provenance", () => {
+  it("rejects Preview alpha.41 pins against the unchanged Production authority", () => {
+    cpSync("package.json", join(root, "package.json"));
+    expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
+  });
+
   it("rejects predecessor alpha.39 source dependency pins", () => {
     cpSync("src/test/fixtures/production-alpha39/package.json", join(root, "package.json"));
     expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
