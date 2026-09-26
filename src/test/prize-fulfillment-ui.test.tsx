@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ApiProblemError, StorefrontTransportError } from "@oripa/storefront-client";
-import { PUBLIC_SHIPPING_REQUEST_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
+import { PUBLIC_SHIPPING_REQUEST_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { PrizeFulfillmentDialog } from "@/components/prizes/prize-fulfillment";
 import type {
@@ -84,7 +84,7 @@ function fulfillmentProblem(code: string, retryable: boolean) {
   });
 }
 
-function renderDialog(action: "point_exchange" | "shipping", fulfillmentClient: PrizeFulfillmentAdapter) {
+function renderDialog(action: "point_exchange" | "shipping", fulfillmentClient: PrizeFulfillmentAdapter, selectedItems: readonly UserPrize[] = [prize]) {
   const onClose = vi.fn();
   const onReconcile = vi.fn().mockResolvedValue(undefined);
   const onSmsVerificationRequired = vi.fn();
@@ -95,13 +95,45 @@ function renderDialog(action: "point_exchange" | "shipping", fulfillmentClient: 
       onClose={onClose}
       onReconcile={onReconcile}
       onSmsVerificationRequired={onSmsVerificationRequired}
-      selectedItems={[prize]}
+      selectedItems={selectedItems}
     />,
   );
   return { onClose, onReconcile, onSmsVerificationRequired };
 }
 
 describe("prize fulfillment UI", () => {
+  it.each(["storage_expired", "payment_hold", "status_not_actionable", "exchange_points_unavailable", "shipping_only"] as const)(
+    "never submits a point exchange denied for %s even with selection allowed", async (reason) => {
+      const denied: UserPrize = { ...prize, allowed_actions: {
+        selection: { allowed: true, unavailable_reason: null },
+        shipping: { allowed: true, unavailable_reason: null },
+        point_exchange: { allowed: false, unavailable_reason: reason },
+      } };
+      const fulfillment = client();
+      renderDialog("point_exchange", fulfillment, [denied]);
+      expect(screen.getByRole("dialog")).toHaveTextContent("選択した景品: 0件");
+      expect(screen.getByRole("dialog")).toHaveTextContent("0 コイン");
+      const submit = screen.getByRole("button", { name: "コインに交換する" });
+      expect(submit).toBeDisabled();
+      fireEvent.click(submit);
+      expect(fulfillment.exchangePrizes).not.toHaveBeenCalled();
+    },
+  );
+
+  it("ships an allowed shipping-only snapshot but excludes a denied snapshot", async () => {
+    const allowed: UserPrize = { ...PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE, id: "shipping-only" };
+    const denied: UserPrize = { ...allowed, id: "held", allowed_actions: {
+      ...allowed.allowed_actions!, shipping: { allowed: false, unavailable_reason: "payment_hold" },
+    } };
+    const fulfillment = client();
+    renderDialog("shipping", fulfillment, [allowed, denied]);
+    await waitFor(() => expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
+    expect(screen.getByRole("dialog")).toHaveTextContent("選択した景品: 1件");
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
+    await waitFor(() => expect(fulfillment.createShippingRequest).toHaveBeenCalledWith(address.id, [allowed.id], { idempotency_key: expect.any(String) }));
+    await screen.findByText("手続きが完了しました");
+  });
+
   beforeEach(() => {
     refreshWallet.mockClear();
     document.addEventListener("storefront:wallet-refresh", refreshWallet);

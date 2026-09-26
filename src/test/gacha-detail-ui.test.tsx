@@ -59,6 +59,18 @@ function presentationResponse(next: GachaPresentationState) {
 }
 
 describe("gacha detail UI", () => {
+  it("labels only the canonical shipping-only lineup prize", async () => {
+    const lineup = detail.prizes![0]!;
+    const normal = { ...lineup, id: "normal", name: "通常景品", shipping_only: false };
+    const delivery = { ...lineup, id: "delivery", name: "配送専用景品", shipping_only: true };
+    renderDetail(publicClient({ getGachaBySlug: vi.fn().mockResolvedValue(response({ data: {
+      ...detail, prizes: [normal, delivery],
+    } })) }));
+    const normalCard = await screen.findByLabelText(normal.name);
+    expect(normalCard).not.toHaveTextContent("配送のみ・ポイント交換不可");
+    expect(screen.getByLabelText(delivery.name)).toHaveTextContent("配送のみ・ポイント交換不可");
+  });
+
   it("renders canonical detail fields, Rank lineup presentation, and presentation state", async () => {
     const getGachaPresentation = presentationResponse(presentation);
     renderDetail(publicClient({ getGachaPresentation }));

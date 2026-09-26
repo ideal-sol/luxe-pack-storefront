@@ -374,6 +374,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .prize-rank__prize { aspect-ratio: 1; background: var(--paper-deep); border: 1px solid var(--line); border-radius: 10px; min-width: 0; overflow: hidden; position: relative; }
 .prize-rank__prize .catalog-asset { height: 100%; }
 .prize-rank__prize .catalog-asset img { object-fit: contain; }
+.prize-rank__prize .inventory-card__badges { left: 8px; position: absolute; right: 8px; top: 8px; }
 .prize-rank__stock { background: rgb(0 0 0 / 78%); border-radius: 4px; bottom: 8px; color: white; font-size: .75rem; line-height: 1.4; padding: 3px 7px; position: absolute; right: 8px; }
 .draw-snapshot-card__copy .rank-lineup-image { height: 64px; width: 240px; }
 .payment-save-confirmation { align-items: center; background: rgba(23,22,20,.78); display: flex; inset: 0; justify-content: center; padding: 16px; position: fixed; z-index: 100; }

@@ -7,7 +7,8 @@ const addressManager = readFileSync("src/components/address/shipping-address-man
 const fulfillment = readFileSync("src/components/prizes/prize-fulfillment.tsx", "utf8");
 const problem = readFileSync("src/lib/platform/fulfillment-problem.ts", "utf8");
 const terminology = readFileSync("src/lib/presentation/coin-terminology.ts", "utf8");
-const combined = `${inventory}\n${adapter}\n${addressFields}\n${addressManager}\n${fulfillment}\n${problem}`;
+const actions = readFileSync("src/components/prizes/prize-actions.ts", "utf8");
+const combined = `${actions}\n${inventory}\n${adapter}\n${addressFields}\n${addressManager}\n${fulfillment}\n${problem}`;
 
 for (const forbidden of [
   ".display",
@@ -48,7 +49,8 @@ if (!inventory.includes("presentCoinTerminology(presentation?.name")) {
 if (!terminology.includes('value.split("ポイント").join("コイン")')) {
   throw new Error("Coin terminology helper must preserve the canonical input and derive display text only");
 }
-const userFacingSource = `${inventory}\n${fulfillment}\n${problem}`;
+// The shipping-only badge uses the exact Human-approved wording.
+const userFacingSource = `${inventory}\n${fulfillment}\n${problem}`.replaceAll("配送のみ・ポイント交換不可", "");
 if (/ポイント|\bPOINTS?\b|\d\s*pt\b/i.test(userFacingSource)) {
   throw new Error("Legacy user-facing Point terminology remains in Prize presentation");
 }

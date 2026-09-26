@@ -16,7 +16,8 @@ import {
 } from "@/lib/platform";
 import { presentCoinTerminology } from "@/lib/presentation/coin-terminology";
 import { usePrizeClient } from "./prize-client-provider";
-import { PrizeFulfillmentDialog, type FulfillmentAction } from "./prize-fulfillment";
+import { PrizeFulfillmentDialog } from "./prize-fulfillment";
+import { actionablePrizes, type FulfillmentAction } from "./prize-actions";
 
 type InventoryState =
   | { readonly status: "idle" }
@@ -53,6 +54,7 @@ const reasonLabels: Readonly<Record<UserPrizeActionUnavailableReason, string>> =
   payment_hold: "お支払い状況の確認中です。",
   status_not_actionable: "現在の状態では選択できません。",
   storage_expired: "保管期限を過ぎています。",
+  shipping_only: "配送のみ・ポイント交換不可",
 };
 
 function formatDateTime(value: string) {
@@ -104,6 +106,7 @@ function PrizeCard({
         <div className="inventory-card__badges">
           <span>{statusLabels[prize.status]}</span>
           {presentation?.rank && <span>{presentation.rank.name}</span>}
+          {prize.shipping_only === true && <span>配送のみ・ポイント交換不可</span>}
         </div>
         <h2>{name}</h2>
         <dl>
@@ -121,11 +124,12 @@ function availableBulkActions(items: readonly UserPrize[], selected: ReadonlySet
   const selectedItems = items.filter((item) => selected.has(item.id));
   if (selectedItems.length === 0) return [];
   return (["point_exchange", "shipping"] as const).filter((action) =>
-    selectedItems.every((item) => item.allowed_actions?.[action].allowed === true),
+    actionablePrizes(selectedItems, action).length > 0,
   );
 }
 
-function BulkActionTray({ actions, count, onAction, shippingChecking }: { readonly actions: readonly BulkAction[]; readonly count: number; readonly onAction: (action: BulkAction) => void; readonly shippingChecking: boolean }) {
+function BulkActionTray({ actions, items, onAction, shippingChecking }: { readonly actions: readonly BulkAction[]; readonly items: readonly UserPrize[]; readonly onAction: (action: BulkAction) => void; readonly shippingChecking: boolean }) {
+  const count = items.length;
   if (count === 0) return null;
   return (
     <aside aria-label="選択した景品の操作" className="inventory-action-tray">
@@ -134,9 +138,9 @@ function BulkActionTray({ actions, count, onAction, shippingChecking }: { readon
         <div>
           {actions.includes("point_exchange") && <button onClick={() => onAction("point_exchange")} type="button">コインに交換</button>}
           {actions.includes("shipping") && <button disabled={shippingChecking} onClick={() => onAction("shipping")} type="button">{shippingChecking ? "SMS認証を確認中…" : "発送を依頼"}</button>}
-          {actions.length === 0 && <span>選択中の景品に共通して利用できる操作はありません。</span>}
+          {actions.length === 0 && <span>選択中の景品に利用できる操作はありません。</span>}
         </div>
-        <small>操作可否と完了結果はPlatformが実行時に再検証します。</small>
+        <small>交換対象: {number.format(actionablePrizes(items, "point_exchange").length)}件 ／ 配送対象: {number.format(actionablePrizes(items, "shipping").length)}件</small>
       </div>
     </aside>
   );
@@ -167,9 +171,6 @@ export function PrizeInventory() {
     return () => { active = false; };
   }, [client, requestKey, sessionUserId]);
 
-  const selectableIds = useMemo(() => state.status === "ready"
-    ? state.items.filter((item) => item.allowed_actions?.selection.allowed === true).map((item) => item.id)
-    : [], [state]);
   const actions = useMemo(() => state.status === "ready"
     ? availableBulkActions(state.items, selected)
     : [], [selected, state]);
@@ -266,13 +267,14 @@ export function PrizeInventory() {
           <h2 id="inventory-heading">保有景品</h2>
         </div>
         <div className="inventory__selection-actions">
-          <button
-            disabled={selectableIds.length === 0 || selectableIds.every((id) => selected.has(id))}
-            onClick={() => setSelected(new Set(selectableIds))}
-            type="button"
-          >
-            全て選択
-          </button>
+          {(["point_exchange", "shipping"] as const).map((action) => {
+            const ids = actionablePrizes(state.items, action).map((item) => item.id);
+            return (
+              <button disabled={ids.length === 0} key={action} onClick={() => setSelected(new Set(ids))} type="button">
+                {action === "point_exchange" ? "コイン交換対象を全選択" : "配送対象を全選択"}
+              </button>
+            );
+          })}
           <button disabled={selected.size === 0} onClick={() => setSelected(new Set())} type="button">リセット</button>
         </div>
       </div>
@@ -298,7 +300,7 @@ export function PrizeInventory() {
           {state.loadingMore ? "読み込み中" : "さらに表示"}
         </button>
       )}
-      <BulkActionTray actions={actions} count={selected.size} onAction={(action) => void startFulfillment(action)} shippingChecking={shippingChecking} />
+      <BulkActionTray actions={actions} items={selectedItems} onAction={(action) => void startFulfillment(action)} shippingChecking={shippingChecking} />
       {client && (
         <PrizeFulfillmentDialog
           action={fulfillmentAction}
