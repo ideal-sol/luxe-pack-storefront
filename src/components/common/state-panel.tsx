@@ -35,7 +35,7 @@ function StatePanel({
 export function EmptyState() {
   return (
     <StatePanel
-      description="表示できる情報はまだありません。Platform接続後にここへ反映されます。"
+      description="表示できる情報はまだありません。"
       eyebrow="EMPTY"
       title="準備中です"
     />

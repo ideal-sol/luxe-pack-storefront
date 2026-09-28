@@ -278,7 +278,7 @@ export function PrizeInventory() {
           <button disabled={selected.size === 0} onClick={() => setSelected(new Set())} type="button">リセット</button>
         </div>
       </div>
-      <p className="inventory__status-note">状態はPlatformから返された値を項目ごとに表示しています。</p>
+      <p className="inventory__status-note">各景品の状態は、最新の受付状況を表示しています。</p>
       <div className="inventory__list">
         {state.items.map((prize) => (
           <PrizeCard

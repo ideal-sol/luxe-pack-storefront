@@ -1,6 +1,6 @@
 /*
  * オリポケ ブランドテーマ
- * デザイン納品物（2026-09-28「オリポケ_サイトデザイン_開発用」の _共通.css／00_トップ.html）の
+ * デザイン納品物（oripoke-design-20260928 の pages/common.css を正とする。トップ固有の表現は top.html）の
  * 色・書体・部品形状を、既存の画面構造（globals.css）の上に重ねる。
  * 業務判断・表示可否・文言の意味は変更しない。見た目のみを担当する。
  */
@@ -29,7 +29,7 @@
   --radius-card: 14px;
   --radius-control: 10px;
   --focus-ring: 3px solid rgba(0, 190, 177, .45);
-  --font-sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", YuGothic, Meiryo, sans-serif;
+  --font-sans: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
   --button-primary: linear-gradient(180deg, var(--teal-lt), var(--teal));
   --button-primary-shadow: 0 3px 0 #009085, 0 6px 16px rgba(0, 190, 177, .32);
   --button-accent: linear-gradient(180deg, #ffdc7a, var(--yellow));
@@ -132,7 +132,7 @@ body {
 /* ---------- ボタン ---------- */
 .button {
   border-radius: var(--radius-control);
-  font-size: .9rem;
+  font-size: 15px;
   font-weight: 900;
   letter-spacing: .02em;
   text-transform: none;
@@ -158,19 +158,20 @@ body {
   border-bottom: 3px solid var(--teal);
   box-shadow: 0 3px 14px rgba(0, 190, 177, .16);
 }
-.site-header__main { height: 60px; }
-.wordmark { gap: 8px; }
+.site-header__main { gap: 10px; height: 64px; }
+.wordmark { flex-shrink: 0; gap: 8px; white-space: nowrap; }
 .wordmark__mark { display: block; height: 30px; width: auto; }
 .wordmark__name,
 .wordmark strong {
   color: var(--teal);
-  font-size: 1.45rem;
+  font-size: 1.3rem;
   font-weight: 900;
   letter-spacing: .02em;
   line-height: 1;
+  white-space: nowrap;
 }
-.site-header__nav { gap: 22px; }
-.site-header__nav > a:not(.button) { color: var(--ink); font-size: .88rem; font-weight: 700; position: relative; }
+.site-header__nav { gap: 24px; }
+.site-header__nav > a:not(.button) { color: var(--ink); font-size: 14px; font-weight: 700; position: relative; }
 .site-header__nav > a:not(.button)::after {
   background: var(--yellow);
   border-radius: 2px;
@@ -266,7 +267,7 @@ body {
 }
 .home-hero h1 {
   color: var(--white);
-  font-size: clamp(1.75rem, 7vw, 3.25rem);
+  font-size: 28px;
   font-weight: 900;
   letter-spacing: .01em;
   line-height: 1.24;
@@ -314,7 +315,7 @@ body {
   white-space: nowrap;
   width: max-content;
 }
-.home-hero__ribbon-track li { color: var(--ink); font-size: .82rem; font-weight: 900; padding: 0 24px; }
+.home-hero__ribbon-track li { color: var(--ink); font-size: 12px; font-weight: 900; padding: 0 14px; }
 .home-hero__ribbon-track li::before { content: "◆ "; }
 @keyframes oripoke-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
@@ -380,7 +381,7 @@ body {
 .gacha-card__category { background: var(--button-accent); color: var(--ink); font-size: .62rem; left: 10px; top: 10px; bottom: auto; }
 .gacha-card__body { display: flex; flex: 1; flex-direction: column; padding: 14px 15px 15px; }
 .gacha-card__tags span { color: var(--teal-dd); font-size: .66rem; }
-.gacha-card h3 { font-size: 1rem; font-weight: 900; line-height: 1.5; margin: 6px 0 10px; }
+.gacha-card h3 { font-size: 16px; font-weight: 900; line-height: 1.5; margin: 6px 0 10px; }
 .gacha-card__presentation span { font-size: .66rem; }
 .gacha-card__presentation .gacha-card__sale-state { background: var(--paper-deep); color: var(--teal-dd); font-weight: 800; }
 .gacha-card__meta { border-top: 0; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr)); padding-top: 0; }
@@ -390,9 +391,9 @@ body {
   border-radius: 12px;
   padding: 8px 11px;
 }
-.gacha-card__meta p span { color: var(--muted); font-size: .66rem; font-weight: 800; order: -1; }
+.gacha-card__meta p span { color: var(--muted); font-size: 12px; font-weight: 800; order: -1; }
 .gacha-card__meta p:first-child strong,
-.gacha-card__meta p:not(:first-child) strong { color: var(--ink); font-size: 1.3rem; font-weight: 900; line-height: 1.15; }
+.gacha-card__meta p:not(:first-child) strong { color: var(--ink); font-size: 19px; font-weight: 900; line-height: 1.15; }
 .gacha-card__meta p:not(:first-child) { align-items: start; }
 .gacha-card__meta p small { font-size: .7rem; font-weight: 800; }
 .gacha-card__progress {
@@ -410,7 +411,7 @@ body {
   box-shadow: 0 4px 0 #009085, 0 8px 20px rgba(0, 190, 177, .32);
   color: var(--white);
   display: block;
-  font-size: .95rem;
+  font-size: 15px;
   font-weight: 900;
   margin-top: 14px;
   padding: 12px 0;
@@ -435,7 +436,7 @@ body {
   padding: 26px calc(50vw - 50% + 0px) 28px;
 }
 .page-title__eyebrow { color: var(--gold-lt); }
-.page-title h1 { color: var(--white); font-size: clamp(1.5rem, 5vw, 1.75rem); line-height: 1.35; }
+.page-title h1 { color: var(--white); font-size: 22px; font-weight: 900; line-height: 1.35; }
 .page-title__description { color: rgba(255, 255, 255, .88); font-size: .8rem; margin-top: 8px; }
 
 /* ---------- 状態表示・フォーム ---------- */
@@ -490,9 +491,16 @@ body {
 .inventory-action-tray button { background: var(--button-accent); border-radius: 10px; color: var(--ink); }
 
 /* ---------- コイン購入 ---------- */
-.point-product-card { border: 2px solid var(--line); box-shadow: 0 5px 14px rgba(23, 58, 60, .08); }
+.point-product-card { border: 3px solid var(--teal); border-radius: 18px; box-shadow: 0 8px 22px rgba(0, 190, 177, .2); }
 .point-product-card__grant { color: var(--ink); }
-.point-product-card__grant strong { font-size: 2.2rem; }
+.point-product-card__grant strong {
+  background: linear-gradient(180deg, var(--teal-lt), var(--teal-dd));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: 34px;
+  font-weight: 900;
+}
 .point-product-card__grant span { color: var(--teal-dd); }
 .point-product-card__badge { color: var(--teal-dd); }
 .point-product-card__limited-bonus { background: #fff8e1; border-left-color: var(--gold); }
@@ -516,48 +524,147 @@ body {
 .mypage-shortcuts small, .mypage-chevron { color: var(--teal-dd); }
 
 /* ---------- フッター・モバイルナビ ---------- */
-.site-footer { background: linear-gradient(160deg, #173a3c, #0e2a2c); color: rgba(255, 255, 255, .85); }
+.site-footer { background: linear-gradient(160deg, #173a3c, #0e2a2c); color: #d5e8e8; padding-block: 28px 22px; }
 .site-footer__brand .wordmark__mark { height: 34px; width: auto; }
-.site-footer__brand strong { color: var(--white); font-size: 1.3rem; }
-.site-footer__brand p { color: rgba(255, 255, 255, .72); font-size: .74rem; line-height: 1.8; max-width: 420px; }
-.site-footer h2 { color: var(--yellow); font-size: .78rem; letter-spacing: .06em; text-transform: none; }
-.site-footer__grid a { color: rgba(255, 255, 255, .9); }
-.site-footer__bottom { color: rgba(255, 255, 255, .6); font-size: .66rem; letter-spacing: .04em; }
+.site-footer__brand strong { color: var(--white); font-size: 24px; letter-spacing: .06em; }
+.site-footer__brand p { color: #b6d3d3; font-size: 12.5px; font-weight: 600; line-height: 1.9; max-width: 420px; }
+.site-footer h2 { color: var(--yellow); font-size: 13px; font-weight: 900; letter-spacing: .04em; text-transform: none; }
+.site-footer__grid a { color: #d5e8e8; font-size: 12.5px; font-weight: 600; }
+.site-footer__bottom { border-top-color: #2e5658; color: #8fb0b0; font-size: 11.5px; font-weight: 600; letter-spacing: .02em; }
 .mobile-navigation { background: rgba(255, 255, 255, .98); border-top: 2px solid var(--teal); }
 .mobile-navigation a { color: var(--muted); }
 .mobile-navigation a[aria-current="page"] { color: var(--teal-dd); font-weight: 800; }
 
-/* ---------- レスポンシブ ---------- */
-@media (min-width: 600px) {
+/* フォーカス枠を旧テーマの茶色からブランドのティールへ */
+.form-field input:focus,
+.form-field textarea:focus,
+.home-banner-carousel:focus-visible,
+.home-banner-carousel__controls button:focus-visible,
+.catalog-tabs button:focus-visible,
+.content-notice-list > a:focus-visible,
+.content-document__back:focus-visible,
+.safe-content a:focus-visible,
+.content-breadcrumb a:focus-visible,
+.gacha-detail__breadcrumb a:focus-visible,
+.gacha-draw-tray button:focus-visible,
+.gacha-notices summary:focus-visible,
+.payment-method-row input:focus-visible,
+.payment-card-delete:focus-visible,
+.payment-card-add:focus-visible,
+.payment-purchase-button:focus-visible,
+.payment-history-tab:focus-visible,
+.payment-history-row:focus-visible,
+.payment-history-detail__back:focus-visible,
+.payment-history-detail__resume:focus-visible { outline-color: rgba(0, 190, 177, .45); }
+
+/* ---------- スマートフォン（〜780px）の組み替え ---------- */
+/* 見出し：英字の小見出しと見出しを縦に積む（横並びだと左右に離れて読みにくい） */
+@media (max-width: 780px) {
+  .section-heading { align-items: flex-start; flex-direction: column; gap: 6px; padding-bottom: 16px; }
+  .section-heading > a { align-self: flex-end; }
+}
+/* ヘッダー：ロゴを折り返さず、右側は操作ボタンだけにする（マイページは下部ナビにある） */
+.site-header__mobile-account { flex-shrink: 1; font-size: 12px; gap: 8px; min-width: 0; white-space: nowrap; }
+.site-header__mobile-account a[href="/register"] {
+  background: var(--button-primary);
+  border-radius: 9px;
+  box-shadow: 0 3px 0 #009085, 0 5px 14px rgba(0, 190, 177, .32);
+  color: var(--white);
+  font-weight: 800;
+  min-height: 36px;
+  padding: 0 13px;
+}
+.site-header__mobile-account .site-header__login {
+  border: 2px solid var(--teal);
+  border-radius: 9px;
+  color: var(--teal-dd);
+  font-weight: 800;
+  min-height: 36px;
+  padding: 0 11px;
+}
+.site-header__mobile-account a[href="/mypage"] { display: none; }
+.site-header__mobile-account button {
+  border: 2px solid var(--line);
+  border-radius: 9px;
+  color: var(--teal-dd);
+  font-weight: 800;
+  min-height: 36px;
+  padding: 0 10px;
+}
+.site-header__point--mobile { min-height: 36px; }
+@media (max-width: 360px) {
+  .wordmark__name, .wordmark strong { font-size: 1.1rem; }
+  .wordmark__mark { height: 26px; }
+  .site-header__mobile-account .site-header__login { display: none; }
+}
+/* 保有景品：一括選択ボタンをチップ状にし、選択欄を見やすくする */
+.inventory__selection-actions { flex-wrap: wrap; }
+.inventory__selection-actions button {
+  background: var(--white);
+  border: 2px solid #cfebe8;
+  border-radius: 999px;
+  color: var(--teal-dd);
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 40px;
+  padding: 6px 14px;
+}
+.inventory-card__select input:enabled + span { border: 2px solid var(--teal); }
+.inventory__selection-actions button:focus-visible,
+.inventory-card__select input:focus-visible + span,
+.inventory-action-tray button:focus-visible { outline-color: rgba(0, 190, 177, .45); }
+
+/* ---------- 画面幅ごとの調整（デザインの切り替え幅 600／780／980／1180px に合わせる） ---------- */
+.page-container { max-width: 1180px; padding-inline: 14px; }
+@media (min-width: 601px) {
+  .page-container { padding-inline: 20px; }
+  .gacha-grid { gap: 24px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .home-hero__actions { flex-direction: row; justify-content: center; }
-  .home-hero__badge { font-size: .88rem; padding: 8px 22px; }
+  .home-hero__badge { font-size: 15px; padding: 8px 22px; }
+  .home-hero__ribbon-track li { font-size: 14px; padding: 0 24px; }
+  .home-hero h1 { font-size: 34px; }
   .home-hero__character img { height: 150px; }
   .home-hero__character .home-hero__dog { height: 92px; }
+  .home-hero__cta { font-size: 15px; padding: 13px 22px; }
+  .page-title h1 { font-size: 26px; }
+  .gacha-card__meta p:not(:first-child) strong { font-size: 21px; }
+  .point-product-card__grant strong { font-size: 44px; }
+  .site-footer { padding-block: 36px 26px; }
 }
 @media (min-width: 720px) {
-  .site-header__main { height: 76px; }
-  .wordmark__mark { height: 38px; }
-  .wordmark__name, .wordmark strong { font-size: 1.75rem; }
-  .gacha-grid { gap: 24px; }
+  .site-header__main { height: 74px; }
+  .wordmark__mark { height: 36px; }
+  .wordmark__name, .wordmark strong { font-size: 1.6rem; }
   .page-title, .auth-page .page-title { padding-block: 30px 32px; }
-  .page-title h1 { font-size: 1.75rem; }
+}
+@media (min-width: 781px) {
+  .home-hero__lead { font-size: 16px; }
+  .home-hero h1 { font-size: 38px; }
+  .home-hero__character img { height: 158px; }
+  .home-hero__character .home-hero__dog { height: 96px; }
+  .home-hero__cta { font-size: 17px; padding: 15px 30px; }
   .gacha-detail__hero { align-items: start; gap: 24px; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); padding: 18px; }
   .gacha-detail__visual { border-radius: 12px; overflow: hidden; }
   .gacha-detail__summary { padding: 4px 4px 8px; }
 }
-@media (min-width: 980px) {
+@media (min-width: 981px) {
+  .site-header__main { height: 88px; }
+  .wordmark__mark { height: 44px; }
+  .wordmark__name, .wordmark strong { font-size: 1.9rem; }
+  .gacha-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .home-hero__inner { flex-wrap: nowrap; gap: 20px; justify-content: space-between; padding-top: 34px; }
   .home-hero__copy { flex: 1; order: 0; padding-bottom: 52px; }
-  .home-hero__lead { font-size: 1rem; }
   .home-hero__lead-break { display: inline; }
+  .home-hero h1 { font-size: 44px; }
+  .home-hero__character img { height: 182px; }
+  .home-hero__character--left img { height: 190px; }
+  .home-hero__character .home-hero__dog { height: 116px; }
+}
+@media (min-width: 1181px) {
+  .home-hero h1 { font-size: 52px; }
   .home-hero__character img { height: 212px; }
   .home-hero__character--left img { height: 222px; }
   .home-hero__character .home-hero__dog { height: 134px; }
-  .home-hero__cta { font-size: 1.05rem; padding: 15px 30px; }
-}
-@media (min-width: 1100px) {
-  .gacha-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .home-content, .catalog-page, .gacha-detail-page { max-width: 1220px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .home-hero__ribbon-track { animation: none; }

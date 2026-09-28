@@ -1473,3 +1473,26 @@ application of Platform migrations `000069`／`000070`.
   1280/390 px screens with a local mock of the Public API: no horizontal overflow.
 - Not run: Preview Runtime Acceptance on test.luxe-pack.biz, GitHub Required
   Checks, fixed-head self-review. Production Activation: NOT RUN.
+
+## SITE-DESIGN-002 — オリポケ design package update (Noto Sans JP, breakpoints, mobile)
+
+- Source: client package `oripoke-design-20260928` (`pages/common.css` is the
+  source of truth; top page values are identical to it). Client confirmed that
+  product behaviour, copy and wording follow the existing system.
+- Font: Noto Sans JP (variable 100–900, OFL-1.1) is served from
+  `public/fonts/noto-sans-jp/` via `src/styles/font-noto-sans-jp.css`
+  (unicode-range subsets, loaded before `globals.css`). No external font host,
+  no `next/font/google` build-time fetch, no new dependency.
+- Layout values aligned to `common.css`: content width 1180 px with 20/14 px
+  gutters, breakpoints 600/780/980/1180 px (gacha grid 1/2/3 columns, header
+  74/88 px, hero and heading sizes per step), page title 26 px, fact values
+  21/19 px, button 15 px, footer colours and sizes, coin product cards.
+- Mobile: header keeps the wordmark on one line and shows register/login (or
+  Coin balance/logout) as compact buttons; the My Page link stays in Mobile
+  Navigation. Section headings stack below 780 px. Inventory bulk-selection
+  buttons become chips. Focus outlines use the brand teal.
+- Branding: page metadata, register eyebrow, notices and My Page support copy
+  use `NEXT_PUBLIC_APP_NAME` instead of a fixed "OripaZ"; customer-facing copy no
+  longer mentions "Platform"/"Storefront".
+- Unchanged: routes and the Header/Footer navigation set confirmed in #115,
+  Coin terminology, Platform artifacts, sale/eligibility/Draw/Session/Prize logic.

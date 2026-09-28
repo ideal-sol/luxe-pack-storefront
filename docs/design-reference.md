@@ -131,16 +131,20 @@ sale, eligibility, Draw, Session, or Prize action contract.
 
 ## SITE-DESIGN-001 オリポケ brand theme
 
-The customer-delivered design package「オリポケ_サイトデザイン_開発用_20260928」
-(HTML/CSS and screen images) is the canonical visual reference for this change.
+The customer-delivered design package `oripoke-design-20260928` (HTML/CSS,
+1280/390 px screen images, `spec.md`) is the canonical visual reference;
+`html-css/pages/common.css` is its source of truth.
 Its measured values are applied as a separate brand layer,
 `src/styles/theme-oripoke.css`, loaded after the structural `globals.css`:
 
 - color tokens: teal `#00BEB1` family, yellow `#FFCA37`, ink `#173A3C`, pale
   `#F2FBFA`; primary actions use the teal gradient, purchase/draw emphasis uses
   the yellow gradient;
-- one Japanese sans-serif stack (Hiragino, then Noto Sans JP / Yu Gothic /
-  Meiryo); the former serif and monospace display styles are replaced;
+- Noto Sans JP (variable 100–900, OFL-1.1) served from `public/fonts/noto-sans-jp/`
+  through `src/styles/font-noto-sans-jp.css`, with Hiragino as fallback; no
+  external font host. The former serif and monospace display styles are replaced;
+- breakpoints follow the package (600/780/980/1180 px): gacha grid 1/2/3
+  columns, content width 1180 px with 14/20 px gutters, header 64/74/88 px;
 - white Header with a teal bottom rule, brand mark image plus the
   `NEXT_PUBLIC_APP_NAME` wordmark, pill-shaped Coin balance;
 - Home adds a static main visual (`HomeHero`) with brand characters, catalog and
@@ -148,9 +152,17 @@ Its measured values are applied as a separate brand layer,
   `prefers-reduced-motion`;
 - gacha cards use boxed facts, a remaining-units bar and a decorative detail
   action (hidden from assistive technology because the image and title already
-  link to the same detail); the grid becomes three columns from 1100 px;
+  link to the same detail);
 - page titles become a full-bleed teal band; Detail, Draw result, Coin, Prize and
   My Page surfaces adopt the same tokens.
+
+The package's screens map to existing routes: ガチャ一覧 `/gachas`, ガチャ詳細
+`/gachas/[slug]`, 開封結果 `/draws/[drawRequestId]/result`, マイページ `/mypage`,
+発送依頼 `/mypage/prizes`, ポイント購入 `/points`, 会員登録 `/register`. Header and
+Footer keep the navigation set confirmed in #115; unresolved links in the package
+(FAQ, contact, login) resolve to the CMS footer pages, `/contact` and `/login`.
+Its 390 px images are the desktop CSS rendered narrow, so mobile layouts that
+break there (tables, four-column plans) use the existing stacked components.
 
 Brand images (`public/brand/`) are the client's fixed site assets only. Sample
 gacha banners and card images in the design package are not committed; catalog

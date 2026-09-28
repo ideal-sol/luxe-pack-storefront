@@ -10,7 +10,7 @@ export default async function GachasPage({
   const { category } = await searchParams;
   return (
     <PageContainer className="route-page catalog-page">
-      <PageTitle description="公開中のラインナップをカテゴリーから探せます。販売判断はPlatformの公開Contractをそのまま表示します。" eyebrow="PACK CATALOG" title="ガチャを探す" />
+      <PageTitle description="販売中の企画をカテゴリーから探せます。" eyebrow="PACK CATALOG" title="ガチャを探す" />
       <GachaCatalog {...(category ? { initialCategory: category } : {})} key={category ?? "all"} />
     </PageContainer>
   );
