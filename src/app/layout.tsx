@@ -9,6 +9,7 @@ import { SessionProvider } from "@/components/auth/session-provider";
 import { PublicClientProvider } from "@/components/catalog/public-client-provider";
 import { PointClientProvider } from "@/components/points/point-client-provider";
 import "@/styles/globals.css";
+import "@/styles/theme-oripoke.css";
 
 export const metadata: Metadata = {
   description: "OripaZ customer storefront.",
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: "light",
-  themeColor: "#161513",
+  themeColor: "#00beb1",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

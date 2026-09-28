@@ -128,3 +128,36 @@ Home, Catalog, Detail, Auth, Content, and Prize inventory surfaces:
 The convergence is presentation-only. It does not introduce a UI library, copy
 ORIPAONE assets or content, alter Luxe Pack routes, or reinterpret any Platform
 sale, eligibility, Draw, Session, or Prize action contract.
+
+## SITE-DESIGN-001 オリポケ brand theme
+
+The customer-delivered design package「オリポケ_サイトデザイン_開発用_20260928」
+(HTML/CSS and screen images) is the canonical visual reference for this change.
+Its measured values are applied as a separate brand layer,
+`src/styles/theme-oripoke.css`, loaded after the structural `globals.css`:
+
+- color tokens: teal `#00BEB1` family, yellow `#FFCA37`, ink `#173A3C`, pale
+  `#F2FBFA`; primary actions use the teal gradient, purchase/draw emphasis uses
+  the yellow gradient;
+- one Japanese sans-serif stack (Hiragino, then Noto Sans JP / Yu Gothic /
+  Meiryo); the former serif and monospace display styles are replaced;
+- white Header with a teal bottom rule, brand mark image plus the
+  `NEXT_PUBLIC_APP_NAME` wordmark, pill-shaped Coin balance;
+- Home adds a static main visual (`HomeHero`) with brand characters, catalog and
+  guide actions, and a feature ribbon whose motion stops under
+  `prefers-reduced-motion`;
+- gacha cards use boxed facts, a remaining-units bar and a decorative detail
+  action (hidden from assistive technology because the image and title already
+  link to the same detail); the grid becomes three columns from 1100 px;
+- page titles become a full-bleed teal band; Detail, Draw result, Coin, Prize and
+  My Page surfaces adopt the same tokens.
+
+Brand images (`public/brand/`) are the client's fixed site assets only. Sample
+gacha banners and card images in the design package are not committed; catalog
+images continue to come from Platform-provided paths.
+
+The theme is presentation-only. It keeps Coin terminology, routes, Platform
+sale/eligibility/Draw/Session/Prize contracts and every returned-state rule.
+Design items that need a product or Platform decision (当選実績, 排出履歴,
+automatic point prizes, age confirmation, Point/Coin wording) are not implemented
+here.

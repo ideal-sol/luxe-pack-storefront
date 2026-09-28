@@ -1458,3 +1458,18 @@ application of Platform migrations `000069`／`000070`.
   Fresh fixed-head machine-readable self-review, Required Checks, Squash Merge and
   read-only post-merge authorization evidence are recorded in the authority PR.
   Production Build dispatch, Activation and new-server operations: NOT RUN.
+
+## SITE-DESIGN-001 — オリポケ brand theme foundation
+
+- Scope: presentation only. Adds `src/styles/theme-oripoke.css` (loaded after
+  `globals.css`), `HomeHero`, brand mark/character assets under `public/brand/`,
+  a remaining-units bar and decorative detail action on gacha cards, and
+  Japanese Footer headings. Detail hero uses two columns from 720 px; list/detail
+  widen to 1220 px and three columns from 1100 px.
+- Unchanged: Platform artifacts, `@oripa/storefront-client` usage, routes, Coin
+  terminology, sale/eligibility/Draw/Session/Prize logic, ENV contract.
+- Local checks: `pnpm validate` PASS (all boundary checks, lint, typecheck,
+  51 files / 672 tests, production build). Visual check against the delivered
+  1280/390 px screens with a local mock of the Public API: no horizontal overflow.
+- Not run: Preview Runtime Acceptance on test.luxe-pack.biz, GitHub Required
+  Checks, fixed-head self-review. Production Activation: NOT RUN.

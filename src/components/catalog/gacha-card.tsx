@@ -50,6 +50,12 @@ export function GachaCard({ gacha, priority = false }: { readonly gacha: GachaSu
           </p>
           {showDrawnCount && <p aria-label={`抽選済み${gacha.drawn_count}回`}><span>抽選済み</span><strong>{points.format(gacha.drawn_count!)}</strong><small>回</small></p>}
         </div>
+        {showTotalCount && gacha.total_count > 0 && (
+          <div aria-hidden="true" className="gacha-card__progress">
+            <span style={{ width: `${Math.min(100, Math.max(0, (gacha.remaining_count / gacha.total_count) * 100))}%` }} />
+          </div>
+        )}
+        <Link aria-hidden="true" className="gacha-card__cta" href={`/gachas/${gacha.slug}`} tabIndex={-1}>詳細を見る</Link>
       </div>
     </article>
   );

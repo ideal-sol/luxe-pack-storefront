@@ -11,28 +11,29 @@ export function SiteFooter() {
     <footer className="site-footer">
       <div className="page-container site-footer__grid">
         <div className="site-footer__brand">
-          <span className="wordmark__seal" aria-hidden="true">OZ</span>
+          {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
+          <img alt="" aria-hidden="true" className="wordmark__mark" height={141} src="/brand/mark.png" width={108} />
           <div>
             <strong>{appName}</strong>
-            <p>選ぶ時間から、届く瞬間まで。</p>
+            <p>ポケモンカード専門のオンラインオリジナルパック販売サイトです。当たったカードは発送またはコイン交換をお選びいただけます。</p>
           </div>
         </div>
         <div>
-          <h2>Explore</h2>
+          <h2>ご利用案内</h2>
           {primaryNavigation.filter((item) => item.href !== "/gachas").map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
         </div>
         <div>
-          <h2>Account</h2>
+          <h2>アカウント</h2>
           {accountNavigation.slice(0, 3).map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
         </div>
         <div className="site-footer__information">
-          <h2>Information</h2>
+          <h2>サイトについて</h2>
           <FooterInformationNavigation />
         </div>
       </div>
       <div className="page-container site-footer__bottom">
         <p>© {appName}</p>
-        <p>Customer storefront foundation</p>
+        <p>ポケモンカード専門のオンラインオリパ</p>
       </div>
     </footer>
   );

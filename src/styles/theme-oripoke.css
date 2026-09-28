@@ -1,0 +1,564 @@
+/*
+ * オリポケ ブランドテーマ
+ * デザイン納品物（2026-09-28「オリポケ_サイトデザイン_開発用」の _共通.css／00_トップ.html）の
+ * 色・書体・部品形状を、既存の画面構造（globals.css）の上に重ねる。
+ * 業務判断・表示可否・文言の意味は変更しない。見た目のみを担当する。
+ */
+
+:root {
+  --teal: #00beb1;
+  --teal-lt: #12d9c7;
+  --teal-d: #31a3ac;
+  --teal-dd: #0b7f7a;
+  --yellow: #ffca37;
+  --gold: #f5a623;
+  --gold-lt: #ffe9a8;
+  --pale: #f2fbfa;
+
+  --ink: #173a3c;
+  --muted: #5c7f81;
+  --paper: #f2fbfa;
+  --paper-deep: #e6f7f5;
+  --paper-strong: #e0f1ef;
+  --white: #ffffff;
+  --bronze: #0b7f7a;
+  --bronze-light: #ffca37;
+  --line: #d9ecea;
+  --danger: #d6453d;
+  --shadow: 0 12px 30px rgba(0, 190, 177, .12);
+  --radius-card: 14px;
+  --radius-control: 10px;
+  --focus-ring: 3px solid rgba(0, 190, 177, .45);
+  --font-sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", YuGothic, Meiryo, sans-serif;
+  --button-primary: linear-gradient(180deg, var(--teal-lt), var(--teal));
+  --button-primary-shadow: 0 3px 0 #009085, 0 6px 16px rgba(0, 190, 177, .32);
+  --button-accent: linear-gradient(180deg, #ffdc7a, var(--yellow));
+  --button-accent-shadow: 0 3px 0 #d9a61c, 0 6px 16px rgba(245, 166, 35, .28);
+}
+
+body {
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: var(--gold-lt); color: var(--ink); }
+
+/* 旧テーマの明朝・等幅表現を、デザインの角ゴシックへ統一する */
+.wordmark__seal,
+.wordmark strong,
+.hero h1,
+.hero-art__pack--back span,
+.hero-art__pack--front strong,
+.quick-links__index,
+.section-heading h2,
+.notice-preview h2,
+.assurance-grid article > span,
+.assurance-grid h3,
+.page-title h1,
+.state-panel h2,
+.auth-placeholder > span,
+.verification-card h2,
+.contact-receipt h2,
+.home-banner__caption strong,
+.catalog-section-heading h2,
+.gacha-card__meta p:first-child strong,
+.catalog-asset__fallback span,
+.catalog-message h2,
+.content-notice-list__chevron,
+.content-document__header h1,
+.safe-content h2,
+.safe-content h3,
+.safe-content h4,
+.gacha-detail__summary h1,
+.gacha-section-heading h2,
+.prize-rank h3,
+.payment-save-confirmation__dialog h2,
+.gacha-draw-tray__summary p strong,
+.draw-result__header h1,
+.draw-result__summary dd,
+.draw-result__snapshots .section-heading h2,
+.draw-result__prizes .section-heading h2,
+.inventory__toolbar h2,
+.inventory-action-tray p strong,
+.fulfillment-dialog__summary strong,
+.shipping-address-manager__heading h2,
+.mypage-summary__mark,
+.mypage-summary__heading h2,
+.mypage-shortcuts strong,
+.mypage-chevron,
+.point-balance-summary h2,
+.point-category-section h2,
+.point-product-section h2,
+.point-balance-summary output,
+.point-product-card__heading h3,
+.point-product-card__grant strong,
+.point-purchase-detail__header h1,
+.point-purchase-detail__summary > header h2,
+.point-purchase-detail__conditions > header h2,
+.point-purchase-detail__facts dd strong,
+.payment-methods > legend,
+.payment-result > h1,
+.payment-unpaid-guide h1,
+.payment-history-row data,
+.payment-history-detail__section > h1,
+.payment-history-detail__section > h2,
+.point-history > header h2,
+.point-history__delta,
+.draw-history > header h2,
+.draw-history-card__heading h2,
+.draw-history-card dd,
+.line-account__copy h2,
+.sms-verification-card h2,
+.dialog-card h2,
+.site-footer__brand strong {
+  font-family: var(--font-sans);
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+.section-heading > span,
+.contact-receipt strong,
+.notice-list time,
+.catalog-browser__count,
+.content-notice-list time,
+.content-document__header time,
+.payment-history-row time,
+.point-history__list time,
+.draw-history-card time {
+  font-family: var(--font-sans);
+  letter-spacing: .02em;
+}
+
+/* ---------- ボタン ---------- */
+.button {
+  border-radius: var(--radius-control);
+  font-size: .9rem;
+  font-weight: 900;
+  letter-spacing: .02em;
+  text-transform: none;
+}
+.button--dark {
+  background: var(--button-primary);
+  box-shadow: var(--button-primary-shadow);
+  color: var(--white);
+}
+.button--dark:hover { background: linear-gradient(180deg, #2ce3d3, #00b0a4); }
+.button--accent {
+  background: var(--button-accent);
+  box-shadow: var(--button-accent-shadow);
+  color: #4a3200;
+}
+.button--line, .button--ghost { border: 2px solid var(--teal); color: var(--teal-dd); }
+.button--ghost { background: var(--white); }
+
+/* ---------- ヘッダー ---------- */
+.site-header {
+  backdrop-filter: none;
+  background: var(--white);
+  border-bottom: 3px solid var(--teal);
+  box-shadow: 0 3px 14px rgba(0, 190, 177, .16);
+}
+.site-header__main { height: 60px; }
+.wordmark { gap: 8px; }
+.wordmark__mark { display: block; height: 30px; width: auto; }
+.wordmark__name,
+.wordmark strong {
+  color: var(--teal);
+  font-size: 1.45rem;
+  font-weight: 900;
+  letter-spacing: .02em;
+  line-height: 1;
+}
+.site-header__nav { gap: 22px; }
+.site-header__nav > a:not(.button) { color: var(--ink); font-size: .88rem; font-weight: 700; position: relative; }
+.site-header__nav > a:not(.button)::after {
+  background: var(--yellow);
+  border-radius: 2px;
+  bottom: -7px;
+  content: "";
+  height: 3px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  transform: scaleX(0);
+  transition: transform .2s;
+}
+.site-header__nav > a:not(.button):hover::after { transform: scaleX(1); }
+.site-header__nav > a[href="/register"] {
+  border: 2px solid var(--teal);
+  border-radius: 9px;
+  color: var(--teal-dd);
+  font-size: .82rem;
+  font-weight: 800;
+  padding: 7px 16px;
+}
+.site-header__nav > a[href="/register"]::after { display: none; }
+.site-header__point {
+  align-items: center;
+  background: linear-gradient(180deg, var(--white), var(--pale));
+  border: 2px solid var(--teal);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 190, 177, .18);
+  color: var(--ink);
+  display: inline-flex;
+  font-size: .8rem;
+  font-weight: 800;
+  gap: 7px;
+  padding: 6px 14px;
+}
+.site-header__point::before {
+  background: radial-gradient(circle at 32% 30%, #fff0be, var(--yellow) 60%, var(--gold));
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+  content: "";
+  height: 15px;
+  width: 15px;
+}
+.site-header__point--mobile { color: var(--ink); font-size: .7rem; padding: 4px 10px; }
+.site-header__login,
+.site-header__mobile-account button { color: var(--teal-dd); }
+.site-header__mobile-account { color: var(--ink); }
+
+/* ---------- トップ：メインビジュアル ---------- */
+.home-hero {
+  background:
+    radial-gradient(1100px 380px at 14% 0%, rgba(255, 255, 255, .30), transparent 62%),
+    radial-gradient(900px 460px at 88% 96%, rgba(255, 202, 55, .34), transparent 62%),
+    linear-gradient(150deg, #0fd6c5 0%, var(--teal) 44%, var(--teal-d) 100%);
+  overflow: hidden;
+  position: relative;
+}
+.home-hero__dots {
+  background-image: radial-gradient(rgba(255, 255, 255, .24) 1.6px, transparent 1.7px);
+  background-size: 22px 22px;
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+.home-hero__inner {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding-top: 26px;
+  position: relative;
+}
+.home-hero__copy { flex: 1 0 100%; order: -1; padding-bottom: 22px; text-align: center; }
+.home-hero__character { align-items: flex-end; display: flex; gap: 10px; }
+.home-hero__character img {
+  display: block;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .28));
+  height: 124px;
+  width: auto;
+}
+.home-hero__character .home-hero__dog { height: 74px; }
+.home-hero__badge {
+  align-items: center;
+  background: var(--button-accent);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 #d9a61c, 0 6px 18px rgba(0, 0, 0, .16);
+  color: var(--ink);
+  display: inline-flex;
+  font-size: .75rem;
+  font-weight: 900;
+  margin: 0 0 16px;
+  padding: 7px 16px;
+}
+.home-hero h1 {
+  color: var(--white);
+  font-size: clamp(1.75rem, 7vw, 3.25rem);
+  font-weight: 900;
+  letter-spacing: .01em;
+  line-height: 1.24;
+  margin: 0;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, .16), 0 0 26px rgba(255, 255, 255, .45);
+}
+.home-hero h1 span {
+  background: linear-gradient(180deg, #fff0be, var(--yellow) 55%, var(--gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.home-hero__lead {
+  color: var(--white);
+  font-size: .88rem;
+  font-weight: 700;
+  line-height: 1.85;
+  margin: 14px 0 0;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, .16);
+}
+.home-hero__lead-break { display: none; }
+.home-hero__actions { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+.home-hero__cta {
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 900;
+  padding: 14px 28px;
+  text-align: center;
+}
+.home-hero__cta--primary { background: var(--button-accent); box-shadow: 0 5px 0 #d9a61c, 0 10px 24px rgba(0, 0, 0, .22); color: var(--ink); }
+.home-hero__cta--secondary { background: var(--white); box-shadow: 0 5px 0 rgba(0, 0, 0, .14), 0 10px 22px rgba(0, 0, 0, .18); color: var(--teal-dd); }
+.home-hero__ribbon {
+  background: linear-gradient(90deg, var(--yellow), var(--gold-lt), var(--yellow), var(--gold-lt), var(--yellow));
+  box-shadow: 0 3px 12px rgba(245, 166, 35, .35);
+  overflow: hidden;
+  padding: 10px 0;
+  position: relative;
+}
+.home-hero__ribbon-track {
+  animation: oripoke-marquee 26s linear infinite;
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
+  width: max-content;
+}
+.home-hero__ribbon-track li { color: var(--ink); font-size: .82rem; font-weight: 900; padding: 0 24px; }
+.home-hero__ribbon-track li::before { content: "◆ "; }
+@keyframes oripoke-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ---------- トップ：各セクション ---------- */
+.home-banners { background: linear-gradient(180deg, #e6f7f5, #f7fdfc); padding-block: 24px; }
+.home-banner { border: 3px solid rgba(255, 255, 255, .9); border-radius: 14px; box-shadow: 0 6px 18px rgba(0, 0, 0, .16); }
+.home-banner-carousel__controls > button {
+  background: linear-gradient(180deg, var(--white), #eaf7f6);
+  border: 0;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, .18);
+  color: var(--teal);
+  font-weight: 900;
+}
+.home-banner-carousel__indicators button::before { background: #bee3df; }
+.home-banner-carousel__indicators button[aria-current="true"]::before { background: linear-gradient(90deg, var(--teal), var(--teal-lt)); width: 28px; }
+.home-categories { background: var(--white); padding-block: 26px 10px; }
+.category-links { gap: 10px; }
+.category-links button,
+.home-tag-links button,
+.catalog-tabs button {
+  background: var(--white);
+  border: 2px solid #cfebe8;
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: .8rem;
+  font-weight: 800;
+  padding: 8px 16px;
+}
+.category-links button[aria-pressed="true"],
+.home-tag-links button[aria-pressed="true"],
+.catalog-tabs button[aria-pressed="true"] {
+  background: var(--button-primary);
+  border-color: transparent;
+  box-shadow: 0 2px 0 #009085;
+  color: var(--white);
+}
+.home-gachas { background: var(--white); padding-block: 14px 48px; }
+.home-notices { background: linear-gradient(180deg, #fff7e0, #fffdf6); }
+.catalog-section-heading { align-items: center; }
+.catalog-section-heading p,
+.section-heading p,
+.gacha-section-heading > p,
+.page-title__eyebrow { color: var(--teal-dd); letter-spacing: .12em; }
+.catalog-section-heading h2,
+.gacha-section-heading h2 {
+  background: linear-gradient(transparent 64%, rgba(255, 202, 55, .85) 64%, rgba(255, 202, 55, .85) 88%, transparent 88%);
+  display: inline-block;
+  font-size: clamp(1.4rem, 5vw, 2rem);
+}
+.catalog-section-heading > a { color: var(--teal-dd); }
+
+/* ---------- ガチャカード ---------- */
+.gacha-grid { gap: 20px; }
+.gacha-card {
+  border: 2px solid #d6efec;
+  border-radius: 16px;
+  box-shadow: 0 5px 14px rgba(23, 58, 60, .10);
+  display: flex;
+  flex-direction: column;
+}
+.gacha-card:hover { box-shadow: 0 10px 24px rgba(0, 190, 177, .22); }
+.gacha-card__image { aspect-ratio: 1551 / 1014; }
+.gacha-card__category { background: var(--button-accent); color: var(--ink); font-size: .62rem; left: 10px; top: 10px; bottom: auto; }
+.gacha-card__body { display: flex; flex: 1; flex-direction: column; padding: 14px 15px 15px; }
+.gacha-card__tags span { color: var(--teal-dd); font-size: .66rem; }
+.gacha-card h3 { font-size: 1rem; font-weight: 900; line-height: 1.5; margin: 6px 0 10px; }
+.gacha-card__presentation span { font-size: .66rem; }
+.gacha-card__presentation .gacha-card__sale-state { background: var(--paper-deep); color: var(--teal-dd); font-weight: 800; }
+.gacha-card__meta { border-top: 0; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr)); padding-top: 0; }
+.gacha-card__meta p {
+  background: linear-gradient(180deg, var(--white), var(--pale));
+  border: 2px solid #cfebe8;
+  border-radius: 12px;
+  padding: 8px 11px;
+}
+.gacha-card__meta p span { color: var(--muted); font-size: .66rem; font-weight: 800; order: -1; }
+.gacha-card__meta p:first-child strong,
+.gacha-card__meta p:not(:first-child) strong { color: var(--ink); font-size: 1.3rem; font-weight: 900; line-height: 1.15; }
+.gacha-card__meta p:not(:first-child) { align-items: start; }
+.gacha-card__meta p small { font-size: .7rem; font-weight: 800; }
+.gacha-card__progress {
+  background: #e0f1ef;
+  border-radius: 6px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .14);
+  height: 10px;
+  margin-top: 11px;
+  overflow: hidden;
+}
+.gacha-card__progress span { background: linear-gradient(90deg, var(--teal), var(--teal-lt)); border-radius: 6px; display: block; height: 100%; }
+.gacha-card__cta {
+  background: var(--button-primary);
+  border-radius: 12px;
+  box-shadow: 0 4px 0 #009085, 0 8px 20px rgba(0, 190, 177, .32);
+  color: var(--white);
+  display: block;
+  font-size: .95rem;
+  font-weight: 900;
+  margin-top: 14px;
+  padding: 12px 0;
+  text-align: center;
+}
+.gacha-card__meta { margin-top: auto; }
+.catalog-asset { background: linear-gradient(145deg, #e6f7f5, #bfe9e4); }
+.catalog-asset__fallback { background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, .6), transparent 48%), linear-gradient(145deg, #e6f7f5, #9fdcd5); color: var(--teal-dd); }
+
+/* ---------- ページ見出し（帯） ---------- */
+.route-page:has(> .page-title:first-child) { padding-top: 0; }
+.page-title,
+.auth-page .page-title {
+  background:
+    radial-gradient(700px 200px at 12% 0%, rgba(255, 255, 255, .25), transparent 60%),
+    linear-gradient(135deg, var(--teal), var(--teal-dd));
+  border: 0;
+  color: var(--white);
+  margin-bottom: 28px;
+  margin-inline: calc(50% - 50vw);
+  max-width: none;
+  padding: 26px calc(50vw - 50% + 0px) 28px;
+}
+.page-title__eyebrow { color: var(--gold-lt); }
+.page-title h1 { color: var(--white); font-size: clamp(1.5rem, 5vw, 1.75rem); line-height: 1.35; }
+.page-title__description { color: rgba(255, 255, 255, .88); font-size: .8rem; margin-top: 8px; }
+
+/* ---------- 状態表示・フォーム ---------- */
+.state-panel, .catalog-message, .auth-form, .verification-card, .contact-panel, .contact-receipt, .content-document {
+  border: 2px solid var(--line);
+  box-shadow: none;
+}
+.state-panel__mark, .verification-card > span, .contact-receipt > span { border-color: var(--teal); color: var(--teal); }
+.state-panel__mark span { background: var(--teal); }
+.form-field input:focus, .form-field textarea:focus { border-color: var(--teal); outline: 2px solid rgba(0, 190, 177, .2); }
+.safe-content a, .auth-form__alternate a, .auth-form__terms a { color: var(--teal-dd); }
+.safe-content h2 { border-left-color: var(--teal); }
+.loading-state__spinner, .catalog-loading > span { border-top-color: var(--teal); }
+.catalog-browser__filter-note, .contact-panel__session { background: #fff8e1; border-left-color: var(--gold); }
+
+/* ---------- ガチャ詳細 ---------- */
+.gacha-detail__hero { border: 2px solid var(--line); box-shadow: 0 12px 30px rgba(0, 190, 177, .12); }
+.gacha-detail__visual { align-self: start; aspect-ratio: 1551 / 1014; background: var(--paper-deep); width: 100%; }
+.gacha-detail__visual .catalog-asset img { object-fit: cover; }
+.gacha-detail__badges span { background: var(--button-primary); }
+.gacha-detail__badges span:first-child { background: var(--button-accent); color: var(--ink); }
+.gacha-detail__summary h1 { font-size: clamp(1.4rem, 5vw, 1.9rem); line-height: 1.4; }
+.gacha-detail__tags span { color: var(--teal-dd); }
+.gacha-detail__facts dd { font-size: .95rem; font-weight: 900; }
+.gacha-progress { background: #e0f1ef; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .14); }
+.gacha-progress > span { background: linear-gradient(90deg, var(--teal), var(--teal-lt)); }
+.gacha-description, .gacha-notices, .gacha-eligibility { border: 2px solid var(--line); }
+.gacha-eligibility { border-left: 4px solid var(--teal); }
+.prize-rank { background: var(--white); border: 2px solid var(--line); border-radius: 14px; padding: 16px; }
+.prize-rank h3 { font-size: 1.1rem; }
+.prize-rank__prize { border: 2px solid var(--line); border-radius: 8px; }
+.gacha-draw-tray { background: linear-gradient(160deg, #0e6e70, #12857f 55%, var(--teal-dd)); box-shadow: 0 -6px 20px rgba(0, 0, 0, .18); }
+.gacha-draw-tray__summary p span, .gacha-draw-tray__summary p small, .gacha-draw-tray__action small { color: #bee7e2; }
+.gacha-draw-tray__options button { border: 2px solid rgba(255, 255, 255, .5); border-radius: 10px; }
+.gacha-draw-tray__options button[aria-pressed="true"] { background: var(--button-accent); border-color: var(--yellow); color: var(--ink); }
+.gacha-progress--compact { background: rgba(255, 255, 255, .22); }
+
+/* ---------- 抽選結果 ---------- */
+.draw-result__header { background: linear-gradient(135deg, var(--teal), var(--teal-dd)); border-radius: 14px; }
+.draw-result__header > p { color: var(--gold-lt); }
+.draw-result__header span { color: rgba(255, 255, 255, .9); }
+.draw-result__summary, .draw-snapshot-card, .draw-result-card { border: 2px solid var(--line); border-radius: 12px; }
+.draw-result-card span, .draw-snapshot-card__copy span { color: var(--teal-dd); }
+
+/* ---------- 保有景品・発送 ---------- */
+.inventory-card { border: 2px solid var(--line); }
+.inventory-card--selected { border-color: var(--teal); box-shadow: 0 10px 24px rgba(0, 190, 177, .18); }
+.inventory-card__select input:checked + span { background: var(--teal); border-color: var(--teal); }
+.inventory-card__badges span { background: var(--button-primary); }
+.inventory-card__badges span + span { background: var(--paper-deep); color: var(--ink); }
+.inventory-action-tray { background: linear-gradient(160deg, #0e6e70, #12857f 55%, var(--teal-dd)); }
+.inventory-action-tray button { background: var(--button-accent); border-radius: 10px; color: var(--ink); }
+
+/* ---------- コイン購入 ---------- */
+.point-product-card { border: 2px solid var(--line); box-shadow: 0 5px 14px rgba(23, 58, 60, .08); }
+.point-product-card__grant { color: var(--ink); }
+.point-product-card__grant strong { font-size: 2.2rem; }
+.point-product-card__grant span { color: var(--teal-dd); }
+.point-product-card__badge { color: var(--teal-dd); }
+.point-product-card__limited-bonus { background: #fff8e1; border-left-color: var(--gold); }
+.point-product-card__limited-bonus > p strong { color: #9a6300; }
+.payment-method-row--selected { border-color: var(--teal); }
+
+/* ---------- コイン残高 ---------- */
+.point-balance-summary { background: linear-gradient(135deg, var(--teal), var(--teal-dd)); border: 0; }
+.point-balance-summary small,
+.point-balance-summary__loading,
+.point-balance-summary__expiry p { color: rgba(255, 255, 255, .82); }
+
+/* ---------- マイページ ---------- */
+.mypage-summary { background: linear-gradient(135deg, var(--teal), var(--teal-dd)); border: 0; }
+.mypage-summary__mark { border-color: var(--gold-lt); color: var(--gold-lt); }
+.mypage-summary__heading p { color: var(--gold-lt); }
+.mypage-summary dt { color: rgba(255, 255, 255, .78); }
+.mypage-summary dl { border-top-color: rgba(255, 255, 255, .25); }
+.mypage-shortcuts a, .mypage-menu nav { border: 2px solid var(--line); box-shadow: none; }
+.mypage-shortcuts a:hover { border-color: var(--teal); }
+.mypage-shortcuts small, .mypage-chevron { color: var(--teal-dd); }
+
+/* ---------- フッター・モバイルナビ ---------- */
+.site-footer { background: linear-gradient(160deg, #173a3c, #0e2a2c); color: rgba(255, 255, 255, .85); }
+.site-footer__brand .wordmark__mark { height: 34px; width: auto; }
+.site-footer__brand strong { color: var(--white); font-size: 1.3rem; }
+.site-footer__brand p { color: rgba(255, 255, 255, .72); font-size: .74rem; line-height: 1.8; max-width: 420px; }
+.site-footer h2 { color: var(--yellow); font-size: .78rem; letter-spacing: .06em; text-transform: none; }
+.site-footer__grid a { color: rgba(255, 255, 255, .9); }
+.site-footer__bottom { color: rgba(255, 255, 255, .6); font-size: .66rem; letter-spacing: .04em; }
+.mobile-navigation { background: rgba(255, 255, 255, .98); border-top: 2px solid var(--teal); }
+.mobile-navigation a { color: var(--muted); }
+.mobile-navigation a[aria-current="page"] { color: var(--teal-dd); font-weight: 800; }
+
+/* ---------- レスポンシブ ---------- */
+@media (min-width: 600px) {
+  .home-hero__actions { flex-direction: row; justify-content: center; }
+  .home-hero__badge { font-size: .88rem; padding: 8px 22px; }
+  .home-hero__character img { height: 150px; }
+  .home-hero__character .home-hero__dog { height: 92px; }
+}
+@media (min-width: 720px) {
+  .site-header__main { height: 76px; }
+  .wordmark__mark { height: 38px; }
+  .wordmark__name, .wordmark strong { font-size: 1.75rem; }
+  .gacha-grid { gap: 24px; }
+  .page-title, .auth-page .page-title { padding-block: 30px 32px; }
+  .page-title h1 { font-size: 1.75rem; }
+  .gacha-detail__hero { align-items: start; gap: 24px; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); padding: 18px; }
+  .gacha-detail__visual { border-radius: 12px; overflow: hidden; }
+  .gacha-detail__summary { padding: 4px 4px 8px; }
+}
+@media (min-width: 980px) {
+  .home-hero__inner { flex-wrap: nowrap; gap: 20px; justify-content: space-between; padding-top: 34px; }
+  .home-hero__copy { flex: 1; order: 0; padding-bottom: 52px; }
+  .home-hero__lead { font-size: 1rem; }
+  .home-hero__lead-break { display: inline; }
+  .home-hero__character img { height: 212px; }
+  .home-hero__character--left img { height: 222px; }
+  .home-hero__character .home-hero__dog { height: 134px; }
+  .home-hero__cta { font-size: 1.05rem; padding: 15px 30px; }
+}
+@media (min-width: 1100px) {
+  .gacha-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .home-content, .catalog-page, .gacha-detail-page { max-width: 1220px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-hero__ribbon-track { animation: none; }
+}
