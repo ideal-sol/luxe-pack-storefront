@@ -76,9 +76,13 @@ function PurchaseSummary({ product }: { readonly product: PointProduct }) {
 function PurchaseForm({
   product,
   registrationId,
+  registrationProcessing,
+  onRegistrationStopped,
 }: {
   readonly product: PointProduct;
   readonly registrationId: string | null;
+  readonly registrationProcessing: boolean;
+  readonly onRegistrationStopped: () => void;
 }) {
   const { client } = usePaymentClient();
   const cardFieldsRef = useRef<FincodeCardFieldsHandle>(null);
@@ -91,7 +95,7 @@ function PurchaseForm({
   const [cardMounted, setCardMounted] = useState(false);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [cardBusy, setCardBusy] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState(Boolean(registrationId));
   const [submissionLocked, setSubmissionLocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const registrationStartingRef = useRef(false);
@@ -317,11 +321,15 @@ function PurchaseForm({
       } catch (reason) {
         setError(presentCardRegistrationProblem(reason).message);
         setSubmissionLocked(true);
+        setSubmitting(false);
+        onRegistrationStopped();
         return;
       }
       if (!context) {
         setError(presentCardRegistrationProblem(null).message);
         setSubmissionLocked(true);
+        setSubmitting(false);
+        onRegistrationStopped();
         return;
       }
       window.history.replaceState(null, "", pointPurchaseDetailRoute(product.id));
@@ -334,6 +342,7 @@ function PurchaseForm({
           clearCardRegistrationResume(registration.id);
           setError(presentCardRegistrationProblem(null).message);
           setSubmitting(false);
+          onRegistrationStopped();
           void refreshCards().catch(() => undefined);
           return;
         }
@@ -343,6 +352,7 @@ function PurchaseForm({
         )).message);
         setSubmissionLocked(true);
         setSubmitting(false);
+        onRegistrationStopped();
       };
 
       const resume = async () => {
@@ -384,6 +394,7 @@ function PurchaseForm({
             : presentCardRegistrationProblem(reason).message);
           setSubmissionLocked(uncertain || !paymentStarting && !definitiveRegistrationFailure);
           setSubmitting(false);
+          onRegistrationStopped();
           if (paymentStarting && !uncertain) void refreshCards().catch(() => undefined);
         }
       };
@@ -393,7 +404,7 @@ function PurchaseForm({
       active = false;
       window.clearTimeout(timer);
     };
-  }, [client, navigateAfterStart, product.id, refreshCards, registrationId, startSavedCardPayment]);
+  }, [client, navigateAfterStart, onRegistrationStopped, product.id, refreshCards, registrationId, startSavedCardPayment]);
 
   const deleteCard = async (cardId: string) => {
     if (!client || cardBusy || submitting) return;
@@ -416,6 +427,8 @@ function PurchaseForm({
   );
   const disabled = !method || backendUnavailable || submitting || cardBusy || cardUnavailable || submissionLocked;
   const canSaveCard = (cardLimits?.registration_remaining ?? 0) > 0;
+
+  if (registrationProcessing) return <CatalogLoading label="処理中…" />;
 
   return (
     <section aria-labelledby="payment-method-title" className="point-purchase-detail__payment">
@@ -476,21 +489,25 @@ function ProductDetail({
   readonly registrationId: string | null;
 }) {
   const { client } = usePaymentClient();
+  // Return context signals work in progress, never canonical registration success.
+  const [stoppedRegistrationId, setStoppedRegistrationId] = useState<string | null>(null);
+  const registrationProcessing = authenticated && Boolean(client && registrationId) && stoppedRegistrationId !== registrationId;
+  const onRegistrationStopped = useCallback(() => setStoppedRegistrationId(registrationId), [registrationId]);
   const reason = product.ineligible_reason ? pointProductIneligibleReasonLabels[product.ineligible_reason] : null;
   return (
-    <article className="point-purchase-detail">
-      <header className="point-purchase-detail__header"><p>COIN PURCHASE DETAIL</p><h1>{presentCoinTerminology(product.title)}</h1></header>
+    <article aria-busy={registrationProcessing} className="point-purchase-detail">
+      {!registrationProcessing ? <header className="point-purchase-detail__header"><p>COIN PURCHASE DETAIL</p><h1>{presentCoinTerminology(product.title)}</h1></header> : null}
       {client ? <PaymentReturnAlert client={client} pid={pid} productId={product.id} /> : null}
-      <PurchaseSummary product={product} />
-      {authenticated ? <PurchaseForm product={product} registrationId={registrationId} /> : <LoginRequiredState />}
-      <section aria-labelledby="point-purchase-conditions-title" className="point-purchase-detail__conditions">
+      {!registrationProcessing ? <PurchaseSummary product={product} /> : null}
+      {authenticated ? <PurchaseForm product={product} registrationId={registrationId} registrationProcessing={registrationProcessing} onRegistrationStopped={onRegistrationStopped} /> : <LoginRequiredState />}
+      {!registrationProcessing ? <section aria-labelledby="point-purchase-conditions-title" className="point-purchase-detail__conditions">
         <header><p>PRODUCT INFORMATION</p><h2 id="point-purchase-conditions-title">商品情報</h2></header>
         <dl>
           <div><dt>対象</dt><dd>{product.audience.label}</dd></div>
           <div><dt>販売状態</dt><dd data-sale-state={product.sale_state}>{pointProductSaleStateLabels[product.sale_state]}</dd></div>
           <div><dt>購入条件</dt><dd data-eligible={product.eligible}>{product.eligible ? "購入対象です。" : reason ?? "現在購入できません。"}</dd></div>
         </dl>
-      </section>
+      </section> : null}
     </article>
   );
 }
@@ -528,7 +545,7 @@ export function PointPurchaseDetail({
         : !sessionKey || (state.status === "ready" || state.status === "error") && (state.sessionKey !== sessionKey || state.productId !== productId)
           ? { status: "loading" } : state, [client, productId, session.status, sessionKey, state]);
 
-  if (displayState.status === "loading") return <CatalogLoading label="コイン購入詳細を読み込み中" />;
+  if (displayState.status === "loading") return <CatalogLoading label={registrationId ? "処理中…" : "コイン購入詳細を読み込み中"} />;
   if (displayState.status === "configuration-unavailable") return <CatalogMessage description="この環境ではコイン商品への接続が設定されていません。" eyebrow="CONFIGURATION" title="コイン購入詳細を表示できません" />;
   if (displayState.status === "session-error") return <CatalogMessage description="Sessionを確認できませんでした。時間をおいて再度お試しください。" eyebrow="ERROR" title="コイン購入詳細を表示できません" tone="error" />;
   if (displayState.status === "error") return <CatalogMessage action={() => { setState({ status: "loading" }); setRequestKey((value) => value + 1); }} description={displayState.problem.message} eyebrow="ERROR" title="コイン商品を取得できませんでした" tone="error" />;

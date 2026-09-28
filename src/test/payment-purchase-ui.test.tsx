@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { forwardRef, StrictMode, useEffect, useImperativeHandle } from "react";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import {
   PUBLIC_AUTH_FIXTURE,
   PUBLIC_PAYMENT_CARD_CAPACITY_FIXTURES,
@@ -157,7 +157,7 @@ function renderPurchase(
     getWallet: vi.fn().mockResolvedValue({ data: PUBLIC_POINT_BALANCE_FIXTURES.positive, metadata }),
     listPointProducts: vi.fn().mockResolvedValue({ data: { data: [product] }, metadata }),
   } as unknown as PointClientAdapter;
-  const view = (
+  const view = () => (
     <SessionProvider client={auth}>
       <PointClientProvider client={points}>
         <PaymentClientProvider client={client}>
@@ -166,8 +166,9 @@ function renderPurchase(
       </PointClientProvider>
     </SessionProvider>
   );
-  render(strict ? <StrictMode>{view}</StrictMode> : view);
-  return client;
+  const tree = () => strict ? <StrictMode>{view()}</StrictMode> : view();
+  const rendered = render(tree());
+  return { ...rendered, rerenderPurchase: () => rendered.rerender(tree()) };
 }
 
 async function chooseCreditCard() {
@@ -615,6 +616,141 @@ describe("SITE-040 / SITE-048 / SITE-049 Payment purchase UI", () => {
     expect(navigation.replace).not.toHaveBeenCalled();
   });
 
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((done) => { resolve = done; });
+    return { promise, resolve };
+  }
+
+  function expectContinuousProcessing() {
+    expect(screen.getByRole("status")).toHaveTextContent("処理中…");
+    expect(screen.queryByRole("heading", { name: "購入内容" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "購入する" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "カードを保存して購入" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+  }
+
+  it("keeps return processing through delayed canonical reads and automatic Payment, including StrictMode rerenders", async () => {
+    const registration = PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.completed;
+    const status = deferred<Awaited<ReturnType<PaymentClientAdapter["getCardRegistration"]>>>();
+    const reconcile = deferred<Awaited<ReturnType<PaymentClientAdapter["reconcileCardRegistration"]>>>();
+    const purchase = deferred<Awaited<ReturnType<PaymentClientAdapter["startPayment"]>>>();
+    const client = paymentClient();
+    vi.mocked(client.getCardRegistration).mockReturnValueOnce(status.promise);
+    vi.mocked(client.reconcileCardRegistration).mockReturnValueOnce(reconcile.promise);
+    vi.mocked(client.startPayment).mockReturnValueOnce(purchase.promise);
+    const initial = renderPurchase(client);
+    await chooseCreditCard();
+    fireEvent.click(screen.getByRole("button", { name: /クレジットカードを追加/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "購入する" }));
+    fireEvent.click(screen.getByRole("button", { name: "カードを保存して購入" }));
+    await waitFor(() => expect(navigation.assign).toHaveBeenCalledExactlyOnceWith(
+      PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.requires_action.next_action.url,
+    ));
+    expect(client.startCardRegistration).toHaveBeenCalledOnce();
+    expect(client.startPayment).not.toHaveBeenCalled();
+    const resume = JSON.parse(window.sessionStorage.getItem("luxe-pack:card-registration-resume:v1")!);
+    initial.unmount();
+    navigation.assign.mockClear();
+    const view = renderPurchase(client, registration.id, true);
+    expectContinuousProcessing();
+    await waitFor(() => expect(client.getCardRegistration).toHaveBeenCalledOnce());
+    expectContinuousProcessing();
+    view.rerenderPurchase();
+    await act(async () => status.resolve({ data: PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.pending, metadata }));
+    expect(client.reconcileCardRegistration).toHaveBeenCalledExactlyOnceWith(registration.id);
+    expect(client.startPayment).not.toHaveBeenCalled();
+    expectContinuousProcessing();
+    view.rerenderPurchase();
+    await act(async () => {
+      reconcile.resolve({ data: registration, metadata });
+    });
+    expect(client.startPayment).toHaveBeenCalledExactlyOnceWith({
+      card: { card_id: registration.saved_card_id, source: "saved" },
+      payment_method: "credit_card", point_product_id: product.id,
+    }, { idempotency_key: resume.paymentIdempotencyKey });
+    expectContinuousProcessing();
+    view.rerenderPurchase();
+    await act(async () => purchase.resolve({
+      data: { ...payment("credit_card"), next_action: { type: "three_d_secure", url: "https://provider.example/continuous-purchase-3ds" } }, metadata,
+    }));
+    expect(navigation.assign).toHaveBeenCalledExactlyOnceWith("https://provider.example/continuous-purchase-3ds");
+    expect(navigation.replace).not.toHaveBeenCalled();
+    expectContinuousProcessing();
+    expect(client.getCardRegistration).toHaveBeenCalledOnce();
+    expect(client.reconcileCardRegistration).toHaveBeenCalledOnce();
+    expect(client.startPayment).toHaveBeenCalledOnce();
+  });
+
+  it.each(["status", "reconcile", "payment"] as const)("does not duplicate an interrupted return after remount during %s", async (stage) => {
+    const registration = PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.completed;
+    const delayedRegistration = deferred<Awaited<ReturnType<PaymentClientAdapter["getCardRegistration"]>>>();
+    const delayedPayment = deferred<Awaited<ReturnType<PaymentClientAdapter["startPayment"]>>>();
+    saveCardRegistrationResume({ paymentIdempotencyKey: registrationPaymentIdempotencyKey, productId: product.id, registrationId: registration.id });
+    const client = paymentClient();
+    if (stage === "status") vi.mocked(client.getCardRegistration).mockReturnValueOnce(delayedRegistration.promise);
+    if (stage === "reconcile") {
+      vi.mocked(client.getCardRegistration).mockResolvedValueOnce({ data: PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.pending, metadata });
+      vi.mocked(client.reconcileCardRegistration).mockReturnValueOnce(delayedRegistration.promise);
+    }
+    vi.mocked(client.startPayment).mockReturnValueOnce(delayedPayment.promise);
+    const view = renderPurchase(client, registration.id, true);
+    await waitFor(() => expect(stage === "payment" ? client.startPayment
+      : stage === "reconcile" ? client.reconcileCardRegistration : client.getCardRegistration).toHaveBeenCalledOnce());
+    expectContinuousProcessing();
+    view.unmount();
+    renderPurchase(client, registration.id, true);
+    expect(await screen.findByText("決済状況を確認できるまで、新しい決済は開始できません。")).toBeInTheDocument();
+    await act(async () => {
+      delayedRegistration.resolve({ data: registration, metadata });
+      delayedPayment.resolve({ data: { ...payment("credit_card"), next_action: { type: "three_d_secure", url: "https://provider.example/stale-return" } }, metadata });
+    });
+    expect(client.getCardRegistration).toHaveBeenCalledOnce();
+    expect(client.reconcileCardRegistration).toHaveBeenCalledTimes(stage === "reconcile" ? 1 : 0);
+    expect(client.startPayment).toHaveBeenCalledTimes(stage === "payment" ? 1 : 0);
+    expect(navigation.assign).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
+  });
+
+  it("does not repeat a completed continuation when the return URL is revisited", async () => {
+    const registration = PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.completed;
+    saveCardRegistrationResume({ paymentIdempotencyKey: registrationPaymentIdempotencyKey, productId: product.id, registrationId: registration.id });
+    const client = paymentClient();
+    vi.mocked(client.startPayment).mockResolvedValueOnce({
+      data: { ...payment("credit_card"), next_action: { type: "three_d_secure", url: "https://provider.example/once" } }, metadata,
+    });
+    const view = renderPurchase(client, registration.id, true);
+    await waitFor(() => expect(navigation.assign).toHaveBeenCalledExactlyOnceWith("https://provider.example/once"));
+    view.unmount();
+    renderPurchase(client, registration.id, true);
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(client.getCardRegistration).toHaveBeenCalledOnce();
+    expect(client.startPayment).toHaveBeenCalledOnce();
+    expect(navigation.assign).toHaveBeenCalledOnce();
+  });
+
+  it("keeps one return owner when two mounted consumers compete for the same resume marker", async () => {
+    const registration = PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.completed;
+    const read = deferred<Awaited<ReturnType<PaymentClientAdapter["getCardRegistration"]>>>();
+    saveCardRegistrationResume({ paymentIdempotencyKey: registrationPaymentIdempotencyKey, productId: product.id, registrationId: registration.id });
+    const client = paymentClient();
+    vi.mocked(client.getCardRegistration).mockReturnValueOnce(read.promise);
+    vi.mocked(client.startPayment).mockResolvedValueOnce({
+      data: { ...payment("credit_card"), next_action: { type: "three_d_secure", url: "https://provider.example/one-owner" } }, metadata,
+    });
+    renderPurchase(client, registration.id, true);
+    await waitFor(() => expect(client.getCardRegistration).toHaveBeenCalledOnce());
+    const duplicate = renderPurchase(client, registration.id, true);
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    duplicate.unmount();
+    await act(async () => read.resolve({ data: registration, metadata }));
+    expect(client.getCardRegistration).toHaveBeenCalledOnce();
+    expect(client.reconcileCardRegistration).not.toHaveBeenCalled();
+    expect(client.startPayment).toHaveBeenCalledOnce();
+    expect(navigation.assign).toHaveBeenCalledExactlyOnceWith("https://provider.example/one-owner");
+  });
+
   it("requires canonical completed read before starting Payment after Browser Return", async () => {
     const registration = PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.completed;
     saveCardRegistrationResume({
@@ -687,6 +823,8 @@ describe("SITE-040 / SITE-048 / SITE-049 Payment purchase UI", () => {
       vi.mocked(client.getCardRegistration).mockResolvedValueOnce({ data: registration, metadata });
       renderPurchase(client, registration.id);
       expect(await screen.findByRole("alert")).toHaveTextContent("エラーが発生しました。時間をおいて、もう一度お試しください。");
+      expect(screen.queryByText("処理中…")).not.toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "購入内容" })).toBeInTheDocument();
       expect(client.getCardRegistration).toHaveBeenCalledOnce();
       expect(client.reconcileCardRegistration).not.toHaveBeenCalled();
       expect(client.startPayment).not.toHaveBeenCalled();
@@ -731,6 +869,8 @@ describe("SITE-040 / SITE-048 / SITE-049 Payment purchase UI", () => {
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("通信結果を確認できませんでした。同じ操作を繰り返さず、時間をおいて状態をご確認ください。");
     expect(alert).not.toHaveTextContent(/provider raw private/);
+    expect(screen.queryByText("処理中…")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
     expect(client.getCardRegistration).toHaveBeenCalledOnce();
     expect(client.reconcileCardRegistration).toHaveBeenCalledOnce();
     expect(client.startPayment).not.toHaveBeenCalled();
