@@ -48,7 +48,9 @@ export function presentCardRegistrationProblem(error: unknown): PaymentProblemPr
   }
   if (isCardRegistrationProblemError(error)) {
     return {
-      message: error.status === 429
+      message: error.code === "CARD_LIMIT_REACHED"
+        ? "カードを保存できる上限に達しています。"
+        : error.status === 429
         ? "アクセスが集中しています。時間をおいて、もう一度お試しください。"
         : "エラーが発生しました。時間をおいて、もう一度お試しください。",
       retryAfterSeconds: paymentRetryAfterSeconds(error),

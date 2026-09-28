@@ -8,10 +8,12 @@ import { CatalogLoading, CatalogMessage } from "@/components/catalog/catalog-mes
 import { FincodeCardFields, type FincodeCardFieldsHandle } from "@/components/payment/fincode-card-fields";
 import { CardSaveConfirmation } from "@/components/payment/card-save-confirmation";
 import {
+  assertCardRegistrationResumeAvailable,
   beginCardRegistrationReturn,
   clearCardRegistrationResume,
   markCardRegistrationPaymentStarting,
   readCardRegistrationResume,
+  saveCardRegistrationResume,
 } from "@/components/payment/card-registration-resume";
 import { PaymentMethodSelector } from "@/components/payment/payment-method-selector";
 import { PaymentReturnAlert } from "@/components/payment/payment-return-alert";
@@ -92,6 +94,7 @@ function PurchaseForm({
   const [submitting, setSubmitting] = useState(false);
   const [submissionLocked, setSubmissionLocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const registrationStartingRef = useRef(false);
   const registrationResumeRef = useRef<string | null>(null);
   const onCardMountStateChange = useCallback((mounted: boolean) => setCardMounted(mounted), []);
   const onCardUiError = useCallback((reason: unknown) => {
@@ -210,6 +213,81 @@ function PurchaseForm({
     }, { idempotency_key: idempotencyKey });
     return payment;
   }, [client, product.id]);
+
+  const saveAndBuy = async () => {
+    if (registrationStartingRef.current || !client || submitting || cardBusy || submissionLocked || !cardMounted ||
+        (cardLimits?.registration_remaining ?? 0) <= 0) return;
+    registrationStartingRef.current = true;
+    setConfirmationOpen(false);
+    setSubmitting(true);
+    setError(null);
+    let registrationCreated = false;
+    let paymentCreated = false;
+    let paymentStarting = false;
+    let registrationPublicId: string | null = null;
+    try {
+      assertCardRegistrationResumeAvailable();
+      const registrationIdempotencyKey = createPaymentIdempotencyKey();
+      const paymentIdempotencyKey = createPaymentIdempotencyKey();
+      const cardToken = await cardFieldsRef.current?.tokenize();
+      if (!cardToken) throw new Error("Card tokenization did not return a token");
+      const { data: registration } = await client.startCardRegistration(
+        { card_token: cardToken },
+        { idempotency_key: registrationIdempotencyKey },
+      );
+      registrationCreated = true;
+      registrationPublicId = registration.id;
+      if (registration.status === "requires_action" && registration.next_action?.type === "three_d_secure") {
+        saveCardRegistrationResume({
+          paymentIdempotencyKey,
+          productId: product.id,
+          registrationId: registration.id,
+        });
+        window.location.assign(registration.next_action.url);
+        return;
+      }
+      if (registration.status === "completed" && registration.saved_card_id) {
+        setSelectedCardId(registration.saved_card_id);
+        setCardMounted(false);
+        saveCardRegistrationResume({
+          paymentIdempotencyKey,
+          productId: product.id,
+          registrationId: registration.id,
+        });
+        if (!beginCardRegistrationReturn(registration.id, product.id) ||
+            !markCardRegistrationPaymentStarting(registration.id)) {
+          throw new Error("Card registration Payment correlation is unavailable");
+        }
+        paymentStarting = true;
+        const payment = await startSavedCardPayment(registration.saved_card_id, paymentIdempotencyKey);
+        paymentCreated = true;
+        void refreshCards().catch(() => undefined);
+        await navigateAfterStart(payment, "credit_card", true);
+        clearCardRegistrationResume(registration.id);
+        return;
+      }
+      setError(presentCardRegistrationProblem(null).message);
+      if (registration.status === "pending" || registration.status === "requires_action") {
+        setSubmissionLocked(true);
+      }
+      setSubmitting(false);
+    } catch (reason) {
+      const uncertain = paymentStarting
+        ? reason instanceof StorefrontTransportError
+        : isUncertainCardRegistrationProblem(reason);
+      if (paymentStarting && !uncertain && !paymentCreated && registrationPublicId) {
+        clearCardRegistrationResume(registrationPublicId);
+        void refreshCards().catch(() => undefined);
+      }
+      setError(paymentStarting
+        ? presentPaymentProblem(reason, "credit_card").message
+        : presentCardRegistrationProblem(reason).message);
+      if (uncertain || paymentCreated || registrationCreated && !paymentStarting) setSubmissionLocked(true);
+      setSubmitting(false);
+    } finally {
+      registrationStartingRef.current = false;
+    }
+  };
 
   useEffect(() => {
     if (registrationId) return;
@@ -379,6 +457,7 @@ function PurchaseForm({
           nextCapacityAt={cardLimits?.next_capacity_at ?? null}
           onBack={() => setConfirmationOpen(false)}
           onBuyWithoutSaving={() => { setConfirmationOpen(false); void submitPayment(); }}
+          onSaveAndBuy={() => { void saveAndBuy(); }}
         />
       ) : null}
     </section>

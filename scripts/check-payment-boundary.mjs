@@ -128,6 +128,11 @@ for (const match of cardFields.matchAll(/(?:add|remove)EventListener\(\s*["']([^
 const purchase = readFileSync("src/components/points/point-purchase-detail.tsx", "utf8");
 for (const required of [
   "getPaymentCardUiBootstrap()",
+  "startCardRegistration(",
+  "saveCardRegistrationResume(",
+  "assertCardRegistrationResumeAvailable()",
+  "window.location.assign(registration.next_action.url)",
+  "registrationStartingRef.current",
   "getCardRegistration(registrationId)",
   "reconcileCardRegistration(registrationId)",
   'registration.status !== "completed"',
@@ -144,9 +149,6 @@ for (const required of [
   "save: false",
 ]) {
   if (!purchase.includes(required)) throw new Error(`Payment purchase invariant is missing: ${required}`);
-}
-for (const forbidden of ["startCardRegistration(", "saveCardRegistrationResume(", ".tokenize()"]) {
-  if (purchase.includes(forbidden)) throw new Error(`Disabled Save Card purchase path remains executable: ${forbidden}`);
 }
 if (!purchase.includes("payment.next_action.is_live_mode !== bootstrap.is_live_mode")) {
   throw new Error("fincode environment skew is not rejected");
@@ -173,11 +175,8 @@ if (unpaidThanks < 0 || providerRedirect < 0 || unpaidThanks > providerRedirect 
 }
 
 const saveConfirmation = readFileSync("src/components/payment/card-save-confirmation.tsx", "utf8");
-for (const required of ["onBack", "onBuyWithoutSaving", "戻る", "保存せず購入"]) {
+for (const required of ["onBack", "onBuyWithoutSaving", "onSaveAndBuy", "戻る", "保存せず購入", "カードを保存して購入", "disabled={busy || !canSave}"]) {
   if (!saveConfirmation.includes(required)) throw new Error(`New Card confirmation action is missing: ${required}`);
-}
-for (const forbidden of ["onSaveAndBuy", "カードを保存して購入"]) {
-  if (saveConfirmation.includes(forbidden)) throw new Error(`Disabled Save Card confirmation action remains: ${forbidden}`);
 }
 
 const paymentProblem = readFileSync("src/lib/platform/payment-problem.ts", "utf8");
