@@ -1574,3 +1574,6 @@ application of Platform migrations `000069`／`000070`.
   `brace-expansion` dependency. The narrow CI correction pins its existing
   1.x and 5.x lines to 1.1.20 and 5.0.11; direct dependencies, the Platform
   Contract and security thresholds remain unchanged.
+- Stabilizes the inherited Draw presentation test lifecycle by waiting for the
+  playback effect and unmounting before restoring the media mock. Assertions
+  and application Draw behavior are unchanged.
