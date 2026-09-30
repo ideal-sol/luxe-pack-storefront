@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
 import {
   PUBLIC_AUTH_FIXTURE,
@@ -313,7 +313,11 @@ describe("canonical Draw presentation and full results", () => {
     vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
   });
 
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    // Unmount and flush pending effects while the media mock is still installed.
+    cleanup();
+    vi.restoreAllMocks();
+  });
 
   it("keeps loading until the canonical GET completes, without revealing media or results", async () => {
     let resolve!: (value: ReturnType<typeof response<DrawResponse>>) => void;
@@ -339,7 +343,7 @@ describe("canonical Draw presentation and full results", () => {
     expect(video).toHaveProperty("muted", false);
     expect(video).toHaveProperty("defaultMuted", false);
     expect(video.closest(".draw-presentation")).toHaveAccessibleName("抽選演出");
-    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1));
     expect(document.querySelectorAll("video")).toHaveLength(1);
     expect(document.querySelectorAll(".draw-snapshot-card, .draw-result")).toHaveLength(0);
     if (event === "skip") fireEvent.click(screen.getByRole("button", { name: "スキップ" }));

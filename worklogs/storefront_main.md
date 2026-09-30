@@ -1546,3 +1546,34 @@ application of Platform migrations `000069`／`000070`.
   are excluded. Required CI and exact-source authorization readback apply.
 - Focused provenance/workflow tests: 2 files, 97 cases PASS. The updated
   canonical verifier accepts the exact Runtime Target's alpha.41 provenance.
+
+## SITE-DESIGN-003 — オリポケ motion (design top.html animations)
+
+- Ports every animation defined by the delivered `top.html` / `common.css` as
+  presentation-only CSS (`oripoke-*` keyframes): hero light sweep and rising
+  sparks, badge wobble and twinkle, primary CTA pulse, character bob/float, a
+  light "shine" across filled/accent buttons, gacha cards and card CTAs, a
+  walking-dog band below the banners, peeking characters beside the category
+  row and notices heading (≥981 px), and price-tiered card frames
+  (`data-price-tier`: hi ≥1,000 coins breathes gold, mid ≥300 teal, lo default).
+- Banner carousel becomes the design's centred slider (card width 250/290/330/
+  380/445 px by breakpoint, neighbours visible), advances every 3.4 s, loops,
+  pauses on hover/focus, has a pause/play button (WCAG 2.2.2) and never
+  autoplays under `prefers-reduced-motion`. Manual arrows now wrap.
+- Home adds the Orika guide bubble (fixed bottom-right, hidden ≤600 px, above
+  Mobile Navigation to 719 px); its copy points to the guide page instead of the
+  design's free-gacha wording, and it can be closed while the page is open
+  (no browser storage, per the auth storage boundary).
+- `prefers-reduced-motion: reduce` stops every added motion. The unused design
+  styles for a draw-stage section (pack/flip/crack) have no markup in `top.html`
+  and are not ported.
+- Keeps hover and keyboard-focus pause state independent and uses instant
+  manual scrolling with reduced motion. The scroll rail establishes its own
+  positioning context so banner offsets remain correct on wide desktops.
+- Required CI identified inherited High advisories in the development-only
+  `brace-expansion` dependency. The narrow CI correction pins its existing
+  1.x and 5.x lines to 1.1.20 and 5.0.11; direct dependencies, the Platform
+  Contract and security thresholds remain unchanged.
+- Stabilizes the inherited Draw presentation test lifecycle by waiting for the
+  playback effect and unmounting before restoring the media mock. Assertions
+  and application Draw behavior are unchanged.
