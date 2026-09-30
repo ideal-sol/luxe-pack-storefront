@@ -1527,3 +1527,22 @@ application of Platform migrations `000069`／`000070`.
   run passed 660/695; its 35 failures were confined to child-process artifact
   tests under the sandbox. The affected file passed all 41 cases outside the
   sandbox without source/test changes. Final-head full CI remains the authority.
+
+## SITE-PROD-AUTH-ALPHA41 — exact approved Storefront source
+
+- Human names `db02898cecf6b5d1646401c56579f592be3c4f4e` (PR #122) as the
+  approved Runtime Target; OLD Test Technical and Human Browser Acceptance PASS.
+- Found stale PR #117/alpha.40 production metadata. Sync approved source and
+  canonical SHIPONLY alpha.41 provenance, plus the verifier's three fixed
+  directory/version values and focused acceptance/rejection fixtures.
+- Canonical Artifact `10900150259`, Client/Testkit alpha.41 and independent
+  Public OpenAPI alpha.37 read back from existing provenance and manifest;
+  manifest/package/OpenAPI bytes match the recorded SHA-256 values.
+- Prior approved source to target contains only #118/#119/#120/#121/#122.
+  No unapproved Runtime delta. Keep the separate Platform runtime authority;
+  do not replace it with Contract Artifact Source.
+- Application Runtime, dependencies, workflow definition, Migration, ENV and
+  Worker unchanged. Production Build dispatch, new-server work and activation
+  are excluded. Required CI and exact-source authorization readback apply.
+- Focused provenance/workflow tests: 2 files, 97 cases PASS. The updated
+  canonical verifier accepts the exact Runtime Target's alpha.41 provenance.

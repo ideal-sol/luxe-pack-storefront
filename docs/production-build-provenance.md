@@ -1,94 +1,79 @@
-# Production release authority — alpha.40
+# Production release authority — alpha.41
 
-Authority/provenance preparation only. Application implementation is Human
-accepted. Production Build dispatch and Production Activation are not authorized
-by this change; `activation_authorized` remains false.
+Authority/provenance synchronization only. Human approved exact Storefront Runtime
+Source `db02898cecf6b5d1646401c56579f592be3c4f4e` (merged PR #122), with OLD Test
+Technical and Human Browser Acceptance PASS. Production Build dispatch, new-server
+operations and Production Activation are not authorized by this change.
+`activation_authorized` remains false.
 
 ## Separate runtime and workflow sources
 
-The approved Storefront Runtime Source is
-`b85afec9aba0e72732366e8e12701cef39a06e06` (merged PR #117; includes #115 / #116 / #117).
-The Platform Runtime Source is
-`e4361ece51fc1249a5cfb2c64cf56d3aa4bb0c29`.
-The Platform authority merge is
-`d823c2f80c1500990289b06da8e5504d7b48c2e5`.
-Contract Artifact Source remains
-`dadf79f3b0b2409a57e41b10a83c7b6570ea3507` (`platform_source_sha`);
-it is distinct from `platform_runtime_source_sha` and is never rewritten to the
-Platform Runtime Source. Both authorities propagate into build provenance.
-The authority PR's merge SHA is workflow/metadata authority only and must never
-replace the approved Runtime Source.
+The approved Runtime Source stays `db02898cecf6b5d1646401c56579f592be3c4f4e`.
+The authority PR's merge SHA is workflow/metadata authority only; it must never
+replace the approved Runtime Source. The canonical `production-artifact.yml`
+remains unchanged: approval code comes from protected current main, while the
+application checkout uses the exact approved source.
 
-The existing `production-artifact.yml` accepts explicit `source_sha`. Its
-workflow and approval code come from protected current main, while the separate
-Runtime checkout remains the exact approved source. Both Source PR and current
-workflow Required Checks must pass; empty squash checks are handled only with
-the merged internal PR, identical reviewed/merge trees and reviewed-head checks.
-Failed current checks never fall back to another commit. The workflow is unchanged.
+Both the Source PR and current workflow authority require successful checks.
+Empty squash checks are accepted only through the merged internal PR, identical
+reviewed/merge trees and successful reviewed-head checks. Failed current checks
+never fall back to another commit. Missing or arbitrary source approvals fail.
 
 ## Exact contract authority
 
-`production-approved-source.json` records the Human-approved exact source and
-Platform's final canonical alpha.40 authority. The source must exist, be an
-ancestor of protected main and match the metadata; free-form dispatch input
-does not authorize another source.
+The existing immutable `vendor/oripa/SHIPONLY-20260926/PROVENANCE.md` and manifest
+are the canonical alpha.41 readback. Their original bytes are unchanged.
 
-Client and Testkit are `2.0.0-alpha.40`, from immutable Artifact `10845475225`.
-The manifest is `vendor/oripa/DRAW-20260925/artifact-manifest.json`.
-Public OpenAPI has its independent version `2.0.0-alpha.36`.
-The manifest, Client, Testkit and Public OpenAPI SHA-256 values in the approved
-JSON are the exact Human-supplied Platform authority. Artifact bytes are checked
-against those values; computed digests never replace the approved values.
+- Client/Testkit: `2.0.0-alpha.41`.
+- Artifact ID: `10900150259`; canonical workflow: `36223277643`.
+- Manifest: `vendor/oripa/SHIPONLY-20260926/artifact-manifest.json`.
+- Manifest SHA-256: `b3c7d2a28c0c8332eeea90ac43876245baf4a1e4ce6b7d4f646124212d99f7ee`.
+- Client SHA-256: `3565505ed851df91a1ee4b9eeef1a94caae706a6b47725ef1472e5d5048f6f72`.
+- Testkit SHA-256: `56892eafca206e8f504144937169a7ed2974da6f14082347616abafda013bd59`.
+- Public OpenAPI: `2.0.0-alpha.37` (independent version).
+- Public OpenAPI SHA-256: `2ef9d4d085ad29e4073f6e963d93b68b9e1ecfd8000dc84a330a8a016f30be4b`.
+- Outer archive SHA-256: `6d4cf321249d46145f22ce9551ba709a51dd59453ccbe0bd5004d0782d2dfb50`.
+- Contract Artifact Source: `e2b30805704ed5b9c3fd54492fb86f8b8549bde5`.
 
-The verifier checks source package/lockfile pins, immutable manifest identity,
-Platform source, Client/Testkit alignment, one canonical Artifact ID declaration
-and every approved digest. DRAW provenance uses `Artifact ID:` on its
-canonical workflow line; missing, duplicate or mismatched declarations fail.
-The Public OpenAPI version is checked independently. The outer archive digest
-`3c5b35542cdaf7ed636aa0e7376e39d96463115ea14600c293d30d011e70b0e9`
-is bound to the existing canonical provenance declaration; this sync reuses the
-Human-supplied canonical archive readback and does not download or reissue it.
-Validated fields propagate into Build metadata and are checked before publication
-and after re-download. Alpha.39, old sources, arbitrary/nonexistent SHAs, mixed
-packages and wrong IDs/digests fail closed. Historical vendor bundles and
-predecessor references are retained and confer no Production authority.
+The manifest/package/OpenAPI bytes are checked against these existing canonical
+values. Computed digests do not replace approved values. The archive digest and
+Artifact ID are read back from canonical provenance; no archive is reissued.
 
-## Validation and rollout boundary
+The separately recorded Platform Runtime Source
+`e4361ece51fc1249a5cfb2c64cf56d3aa4bb0c29` and Platform authority merge
+`d823c2f80c1500990289b06da8e5504d7b48c2e5` are retained from their prior independent
+approval. This Storefront-only sync does not approve, inspect or deploy a new
+Platform Runtime Source, and never substitutes Contract Artifact Source for it.
 
-Focused provenance/workflow tests cover the exact authority and rejection cases.
-Artifact, policy, security and lint checks run locally; all five existing Required
-Checks, including CI's automatic application tests/build, must pass on the final
-PR head. A fresh machine-readable self-review binds that same head and exact paths.
-Storefront has no dated Security/ESLint baseline files or expiry/refresh mechanism;
-its canonical evidence is the current security/quality gates, not Platform's
-baseline dates. CodeQL default setup is not configured in this repository.
+The verifier changes only three fixed provenance values: the canonical directory,
+contract version and independent OpenAPI version. Its validation and authorization
+logic remain unchanged, including exact pins, immutable manifest, source identity,
+unique Artifact ID/archive declarations, digests and Client/Testkit alignment.
+Historical alpha.39/alpha.40 fixtures remain as rejection evidence.
 
-After Squash Merge, validate approved provenance against the exact Runtime Source
-and run the authorization function using live protected-main, merged-PR and check
-readback. This performs no Build or workflow dispatch. The metadata merge must
-have zero application, dependency, ENV, Secret or migration delta from the
-approved Runtime Source. Application Runtime Acceptance is already Human accepted;
-no additional Runtime E2E or activation is part of this authority-only change.
+## Approved runtime delta
 
-Production Build dispatch, artifact placement, service restart, traffic changes
-and new-server operations remain NOT RUN. Rollback is a reviewed metadata/verifier
-revert; this change performs no application or database rollout.
+From prior approved source `b85afec9aba0e72732366e8e12701cef39a06e06`, the complete
+history is #118 (authority only), #119 (shipping-only prizes and alpha.41), #120
+(Save Card/3DS entry), #121 (purchase continuation processing), and #122 (Phase1/
+Phase2 design, prize guidance, narrow-screen login and the disclosed fast-uri/
+undici development dependency audit fixes). There are no other intervening
+commits. Human explicitly approved #122 merge/OLD Test activation and now names
+that exact merged source with Technical and Browser Acceptance PASS.
+Unapproved Runtime delta: NONE.
 
-## Latest approved runtime delta (2026-09-25)
+## Verification and rollout boundary
 
-From prior approved source `c911155f2fff5aea0f0b3df4f3184aa4081b6203`,
-#114 updates authority only; #115 changes Top/Navigation; #116 adopts the approved
-alpha.40 Client/Testkit and representative presentation; #117 fixes fullscreen,
-audio autoplay and presentation flow. There are no other intervening commits.
-The package/lockfile delta contains only that approved contract adoption, with
-no unexpected runtime dependency change. Unapproved Runtime delta: NONE.
-Migration: NONE. ENV: NONE. Old Test Technical and Human Browser Acceptance are
-already PASS per Human authority and are not rerun by this provenance sync.
+Focused tests cover acceptance of this authority and rejection of old sources,
+old/mixed pins, invalid IDs/digests, untrusted checks and reviewed-tree mismatch.
+Run the repository's existing Required Checks and fresh fixed-head self-review.
+Their ordinary CI tests/build do not dispatch the Production artifact workflow.
+After Squash Merge, invoke the canonical authorization function against live
+GitHub readback and validate provenance on the exact Runtime Source, without
+workflow dispatch or Production Build.
 
-This sync changes only authority metadata, its verifier, focused tests and this
-document. Runtime Application delta: NONE. Dependencies: NONE. Secret inputs:
-NONE. The canonical ARM64 production workflow is unchanged. Read-only acceptance
-of the target is authorization/provenance proof, not a Production Artifact Build.
-Subsequent planned activation covers Storefront and API only; Admin, Contact Reply
-Worker, Identity, SMS, Agency and Scheduler are out of scope. No activation occurs
-in this change.
+Authority Sync Runtime Application delta: NONE. Dependencies: NONE. Migration:
+NONE. ENV: NONE. Worker: NONE. No Platform changes, new-server operations, service
+restarts or activation are part of this sync. OLD Test Runtime remains at the
+approved application source. Human Browser Acceptance is already PASS and is not
+rerun. Rollback for this change is a reviewed authority-metadata/verifier revert.
