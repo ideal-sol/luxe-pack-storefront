@@ -1577,3 +1577,33 @@ application of Platform migrations `000069`／`000070`.
 - Stabilizes the inherited Draw presentation test lifecycle by waiting for the
   playback effect and unmounting before restoring the media mock. Assertions
   and application Draw behavior are unchanged.
+
+
+## SITE-DESIGN-004 — オリポケ logo and fixed Home guide sections
+
+- Logo: replace the first-package mark (`mark.png`) with the delivered vector
+  mark (`/brand/mark.svg`). When `NEXT_PUBLIC_APP_NAME` is exactly オリポケ the
+  Header shows the delivered logo image (`/brand/logo.webp`, mark + lettering)
+  and keeps the name as visually hidden text; any other app name keeps mark +
+  text. Footer uses the vector mark on white, as in the package.
+- Home reuses the package's fixed sections between the gacha list and notices:
+  three purchase-guide cards linking to `/points`, purchase information, the
+  four-step flow and three guidance cards.
+- Human approved aligning copy with the current implementation: product prices,
+  coin amounts and payment availability are referred to the purchase screen;
+  registration describes email/password; fulfillment depends on each prize's
+  available actions. Unconfirmed age limits, shipping promises and replacement
+  guarantees are replaced with directions to existing guides and terms.
+- The delivered layout, SVG icons and brand assets are reused. No Platform
+  products, eligibility, payment behavior, fulfillment rules or contracts change.
+
+## SITE-DESIGN-005 — Header menu: ガチャ一覧 / コイン購入
+
+- Desktop Header menu becomes ガチャ一覧 (`/gachas`), コイン購入 (`/points`) and
+  お知らせ (`/notices`) via `headerNavigation`, following the package header's
+  ガチャ一覧 / ポイント購入 with site-wide Coin wording. Footer and Mobile
+  Navigation are unchanged.
+- Menu items never wrap; between 720 and 980 px spacing, font size and button
+  padding tighten so the authenticated Header (menu, My Page, Coin balance,
+  logout) fits the delivered layout. Responsive browser checks cover guest
+  and fixture-based member headers.

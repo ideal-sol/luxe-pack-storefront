@@ -25,12 +25,14 @@ describe("shared layout", () => {
     const view = render(<ToastProvider><SessionProvider client={client}><PointClientProvider client={null}><SiteHeader /></PointClientProvider></SessionProvider></ToastProvider>);
     expect(screen.getByRole("banner")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "パック" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "コイン" })).toHaveAttribute("href", "/points");
-    expect(screen.getByRole("link", { name: "お知らせ" })).toHaveAttribute("href", "/notices");
+    const mainNavigation = screen.getByRole("navigation", { name: "メインナビゲーション" });
+    expect(Array.from(mainNavigation.querySelectorAll("a:not(.button)")).slice(0, 3).map((link) => [link.textContent, link.getAttribute("href")]))
+      .toEqual([["ガチャ一覧", "/gachas"], ["コイン購入", "/points"], ["お知らせ", "/notices"]]);
     expect(screen.getByRole("link", { name: `${appName} ホーム` })).toBeInTheDocument();
     expect(screen.getByText(appName)).toBeInTheDocument();
-    expect(view.container.querySelector(".wordmark__mark")).toHaveAttribute("src", "/brand/mark.png");
-    expect(view.container.querySelector(".wordmark__mark")).toHaveAttribute("aria-hidden", "true");
+    const brandImage = view.container.querySelector(appName === "オリポケ" ? ".wordmark__logo" : ".wordmark__mark");
+    expect(brandImage).toHaveAttribute("src", appName === "オリポケ" ? "/brand/logo.webp" : "/brand/mark.svg");
+    expect(brandImage).toHaveAttribute("aria-hidden", "true");
     expect(view.container).not.toHaveTextContent("LUXE PACK");
     expect((await screen.findAllByRole("link", { name: "新規登録" })).length).toBeGreaterThan(0);
     const mobileAccount = within(screen.getByRole("navigation", { name: "モバイルアカウント" }));
@@ -57,7 +59,7 @@ describe("shared layout", () => {
     expect(screen.getByRole("link", { name: "コイン" })).toHaveAttribute("href", "/points");
     expect(screen.getByRole("link", { name: "お知らせ" })).toHaveAttribute("href", "/notices");
     expect(screen.getByText(appName)).toBeInTheDocument();
-    expect(view.container.querySelector(".wordmark__mark")).toHaveAttribute("src", "/brand/mark.png");
+    expect(view.container.querySelector(".wordmark__mark")).toHaveAttribute("src", "/brand/mark.svg");
     expect(view.container).toHaveTextContent(`© ${appName}`);
     expect(view.container).not.toHaveTextContent("LUXE PACK");
     expect(screen.getByText("サイトについて")).toBeInTheDocument();

@@ -4,6 +4,7 @@ import { PUBLIC_TOP_BANNERS_FIXTURE } from "@oripa/storefront-testkit";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HomeAssist } from "@/components/catalog/home-assist";
 import { HomeBannerCarousel, homeBannerAutoplayIntervalMs } from "@/components/catalog/home-banner-carousel";
+import { HomeGuide, homeGuideContent } from "@/components/catalog/home-guide";
 import { gachaPriceTier } from "@/components/catalog/gacha-card";
 import { HomeHero, homeHeroRibbonMessages } from "@/components/catalog/home-hero";
 
@@ -175,5 +176,23 @@ describe("オリポケ animations", () => {
     expect(gachaPriceTier(300)).toBe("mid");
     expect(gachaPriceTier(150)).toBe("lo");
     expect(gachaPriceTier(0)).toBe("lo");
+  });
+});
+
+describe("HomeGuide", () => {
+  it("shows the fixed coin purchase, payment, flow and assurance sections from the design", () => {
+    render(<HomeGuide />);
+    for (const name of ["コインの購入", "ご利用の流れ", "安心してご利用いただくために"]) {
+      expect(screen.getByRole("heading", { level: 2, name })).toBeInTheDocument();
+    }
+    const buyLinks = screen.getAllByRole("link", { name: "コイン購入画面へ" });
+    expect(buyLinks).toHaveLength(3);
+    buyLinks.forEach((link) => expect(link).toHaveAttribute("href", "/points"));
+    expect(screen.getByRole("heading", { level: 3, name: "購入前の確認事項" })).toBeInTheDocument();
+    expect(screen.getAllByText(/^STEP \d$/)).toHaveLength(4);
+  });
+
+  it("keeps site-wide Coin terminology in the fixed copy", () => {
+    expect(JSON.stringify(homeGuideContent)).not.toMatch(/ポイント|\dpt\b/);
   });
 });
