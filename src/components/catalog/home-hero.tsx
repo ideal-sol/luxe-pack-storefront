@@ -9,7 +9,7 @@ import { informationNavigation } from "@/lib/routes/navigation";
 export const homeHeroRibbonMessages = [
   "ポケモンカード専門",
   "排出内容と割合を企画ごとに公開",
-  "当たったカードは発送かコイン交換",
+  "景品に応じて発送・コイン交換",
   "発送は追跡番号つき",
 ] as const;
 
@@ -28,9 +28,9 @@ export function HomeHero() {
             最高の<span>一枚</span>を、<br />あなたに！
           </h1>
           <p className="home-hero__lead">
-            コインを購入してガチャを引くだけ。当たったカードは
+            獲得した景品は、景品ごとに利用可能な方法で
             <br className="home-hero__lead-break" />
-            ご自宅への発送か、コインへの交換をお選びいただけます。
+            発送依頼またはコイン交換を行えます。
           </p>
           <div className="home-hero__actions">
             <Link className="home-hero__cta home-hero__cta--primary" href="/gachas">ガチャ一覧を見る</Link>

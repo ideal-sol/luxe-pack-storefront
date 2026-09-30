@@ -15,7 +15,7 @@ export function SiteFooter() {
           <img alt="" aria-hidden="true" className="wordmark__mark" height={141} src="/brand/mark.png" width={108} />
           <div>
             <strong>{appName}</strong>
-            <p>ポケモンカード専門のオンラインオリジナルパック販売サイトです。当たったカードは発送またはコイン交換をお選びいただけます。</p>
+            <p>ポケモンカード専門のオンラインオリジナルパック販売サイトです。獲得した景品は、景品ごとに利用可能な方法で発送依頼またはコイン交換を行えます。</p>
           </div>
         </div>
         <div>

@@ -593,9 +593,12 @@ body {
 }
 .site-header__point--mobile { min-height: 36px; }
 @media (max-width: 360px) {
+  .site-header__main { height: auto; min-height: 64px; padding-block: 8px; }
   .wordmark__name, .wordmark strong { font-size: 1.1rem; }
   .wordmark__mark { height: 26px; }
-  .site-header__mobile-account .site-header__login { display: none; }
+  .site-header__mobile-account { flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+  .site-header__mobile-account a[href="/register"],
+  .site-header__mobile-account .site-header__login { padding-inline: 8px; }
 }
 /* 保有景品：一括選択ボタンをチップ状にし、選択欄を見やすくする */
 .inventory__selection-actions { flex-wrap: wrap; }

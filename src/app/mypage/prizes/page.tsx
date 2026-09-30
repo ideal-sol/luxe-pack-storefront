@@ -6,7 +6,7 @@ import { PrizeInventory } from "@/components/prizes/prize-inventory";
 export default function PrizesPage() {
   return (
     <PageContainer className="route-page inventory-page">
-      <PageTitle description="獲得した景品の状態を確認し、選択できる景品は発送またはコイン交換をお選びいただけます。" eyebrow="MY PAGE / ITEMS" title="獲得アイテム" />
+      <PageTitle description="獲得した景品の状態を確認し、景品ごとに利用可能な方法で発送依頼またはコイン交換を行えます。" eyebrow="MY PAGE / ITEMS" title="獲得アイテム" />
       <PrizeClientProvider>
         <PrizeInventory />
       </PrizeClientProvider>

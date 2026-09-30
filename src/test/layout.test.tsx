@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { PUBLIC_FOOTER_PAGES_FIXTURE } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -33,6 +33,9 @@ describe("shared layout", () => {
     expect(view.container.querySelector(".wordmark__mark")).toHaveAttribute("aria-hidden", "true");
     expect(view.container).not.toHaveTextContent("LUXE PACK");
     expect((await screen.findAllByRole("link", { name: "新規登録" })).length).toBeGreaterThan(0);
+    const mobileAccount = within(screen.getByRole("navigation", { name: "モバイルアカウント" }));
+    expect(mobileAccount.getByRole("link", { name: "ログイン" })).toHaveAttribute("href", "/login");
+    expect(mobileAccount.getByRole("link", { name: "新規登録" })).toHaveAttribute("href", "/register");
   });
 
   it.each(["OripaZ", "Test Store", "オリポケ"])("renders Backend-ordered Footer pages with app name %s", async (appName) => {

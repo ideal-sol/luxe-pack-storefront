@@ -1496,3 +1496,24 @@ application of Platform migrations `000069`／`000070`.
   longer mentions "Platform"/"Storefront".
 - Unchanged: routes and the Header/Footer navigation set confirmed in #115,
   Coin terminology, Platform artifacts, sale/eligibility/Draw/Session/Prize logic.
+
+## SITE-DESIGN-INTEGRATION — Phase1 / Phase2 on current main
+
+- Started from protected main `7290e8cc8ae5cf2b27618b1b1860e0296e9c0c58`.
+  Reused Phase1 `36442b8ccd8ac041a3ea85c0c25ec031fcb2106c` and Phase2
+  `ddf021cb2b39c4253e37f23aff0e7adf4e9db3d1` in order, with no conflicts.
+- Qualified Home, Footer and inventory copy so shipping-only prizes are not
+  described as freely exchangeable. Kept direct mobile login at 320/360 px;
+  compact spacing and wrapping also keep authenticated actions on screen.
+- Latest Save Card/3DS continuation and processing, shipping-only action filters,
+  Draw presentation/full results, Session and alpha.41 contracts are preserved.
+- Focused regression: 18 files / 294 tests PASS with one worker. The initial
+  parallel run had three failures in two unchanged suites; isolated serial
+  diagnosis passed all 43 tests, then the complete focused selection passed.
+- Isolated Chromium Header rendering: 10 cases PASS (anonymous/authenticated at
+  320, 360, 390, 720 and 1280 px), using local assets and no external requests.
+  This is component rendering verification, not Preview Runtime Acceptance.
+- Artifact verification, policy, all boundary checks, secret check, lint and
+  typecheck PASS. Full suite/build remain subject to PR Required Checks.
+- No Preview deployment, production activation, Contract update or S3 migration.
+  Winning results are excluded; existing personal Draw history is unchanged.
