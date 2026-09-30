@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from "next";
 import { MobileBottomNavigation } from "@/components/layout/mobile-bottom-navigation";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { MotionEffects } from "@/components/common/motion-effects";
 import { ToastProvider } from "@/components/common/toast-provider";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { PublicClientProvider } from "@/components/catalog/public-client-provider";
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <SessionProvider>
             <PointClientProvider>
               <PublicClientProvider>
+                <MotionEffects />
                 <SiteHeader />
                 <main className="site-main">{children}</main>
                 <SiteFooter />

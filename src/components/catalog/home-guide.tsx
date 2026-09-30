@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HomeSectionHeading } from "./home-section-heading";
 
 /**
  * トップ固定の案内区画（デザイン top.html の「ポイントの購入」「ご利用の流れ」「安心してご利用いただくために」）。
@@ -98,31 +99,20 @@ function AssuranceIcon({ kind }: { readonly kind: (typeof assurances)[number]["i
   );
 }
 
-function SectionHeading({ id, title, lead, peek }: { readonly id: string; readonly title: string; readonly lead?: string; readonly peek?: boolean }) {
-  return (
-    <div className="home-guide__heading">
-      <h2 id={id}>{title}</h2>
-      {peek && (
-        // eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要
-        <img alt="" aria-hidden="true" className="home-peek home-peek--guide" height={216} src="/brand/sd_orika_wink.webp" width={138} />
-      )}
-      {lead && <p>{lead}</p>}
-      <span aria-hidden="true" className="home-guide__bar" />
-    </div>
-  );
-}
-
 export function HomeGuide() {
   return (
     <>
       <section aria-labelledby="home-guide-coins" className="home-guide home-guide--buy">
         <div className="page-container">
-          <SectionHeading
+          <HomeSectionHeading
             id="home-guide-coins"
             lead="ガチャは、サイト内のコインでお引きいただきます。販売中の商品はコイン購入画面でご確認ください。"
-            peek
             title="コインの購入"
-          />
+            watermark="COIN"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
+            <img alt="" aria-hidden="true" className="home-peek home-peek--guide" height={216} src="/brand/sd_orika_wink.webp" width={138} />
+          </HomeSectionHeading>
           <ul className="home-guide__plans">
             {coinPlans.map((plan) => (
               <li className={plan.best ? "home-guide__plan home-guide__plan--best" : "home-guide__plan"} key={plan.amount}>
@@ -153,13 +143,14 @@ export function HomeGuide() {
 
       <section aria-labelledby="home-guide-flow" className="home-guide home-guide--flow">
         <div className="page-container">
-          <SectionHeading id="home-guide-flow" lead="会員登録から、カードがお手元に届くまで。" title="ご利用の流れ" />
+          <HomeSectionHeading id="home-guide-flow" lead="会員登録から、カードがお手元に届くまで。" title="ご利用の流れ" watermark="FLOW" />
           <ol className="home-guide__flow">
             {flowSteps.map((step, index) => (
               <li key={step.title}>
                 <span className="home-guide__step-no">STEP {index + 1}</span>
                 {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
                 <img alt="" aria-hidden="true" height={step.height} src={step.image} width={step.width} />
+                <span aria-hidden="true" className="home-guide__pedestal" />
                 <h3>{step.title}</h3>
                 <p>{step.body}</p>
               </li>
@@ -170,7 +161,7 @@ export function HomeGuide() {
 
       <section aria-labelledby="home-guide-safe" className="home-guide home-guide--safe">
         <div className="page-container">
-          <SectionHeading id="home-guide-safe" title="安心してご利用いただくために" />
+          <HomeSectionHeading id="home-guide-safe" title="安心してご利用いただくために" watermark="SAFETY" />
           <ul className="home-guide__safes">
             {assurances.map((item) => (
               <li key={item.title}>
