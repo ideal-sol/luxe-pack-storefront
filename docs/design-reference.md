@@ -164,6 +164,11 @@ Footer keep the navigation set confirmed in #115; unresolved links in the packag
 Its 390 px images are the desktop CSS rendered narrow, so mobile layouts that
 break there (tables, four-column plans) use the existing stacked components.
 
+Motion (SITE-DESIGN-003) follows the package's `top.html`: every keyframe is
+ported as `oripoke-*` CSS, the banner carousel auto-advances every 3.4 s with a
+pause control, card frames use a presentation-only price tier, and
+`prefers-reduced-motion` stops all motion and carousel autoplay.
+
 Brand images (`public/brand/`) are the client's fixed site assets only. Sample
 gacha banners and card images in the design package are not committed; catalog
 images continue to come from Platform-provided paths.

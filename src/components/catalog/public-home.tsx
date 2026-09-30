@@ -165,8 +165,15 @@ export function PublicHome() {
         </PageContainer>
       </section>
 
+      <div aria-hidden="true" className="home-walk">
+        {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
+        <img alt="" height={268} src="/brand/fukumaru_hashiru.webp" width={328} />
+      </div>
+
       <section className="home-categories">
-        <PageContainer className="home-content">
+        <PageContainer className="home-content home-peek-anchor">
+          {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
+          <img alt="" aria-hidden="true" className="home-peek home-peek--right" height={190} src="/brand/sd_fukumaru_ooyorokobi.webp" width={176} />
           {categories.length > 0 ? (
             <nav aria-label="ガチャカテゴリー" className="category-links">
               {categories.map((item) => <button aria-pressed={category === item.slug} key={item.id} onClick={() => selectCategory(item.slug)} onFocus={revealFilter} type="button">{item.name}</button>)}
@@ -191,7 +198,9 @@ export function PublicHome() {
       </section>
 
       <section className="home-notices">
-        <PageContainer>
+        <PageContainer className="home-peek-anchor">
+          {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
+          <img alt="" aria-hidden="true" className="home-peek home-peek--left" height={220} src="/brand/sd_pokezou_ooatari.webp" width={164} />
           <header className="catalog-section-heading"><div><p>INFORMATION</p><h2>お知らせ</h2></div><Link href="/notices">一覧を見る <span>→</span></Link></header>
           {notices.length > 0 ? (
             <div className="notice-list">{notices.map((notice) => <Link href={`/notices/${notice.id}`} key={notice.id}><time dateTime={notice.publish_start_at}>{formatDate(notice.publish_start_at)}</time>{notice.is_important && <span>重要</span>}<strong>{notice.title}</strong><p>{notice.summary ?? "--"}</p></Link>)}</div>

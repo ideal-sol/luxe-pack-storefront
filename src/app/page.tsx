@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { HomeAssist } from "@/components/catalog/home-assist";
 import { HomeHero } from "@/components/catalog/home-hero";
 import { PublicHome } from "@/components/catalog/public-home";
 import { CardRegistrationReturnRouter } from "@/components/payment/card-registration-return-router";
@@ -21,6 +22,7 @@ export default async function HomePage({
     <>
       <HomeHero />
       <PublicHome />
+      <HomeAssist />
     </>
   );
 }

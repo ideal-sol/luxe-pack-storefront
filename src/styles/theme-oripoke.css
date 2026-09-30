@@ -557,6 +557,232 @@ body {
 .payment-history-detail__back:focus-visible,
 .payment-history-detail__resume:focus-visible { outline-color: rgba(0, 190, 177, .45); }
 
+/* ==========================================================
+   アニメーション（デザイン top.html／common.css の動きを移植）
+   すべて transform／opacity／box-shadow／left のみで、OSの「動きを減らす」設定では止める。
+   ========================================================== */
+@keyframes oripoke-shine { 0% { left: -70%; } 55% { left: 135%; } 100% { left: 135%; } }
+@keyframes oripoke-floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes oripoke-bob { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-11px) rotate(-2deg); } }
+@keyframes oripoke-bob2 { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-8px) rotate(2.5deg); } }
+@keyframes oripoke-twinkle { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
+@keyframes oripoke-wobble { 0%, 100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
+@keyframes oripoke-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.045); } }
+@keyframes oripoke-rise {
+  0% { opacity: 0; transform: translateY(24px) scale(.5); }
+  18% { opacity: .95; }
+  82% { opacity: .6; }
+  100% { opacity: 0; transform: translateY(-190px) scale(1.15); }
+}
+@keyframes oripoke-sweep { 0% { transform: translateX(-40%) rotate(12deg); } 100% { transform: translateX(140%) rotate(12deg); } }
+@keyframes oripoke-walk { 0% { left: 100%; } 100% { left: -240px; } }
+@keyframes oripoke-breathe {
+  0%, 100% { box-shadow: 0 0 0 1px var(--gold-lt), 0 8px 20px rgba(245, 166, 35, .22); }
+  50% { box-shadow: 0 0 0 1px #ffd980, 0 12px 34px rgba(245, 166, 35, .55); }
+}
+
+/* 光が走る共通表現（ボタン・カード） */
+.button--dark:not(:disabled),
+.button--accent:not(:disabled),
+.home-hero__cta,
+.gacha-card__cta,
+.site-header__mobile-account a[href="/register"] {
+  overflow: hidden;
+  position: relative;
+}
+.button--dark:not(:disabled)::after,
+.button--accent:not(:disabled)::after,
+.home-hero__cta::after,
+.gacha-card__cta::after,
+.site-header__mobile-account a[href="/register"]::after,
+.gacha-card::after {
+  animation: oripoke-shine 4s infinite;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .6), transparent);
+  content: "";
+  height: 100%;
+  left: -70%;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  transform: skewX(-18deg);
+  width: 45%;
+}
+.home-hero__cta::after { animation-duration: 3.6s; background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .7), transparent); width: 42%; }
+.gacha-card__cta::after { animation-duration: 4.2s; width: 42%; }
+.gacha-card { overflow: hidden; position: relative; }
+.gacha-card::after { animation-duration: 5.5s; background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .5), transparent); width: 36%; z-index: 3; }
+
+/* メインビジュアル */
+.home-hero__inner { z-index: 2; }
+.home-hero__lightsweep, .home-hero__sparks { inset: 0; overflow: hidden; pointer-events: none; position: absolute; z-index: 1; }
+.home-hero__lightsweep i {
+  animation: oripoke-sweep 7s linear infinite;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .2), transparent);
+  height: 180%;
+  left: 0;
+  position: absolute;
+  top: -40%;
+  width: 26%;
+}
+.home-hero__spark {
+  animation-iteration-count: infinite;
+  animation-name: oripoke-rise;
+  animation-timing-function: linear;
+  background: var(--white);
+  border-radius: 50%;
+  display: block;
+  opacity: 0;
+  position: absolute;
+}
+.home-hero__spark--yellow { background: var(--yellow); }
+.home-hero__badge { animation: oripoke-wobble 4s ease-in-out infinite; gap: 9px; }
+.home-hero__badge b { animation: oripoke-twinkle 1.8s infinite; background: var(--white); border-radius: 50%; display: block; height: 8px; width: 8px; }
+.home-hero h1 span { text-shadow: 0 3px 10px rgba(245, 166, 35, .5); }
+.home-hero__cta--primary { animation: oripoke-pulse 2.6s ease-in-out infinite; }
+.home-hero__character .home-hero__pokezou { animation: oripoke-bob 3.6s ease-in-out infinite; }
+.home-hero__character .home-hero__fukumaru { animation: oripoke-floaty 3.4s ease-in-out infinite; }
+.home-hero__character .home-hero__orika { animation: oripoke-bob2 3s ease-in-out .4s infinite; }
+
+/* 注目の企画（バナー）：中央の1枚の左右に前後が見える自動送りカルーセル */
+.home-banner-carousel { --cw: 250px; --cg: 12px; position: relative; }
+.home-banners__rail {
+  position: relative;
+  gap: var(--cg);
+  grid-auto-columns: var(--cw);
+  margin-inline: calc(50% - 50vw);
+  padding: 4px calc(50vw - var(--cw) / 2) 10px;
+  scroll-padding-inline: 0;
+}
+.home-banner-carousel__slide { scroll-snap-align: center; }
+.home-banner { aspect-ratio: 1551 / 1014; border: 0; border-radius: 14px; outline: 3px solid rgba(255, 255, 255, .9); }
+.home-banner::after { display: none; }
+.home-banner-carousel__controls > .home-banner-carousel__arrow {
+  background: linear-gradient(180deg, var(--white), #eaf7f6);
+  border: 0;
+  border-radius: 50%;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, .22);
+  color: var(--teal);
+  font-size: 14px;
+  height: 38px;
+  position: absolute;
+  top: calc(4px + var(--cw) * 1014 / 1551 / 2 - 19px);
+  width: 38px;
+  z-index: 5;
+}
+.home-banner-carousel__arrow--prev { left: max(4px, calc(50% - var(--cw) / 2 - 56px)); }
+.home-banner-carousel__arrow--next { right: max(4px, calc(50% - var(--cw) / 2 - 56px)); }
+.home-banner-carousel__controls > .home-banner-carousel__toggle {
+  align-items: center;
+  background: var(--white);
+  border: 2px solid #cfebe8;
+  border-radius: 999px;
+  color: var(--teal-dd);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 11px;
+  height: 32px;
+  justify-content: center;
+  margin-left: 6px;
+  width: 44px;
+}
+.home-banner-carousel__indicators button::before { transition: background-color .3s ease, width .3s ease; }
+
+/* バナーの下を、ふくまるが歩いて横切る帯 */
+.home-walk { background: linear-gradient(180deg, var(--pale), var(--white)); height: 56px; overflow: hidden; position: relative; }
+.home-walk img { animation: oripoke-walk 17s linear infinite; bottom: 4px; height: 46px; left: 100%; position: absolute; width: auto; }
+
+/* 見出しの横から顔を出すキャラクター（広い画面のみ） */
+.home-peek-anchor { position: relative; }
+.home-peek { display: none; height: auto; pointer-events: none; position: absolute; width: auto; z-index: 1; }
+
+/* 単価による枠の強さ（hi：金枠が呼吸するように光る／mid：水色の太枠／lo：標準） */
+.gacha-card[data-price-tier="hi"] { animation: oripoke-breathe 3.4s ease-in-out infinite; border: 3px solid var(--yellow); }
+.gacha-card[data-price-tier="mid"] { border: 3px solid #7fd9d1; box-shadow: 0 8px 20px rgba(0, 190, 177, .24); }
+
+/* オリカの案内吹き出し（トップ右下） */
+.home-assist { align-items: flex-end; bottom: calc(66px + 14px + env(safe-area-inset-bottom)); display: none; gap: 8px; position: fixed; right: 16px; z-index: 45; }
+.home-assist__bubble {
+  background: var(--white);
+  border: 3px solid var(--teal);
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .22);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 180px;
+  padding: 9px 12px;
+}
+.home-assist__bubble a { color: var(--teal-dd); text-decoration: underline; text-underline-offset: 2px; }
+.home-assist__character { filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .3)); height: 80px; width: auto; }
+.home-assist__close {
+  align-items: center;
+  background: var(--ink);
+  border: 2px solid var(--white);
+  border-radius: 50%;
+  color: var(--white);
+  cursor: pointer;
+  display: flex;
+  font-size: 13px;
+  height: 26px;
+  justify-content: center;
+  left: -10px;
+  line-height: 1;
+  padding: 0;
+  position: absolute;
+  top: -10px;
+  width: 26px;
+}
+
+@media (min-width: 601px) {
+  .home-banner-carousel { --cw: 290px; --cg: 20px; }
+  .home-banner-carousel__controls > .home-banner-carousel__arrow { font-size: 18px; height: 48px; top: calc(4px + var(--cw) * 1014 / 1551 / 2 - 24px); width: 48px; }
+  .home-banner-carousel__arrow--prev { left: max(8px, calc(50% - var(--cw) / 2 - 68px)); }
+  .home-banner-carousel__arrow--next { right: max(8px, calc(50% - var(--cw) / 2 - 68px)); }
+  .home-walk { height: 74px; }
+  .home-walk img { height: 62px; }
+  .home-assist { display: flex; }
+}
+@media (min-width: 720px) {
+  .home-assist { bottom: calc(20px + env(safe-area-inset-bottom)); right: 20px; }
+}
+@media (min-width: 781px) {
+  .home-banner-carousel { --cw: 330px; }
+  .home-assist__bubble { font-size: 13px; max-width: 230px; padding: 11px 15px; }
+  .home-assist__character { height: 104px; }
+}
+@media (min-width: 981px) {
+  .home-banner-carousel { --cw: 380px; }
+  .home-peek { display: block; }
+  .home-categories .home-peek-anchor { padding-right: 120px; }
+  .home-peek--right { animation: oripoke-bob2 2.8s ease-in-out infinite; height: 95px; right: 12px; top: -34px; }
+  .home-peek--left { animation: oripoke-bob 3.2s ease-in-out infinite; height: 110px; right: 170px; top: -58px; }
+}
+@media (min-width: 1181px) {
+  .home-banner-carousel { --cw: 445px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero__lightsweep,
+  .home-hero__sparks,
+  .button--dark::after,
+  .button--accent::after,
+  .home-hero__cta::after,
+  .gacha-card__cta::after,
+  .gacha-card::after,
+  .site-header__mobile-account a[href="/register"]::after { display: none; }
+  .home-hero__badge,
+  .home-hero__badge b,
+  .home-hero__cta--primary,
+  .home-hero__character .home-hero__pokezou,
+  .home-hero__character .home-hero__fukumaru,
+  .home-hero__character .home-hero__orika,
+  .home-peek,
+  .gacha-card[data-price-tier="hi"] { animation: none; }
+  .home-walk img { animation: none; left: auto; right: 10%; }
+}
+
 /* ---------- スマートフォン（〜780px）の組み替え ---------- */
 /* 見出し：英字の小見出しと見出しを縦に積む（横並びだと左右に離れて読みにくい） */
 @media (max-width: 780px) {

@@ -5,6 +5,16 @@ import { gachaPresentationReasonLabels, gachaSaleStateLabels } from "./gacha-pre
 
 const points = new Intl.NumberFormat("ja-JP");
 
+/**
+ * 単価による枠の強さ（デザインの gcard.hi / mid / lo）。見た目だけの区分で、販売・抽選の判断には使わない。
+ * 1,000コイン以上を hi（金枠が光る）、300コイン以上を mid、それ未満を lo とする。
+ */
+export function gachaPriceTier(pricePoints: number): "hi" | "mid" | "lo" {
+  if (pricePoints >= 1000) return "hi";
+  if (pricePoints >= 300) return "mid";
+  return "lo";
+}
+
 export function GachaCard({ gacha, priority = false }: { readonly gacha: GachaSummary; readonly priority?: boolean }) {
   const asset = gacha.presentation_asset?.media_type === "image" ? gacha.presentation_asset : null;
   const presentation = gacha.presentation;
@@ -13,7 +23,7 @@ export function GachaCard({ gacha, priority = false }: { readonly gacha: GachaSu
   const showTotalCount = display?.show_total_count ?? true;
   const showDrawnCount = display?.show_drawn_count === true && gacha.drawn_count !== undefined;
   return (
-    <article className="gacha-card">
+    <article className="gacha-card" data-price-tier={gachaPriceTier(gacha.price_points)}>
       <Link aria-label={`${gacha.title}の詳細を見る`} className="gacha-card__image" href={`/gachas/${gacha.slug}`}>
         <CatalogAsset alt={asset?.alt_text ?? gacha.title} priority={priority} {...(asset?.path ? { src: asset.path } : {})} />
         <span className="gacha-card__category">{gacha.category.name}</span>
