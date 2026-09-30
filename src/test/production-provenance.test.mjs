@@ -49,12 +49,12 @@ describe("exact alpha.41 Production provenance", () => {
 
   it("accepts approved source pins, immutable artifact identity and every digest", () => {
     expect(validateProvenance(root)).toMatchObject({
-      source_sha: "db02898cecf6b5d1646401c56579f592be3c4f4e",
+      source_sha: "7da93eb695f38b7cf804eba59a3642da0b9dc073",
       contract_version: "2.0.0-alpha.41", contract_artifact_id: "10900150259",
       contract_manifest_sha256: "b3c7d2a28c0c8332eeea90ac43876245baf4a1e4ce6b7d4f646124212d99f7ee",
       client_pin: "2.0.0-alpha.41", testkit_pin: "2.0.0-alpha.41", public_openapi_pin: "2.0.0-alpha.37",
-      platform_runtime_source_sha: "e4361ece51fc1249a5cfb2c64cf56d3aa4bb0c29",
-      platform_authority_merge_sha: "d823c2f80c1500990289b06da8e5504d7b48c2e5",
+      platform_runtime_source_sha: "538a208c025fcc5a7d6f9914d3c428b9ef702dbe",
+      platform_authority_merge_sha: "6deba7e8fe4b85ae43b66b7437b46db94ad7c814",
       contract_archive_sha256: "6d4cf321249d46145f22ce9551ba709a51dd59453ccbe0bd5004d0782d2dfb50",
       platform_source_sha: "e2b30805704ed5b9c3fd54492fb86f8b8549bde5",
       client_sha256: "3565505ed851df91a1ee4b9eeef1a94caae706a6b47725ef1472e5d5048f6f72",
@@ -77,6 +77,14 @@ describe("exact alpha.41 Production provenance", () => {
 
   it.each(["platform_runtime_source_sha", "platform_authority_merge_sha"])("rejects wrong %s", (field) => {
     authority[field] = "f".repeat(40);
+    expect(() => validateProvenance(root, authority)).toThrow("Platform runtime authority mismatch");
+  });
+
+  it.each([
+    ["platform_runtime_source_sha", "e4361ece51fc1249a5cfb2c64cf56d3aa4bb0c29"],
+    ["platform_authority_merge_sha", "d823c2f80c1500990289b06da8e5504d7b48c2e5"],
+  ])("rejects superseded %s", (field, value) => {
+    authority[field] = value;
     expect(() => validateProvenance(root, authority)).toThrow("Platform runtime authority mismatch");
   });
 
