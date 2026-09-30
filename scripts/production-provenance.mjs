@@ -30,8 +30,8 @@ export function validateProvenance(root, authority = approvedSource) {
   const directory = dirname(authority.manifest_path);
   requireValue(directory === "vendor/oripa/SHIPONLY-20260926", "stale provenance authority");
   requireValue(authority.contract_version === "2.0.0-alpha.41", "unapproved contract version");
-  requireValue(authority.platform_runtime_source_sha === "e4361ece51fc1249a5cfb2c64cf56d3aa4bb0c29"
-    && authority.platform_authority_merge_sha === "d823c2f80c1500990289b06da8e5504d7b48c2e5",
+  requireValue(authority.platform_runtime_source_sha === "538a208c025fcc5a7d6f9914d3c428b9ef702dbe"
+    && authority.platform_authority_merge_sha === "6deba7e8fe4b85ae43b66b7437b46db94ad7c814",
   "Platform runtime authority mismatch");
   const manifestPath = join(root, directory, "artifact-manifest.json");
   requireValue(digest(manifestPath) === authority.manifest_sha256, "manifest digest mismatch");

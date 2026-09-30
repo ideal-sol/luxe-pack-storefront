@@ -1,14 +1,14 @@
 # Production release authority — alpha.41
 
 Authority/provenance synchronization only. Human approved exact Storefront Runtime
-Source `db02898cecf6b5d1646401c56579f592be3c4f4e` (merged PR #122), with OLD Test
-Technical and Human Browser Acceptance PASS. Production Build dispatch, new-server
+Source `7da93eb695f38b7cf804eba59a3642da0b9dc073` (merged PR #126), with OLD Test
+Technical, Human Browser Acceptance and Security Production Acceptance PASS. Production Build dispatch, new-server
 operations and Production Activation are not authorized by this change.
 `activation_authorized` remains false.
 
 ## Separate runtime and workflow sources
 
-The approved Runtime Source stays `db02898cecf6b5d1646401c56579f592be3c4f4e`.
+The approved Runtime Source stays `7da93eb695f38b7cf804eba59a3642da0b9dc073`.
 The authority PR's merge SHA is workflow/metadata authority only; it must never
 replace the approved Runtime Source. The canonical `production-artifact.yml`
 remains unchanged: approval code comes from protected current main, while the
@@ -40,26 +40,21 @@ values. Computed digests do not replace approved values. The archive digest and
 Artifact ID are read back from canonical provenance; no archive is reissued.
 
 The separately recorded Platform Runtime Source
-`e4361ece51fc1249a5cfb2c64cf56d3aa4bb0c29` and Platform authority merge
-`d823c2f80c1500990289b06da8e5504d7b48c2e5` are retained from their prior independent
-approval. This Storefront-only sync does not approve, inspect or deploy a new
-Platform Runtime Source, and never substitutes Contract Artifact Source for it.
+`538a208c025fcc5a7d6f9914d3c428b9ef702dbe` and Platform authority merge
+`6deba7e8fe4b85ae43b66b7437b46db94ad7c814` are synchronized to the final
+Human-provided Platform authorities. This does not change Platform source or
+substitute the Runtime Source for Contract Artifact Source.
 
-The verifier changes only three fixed provenance values: the canonical directory,
-contract version and independent OpenAPI version. Its validation and authorization
-logic remain unchanged, including exact pins, immutable manifest, source identity,
-unique Artifact ID/archive declarations, digests and Client/Testkit alignment.
-Historical alpha.39/alpha.40 fixtures remain as rejection evidence.
+The verifier updates only the two fixed Platform runtime/authority values.
+Validation and authorization logic, Contract pins and all digest checks remain
+unchanged. Historical alpha.39/alpha.40 fixtures remain rejection evidence.
 
-## Approved runtime delta
+## Approved runtime target
 
-From prior approved source `b85afec9aba0e72732366e8e12701cef39a06e06`, the complete
-history is #118 (authority only), #119 (shipping-only prizes and alpha.41), #120
-(Save Card/3DS entry), #121 (purchase continuation processing), and #122 (Phase1/
-Phase2 design, prize guidance, narrow-screen login and the disclosed fast-uri/
-undici development dependency audit fixes). There are no other intervening
-commits. Human explicitly approved #122 merge/OLD Test activation and now names
-that exact merged source with Technical and Browser Acceptance PASS.
+Human approved the exact merged Phase5 source from PR #126, with Browser and
+Security Production Acceptance PASS. This sync starts from that protected main
+and changes only authority metadata, provenance constants, focused tests and
+this document. It does not incorporate additional application changes.
 Unapproved Runtime delta: NONE.
 
 ## Verification and rollout boundary
