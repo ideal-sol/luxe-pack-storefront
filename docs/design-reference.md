@@ -169,6 +169,14 @@ ported as `oripoke-*` CSS, the banner carousel auto-advances every 3.4 s with a
 pause control, card frames use a presentation-only price tier, and
 `prefers-reduced-motion` stops all motion and carousel autoplay.
 
+Home also shows the package's fixed guide sections (coin purchase, purchase
+information, flow, guidance) from `home-guide.tsx` constants with Coin wording;
+they are static copy and never stand in for Platform product, payment or
+policy data. Human-approved copy directs visitors to current purchase screens,
+guides and terms instead of asserting unconfirmed prices or policy promises.
+The Header uses the delivered logo image only when the app name is
+オリポケ; other names keep the vector mark and text.
+
 Brand images (`public/brand/`) are the client's fixed site assets only. Sample
 gacha banners and card images in the design package are not committed; catalog
 images continue to come from Platform-provided paths.

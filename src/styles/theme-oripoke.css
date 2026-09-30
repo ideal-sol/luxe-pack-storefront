@@ -783,6 +783,222 @@ body {
   .home-walk img { animation: none; left: auto; right: 10%; }
 }
 
+/* ==========================================================
+   ロゴ（オリポケのロゴ画像。サイト名がオリポケ以外のときはマーク＋テキスト）
+   ========================================================== */
+.wordmark__logo { display: block; height: 30px; width: auto; }
+.wordmark__name--visually-hidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+.site-footer__brand .wordmark__mark { background: var(--white); height: 36px; width: 36px; }
+
+/* ==========================================================
+   トップ固定の案内区画（コインの購入・ご利用の流れ・安心して）
+   ========================================================== */
+.home-guide { padding-block: 30px 32px; position: relative; }
+.home-guide--buy { background: linear-gradient(180deg, var(--pale), var(--white)); }
+.home-guide--safe { background: linear-gradient(180deg, var(--white), var(--pale)); }
+.home-guide__heading { margin-bottom: 22px; position: relative; text-align: center; }
+.home-guide__heading h2 {
+  background: linear-gradient(transparent 64%, rgba(255, 202, 55, .85) 64%, rgba(255, 202, 55, .85) 88%, transparent 88%);
+  color: var(--ink);
+  display: inline-block;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  margin: 0;
+}
+.home-guide__heading p { color: #4a6e70; font-size: 12px; font-weight: 700; line-height: 1.8; margin: 11px 0 0; }
+.home-guide__bar {
+  background: linear-gradient(90deg, var(--yellow), var(--gold));
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(245, 166, 35, .5);
+  display: block;
+  height: 6px;
+  margin: 14px auto 0;
+  width: 70px;
+}
+.home-guide ul, .home-guide ol { list-style: none; margin: 0; padding: 0; }
+
+.home-guide__plans { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); margin-bottom: 26px !important; }
+.home-guide__plan {
+  background: var(--white);
+  border: 3px solid var(--teal);
+  border-radius: 18px;
+  box-shadow: 0 8px 22px rgba(0, 190, 177, .2);
+  overflow: hidden;
+  padding: 24px 20px;
+  position: relative;
+  text-align: center;
+}
+.home-guide__plan--best { border-color: var(--yellow); box-shadow: 0 0 0 1px var(--gold-lt), 0 10px 28px rgba(245, 166, 35, .32); }
+.home-guide__plan p { margin: 0; }
+.home-guide__plan-amount {
+  background: linear-gradient(180deg, var(--teal-lt), var(--teal-dd));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+.home-guide__plan-amount small { font-size: 16px; margin-left: 2px; }
+.home-guide__plan-price { color: var(--ink); font-size: 20px; font-weight: 900; margin-top: 9px !important; }
+.home-guide__plan-memo { color: var(--muted); font-size: 12.5px; font-weight: 700; margin-top: 7px !important; }
+.home-guide__plan-buy {
+  background: linear-gradient(180deg, #ffdc7a, var(--yellow));
+  border-radius: 11px;
+  box-shadow: 0 4px 0 #d9a61c;
+  color: var(--ink);
+  display: block;
+  font-size: 15px;
+  font-weight: 900;
+  margin-top: 15px;
+  overflow: hidden;
+  padding: 13px 0;
+  position: relative;
+}
+.home-guide__plan-buy::after {
+  animation: oripoke-shine 4.4s infinite;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .7), transparent);
+  content: "";
+  height: 100%;
+  left: -70%;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  transform: skewX(-18deg);
+  width: 42%;
+}
+.home-guide__paybox {
+  background: var(--white);
+  border: 2px solid #d6efec;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(23, 58, 60, .08);
+  padding: 22px 16px;
+}
+.home-guide__paybox h3 { color: var(--ink); font-size: 18px; font-weight: 900; margin: 0 0 16px; text-align: center; }
+.home-guide__pays { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+.home-guide__pays li {
+  align-items: center;
+  background: linear-gradient(180deg, var(--white), var(--pale));
+  border: 2px solid #d6efec;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 10px;
+  text-align: center;
+}
+.home-guide__pay-icon { margin-bottom: 9px; }
+.home-guide__pays strong { color: var(--ink); font-size: 14px; font-weight: 900; }
+.home-guide__pays span { color: var(--muted); font-size: 11.5px; font-weight: 700; line-height: 1.6; margin-top: 5px; }
+.home-guide__paynote { color: var(--muted); font-size: 12px; font-weight: 700; line-height: 1.85; margin-top: 14px; text-align: center; }
+.home-guide__paynote p { margin: 0; }
+
+.home-guide__flow { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+.home-guide__flow li {
+  background: var(--white);
+  border: 2px solid #d6efec;
+  border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(23, 58, 60, .09);
+  padding: 18px 14px 16px;
+  position: relative;
+  text-align: center;
+}
+.home-guide__step-no {
+  background: linear-gradient(180deg, var(--teal-lt), var(--teal));
+  border-radius: 999px;
+  box-shadow: 0 2px 0 #009085;
+  color: var(--white);
+  display: inline-block;
+  font-size: 12.5px;
+  font-weight: 900;
+  margin-bottom: 11px;
+  padding: 6px 15px;
+}
+.home-guide__flow img { display: block; filter: drop-shadow(0 6px 9px rgba(0, 0, 0, .18)); height: 100px; margin: 0 auto 11px; width: auto; }
+.home-guide__flow h3 { color: var(--ink); font-size: 17px; font-weight: 900; margin: 0 0 7px; }
+.home-guide__flow p { color: #3b6062; font-size: 12.5px; font-weight: 600; line-height: 1.8; margin: 0; }
+
+.home-guide__safes { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+.home-guide__safes li {
+  background: var(--white);
+  border: 2px solid #d6efec;
+  border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(23, 58, 60, .09);
+  padding: 22px 20px;
+}
+.home-guide__safe-icon { display: block; margin-bottom: 13px; }
+.home-guide__safes h3 { color: var(--ink); font-size: 17px; font-weight: 900; margin: 0 0 10px; }
+.home-guide__safes p { color: #3b6062; font-size: 13px; font-weight: 600; line-height: 1.9; margin: 0; }
+
+.home-peek--guide { height: 108px; left: 0; top: -34px; }
+
+@media (min-width: 601px) {
+  .home-guide__heading h2 { font-size: 26px; }
+  .home-guide__heading p { font-size: 14px; }
+  .home-guide__plans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-guide__plan-amount { font-size: 44px; }
+  .home-guide__plan-amount small { font-size: 20px; }
+  .home-guide__pays { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-guide__paybox { padding: 22px 24px; }
+  .home-guide__flow, .home-guide__safes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 720px) {
+  .wordmark__logo { height: 36px; }
+}
+@media (min-width: 781px) {
+  .home-guide { padding-block: 38px 40px; }
+  .home-guide__heading { margin-bottom: 26px; }
+  .home-guide__heading h2 { font-size: 30px; }
+}
+@media (min-width: 981px) {
+  .wordmark__logo { height: 44px; }
+  .home-guide__plans { gap: 24px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .home-guide__pays { gap: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .home-guide__safes { gap: 24px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .home-guide__flow { gap: 36px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .home-guide__flow li + li::before {
+    color: var(--yellow);
+    content: "▶";
+    font-size: 24px;
+    font-weight: 900;
+    left: -30px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .home-peek--guide { animation: oripoke-bob 3.2s ease-in-out infinite; }
+}
+@media (min-width: 1181px) {
+  .home-guide__heading h2 { font-size: 34px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-guide__plan-buy::after { display: none; }
+  .home-peek--guide { animation: none; }
+}
+
+/* ヘッダーメニュー（ガチャ一覧・コイン購入・お知らせ）：折り返さず、720〜980pxでは詰めて1行に収める */
+.site-header__nav > a,
+.site-header__nav > button,
+.site-header__nav > span { flex-shrink: 0; white-space: nowrap; }
+@media (min-width: 720px) and (max-width: 980px) {
+  .site-header__nav { gap: 12px; }
+  .site-header__nav > a:not(.button) { font-size: 12.5px; }
+  .site-header__nav > a[href="/register"] { padding: 6px 10px; }
+  .site-header__nav .button { font-size: 13px; min-height: 38px; padding: 8px 12px; }
+  .site-header__point { font-size: 12px; gap: 5px; padding: 5px 10px; }
+  .wordmark__logo { height: 30px; }
+}
+
 /* ---------- スマートフォン（〜780px）の組み替え ---------- */
 /* 見出し：英字の小見出しと見出しを縦に積む（横並びだと左右に離れて読みにくい） */
 @media (max-width: 780px) {

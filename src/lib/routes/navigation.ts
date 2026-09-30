@@ -17,6 +17,13 @@ export const primaryNavigation = [
   { href: "/notices", icon: "notice", label: "お知らせ" },
 ] as const satisfies readonly NavigationItem[];
 
+/** PCヘッダーのメニュー（デザインのヘッダーに対応。購入の表記はサイト全体のコインに合わせる）。 */
+export const headerNavigation = [
+  { href: "/gachas", label: "ガチャ一覧" },
+  { href: "/points", label: "コイン購入" },
+  { href: "/notices", label: "お知らせ" },
+] as const;
+
 export const mobileNavigation = [
   { href: "/", icon: "home", label: "ホーム" },
   ...primaryNavigation,

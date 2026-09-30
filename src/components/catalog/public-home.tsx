@@ -15,6 +15,7 @@ import { usePublicClient } from "./public-client-provider";
 import { CatalogLoading, CatalogMessage } from "./catalog-message";
 import { GachaCard } from "./gacha-card";
 import { HomeBannerCarousel } from "./home-banner-carousel";
+import { HomeGuide } from "./home-guide";
 
 interface HomeData {
   readonly categories: readonly GachaCategory[];
@@ -196,6 +197,8 @@ export function PublicHome() {
           ) : <CatalogMessage description="現在表示できるガチャはありません。" eyebrow="EMPTY" title="ラインナップを準備中です" />)}
         </PageContainer>
       </section>
+
+      <HomeGuide />
 
       <section className="home-notices">
         <PageContainer className="home-peek-anchor">

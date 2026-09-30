@@ -5,13 +5,16 @@ import { useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
 import { useToast } from "@/components/common/toast-provider";
 import { presentAuthProblem } from "@/lib/platform";
-import { primaryNavigation } from "@/lib/routes/navigation";
+import { headerNavigation } from "@/lib/routes/navigation";
 import { usePointClient } from "@/components/points/point-client-provider";
 
 const pointNumber = new Intl.NumberFormat("ja-JP");
+export const brandLogoAppName = "オリポケ";
 
 export function SiteHeader() {
   const appName = process.env.NEXT_PUBLIC_APP_NAME;
+  // オリポケのロゴ画像（マーク＋ロゴ文字）はサイト名がオリポケのときだけ使う。他の名前ではマーク＋テキスト表示。
+  const brandLogo = appName?.trim() === brandLogoAppName;
   const { logout, state } = useSession();
   const { showToast } = useToast();
   const { wallet } = usePointClient();
@@ -35,13 +38,18 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="page-container site-header__main">
-        <Link aria-label={appName ? `${appName} ホーム` : "ホーム"} className="wordmark" href="/">
-          {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
-          <img alt="" aria-hidden="true" className="wordmark__mark" height={141} src="/brand/mark.png" width={108} />
-          <strong className="wordmark__name">{appName}</strong>
+        <Link aria-label={appName ? `${appName} ホーム` : "ホーム"} className={brandLogo ? "wordmark wordmark--logo" : "wordmark"} href="/">
+          {brandLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要
+            <img alt="" aria-hidden="true" className="wordmark__logo" height={96} src="/brand/logo.webp" width={402} />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要
+            <img alt="" aria-hidden="true" className="wordmark__mark" height={100} src="/brand/mark.svg" width={100} />
+          )}
+          <strong className={brandLogo ? "wordmark__name wordmark__name--visually-hidden" : "wordmark__name"}>{appName}</strong>
         </Link>
         <nav aria-label="メインナビゲーション" className="site-header__nav">
-          {primaryNavigation.filter((item) => item.href !== "/gachas").map((item) => (
+          {headerNavigation.map((item) => (
             <Link href={item.href} key={item.href}>
               {item.label}
             </Link>
