@@ -36,11 +36,9 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="page-container site-header__main">
         <Link aria-label={appName ? `${appName} ホーム` : "ホーム"} className="wordmark" href="/">
-          <span className="wordmark__seal" aria-hidden="true">OZ</span>
-          <span>
-            <strong>{appName}</strong>
-            <small>STORE FRONT</small>
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
+          <img alt="" aria-hidden="true" className="wordmark__mark" height={141} src="/brand/mark.png" width={108} />
+          <strong className="wordmark__name">{appName}</strong>
         </Link>
         <nav aria-label="メインナビゲーション" className="site-header__nav">
           {primaryNavigation.filter((item) => item.href !== "/gachas").map((item) => (

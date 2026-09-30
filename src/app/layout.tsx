@@ -8,19 +8,23 @@ import { ToastProvider } from "@/components/common/toast-provider";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { PublicClientProvider } from "@/components/catalog/public-client-provider";
 import { PointClientProvider } from "@/components/points/point-client-provider";
+import "@/styles/font-noto-sans-jp.css";
 import "@/styles/globals.css";
+import "@/styles/theme-oripoke.css";
+
+const siteName = process.env.NEXT_PUBLIC_APP_NAME?.trim() || "OripaZ";
 
 export const metadata: Metadata = {
-  description: "OripaZ customer storefront.",
+  description: `${siteName} ポケモンカード専門のオンラインオリパ`,
   title: {
-    default: "OripaZ",
-    template: "%s | OripaZ",
+    default: siteName,
+    template: `%s | ${siteName}`,
   },
 };
 
 export const viewport: Viewport = {
   colorScheme: "light",
-  themeColor: "#161513",
+  themeColor: "#00beb1",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

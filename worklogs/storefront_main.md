@@ -1458,3 +1458,72 @@ application of Platform migrations `000069`／`000070`.
   Fresh fixed-head machine-readable self-review, Required Checks, Squash Merge and
   read-only post-merge authorization evidence are recorded in the authority PR.
   Production Build dispatch, Activation and new-server operations: NOT RUN.
+
+## SITE-DESIGN-001 — オリポケ brand theme foundation
+
+- Scope: presentation only. Adds `src/styles/theme-oripoke.css` (loaded after
+  `globals.css`), `HomeHero`, brand mark/character assets under `public/brand/`,
+  a remaining-units bar and decorative detail action on gacha cards, and
+  Japanese Footer headings. Detail hero uses two columns from 720 px; list/detail
+  widen to 1220 px and three columns from 1100 px.
+- Unchanged: Platform artifacts, `@oripa/storefront-client` usage, routes, Coin
+  terminology, sale/eligibility/Draw/Session/Prize logic, ENV contract.
+- Local checks: `pnpm validate` PASS (all boundary checks, lint, typecheck,
+  51 files / 672 tests, production build). Visual check against the delivered
+  1280/390 px screens with a local mock of the Public API: no horizontal overflow.
+- Not run: Preview Runtime Acceptance on test.luxe-pack.biz, GitHub Required
+  Checks, fixed-head self-review. Production Activation: NOT RUN.
+
+## SITE-DESIGN-002 — オリポケ design package update (Noto Sans JP, breakpoints, mobile)
+
+- Source: client package `oripoke-design-20260928` (`pages/common.css` is the
+  source of truth; top page values are identical to it). Client confirmed that
+  product behaviour, copy and wording follow the existing system.
+- Font: Noto Sans JP (variable 100–900, OFL-1.1) is served from
+  `public/fonts/noto-sans-jp/` via `src/styles/font-noto-sans-jp.css`
+  (unicode-range subsets, loaded before `globals.css`). No external font host,
+  no `next/font/google` build-time fetch, no new dependency.
+- Layout values aligned to `common.css`: content width 1180 px with 20/14 px
+  gutters, breakpoints 600/780/980/1180 px (gacha grid 1/2/3 columns, header
+  74/88 px, hero and heading sizes per step), page title 26 px, fact values
+  21/19 px, button 15 px, footer colours and sizes, coin product cards.
+- Mobile: header keeps the wordmark on one line and shows register/login (or
+  Coin balance/logout) as compact buttons; the My Page link stays in Mobile
+  Navigation. Section headings stack below 780 px. Inventory bulk-selection
+  buttons become chips. Focus outlines use the brand teal.
+- Branding: page metadata, register eyebrow, notices and My Page support copy
+  use `NEXT_PUBLIC_APP_NAME` instead of a fixed "OripaZ"; customer-facing copy no
+  longer mentions "Platform"/"Storefront".
+- Unchanged: routes and the Header/Footer navigation set confirmed in #115,
+  Coin terminology, Platform artifacts, sale/eligibility/Draw/Session/Prize logic.
+
+## SITE-DESIGN-INTEGRATION — Phase1 / Phase2 on current main
+
+- Started from protected main `7290e8cc8ae5cf2b27618b1b1860e0296e9c0c58`.
+  Reused Phase1 `36442b8ccd8ac041a3ea85c0c25ec031fcb2106c` and Phase2
+  `ddf021cb2b39c4253e37f23aff0e7adf4e9db3d1` in order, with no conflicts.
+- Qualified Home, Footer and inventory copy so shipping-only prizes are not
+  described as freely exchangeable. Kept direct mobile login at 320/360 px;
+  compact spacing and wrapping also keep authenticated actions on screen.
+- Latest Save Card/3DS continuation and processing, shipping-only action filters,
+  Draw presentation/full results, Session and alpha.41 contracts are preserved.
+- Focused regression: 18 files / 294 tests PASS with one worker. The initial
+  parallel run had three failures in two unchanged suites; isolated serial
+  diagnosis passed all 43 tests, then the complete focused selection passed.
+- Isolated Chromium Header rendering: 10 cases PASS (anonymous/authenticated at
+  320, 360, 390, 720 and 1280 px), using local assets and no external requests.
+  This is component rendering verification, not Preview Runtime Acceptance.
+- Artifact verification, policy, all boundary checks, secret check, lint and
+  typecheck PASS. Full suite/build remain subject to PR Required Checks.
+- No Preview deployment, production activation, Contract update or S3 migration.
+  Winning results are excluded; existing personal Draw history is unchanged.
+- The first PR CI passed policy, quality and integration (full tests/build), but
+  its dependency audit found five inherited High advisories. Limited the fix to
+  transitive development dependencies fast-uri 3.1.7 and undici 8.10.2; direct
+  dependencies, Contract pins and vendored artifacts remain unchanged. The
+  updated lockfile passes the same pnpm 11 High audit (High/Critical: zero;
+  three Moderate advisories remain). No audit threshold or CI gate was relaxed.
+- After the dependency fix, all 294 focused cases passed again. The full local
+  run passed 660/695; its 35 failures were confined to child-process artifact
+  tests under the sandbox. The affected file passed all 41 cases outside the
+  sandbox without source/test changes. Final-head full CI remains the authority.

@@ -63,7 +63,8 @@
     "overrides": {
       "@oripa/site-schema@2.0.0-alpha.23": "file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
       "@oripa/storefront-client@2.0.0-alpha.41": "file:vendor/oripa/SHIPONLY-20260926/oripa-storefront-client-2.0.0-alpha.41.tgz",
-      "fast-uri@<3.1.6": "3.1.6",
+      "fast-uri@<3.1.7": "3.1.7",
+      "undici@>=8.0.0 <8.10.2": "8.10.2",
       "nanoid@<3.3.18": "3.3.18",
       "sharp@<0.35.4": "0.35.4",
       "js-yaml@>=4.0.0 <4.3.2": "4.3.2"

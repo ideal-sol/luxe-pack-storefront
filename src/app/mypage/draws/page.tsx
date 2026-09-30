@@ -7,7 +7,7 @@ export default function DrawHistoryPage() {
   return (
     <PageContainer className="route-page draw-history-page" size="narrow">
       <PageTitle
-        description="利用したガチャとPlatformが確定した実行内容を確認できます。"
+        description="利用したガチャと抽選の実行内容を確認できます。"
         eyebrow="MY PAGE / HISTORY"
         title="ガチャ履歴"
       />

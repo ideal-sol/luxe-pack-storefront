@@ -269,7 +269,7 @@ export function PrizeFulfillmentDialog({
           <div className="fulfillment-dialog__success" role="status">
             <strong>手続きが完了しました</strong>
             <p>{success}</p>
-            <p>景品・発送・お届け先はPlatformから再取得済みです。</p>
+            <p>景品・発送・お届け先は最新の情報を表示しています。</p>
           </div>
         ) : editingAddressId && addressInput ? (
           <form onSubmit={(event) => { event.preventDefault(); void saveAddress(); }}>
@@ -286,7 +286,7 @@ export function PrizeFulfillmentDialog({
               <div className="fulfillment-dialog__summary">
                 <span>表示上の交換予定</span>
                 <strong>{number.format(exchangeEstimate)} コイン</strong>
-                <small>実際の付与コインはPlatformの完了応答を正本とします。</small>
+                <small>実際に付与されるコインは、手続き完了時の内容となります。</small>
               </div>
             ) : (
               <div className="fulfillment-addresses">
@@ -321,7 +321,7 @@ export function PrizeFulfillmentDialog({
             <div className="dialog-card__actions">
               <button className="button button--ghost" disabled={submitting} onClick={closeDialog} type="button">キャンセル</button>
               <button className="button button--dark" disabled={submitting || prizeIds.length === 0 || action === "shipping" && !selectedAddressId} onClick={() => void (action === "shipping" ? ship() : exchange())} type="button">
-                {submitting ? "Platformへ確認中…" : action === "shipping" ? "発送を依頼する" : "コインに交換する"}
+                {submitting ? "確認中…" : action === "shipping" ? "発送を依頼する" : "コインに交換する"}
               </button>
             </div>
           </>

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { PUBLIC_FOOTER_PAGES_FIXTURE } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -29,9 +29,13 @@ describe("shared layout", () => {
     expect(screen.getByRole("link", { name: "お知らせ" })).toHaveAttribute("href", "/notices");
     expect(screen.getByRole("link", { name: `${appName} ホーム` })).toBeInTheDocument();
     expect(screen.getByText(appName)).toBeInTheDocument();
-    expect(view.container.querySelector(".wordmark__seal")).toHaveTextContent("OZ");
+    expect(view.container.querySelector(".wordmark__mark")).toHaveAttribute("src", "/brand/mark.png");
+    expect(view.container.querySelector(".wordmark__mark")).toHaveAttribute("aria-hidden", "true");
     expect(view.container).not.toHaveTextContent("LUXE PACK");
     expect((await screen.findAllByRole("link", { name: "新規登録" })).length).toBeGreaterThan(0);
+    const mobileAccount = within(screen.getByRole("navigation", { name: "モバイルアカウント" }));
+    expect(mobileAccount.getByRole("link", { name: "ログイン" })).toHaveAttribute("href", "/login");
+    expect(mobileAccount.getByRole("link", { name: "新規登録" })).toHaveAttribute("href", "/register");
   });
 
   it.each(["OripaZ", "Test Store", "オリポケ"])("renders Backend-ordered Footer pages with app name %s", async (appName) => {
@@ -53,10 +57,10 @@ describe("shared layout", () => {
     expect(screen.getByRole("link", { name: "コイン" })).toHaveAttribute("href", "/points");
     expect(screen.getByRole("link", { name: "お知らせ" })).toHaveAttribute("href", "/notices");
     expect(screen.getByText(appName)).toBeInTheDocument();
-    expect(view.container.querySelector(".wordmark__seal")).toHaveTextContent("OZ");
+    expect(view.container.querySelector(".wordmark__mark")).toHaveAttribute("src", "/brand/mark.png");
     expect(view.container).toHaveTextContent(`© ${appName}`);
     expect(view.container).not.toHaveTextContent("LUXE PACK");
-    expect(screen.getByText("Information")).toBeInTheDocument();
+    expect(screen.getByText("サイトについて")).toBeInTheDocument();
     expect(await screen.findByRole("link", { name: "利用規約" })).toHaveAttribute("href", "/pages/terms");
     expect(screen.getByRole("link", { name: "プライバシーポリシー" })).toHaveAttribute("href", "/pages/privacy");
     expect(screen.queryByText(PUBLIC_FOOTER_PAGES_FIXTURE.excluded.footer_off.title)).not.toBeInTheDocument();
@@ -77,9 +81,9 @@ describe("shared layout", () => {
     render(<PublicClientProvider client={client}><SiteFooter /></PublicClientProvider>);
     await waitFor(() => expect(client.listFooterPages).toHaveBeenCalledOnce());
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
-    expect(screen.getByText("Explore")).toBeInTheDocument();
-    expect(screen.getByText("Account")).toBeInTheDocument();
-    expect(screen.getByText("Information")).toBeInTheDocument();
+    expect(screen.getByText("ご利用案内")).toBeInTheDocument();
+    expect(screen.getByText("アカウント")).toBeInTheDocument();
+    expect(screen.getByText("サイトについて")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "利用規約" })).not.toBeInTheDocument();
   });
 
@@ -91,8 +95,8 @@ describe("shared layout", () => {
     await waitFor(() => expect(client.listFooterPages).toHaveBeenCalledOnce());
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
     expect(screen.getByText("OripaZ")).toBeInTheDocument();
-    expect(screen.getByText("Explore")).toBeInTheDocument();
-    expect(screen.getByText("Account")).toBeInTheDocument();
+    expect(screen.getByText("ご利用案内")).toBeInTheDocument();
+    expect(screen.getByText("アカウント")).toBeInTheDocument();
   });
 
   it("renders mobile navigation", () => {
