@@ -233,7 +233,7 @@ describe("SITE-030 Coin history and canonical Wallet presentation", () => {
     document.dispatchEvent(new Event("storefront:wallet-refresh"));
 
     await waitFor(() => expect(getWallet).toHaveBeenCalledTimes(2));
-    expect(screen.getAllByLabelText("コイン残高")[0]).toHaveTextContent("コイン 7,654");
+    await waitFor(() => expect(screen.getAllByLabelText("コイン残高")[0]).toHaveTextContent("コイン 7,654"));
   });
 
   it("coalesces duplicate manual refreshes and queues one canonical read behind an older passive read", async () => {

@@ -5,7 +5,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { HomeAssist } from "@/components/catalog/home-assist";
 import { HomeBannerCarousel, homeBannerAutoplayIntervalMs } from "@/components/catalog/home-banner-carousel";
 import { HomeGuide, homeGuideContent } from "@/components/catalog/home-guide";
-import { gachaPriceTier } from "@/components/catalog/gacha-card";
+import { GachaCard, gachaPriceTier } from "@/components/catalog/gacha-card";
+import { sortGachas } from "@/components/catalog/gacha-sort";
+import { homeLiveBandEnabled } from "@/components/catalog/home-live-band";
+import { StrictMode } from "react";
+import { MotionEffects } from "@/components/common/motion-effects";
+import { CountUp } from "@/components/common/count-up";
+import { PageTitle } from "@/components/common/page-title";
+import { PUBLIC_CATALOG_FIXTURE } from "@oripa/storefront-testkit";
 import { HomeHero, homeHeroRibbonMessages } from "@/components/catalog/home-hero";
 
 const theme = readFileSync("src/styles/theme-oripoke.css", "utf8");
@@ -195,4 +202,85 @@ describe("HomeGuide", () => {
   it("keeps site-wide Coin terminology in the fixed copy", () => {
     expect(JSON.stringify(homeGuideContent)).not.toMatch(/ポイント|\dpt\b/);
   });
+});
+
+describe("オリポケ 作り込み (2026-09-30)", () => {
+  const base = PUBLIC_CATALOG_FIXTURE.data;
+
+  it("keeps the live band hidden until real data exists", () => {
+    expect(homeLiveBandEnabled).toBe(false);
+    render(<HomeHero />);
+    expect(screen.queryByRole("region", { name: "ただいまの状況" })).not.toBeInTheDocument();
+  });
+
+  it("sorts without changing the recommended order and keeps ties stable", () => {
+    const a = { ...base, id: "a", price_points: 500, publish_start_at: "2026-09-01T00:00:00Z", remaining_count: 30, total_count: 100 };
+    const b = { ...base, id: "b", price_points: 9000, publish_start_at: "2026-09-20T00:00:00Z", remaining_count: 5, total_count: 50 };
+    const c = { ...base, id: "c", price_points: 500, publish_start_at: "2026-09-10T00:00:00Z", remaining_count: 80, total_count: 900 };
+    const ids = (key: Parameters<typeof sortGachas>[1]) => sortGachas([a, b, c], key).map((gacha) => gacha.id);
+    expect(ids("recommended")).toEqual(["a", "b", "c"]);
+    expect(ids("price-desc")).toEqual(["b", "a", "c"]);
+    expect(ids("remaining-asc")).toEqual(["b", "a", "c"]);
+    expect(ids("newest")).toEqual(["b", "c", "a"]);
+    expect(ids("total-desc")).toEqual(["c", "a", "b"]);
+  });
+
+  it("marks only running-low cards and renders final numbers before any motion", () => {
+    const low = { ...base, id: "low", remaining_count: 30, total_count: 100 };
+    const plenty = { ...base, id: "plenty", remaining_count: 90, total_count: 100 };
+    const soldOut = { ...base, id: "sold", remaining_count: 0, total_count: 100 };
+    const view = render(<><GachaCard gacha={low} /><GachaCard gacha={plenty} /><GachaCard gacha={soldOut} /></>);
+    expect(view.getAllByText("残りわずか")).toHaveLength(1);
+    expect(view.container.querySelectorAll(".count-up")[0]).toHaveTextContent(new Intl.NumberFormat("ja-JP").format(low.price_points));
+  });
+
+  it("decorates page titles without exposing decoration to assistive technology", () => {
+    const view = render(<PageTitle description="説明" title="会員登録" />);
+    expect(screen.getByRole("heading", { level: 1, name: "会員登録" })).toBeInTheDocument();
+    view.container.querySelectorAll(".page-title__layer, .page-title__wave").forEach((layer) => expect(layer).toHaveAttribute("aria-hidden", "true"));
+  });
+});
+
+
+describe("CountUp accessibility", () => {
+  it("keeps the final value readable and stops when reduced motion is enabled", () => {
+    let intersect: (entries: { isIntersecting: boolean }[]) => void = () => undefined;
+    let changed = () => undefined;
+    const motion = { matches: false, addEventListener: vi.fn((_event, callback) => { changed = callback; }), removeEventListener: vi.fn() };
+    vi.stubGlobal("matchMedia", vi.fn(() => motion));
+    vi.stubGlobal("IntersectionObserver", class {
+      constructor(callback: typeof intersect) { intersect = callback; }
+      observe = vi.fn();
+      disconnect = vi.fn();
+    });
+    try {
+      const view = render(<CountUp value={1234} />);
+      act(() => intersect([{ isIntersecting: false }]));
+      expect(view.container.querySelector(".count-up__accessible")).toHaveTextContent("1,234");
+      expect(view.container.querySelector(".count-up__visual")).toHaveAttribute("aria-hidden", "true");
+      expect(view.container.querySelector(".count-up__visual")).toHaveAttribute("data-count", "0");
+      act(() => { motion.matches = true; changed(); });
+      expect(view.container.querySelector(".count-up__visual")).toHaveAttribute("data-count", "1,234");
+      view.unmount();
+      expect(motion.removeEventListener).toHaveBeenCalled();
+    } finally { vi.unstubAllGlobals(); }
+  });
+});
+
+
+it("re-observes reveal targets after Strict Mode effect replay", () => {
+  const observers: { observe: ReturnType<typeof vi.fn> }[] = [];
+  vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+  vi.stubGlobal("IntersectionObserver", class {
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
+    constructor() { observers.push(this); }
+  });
+  try {
+    const view = render(<StrictMode><MotionEffects /><article className="gacha-card">企画</article></StrictMode>);
+    expect(observers.length).toBeGreaterThan(1);
+    expect(observers.at(-1)!.observe).toHaveBeenCalledWith(view.container.querySelector(".gacha-card"));
+    view.unmount();
+  } finally { vi.unstubAllGlobals(); }
 });

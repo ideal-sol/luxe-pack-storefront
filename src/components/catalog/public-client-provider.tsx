@@ -47,3 +47,8 @@ export function usePublicClient() {
   if (!context) throw new Error("usePublicClient must be used within PublicClientProvider");
   return context;
 }
+
+/** プロバイダーの外（単体表示など）では null を返す版。装飾用の取得に使う。 */
+export function useOptionalPublicClient() {
+  return useContext(PublicClientContext)?.client ?? null;
+}

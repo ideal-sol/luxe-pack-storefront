@@ -177,6 +177,13 @@ guides and terms instead of asserting unconfirmed prices or policy promises.
 The Header uses the delivered logo image only when the app name is
 オリポケ; other names keep the vector mark and text.
 
+The 2026-09-30 package adds a "作り込み" layer (SITE-DESIGN-006): sticky shrinking
+Header with progress bar, layered page titles and hero, card tilt/gloss/streak,
+rotating gold top-tier frame, flowing gauges with a presentation-only
+「残りわずか」 badge, scroll reveal and count-up numbers, design section headings,
+and a Home sort/tag toolbar that sorts locally (the Public API has no sort
+parameter). The live band is built but disabled until real data exists.
+
 Brand images (`public/brand/`) are the client's fixed site assets only. Sample
 gacha banners and card images in the design package are not committed; catalog
 images continue to come from Platform-provided paths.

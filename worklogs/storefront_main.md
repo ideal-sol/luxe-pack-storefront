@@ -1607,3 +1607,47 @@ application of Platform migrations `000069`／`000070`.
   padding tighten so the authenticated Header (menu, My Page, Coin balance,
   logout) fits the delivered layout. Responsive browser checks cover guest
   and fixture-based member headers.
+
+
+## SITE-DESIGN-006 — オリポケ 作り込み (design package 2026-09-30)
+
+- Source: client package `オリポケ_サイトデザイン_20260930` (`_共通.css` unchanged;
+  `_作り込み.css` / `_作り込み.js` and the top page "作り込み版オーバーレイ" added).
+- Common: Header sticks and shrinks on scroll with a reading-progress bar and a
+  ポケカ専門 badge (オリポケ logo only); buttons sink on press; boxed panels get a
+  colour bar; page titles gain rays, holographic sweep, bokeh, 3D title and a wave;
+  cards tilt with the mouse and show a holographic gloss and a running streak;
+  top-tier cards get a rotating gold border; gauges get flowing stripes and a
+  「残りわずか」 badge at ≤35% remaining (presentation only); blocks reveal on
+  scroll and numbers count up from 0 once visible (final value is rendered first).
+- Home: hero rays, holographic sweep, bokeh, blurred floating gacha images
+  (≥981 px, taken from the public catalog), 3D headline, character ground
+  shadows, wave edge, centred headline columns; design section headings
+  (注目の企画 / ガチャ一覧 / コインの購入 / ご利用の流れ / 安心してご利用いただくために /
+  お知らせ) with watermark and wings; featured first card; flow/assurance/payment/
+  plan hover details.
+- Home lineup toolbar: 並べ替え (おすすめ順 default, 単価が高い順, 残りが少ない順,
+  新着順, 口数が多い順) and tag chips with すべて. The Public API has no sort
+  parameter, so non-default orders fetch up to 100 items and sort locally; the
+  default keeps the six-item backend order and server-side filters.
+- Live band (閲覧人数 / 本日の開封 / 当選報告) is implemented as `HomeLiveBand` but
+  disabled (`homeLiveBandEnabled = false`, no data source); design sample numbers
+  are never shown.
+- Register page: title 会員登録, email + password only (unchanged fields), panel
+  heading, placeholders and accent submit button. Catalog page title ガチャ一覧.
+- Orika hero image replaced with the package's updated artwork.
+- `prefers-reduced-motion` stops all added motion (no reveal, no count-up, no
+  tilt, no autoplay); heavy holographic layers are dropped at ≤600 px.
+
+- Integration retains final accessible numbers during count-up; reduced-motion
+  changes stop active effects, and keyboard focus reveals otherwise hidden cards.
+- Banner wording refers to featured public content without implying every item
+  is currently on sale. Phase4b's approved guide copy is preserved.
+- The new header badge is limited to desktop widths to prevent overlap with
+  authenticated navigation at 720 px.
+- Reveal starts on first intersection so tall prize groups cannot stay hidden
+  because their visible fraction is below a percentage threshold.
+- Wallet regression now waits for the rendered refreshed balance, not only the
+  start of the request. Assertions and Wallet application code are unchanged.
+- Reveal cleanup clears its DOM markers so React Strict Mode replay and hot
+  reload can observe every target again instead of leaving content hidden.

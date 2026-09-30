@@ -38,7 +38,8 @@ export function RegisterForm() {
   if (pendingUserId) return <EmailVerificationNotice userId={pendingUserId} />;
   const unavailable = state.status === "configuration-unavailable";
   return (
-    <form className="auth-form" onSubmit={submit}>
+    <form aria-labelledby="register-form-heading" className="auth-form auth-form--register" onSubmit={submit}>
+      <h2 className="auth-form__heading" id="register-form-heading">お客様情報のご入力</h2>
       <AuthProblem
         problem={unavailable ? {
           fieldErrors: {},
@@ -48,19 +49,19 @@ export function RegisterForm() {
       />
       <label className="form-field">
         <span>メールアドレス</span>
-        <input autoComplete="email" disabled={submitting || unavailable} maxLength={320} name="email" required type="email" />
+        <input autoComplete="email" disabled={submitting || unavailable} maxLength={320} name="email" placeholder="mail@example.com" required type="email" />
         <FieldProblem field="email" problem={problem} />
       </label>
       <label className="form-field">
         <span>パスワード</span>
-        <input aria-label="パスワード" autoComplete="new-password" disabled={submitting || unavailable} maxLength={128} minLength={8} name="password" required type="password" />
+        <input aria-label="パスワード" autoComplete="new-password" disabled={submitting || unavailable} maxLength={128} minLength={8} name="password" placeholder="8文字以上" required type="password" />
         <small>8文字以上128文字以内</small>
         <FieldProblem field="password" problem={problem} />
       </label>
       <p className="auth-form__terms">
         登録により<Link href="/pages/terms">利用規約</Link>と<Link href="/pages/privacy">プライバシーポリシー</Link>をご確認いただいたものとします。
       </p>
-      <button className="button button--dark auth-form__submit" disabled={submitting || unavailable} type="submit">
+      <button className="button button--accent auth-form__submit" disabled={submitting || unavailable} type="submit">
         {submitting ? "登録中…" : "新規登録"}
       </button>
       <p className="auth-form__alternate">すでにアカウントをお持ちの方は <Link href="/login">ログイン</Link></p>

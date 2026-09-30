@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { GachaSummary } from "@/lib/platform";
+import { CountUp } from "@/components/common/count-up";
 import { CatalogAsset } from "./catalog-asset";
 import { gachaPresentationReasonLabels, gachaSaleStateLabels } from "./gacha-presentation";
 
@@ -15,18 +16,33 @@ export function gachaPriceTier(pricePoints: number): "hi" | "mid" | "lo" {
   return "lo";
 }
 
-export function GachaCard({ gacha, priority = false }: { readonly gacha: GachaSummary; readonly priority?: boolean }) {
+/** 残り口数の割合がこの値以下なら「残りわずか」を出す（デザインの作り込み。見た目だけの表示で販売判断には使わない）。 */
+export const gachaFewLeftRatio = 0.35;
+
+export function GachaCard({
+  featured = false,
+  gacha,
+  priority = false,
+}: {
+  readonly featured?: boolean;
+  readonly gacha: GachaSummary;
+  readonly priority?: boolean;
+}) {
   const asset = gacha.presentation_asset?.media_type === "image" ? gacha.presentation_asset : null;
   const presentation = gacha.presentation;
   const display = presentation?.display;
   const showPricePoints = display?.show_price_points ?? true;
   const showTotalCount = display?.show_total_count ?? true;
   const showDrawnCount = display?.show_drawn_count === true && gacha.drawn_count !== undefined;
+  const remainingRatio = gacha.total_count > 0 ? gacha.remaining_count / gacha.total_count : 1;
+  const fewLeft = showTotalCount && remainingRatio > 0 && remainingRatio <= gachaFewLeftRatio;
   return (
-    <article className="gacha-card" data-price-tier={gachaPriceTier(gacha.price_points)}>
+    <article className={featured ? "gacha-card gacha-card--featured" : "gacha-card"} data-price-tier={gachaPriceTier(gacha.price_points)}>
       <Link aria-label={`${gacha.title}の詳細を見る`} className="gacha-card__image" href={`/gachas/${gacha.slug}`}>
         <CatalogAsset alt={asset?.alt_text ?? gacha.title} priority={priority} {...(asset?.path ? { src: asset.path } : {})} />
         <span className="gacha-card__category">{gacha.category.name}</span>
+        <span aria-hidden="true" className="gacha-card__streak" />
+        {fewLeft && <span className="gacha-card__few-left">残りわずか</span>}
       </Link>
       <div className="gacha-card__body">
         <div className="gacha-card__tags" aria-label="タグ">
@@ -53,9 +69,9 @@ export function GachaCard({ gacha, priority = false }: { readonly gacha: GachaSu
           </div>
         )}
         <div className="gacha-card__meta">
-          {showPricePoints && <p><strong>{points.format(gacha.price_points)}</strong><span>コイン / 1回</span></p>}
+          {showPricePoints && <p><strong><CountUp value={gacha.price_points} /></strong><span>コイン / 1回</span></p>}
           <p aria-label={showTotalCount ? `残り${gacha.remaining_count}口、全${gacha.total_count}口` : `残り${gacha.remaining_count}口`}>
-            <span>残り</span><strong>{points.format(gacha.remaining_count)}</strong>
+            <span>残り</span><strong><CountUp value={gacha.remaining_count} /></strong>
             {showTotalCount && <small>/ {points.format(gacha.total_count)}</small>}
           </p>
           {showDrawnCount && <p aria-label={`抽選済み${gacha.drawn_count}回`}><span>抽選済み</span><strong>{points.format(gacha.drawn_count!)}</strong><small>回</small></p>}
