@@ -1517,3 +1517,13 @@ application of Platform migrations `000069`／`000070`.
   typecheck PASS. Full suite/build remain subject to PR Required Checks.
 - No Preview deployment, production activation, Contract update or S3 migration.
   Winning results are excluded; existing personal Draw history is unchanged.
+- The first PR CI passed policy, quality and integration (full tests/build), but
+  its dependency audit found five inherited High advisories. Limited the fix to
+  transitive development dependencies fast-uri 3.1.7 and undici 8.10.2; direct
+  dependencies, Contract pins and vendored artifacts remain unchanged. The
+  updated lockfile passes the same pnpm 11 High audit (High/Critical: zero;
+  three Moderate advisories remain). No audit threshold or CI gate was relaxed.
+- After the dependency fix, all 294 focused cases passed again. The full local
+  run passed 660/695; its 35 failures were confined to child-process artifact
+  tests under the sandbox. The affected file passed all 41 cases outside the
+  sandbox without source/test changes. Final-head full CI remains the authority.
