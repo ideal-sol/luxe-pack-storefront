@@ -12,6 +12,15 @@ import { usePublicClient } from "./public-client-provider";
 import { CatalogLoading, CatalogMessage } from "./catalog-message";
 import { GachaCard } from "./gacha-card";
 
+/** いちばん単価が高い1枚の位置（同額なら先の1枚）。デザインの「いちばん単価が高い1枚は金箔の縁」。見た目だけで販売判断には使わない。 */
+export function topPriceIndex(gachas: readonly { readonly price_points: number }[]): number {
+  let best = -1;
+  gachas.forEach((gacha, index) => {
+    if (best < 0 || gacha.price_points > gachas[best]!.price_points) best = index;
+  });
+  return best;
+}
+
 type CatalogState =
   | { readonly status: "loading" }
   | { readonly status: "configuration-unavailable" }
@@ -100,7 +109,7 @@ export function GachaCatalog({ initialCategory }: { readonly initialCategory?: s
       {state.status === "ready" && state.collection.data.length > 0 && (
         <>
           <p className="catalog-browser__count">{state.collection.data.length} PACKS</p>
-          <div className="gacha-grid">{state.collection.data.map((gacha, index) => <GachaCard gacha={gacha} key={`${gacha.id}-${index}`} priority={index < 4} />)}</div>
+          <div className="gacha-grid gacha-grid--catalog">{((top) => state.collection.data.map((gacha, index) => <GachaCard frame={index === top ? "gold" : "plain"} gacha={gacha} key={`${gacha.id}-${index}`} priority={index < 4} />))(topPriceIndex(state.collection.data))}</div>
           {state.collection.meta.has_more && state.collection.meta.next_cursor && (
             <div className="catalog-browser__more"><button className="button button--dark" disabled={loadingMore} onClick={loadMore} type="button">{loadingMore ? "読み込み中…" : "さらに表示"}</button></div>
           )}

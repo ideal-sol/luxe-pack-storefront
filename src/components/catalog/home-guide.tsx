@@ -147,6 +147,7 @@ export function HomeGuide() {
           <ol className="home-guide__flow">
             {flowSteps.map((step, index) => (
               <li key={step.title}>
+                {index > 0 && <span aria-hidden="true" className="home-guide__flow-arrow">▶</span>}
                 <span className="home-guide__step-no">STEP {index + 1}</span>
                 {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
                 <img alt="" aria-hidden="true" height={step.height} src={step.image} width={step.width} />

@@ -19,12 +19,22 @@ export function gachaPriceTier(pricePoints: number): "hi" | "mid" | "lo" {
 /** 残り口数の割合がこの値以下なら「残りわずか」を出す（デザインの作り込み。見た目だけの表示で販売判断には使わない）。 */
 export const gachaFewLeftRatio = 0.35;
 
+/**
+ * 枠の見せ方。
+ * - "price"（既定）：単価による hi / mid / lo（トップのガチャ一覧。デザインの gcard）
+ * - "gold"：金箔の縁が回る（トップの目玉の企画、一覧ページでいちばん単価が高い1枚。デザインの feature / card2.top1）
+ * - "plain"：枠なし（一覧ページの通常のカード。デザインの card2）
+ */
+export type GachaCardFrame = "price" | "gold" | "plain";
+
 export function GachaCard({
   featured = false,
+  frame = "price",
   gacha,
   priority = false,
 }: {
   readonly featured?: boolean;
+  readonly frame?: GachaCardFrame;
   readonly gacha: GachaSummary;
   readonly priority?: boolean;
 }) {
@@ -37,7 +47,7 @@ export function GachaCard({
   const remainingRatio = gacha.total_count > 0 ? gacha.remaining_count / gacha.total_count : 1;
   const fewLeft = showTotalCount && remainingRatio > 0 && remainingRatio <= gachaFewLeftRatio;
   return (
-    <article className={featured ? "gacha-card gacha-card--featured" : "gacha-card"} data-price-tier={gachaPriceTier(gacha.price_points)}>
+    <article className={featured ? "gacha-card gacha-card--featured" : "gacha-card"} data-price-tier={frame === "gold" ? "hi" : frame === "plain" ? "plain" : gachaPriceTier(gacha.price_points)}>
       <Link aria-label={`${gacha.title}の詳細を見る`} className="gacha-card__image" href={`/gachas/${gacha.slug}`}>
         <CatalogAsset alt={asset?.alt_text ?? gacha.title} priority={priority} {...(asset?.path ? { src: asset.path } : {})} />
         <span className="gacha-card__category">{gacha.category.name}</span>

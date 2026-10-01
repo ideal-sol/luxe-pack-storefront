@@ -405,7 +405,7 @@ describe("public catalog UI", () => {
     expect(within(sort).getByRole("button", { name: "おすすめ順" })).toHaveAttribute("aria-pressed", "true");
     expect(listGachas).toHaveBeenLastCalledWith({ limit: 6 });
     await screen.findByRole("link", { name: "安い企画" });
-    const titles = () => Array.from(view.container.querySelectorAll(".gacha-grid h3")).map((heading) => heading.textContent);
+    const titles = () => Array.from(view.container.querySelectorAll(".gacha-grid--home h3")).map((heading) => heading.textContent);
     expect(titles()).toEqual(["安い企画", "高い企画"]);
     fireEvent.click(within(sort).getByRole("button", { name: "単価が高い順" }));
     await waitFor(() => expect(listGachas).toHaveBeenLastCalledWith({ limit: 100 }));

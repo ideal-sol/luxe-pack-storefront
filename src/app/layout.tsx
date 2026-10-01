@@ -9,6 +9,7 @@ import { ToastProvider } from "@/components/common/toast-provider";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { PublicClientProvider } from "@/components/catalog/public-client-provider";
 import { PointClientProvider } from "@/components/points/point-client-provider";
+import { brandIcons, usesBrandIcons } from "@/lib/brand-icons";
 import "@/styles/font-noto-sans-jp.css";
 import "@/styles/globals.css";
 import "@/styles/theme-oripoke.css";
@@ -17,6 +18,7 @@ const siteName = process.env.NEXT_PUBLIC_APP_NAME?.trim() || "OripaZ";
 
 export const metadata: Metadata = {
   description: `${siteName} ポケモンカード専門のオンラインオリパ`,
+  ...(usesBrandIcons(siteName) ? { icons: brandIcons } : {}),
   title: {
     default: siteName,
     template: `%s | ${siteName}`,

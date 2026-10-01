@@ -16,6 +16,7 @@ import { CatalogLoading, CatalogMessage } from "./catalog-message";
 import { GachaCard } from "./gacha-card";
 import { HomeBannerCarousel } from "./home-banner-carousel";
 import { HomeGuide } from "./home-guide";
+import { HomeLoginBonus } from "./home-login-bonus";
 import { HomeSectionHeading } from "./home-section-heading";
 import { gachaSortFetchLimit, gachaSortOptions, sortGachas, type GachaSortKey } from "./gacha-sort";
 
@@ -182,6 +183,9 @@ export function PublicHome() {
         <img alt="" height={268} src="/brand/fukumaru_hashiru.webp" width={328} />
       </div>
 
+      {/* 無料・ログインボーナス（注目の企画とガチャ一覧の間。表示のみ、抽選は Platform 側） */}
+      <HomeLoginBonus />
+
       <section className="home-categories">
         <PageContainer className="home-content">
           {categories.length > 0 ? (
@@ -224,7 +228,7 @@ export function PublicHome() {
           {gachaState.status === "ready" && (gachaState.gachas.length > 0 ? (
             <div className="gacha-grid gacha-grid--home">
               {sortGachas(gachaState.gachas, sort).map((gacha, index) => (
-                <GachaCard featured={index === 0} gacha={gacha} key={gacha.id} priority={index < 2} />
+                <GachaCard featured={index === 0} {...(index === 0 ? { frame: "gold" as const } : {})} gacha={gacha} key={gacha.id} priority={index < 2} />
               ))}
             </div>
           ) : <CatalogMessage description="現在表示できるガチャはありません。" eyebrow="EMPTY" title="ラインナップを準備中です" />)}

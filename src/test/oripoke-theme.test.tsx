@@ -11,7 +11,11 @@ import { homeLiveBandEnabled } from "@/components/catalog/home-live-band";
 import { StrictMode } from "react";
 import { MotionEffects } from "@/components/common/motion-effects";
 import { CountUp } from "@/components/common/count-up";
+import { HomeLoginBonus, homeLoginBonusSampleItems } from "@/components/catalog/home-login-bonus";
 import { PageTitle } from "@/components/common/page-title";
+import { topPriceIndex } from "@/components/catalog/gacha-catalog";
+import { brandIcons, brandManifestIcons, usesBrandIcons } from "@/lib/brand-icons";
+import manifest from "@/app/manifest";
 import { PUBLIC_CATALOG_FIXTURE } from "@oripa/storefront-testkit";
 import { HomeHero, homeHeroRibbonMessages } from "@/components/catalog/home-hero";
 
@@ -207,6 +211,51 @@ describe("HomeGuide", () => {
 describe("オリポケ 作り込み (2026-09-30)", () => {
   const base = PUBLIC_CATALOG_FIXTURE.data;
 
+  it("uses the gold frame for the featured card and the top-priced catalog card only", () => {
+    const cheap = { ...base, id: "c", price_points: 50 };
+    const view = render(<><GachaCard frame="gold" gacha={cheap} /><GachaCard frame="plain" gacha={{ ...base, id: "p", price_points: 9000 }} /><GachaCard gacha={{ ...base, id: "d", price_points: 9000 }} /></>);
+    const tiers = Array.from(view.container.querySelectorAll(".gacha-card")).map((card) => card.getAttribute("data-price-tier"));
+    expect(tiers).toEqual(["hi", "plain", "hi"]);
+    expect(topPriceIndex([{ price_points: 500 }, { price_points: 9000 }, { price_points: 9000 }])).toBe(1);
+    expect(topPriceIndex([])).toBe(-1);
+  });
+
+  it("keeps a single h1 when the page title band sits above a page with its own heading", () => {
+    render(<><PageTitle headingAs="p" title="ガチャ詳細" /><h1>企画名</h1></>);
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByText("ガチャ詳細")).toHaveClass("page-title__heading");
+  });
+
+  it("serves the delivered icon set only for the オリポケ site name", () => {
+    expect(usesBrandIcons("オリポケ")).toBe(true);
+    expect(usesBrandIcons("OripaZ")).toBe(false);
+    expect(JSON.stringify(brandIcons)).toContain("/brand/icons/favicon.ico");
+    expect(brandManifestIcons.map((icon) => icon.purpose)).toEqual(["any", "any", "maskable"]);
+    vi.stubEnv("NEXT_PUBLIC_APP_NAME", "オリポケ");
+    expect(manifest().icons).toHaveLength(3);
+    vi.stubEnv("NEXT_PUBLIC_APP_NAME", "OripaZ");
+    expect(manifest().icons).toBeUndefined();
+    vi.unstubAllEnvs();
+  });
+
+  it("shows the login bonus section as presentation only", () => {
+    render(<HomeLoginBonus />);
+    const section = screen.getByRole("region", { name: "無料・ログインボーナス" });
+    expect(within(section).getAllByRole("article")).toHaveLength(3);
+    expect(within(section).getAllByText("無料")).toHaveLength(2);
+    expect(within(section).getByText("1日1回")).toBeInTheDocument();
+    // 遷移先が未設定のあいだはリンクにしない
+    expect(within(section).queryAllByRole("link")).toHaveLength(0);
+    expect(within(section).getByText(/現在はご利用いただけません/)).toBeInTheDocument();
+    expect(within(section).getAllByText("準備中")).toHaveLength(3);
+    expect(JSON.stringify(homeLoginBonusSampleItems)).not.toMatch(/ポイント|\dpt\b/);
+  });
+
+  it("links the login bonus card when a destination is given", () => {
+    render(<HomeLoginBonus items={[{ ...homeLoginBonusSampleItems[1]!, href: "/gachas/daily-bonus" }]} />);
+    expect(screen.getByRole("link", { name: "毎日1回ログボの詳細を見る" })).toHaveAttribute("href", "/gachas/daily-bonus");
+  });
+
   it("keeps the live band hidden until real data exists", () => {
     expect(homeLiveBandEnabled).toBe(false);
     render(<HomeHero />);
@@ -281,6 +330,42 @@ it("re-observes reveal targets after Strict Mode effect replay", () => {
     const view = render(<StrictMode><MotionEffects /><article className="gacha-card">企画</article></StrictMode>);
     expect(observers.length).toBeGreaterThan(1);
     expect(observers.at(-1)!.observe).toHaveBeenCalledWith(view.container.querySelector(".gacha-card"));
+    view.unmount();
+  } finally { vi.unstubAllGlobals(); }
+});
+
+it("reveals server-rendered panels without mutating hydration attributes and respects focus/reduced motion", () => {
+  let intersect: (entries: { isIntersecting: boolean; target: HTMLElement }[]) => void = () => undefined;
+  let changed = () => undefined;
+  const motion = { matches: false, addEventListener: vi.fn((_event, callback) => { changed = callback; }), removeEventListener: vi.fn() };
+  const animations: { cancel: ReturnType<typeof vi.fn> }[] = [];
+  vi.stubGlobal("matchMedia", vi.fn(() => motion));
+  vi.stubGlobal("IntersectionObserver", class {
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
+    constructor(callback: typeof intersect) { intersect = callback; }
+  });
+  try {
+    const view = render(<><MotionEffects /><form className="auth-form"><input aria-label="test field" /></form><section className="contact-panel" /></>);
+    const panels = Array.from(view.container.querySelectorAll<HTMLElement>(".auth-form, .contact-panel"));
+    for (const panel of panels) {
+      const animation = { cancel: vi.fn() };
+      animations.push(animation);
+      panel.animate = vi.fn(() => animation as unknown as Animation);
+      expect(panel).not.toHaveAttribute("style");
+      expect(panel).not.toHaveAttribute("data-reveal");
+    }
+    act(() => intersect(panels.map((target) => ({ target, isIntersecting: true }))));
+    expect(panels[0]!.animate).toHaveBeenCalledOnce();
+    fireEvent.focusIn(screen.getByLabelText("test field"));
+    expect(animations[0]!.cancel).toHaveBeenCalledOnce();
+    act(() => { motion.matches = true; changed(); });
+    expect(animations[1]!.cancel).toHaveBeenCalledOnce();
+    for (const panel of panels) {
+      expect(panel).not.toHaveAttribute("style");
+      expect(panel).not.toHaveAttribute("data-reveal");
+    }
     view.unmount();
   } finally { vi.unstubAllGlobals(); }
 });

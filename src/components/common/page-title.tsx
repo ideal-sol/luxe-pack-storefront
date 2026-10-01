@@ -1,6 +1,8 @@
 interface PageTitleProps {
   readonly description?: string;
   readonly eyebrow?: string;
+  /** 本文側に別の h1 がある画面（ガチャ詳細・抽選結果）では "p" にして見出しを重複させない */
+  readonly headingAs?: "h1" | "p";
   readonly title: string;
 }
 
@@ -12,7 +14,8 @@ const titleBokeh = Array.from({ length: 10 }, (_, index) => ({
   size: 5 + ((index * 7) % 16),
 }));
 
-export function PageTitle({ description, eyebrow, title }: PageTitleProps) {
+export function PageTitle({ description, eyebrow, headingAs = "h1", title }: PageTitleProps) {
+  const Heading = headingAs;
   return (
     <header className="page-title">
       <div aria-hidden="true" className="page-title__layer page-title__dots" />
@@ -28,7 +31,7 @@ export function PageTitle({ description, eyebrow, title }: PageTitleProps) {
       </div>
       <div className="page-title__content">
         {eyebrow ? <p className="page-title__eyebrow">{eyebrow}</p> : null}
-        <h1>{title}</h1>
+        <Heading className="page-title__heading">{title}</Heading>
         {description ? <p className="page-title__description">{description}</p> : null}
       </div>
       <svg aria-hidden="true" className="page-title__wave" preserveAspectRatio="none" viewBox="0 0 1440 34">
