@@ -55,7 +55,7 @@ body {
 .notice-preview h2,
 .assurance-grid article > span,
 .assurance-grid h3,
-.page-title h1,
+.page-title .page-title__heading,
 .state-panel h2,
 .auth-placeholder > span,
 .verification-card h2,
@@ -436,7 +436,7 @@ body {
   padding: 26px calc(50vw - 50% + 0px) 28px;
 }
 .page-title__eyebrow { color: var(--gold-lt); }
-.page-title h1 { color: var(--white); font-size: 22px; font-weight: 900; line-height: 1.35; }
+.page-title .page-title__heading { color: var(--white); font-size: 22px; font-weight: 900; line-height: 1.35; }
 .page-title__description { color: rgba(255, 255, 255, .88); font-size: .8rem; margin-top: 8px; }
 
 /* ---------- 状態表示・フォーム ---------- */
@@ -1126,7 +1126,7 @@ body {
   position: absolute;
 }
 .page-title__content { position: relative; z-index: 3; }
-.page-title h1 {
+.page-title .page-title__heading {
   letter-spacing: .03em;
   text-shadow: 0 2px 0 #0a6e6a, 0 3px 0 #08605d, 0 4px 1px rgba(0, 40, 38, .45), 0 0 26px rgba(255, 255, 255, .32);
 }
@@ -1363,7 +1363,7 @@ body {
 .gacha-card:nth-child(4) .gacha-card__streak { animation-delay: 2.1s; }
 .gacha-card:nth-child(5) .gacha-card__streak { animation-delay: 2.8s; }
 .gacha-card:nth-child(6) .gacha-card__streak { animation-delay: 3.5s; }
-.gacha-card::after { display: none; }
+/* カード全体の光（.gacha-card::after）と画像の走る光（.gacha-card__streak）の2本を、デザインどおり両方出す */
 .gacha-card__few-left {
   animation: oripoke-hot-pulse 2.1s ease-in-out infinite;
   background: linear-gradient(180deg, #ff6b6b, #e23b3b);
@@ -1444,7 +1444,7 @@ html[data-motion="ready"] .gacha-card[data-reveal="in"]:hover { transition-delay
   .home-section-heading__watermark { font-size: 40px; top: -20px; }
   .home-hero__wave { height: 46px; }
   .page-title__wave { height: 34px; }
-  .page-title h1 { text-shadow: 0 2px 0 #0a6e6a, 0 3px 0 #0a6e6a, 0 4px 0 #08605d, 0 5px 1px rgba(0, 40, 38, .45), 0 0 26px rgba(255, 255, 255, .32); }
+  .page-title .page-title__heading { text-shadow: 0 2px 0 #0a6e6a, 0 3px 0 #0a6e6a, 0 4px 0 #08605d, 0 5px 1px rgba(0, 40, 38, .45), 0 0 26px rgba(255, 255, 255, .32); }
   .home-live__stat { font-size: 11.5px; padding: 13px 22px 13px 0; }
   .home-live__stat + .home-live__stat { padding-left: 22px; }
   .home-live__stat strong { font-size: 17px; }
@@ -1508,12 +1508,16 @@ html[data-motion="ready"] .gacha-card[data-reveal="in"]:hover { transition-delay
 }
 @media (min-width: 1181px) {
   .home-hero__character { --hero-side: 302px; }
-  .page-title h1 { font-size: 32px; }
+  .page-title .page-title__heading { font-size: 32px; }
 }
 
 /* 狭い画面・動きを減らす設定では重い演出を止める */
+/* スマホ幅：虹（ホログラムの帯）は画面が狭いと細く薄く見えるため、幅と濃さを上げて速めに流す */
 @media (max-width: 600px) {
-  .home-hero__holo, .page-title__holo { display: none; }
+  .home-hero__holo i { animation-duration: 6.5s; filter: blur(4px); opacity: .6; width: 62%; }
+  .home-hero__holo i:nth-child(2) { animation-delay: 3.2s; animation-duration: 9s; opacity: .42; width: 40%; }
+  .page-title__holo i { animation-duration: 6.5s; opacity: .5; width: 58%; }
+  .page-title__holo i:nth-child(2) { animation-delay: 3.2s; animation-duration: 9s; opacity: .34; width: 36%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .home-hero__rays::before, .page-title__rays::before, .gacha-card[data-price-tier="hi"],
@@ -1597,7 +1601,7 @@ html[data-motion="ready"] .gacha-card[data-reveal="in"]:hover { transition-delay
   .home-hero__character img { height: 150px; }
   .home-hero__character .home-hero__dog { height: 92px; }
   .home-hero__cta { font-size: 15px; padding: 13px 22px; }
-  .page-title h1 { font-size: 26px; }
+  .page-title .page-title__heading { font-size: 26px; }
   .gacha-card__meta p:not(:first-child) strong { font-size: 21px; }
   .point-product-card__grant strong { font-size: 44px; }
   .site-footer { padding-block: 36px 26px; }
@@ -1638,4 +1642,141 @@ html[data-motion="ready"] .gacha-card[data-reveal="in"]:hover { transition-delay
 }
 @media (prefers-reduced-motion: reduce) {
   .home-hero__ribbon-track { animation: none; }
+}
+
+/* ---------- トップ：無料・ログインボーナス（デザイン 09-30 の section.bonus） ---------- */
+.home-bonus { background: linear-gradient(180deg, #fff7e0, #fffdf6); padding-block: 26px 44px; position: relative; }
+.home-bonus .home-section-heading h2 {
+  background: linear-gradient(transparent 64%, rgba(0, 190, 177, .3) 64%, rgba(0, 190, 177, .3) 88%, transparent 88%);
+}
+.home-bonus .home-section-heading__watermark { color: rgba(160, 110, 10, .05); }
+.gacha-card--bonus h3 { line-height: 1.55; }
+.gacha-card--bonus .gacha-card__image img { aspect-ratio: 1551 / 1014; display: block; height: auto; object-fit: cover; width: 100%; }
+.gacha-card__limit {
+  color: var(--muted);
+  display: flex;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 8px;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+.gacha-card__limit + .gacha-card__progress { margin-top: 6px; }
+.gacha-card__progress--bonus span {
+  background: linear-gradient(90deg, var(--gold), var(--yellow));
+  box-shadow: 0 0 10px rgba(245, 166, 35, .75);
+}
+.gacha-card__cta--pending { cursor: default; }
+.gacha-card--bonus .gacha-card__meta p strong small { font-size: 11px; font-weight: 800; margin-left: 2px; }
+
+/* ==========================================================
+   納品デザインとの差分を戻す（2026-10-01）
+   ========================================================== */
+/* ヘッダー（PC）：デザインどおり「ログイン」は線のボタン、「新規登録」は塗りのボタンに光が走る */
+.site-header__nav > a[href="/login"].button {
+  background: var(--white);
+  border: 2px solid var(--teal);
+  border-radius: 9px;
+  box-shadow: none;
+  color: var(--teal-dd);
+  font-size: 13px;
+  font-weight: 800;
+  min-height: 0;
+  padding: 7px 16px;
+}
+.site-header__nav > a[href="/login"].button::after { display: none; }
+.site-header__nav > a[href="/register"] {
+  background: linear-gradient(180deg, var(--teal-lt), var(--teal));
+  border: 0;
+  border-radius: 9px;
+  box-shadow: 0 3px 0 #009085, 0 5px 14px rgba(0, 190, 177, .4);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  padding: 9px 18px;
+  position: relative;
+}
+.site-header__nav > a[href="/register"]::after,
+.site-header__nav > a[href="/register"]:hover::after {
+  animation: oripoke-shine 4s infinite;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .6), transparent);
+  bottom: auto;
+  content: "";
+  display: block;
+  height: 100%;
+  left: -70%;
+  pointer-events: none;
+  position: absolute;
+  right: auto;
+  top: 0;
+  transform: skewX(-18deg);
+  transition: none;
+  width: 45%;
+}
+@media (min-width: 720px) and (max-width: 980px) {
+  .site-header__nav > a[href="/login"].button, .site-header__nav > a[href="/register"] { font-size: 12px; padding: 6px 11px; }
+}
+
+/* トップの目玉の企画：単価に関係なく金箔の縁が回る（デザインの .feature、9秒で一周） */
+.gacha-grid--home .gacha-card--featured[data-price-tier="hi"] { animation-duration: 9s; }
+
+/* 一覧ページのカード：通常は枠なし、いちばん単価が高い1枚だけ金箔の縁（デザインの card2 / card2.top1） */
+.gacha-card[data-price-tier="plain"] { border: 0; box-shadow: 0 1px 2px rgba(23, 58, 60, .06), 0 8px 20px rgba(23, 58, 60, .1); }
+.gacha-card[data-price-tier="plain"]:hover { box-shadow: 0 20px 40px rgba(23, 58, 60, .2); }
+
+/* ご利用の流れ：手順の間の矢印の後ろが脈打つように光る（デザインの .arw::after） */
+.home-guide__flow-arrow { display: none; }
+@media (min-width: 981px) {
+  .home-guide__flow li + li::before { content: none; }
+  .home-guide__flow li > .home-guide__flow-arrow {
+    color: var(--yellow);
+    display: block;
+    font-size: 24px;
+    font-weight: 900;
+    left: -30px;
+    line-height: 1;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+  }
+  .home-guide__flow-arrow::after {
+    animation: oripoke-corner-pop 2.2s ease-in-out infinite;
+    background: radial-gradient(circle, rgba(255, 202, 55, .45), transparent 68%);
+    border-radius: 50%;
+    content: "";
+    inset: -6px;
+    position: absolute;
+    z-index: -1;
+  }
+}
+
+/* ガチャ詳細・抽選結果にも見出し帯（デザインの各画面の pagehead） */
+.gacha-detail-page:has(> .page-title:first-child), .draw-result-page:has(> .page-title:first-child) { padding-top: 0; }
+.gacha-detail-page > .page-title, .draw-result-page > .page-title { margin-bottom: 18px; }
+
+/* 白い2番手のボタンにも光が走る（デザインの .btn.sub） */
+.button--ghost:not(:disabled) {
+  background: linear-gradient(180deg, var(--white), var(--pale));
+  box-shadow: 0 4px 0 #bfe0dd, 0 8px 18px rgba(0, 190, 177, .2);
+  overflow: hidden;
+  position: relative;
+}
+.button--ghost:not(:disabled)::after {
+  animation: oripoke-shine 4.4s infinite;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .7), transparent);
+  content: "";
+  height: 100%;
+  left: -70%;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  transform: skewX(-18deg);
+  width: 42%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header__nav > a[href="/register"]::after, .button--ghost:not(:disabled)::after { display: none; }
+  .home-guide__flow-arrow::after { animation: none; }
 }

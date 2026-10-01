@@ -15,6 +15,17 @@ const revealSelector = [
   ".notice-list",
 ].join(", ");
 
+// Server-rendered panels can still be hydrating when the layout effect runs.
+// Animate them without changing their HTML attributes.
+const panelSelector = [
+  ".auth-form",
+  ".contact-panel",
+  ".verification-card",
+  ".content-document",
+  ".draw-result__summary",
+  ".mypage-menu nav",
+].join(", ");
+
 /**
  * 全画面共通の動き（見た目のみ）。
  * - スクロールに合わせてブロックを順に表示する
@@ -28,18 +39,37 @@ export function MotionEffects() {
     const root = document.documentElement;
     root.dataset.motion = "ready";
 
+    const panels = new WeakSet<HTMLElement>();
+    const panelAnimations = new Map<HTMLElement, Animation>();
     let revealObserver: IntersectionObserver | null = null;
     if (typeof IntersectionObserver !== "undefined") {
       revealObserver = new IntersectionObserver((entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
-          (entry.target as HTMLElement).dataset.reveal = "in";
+          const element = entry.target as HTMLElement;
+          if (element.matches(panelSelector)) {
+            if (!motion?.matches && !element.contains(document.activeElement) && typeof element.animate === "function") {
+              const animation = element.animate([
+                { opacity: 0, transform: "translateY(22px)" },
+                { opacity: 1, transform: "translateY(0)" },
+              ], { duration: 650, easing: "cubic-bezier(.2, .7, .2, 1)" });
+              panelAnimations.set(element, animation);
+              animation.onfinish = () => panelAnimations.delete(element);
+            }
+          } else {
+            element.dataset.reveal = "in";
+          }
           revealObserver?.unobserve(entry.target);
         }
       }, { rootMargin: "0px 0px -8% 0px", threshold: 0 });
     }
     const prepare = (scope: ParentNode) => {
       if (!revealObserver) return;
+      scope.querySelectorAll<HTMLElement>(panelSelector).forEach((element) => {
+        if (panels.has(element)) return;
+        panels.add(element);
+        revealObserver?.observe(element);
+      });
       scope.querySelectorAll<HTMLElement>(revealSelector).forEach((element, index) => {
         if (element.dataset.reveal) return;
         element.dataset.reveal = "wait";
@@ -52,12 +82,24 @@ export function MotionEffects() {
       for (const record of records) {
         record.addedNodes.forEach((node) => {
           if (!(node instanceof HTMLElement)) return;
-          if (node.matches(revealSelector)) prepare(node.parentElement ?? document);
+          if (node.matches(`${revealSelector}, ${panelSelector}`)) prepare(node.parentElement ?? document);
           else prepare(node);
         });
       }
     });
     mutations.observe(document.body, { childList: true, subtree: true });
+
+    const cancelPanelAnimations = () => {
+      panelAnimations.forEach((animation) => animation.cancel());
+      panelAnimations.clear();
+    };
+    const onFocus = (event: FocusEvent) => {
+      const panel = (event.target as Element | null)?.closest<HTMLElement>(panelSelector);
+      if (!panel) return;
+      panelAnimations.get(panel)?.cancel();
+      panelAnimations.delete(panel);
+    };
+    document.addEventListener("focusin", onFocus);
 
     const onPointerMove = (event: PointerEvent) => {
       if (motion?.matches || event.pointerType !== "mouse") return;
@@ -85,6 +127,7 @@ export function MotionEffects() {
       delete root.dataset.motion;
       revealObserver?.disconnect();
       mutations.disconnect();
+      cancelPanelAnimations();
       document.querySelectorAll<HTMLElement>("[data-tilt]").forEach((card) => { delete card.dataset.tilt; });
     };
     motion?.addEventListener("change", stopForReducedMotion);
@@ -94,10 +137,12 @@ export function MotionEffects() {
       delete root.dataset.motion;
       revealObserver?.disconnect();
       mutations.disconnect();
+      cancelPanelAnimations();
       document.querySelectorAll<HTMLElement>("[data-reveal]").forEach((element) => {
         delete element.dataset.reveal;
         element.style.removeProperty("--reveal-delay");
       });
+      document.removeEventListener("focusin", onFocus);
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerout", onPointerOut);
     };

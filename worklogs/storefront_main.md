@@ -1651,3 +1651,36 @@ application of Platform migrations `000069`／`000070`.
   start of the request. Assertions and Wallet application code are unchanged.
 - Reveal cleanup clears its DOM markers so React Strict Mode replay and hot
   reload can observe every target again instead of leaving content hidden.
+
+
+## Oripoke Phase5e — Canonical presentation follow-ups
+
+Integrated the five Phase5e follow-up patches on the current main, preserving the
+Phase5 accessibility fixes and production provenance. Restored mobile rainbow,
+card shine, header button order/style, featured/catalog gold frames, guide arrow
+glow, detail/result title bands, secondary-button shine, and panel reveals.
+Added the delivered login-bonus presentation and twelve static brand assets
+(three bonus images and nine icons), plus the brand-conditional web manifest.
+
+The bonus samples have no action destinations and are explicitly marked as
+preparation-only examples. Result guidance refers to available actions without
+promising point exchange for shipping-only prizes. No business decisions, API
+contracts or existing assets were changed. Client and Testkit
+remain exactly pinned to 2.0.0-alpha.41.
+
+The existing Next.js and matching ESLint config are patched from 16.3.3 to
+16.3.6 to clear the existing Critical audit finding GHSA-vcvr-r3jv-pc5j.
+The dependency audit policy is unchanged; no new direct runtime package is added.
+
+Validation: the initial 51-file / 725-test run passed. After the hydration fix,
+the 726-test run passed 725 tests with one existing asynchronous Product-heading
+lookup timing out under concurrent browser load; its unchanged test file then
+passed all 12 tests in isolation. The final theme regression passed all 29 tests.
+Coverage includes Auth, Payment, Draw, Prize, and Contact regressions.
+Artifact/policy/boundary checks, secret scanning, lint, and typecheck passed.
+The unchanged high-severity dependency audit threshold passed (six moderate
+findings remain). Build and browser results are recorded against the final head.
+
+Browser acceptance identified hydration warnings from the delivered panel-reveal
+attributes. Panels now use the Web Animations API with focus and reduced-motion
+cancellation; their server-rendered HTML stays unchanged during hydration.

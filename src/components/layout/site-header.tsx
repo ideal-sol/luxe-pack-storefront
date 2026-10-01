@@ -86,8 +86,8 @@ export function SiteHeader() {
             </>
           ) : unauthenticated ? (
             <>
-              <Link href="/register">新規登録</Link>
               <Link className="button button--dark button--compact" href="/login">ログイン</Link>
+              <Link href="/register">新規登録</Link>
             </>
           ) : (
             <span className="site-header__auth-neutral" aria-label="認証状態を確認中">--</span>
