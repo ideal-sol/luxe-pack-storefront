@@ -16,9 +16,9 @@ beforeEach(() => {
     mkdirSync(dirname(join(root, file)), { recursive: true });
     cpSync(file, join(root, file), { recursive: true });
   }
-  // The approved exact Runtime Source and current source share alpha.41 pins.
+  // Keep Production authority on its approved alpha.41 source while Preview adopts alpha.42.
   for (const file of ["package.json", "pnpm-lock.yaml"]) {
-    cpSync(file, join(root, file));
+    cpSync(`src/test/fixtures/production-alpha41/${file}`, join(root, file));
   }
 });
 

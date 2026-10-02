@@ -58,6 +58,8 @@ export {
   type ContentNoticeCollection,
   type ContentNoticeSummary,
   type ContentStaticPage,
+  type LoginGachaSummary,
+  type LoginGachaDetail,
   type GachaCategory,
   type GachaDetail,
   type GachaPresentationState,
