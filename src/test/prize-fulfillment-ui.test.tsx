@@ -166,6 +166,9 @@ describe("prize fulfillment UI", () => {
     expect(screen.getByText(`${prize.exchange_points.toLocaleString()} コイン`)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "コインに交換する" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("同じ操作のまま再試行");
+    expect(onReconcile).not.toHaveBeenCalled();
+    expect(refreshWallet).not.toHaveBeenCalled();
+    expect(screen.queryByText("手続きが完了しました")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "コインに交換する" }));
     expect(await screen.findByText("手続きが完了しました")).toBeInTheDocument();
     expect(screen.getByText(`${prize.exchange_points.toLocaleString()} コインへ交換しました。`, { exact: false })).toBeInTheDocument();
@@ -173,8 +176,8 @@ describe("prize fulfillment UI", () => {
     expect(exchangePrizes).toHaveBeenCalledTimes(2);
     expect(exchangePrizes.mock.calls[0]?.[1].idempotency_key).toBe(exchangePrizes.mock.calls[1]?.[1].idempotency_key);
     expect(onReconcile).toHaveBeenCalledOnce();
-    expect(fulfillmentClient.listShippingAddresses).toHaveBeenCalled();
-    expect(fulfillmentClient.listShippingRequests).toHaveBeenCalled();
+    expect(fulfillmentClient.listShippingAddresses).not.toHaveBeenCalled();
+    expect(fulfillmentClient.listShippingRequests).not.toHaveBeenCalled();
     expect(refreshWallet).toHaveBeenCalledOnce();
   });
 
@@ -204,10 +207,15 @@ describe("prize fulfillment UI", () => {
     const fulfillmentClient = client({
       exchangePrizes: vi.fn().mockRejectedValue(fulfillmentProblem("PRIZE_ON_PAYMENT_HOLD", false)),
     });
-    renderDialog("point_exchange", fulfillmentClient);
+    const { onReconcile } = renderDialog("point_exchange", fulfillmentClient);
     fireEvent.click(screen.getByRole("button", { name: "コインに交換する" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("お支払い状況の確認中");
     expect(screen.queryByText(/このdetail/)).not.toBeInTheDocument();
+    expect(fulfillmentClient.exchangePrizes).toHaveBeenCalledOnce();
+    expect(onReconcile).not.toHaveBeenCalled();
+    expect(fulfillmentClient.listShippingAddresses).not.toHaveBeenCalled();
+    expect(fulfillmentClient.listShippingRequests).not.toHaveBeenCalled();
+    expect(screen.queryByText("手続きが完了しました")).not.toBeInTheDocument();
     expect(refreshWallet).not.toHaveBeenCalled();
   });
 
@@ -235,9 +243,13 @@ describe("prize fulfillment UI", () => {
       { idempotency_key: expect.any(String) },
     );
     expect(fulfillmentClient.getShippingRequest).toHaveBeenCalledWith(shippingRequest.id);
-    expect(fulfillmentClient.listShippingRequests).toHaveBeenCalled();
-    expect(fulfillmentClient.listShippingAddresses).toHaveBeenCalled();
+    expect(fulfillmentClient.createShippingRequest).toHaveBeenCalledOnce();
+    expect(fulfillmentClient.listShippingRequests).toHaveBeenCalledOnce();
+    expect(fulfillmentClient.listShippingAddresses).toHaveBeenCalledTimes(2);
     expect(onReconcile).toHaveBeenCalledOnce();
+    expect(screen.getByRole("dialog")).toHaveTextContent("景品・発送・お届け先は最新の情報を表示しています。");
+    expect(fulfillmentClient.exchangePrizes).not.toHaveBeenCalled();
+    expect(refreshWallet).not.toHaveBeenCalled();
   });
 
   it("blocks shipping for the canonical empty address collection and navigates to registration", async () => {

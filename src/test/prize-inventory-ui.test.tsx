@@ -1,11 +1,13 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
-import { PUBLIC_AUTH_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
+import { PUBLIC_AUTH_FIXTURE, PUBLIC_POINT_BALANCE_FIXTURES, PUBLIC_SMS_VERIFICATION_FIXTURES, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { PrizeClientProvider } from "@/components/prizes/prize-client-provider";
 import { PrizeInventory } from "@/components/prizes/prize-inventory";
-import type { AuthClientAdapter, AuthSession, PrizeFulfillmentAdapter, UserPrize } from "@/lib/platform";
+import { PointClientProvider, usePointClient } from "@/components/points/point-client-provider";
+import { PointBalanceSummary } from "@/components/points/point-purchase-page";
+import type { AuthClientAdapter, AuthSession, PointClientAdapter, PrizeFulfillmentAdapter, UserPrize } from "@/lib/platform";
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
@@ -110,7 +112,100 @@ function renderInventory(prizeClient: PrizeFulfillmentAdapter | null = client(),
   );
 }
 
+function WalletBalance() {
+  const { wallet } = usePointClient();
+  return <PointBalanceSummary wallet={wallet} />;
+}
+
 describe("prize inventory UI", () => {
+  it.each(["login", "standard"])("completes a %s Gacha prize exchange without SMS or shipping reads after selection clears", async (origin) => {
+    const stored = prize({ id: base.id, name: `${origin}ガチャの通常景品`, shipping_only: false });
+    const converted: UserPrize = {
+      ...stored,
+      status: "converted",
+      allowed_actions: {
+        selection: { allowed: false, unavailable_reason: "status_not_actionable" },
+        point_exchange: { allowed: false, unavailable_reason: "status_not_actionable" },
+        shipping: { allowed: false, unavailable_reason: "status_not_actionable" },
+      },
+    };
+    const smsRequired = new ApiProblemError({
+      code: "SMS_VERIFICATION_REQUIRED",
+      request_id: "request-shipping-sms-required",
+      retryable: false,
+      status: 403,
+      title: "SMS verification required",
+      type: "https://storefront.test/problems/sms-verification-required",
+    });
+    const fulfillment = client({
+      listPrizes: vi.fn()
+        .mockResolvedValueOnce(response({ items: [stored], next_cursor: null }))
+        .mockResolvedValueOnce(response({ items: [converted], next_cursor: null })),
+      exchangePrizes: vi.fn().mockResolvedValue(response({
+        id: "0198a001-0000-7000-8000-000000000150",
+        status: "completed",
+        exchanged_count: 1,
+        exchange_point_total: stored.exchange_points,
+        wallet_free_points_after: 8000,
+        idempotent_replay: false,
+      })),
+      listShippingAddresses: vi.fn().mockRejectedValue(smsRequired),
+    });
+    const auth = authClient(authenticated, {
+      getSmsVerificationStatus: vi.fn().mockResolvedValue(response(PUBLIC_SMS_VERIFICATION_FIXTURES.unverified)),
+    });
+    const wallet = PUBLIC_POINT_BALANCE_FIXTURES.positive;
+    const refreshedWallet = { ...wallet, free_points: 8000, total_points: wallet.paid_points + 8000 };
+    const point = {
+      getWallet: vi.fn()
+        .mockResolvedValueOnce(response(wallet))
+        .mockResolvedValueOnce(response(refreshedWallet)),
+      listPointLedgerEntries: vi.fn(),
+      listPointProducts: vi.fn(),
+    } as PointClientAdapter;
+    const walletRefresh = vi.fn();
+    document.addEventListener("storefront:wallet-refresh", walletRefresh);
+    try {
+      render(
+        <SessionProvider client={auth}>
+          <PointClientProvider client={point}>
+            <WalletBalance />
+            <PrizeClientProvider client={fulfillment}><PrizeInventory /></PrizeClientProvider>
+          </PointClientProvider>
+        </SessionProvider>,
+      );
+      await waitFor(() => expect(screen.getByLabelText("現在のコイン残高")).toHaveTextContent(wallet.total_points.toLocaleString("ja-JP")));
+      fireEvent.click(await screen.findByRole("checkbox", { name: `${stored.presentation!.name}を選択` }));
+      fireEvent.click(screen.getByRole("button", { name: "コインに交換" }));
+      fireEvent.click(screen.getByRole("button", { name: "コインに交換する" }));
+
+      expect(await screen.findByText("コイン交換済み")).toBeInTheDocument();
+      expect(screen.getByRole("dialog")).toHaveTextContent("選択した景品: 0件");
+      expect(screen.queryByRole("complementary", { name: "選択した景品の操作" })).not.toBeInTheDocument();
+      expect(await screen.findByText("手続きが完了しました")).toBeInTheDocument();
+      expect(screen.getByRole("dialog")).toHaveTextContent(`1件を${stored.exchange_points.toLocaleString("ja-JP")} コインへ交換しました。`);
+      expect(screen.getByRole("dialog")).not.toHaveTextContent("景品・発送・お届け先は最新の情報を表示しています。");
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(screen.queryByText(/操作を完了できませんでした/)).not.toBeInTheDocument();
+      expect(fulfillment.exchangePrizes).toHaveBeenCalledExactlyOnceWith([stored.id], { idempotency_key: expect.any(String) });
+      expect(fulfillment.listPrizes).toHaveBeenCalledTimes(2);
+      expect(fulfillment.listShippingAddresses).not.toHaveBeenCalled();
+      expect(fulfillment.listShippingRequests).not.toHaveBeenCalled();
+      expect(fulfillment.getShippingRequest).not.toHaveBeenCalled();
+      expect(auth.getSmsVerificationStatus).not.toHaveBeenCalled();
+      expect(walletRefresh).toHaveBeenCalledOnce();
+      await waitFor(() => expect(screen.getByLabelText("現在のコイン残高")).toHaveTextContent(refreshedWallet.total_points.toLocaleString("ja-JP")));
+      expect(point.getWallet).toHaveBeenCalledTimes(2);
+      expect(screen.getByRole("checkbox")).not.toBeChecked();
+      expect(screen.getByRole("checkbox")).toBeDisabled();
+      fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(fulfillment.exchangePrizes).toHaveBeenCalledOnce();
+    } finally {
+      document.removeEventListener("storefront:wallet-refresh", walletRefresh);
+    }
+  });
+
   it("excludes shipping-only snapshots from exchange selection, counts, totals and payload while retaining shipping", async () => {
     const a = prize({ id: "A", name: "通常A", exchange_points: 100, shipping_only: false });
     const b = prize({ id: "B", name: "通常B", exchange_points: 500, shipping_only: false });
