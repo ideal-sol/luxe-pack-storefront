@@ -1,0 +1,37 @@
+name: Storefront Readiness Shadow Observation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  readiness-shadow:
+    name: storefront-readiness-shadow-observation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.22.3
+      - run: corepack enable && corepack prepare pnpm@10.12.1 --activate
+      - run: pnpm install --frozen-lockfile
+      - name: Verify classifier implementation
+        run: pnpm exec vitest run src/test/readiness-classifier.test.mjs
+      - name: Observe exact diff without Production handoff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/readiness/classifier.mjs . "$BASE_SHA" "$HEAD_SHA" "$RUNNER_TEMP/readiness-shadow.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: storefront-readiness-shadow-observation
+          path: ${{ runner.temp }}/readiness-shadow.json
+          retention-days: 7
