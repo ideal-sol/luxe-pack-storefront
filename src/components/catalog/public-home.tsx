@@ -16,7 +16,7 @@ import { CatalogLoading, CatalogMessage } from "./catalog-message";
 import { GachaCard } from "./gacha-card";
 import { HomeBannerCarousel } from "./home-banner-carousel";
 import { HomeGuide } from "./home-guide";
-import { HomeLoginBonus } from "./home-login-bonus";
+import { HomeLoginBonusFeed } from "./home-login-bonus";
 import { HomeSectionHeading } from "./home-section-heading";
 import { gachaSortFetchLimit, gachaSortOptions, sortGachas, type GachaSortKey } from "./gacha-sort";
 
@@ -184,7 +184,7 @@ export function PublicHome() {
       </div>
 
       {/* 無料・ログインボーナス（注目の企画とガチャ一覧の間。表示のみ、抽選は Platform 側） */}
-      <HomeLoginBonus />
+      <HomeLoginBonusFeed />
 
       <section className="home-categories">
         <PageContainer className="home-content">

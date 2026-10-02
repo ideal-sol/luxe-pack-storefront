@@ -1,0 +1,78 @@
+{
+  "bundle": {
+    "immutable": true,
+    "predecessor": "2.0.0-alpha.41",
+    "release_mode": "contract-additive",
+    "version": "2.0.0-alpha.42"
+  },
+  "generated_at": "2026-10-02T03:59:25Z",
+  "installation": {
+    "consumer_resolution": "pin published tarballs and retain referenced package digests from the predecessor bundle",
+    "registry_publish_performed": false,
+    "workspace_dependency_required": false
+  },
+  "packages": [
+    {
+      "browser_compatible": true,
+      "disposition": "published",
+      "file": "oripa-storefront-client-2.0.0-alpha.42.tgz",
+      "minimum_public_api_contract": "2.0.0-alpha.38",
+      "name": "@oripa/storefront-client",
+      "required_capabilities": [
+        "draw.browser-mutation.v2",
+        "gacha.catalog-display.v2",
+        "gacha.presentation.v2",
+        "gacha.rank-master.v2",
+        "identity.sms-phone-ownership.v2",
+        "payment.fincode.v2",
+        "prize.fulfillment-browser-mutation.v2",
+        "user-draw-history.read.v2",
+        "user-point.read.v2",
+        "user-prize.presentation.v2"
+      ],
+      "sha256": "e3d7c83da5289298099c6f3d91f2081180720680f2f6add30cd38fb1878922fc",
+      "version": "2.0.0-alpha.42"
+    },
+    {
+      "disposition": "referenced",
+      "name": "@oripa/site-schema",
+      "sha256": "b4ca0ddb0ec8a6f4bda6dfec40fb5f3f5098a837160310be64de97cab36740c2",
+      "source_bundle_version": "2.0.0-alpha.23",
+      "source_tree": "11f6bee77dd463c2f90352537f817404cf3042bd",
+      "version": "2.0.0-alpha.23"
+    },
+    {
+      "browser_compatible": true,
+      "disposition": "published",
+      "file": "oripa-storefront-testkit-2.0.0-alpha.42.tgz",
+      "name": "@oripa/storefront-testkit",
+      "public_api_operation_count": 78,
+      "sha256": "da3ae837df68cc5502b9440213ac5267b76c2028c39297b8ff3cfa2b2c9d566c",
+      "site_schema_version": "2.0.0-alpha.23",
+      "storefront_client_version": "2.0.0-alpha.42",
+      "version": "2.0.0-alpha.42"
+    }
+  ],
+  "platform": {
+    "application_versions": {
+      "admin": "2.0.0-alpha.23",
+      "workspace": "2.0.0-alpha.23"
+    },
+    "version": "2.0.0-alpha.23"
+  },
+  "public_openapi": {
+    "breaking_change": false,
+    "compatibility_family": 2,
+    "file": "public.openapi.json",
+    "operation_count": 78,
+    "sha256": "fddb22735a1dff423562b10d9545391ccca4f9a6a13b805cb68df44445ef024a",
+    "version": "2.0.0-alpha.38"
+  },
+  "schema_version": "2.0",
+  "source_commit": "2918db8d960380084fa02009a9de15891e1a9d04",
+  "task_id": "LOGIN-GACHA-UI-20261002",
+  "toolchain": {
+    "node": "22.22.3",
+    "pnpm": "10.12.1"
+  }
+}

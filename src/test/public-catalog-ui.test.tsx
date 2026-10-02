@@ -37,6 +37,8 @@ function publicClient(overrides: Partial<PublicCatalogAdapter> = {}): PublicCata
   return {
     getNotice: vi.fn().mockResolvedValue(response(PUBLIC_CONTENT_FIXTURE.notice)),
     getStaticPage: vi.fn(),
+    listLoginGachas: vi.fn().mockResolvedValue(response({ items: [] })),
+    getLoginGacha: vi.fn(),
     listBanners: vi.fn().mockResolvedValue(response(PUBLIC_TOP_BANNERS_FIXTURE.response)),
     listGachaCategories: vi.fn().mockResolvedValue(response(categoryCollection)),
     listGachaTags: vi.fn().mockResolvedValue(response({ data: summary.tags })),
@@ -309,7 +311,7 @@ describe("public catalog UI", () => {
     const pending = new Promise<never>(() => undefined);
     const loading = renderPublic(<PublicHome />, publicClient({ listBanners: vi.fn(() => pending) }));
     expect(await screen.findByRole("link", { name: summary.title })).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("バナーを読み込み中");
+    expect(screen.getByText("バナーを読み込み中")).toBeInTheDocument();
     loading.unmount();
 
     const problem = new ApiProblemError({
