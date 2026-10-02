@@ -142,7 +142,7 @@ export function PrizeFulfillmentDialog({
     setProblem(null);
     try {
       const { data } = await client.exchangePrizes(prizeIds, { idempotency_key: key });
-      await reconcileReads();
+      await onReconcile();
       document.dispatchEvent(new Event("storefront:wallet-refresh"));
       pendingExchange.current = null;
       setSuccess(exchangeSuccess(data));
@@ -269,7 +269,7 @@ export function PrizeFulfillmentDialog({
           <div className="fulfillment-dialog__success" role="status">
             <strong>手続きが完了しました</strong>
             <p>{success}</p>
-            <p>景品・発送・お届け先は最新の情報を表示しています。</p>
+            <p>{action === "point_exchange" ? "景品は最新の情報を表示しています。" : "景品・発送・お届け先は最新の情報を表示しています。"}</p>
           </div>
         ) : editingAddressId && addressInput ? (
           <form onSubmit={(event) => { event.preventDefault(); void saveAddress(); }}>
