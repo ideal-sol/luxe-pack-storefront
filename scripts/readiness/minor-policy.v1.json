@@ -1,0 +1,151 @@
+{
+  "policy_version": "1.0-shadow-proposal",
+  "approved_at": null,
+  "approved_by_role": null,
+  "status": "PROPOSED_SHADOW_ONLY",
+  "critical_paths": [
+    "src/components/auth/",
+    "src/components/account/",
+    "src/components/account-security/",
+    "src/components/payment/",
+    "src/components/points/",
+    "src/components/draw/",
+    "src/components/prizes/",
+    "src/components/address/",
+    "src/components/contact/",
+    "src/components/catalog/",
+    "src/components/advertising/"
+  ],
+  "critical_symbols": [
+    "onClick",
+    "onSubmit",
+    "useEffect",
+    "useState",
+    "fetch",
+    "mutate",
+    "redirect",
+    "router",
+    "payload",
+    "csrf",
+    "sanitizeHtml"
+  ],
+  "allowed_change_classes": [
+    "scoped_css",
+    "literal_className",
+    "literal_inline_style",
+    "noncritical_copy",
+    "decorative_raster"
+  ],
+  "forbidden_change_classes": [
+    "handler",
+    "submit",
+    "state",
+    "effect",
+    "hook",
+    "conditional_rendering",
+    "api_client",
+    "fetch_mutation",
+    "payload",
+    "polling_retry",
+    "routing_redirect",
+    "auth_session",
+    "payment_3ds",
+    "draw",
+    "catalog_logic",
+    "prize_shipping",
+    "save_card",
+    "sms_line",
+    "advertising",
+    "cookie_csrf",
+    "sanitization",
+    "dependency_lockfile",
+    "contract",
+    "env_requirement",
+    "build_runtime_config",
+    "ci_workflow",
+    "security_policy",
+    "dom_structure"
+  ],
+  "css_rule_constraints": {
+    "allowed_properties": [
+      "color",
+      "background-color",
+      "border-color",
+      "padding",
+      "padding-top",
+      "padding-right",
+      "padding-bottom",
+      "padding-left",
+      "margin",
+      "margin-top",
+      "margin-right",
+      "margin-bottom",
+      "margin-left",
+      "gap",
+      "row-gap",
+      "column-gap",
+      "border-radius"
+    ],
+    "numeric_units": [
+      "px",
+      "rem",
+      "em"
+    ],
+    "max_numeric_value": 128,
+    "forbidden_properties": [
+      "display",
+      "visibility",
+      "pointer-events",
+      "opacity",
+      "overflow",
+      "overflow-x",
+      "overflow-y",
+      "clip",
+      "clip-path",
+      "z-index",
+      "position",
+      "top",
+      "left",
+      "right",
+      "bottom",
+      "transform"
+    ],
+    "allowed_class_pattern": "^(?:(?:sm|md|lg|xl):)?(?:p[trblxy]?|m[trblxy]?|gap(?:-x|-y)?|space-[xy])-(?:0|1|2|3|4|5|6|8|10|12|16)$"
+  },
+  "asset_constraints": {
+    "paths": [
+      "src/assets/decorative/"
+    ],
+    "formats": [
+      "png",
+      "jpeg",
+      "webp"
+    ],
+    "max_bytes": 1048576,
+    "max_growth_ratio": 2,
+    "max_width": 4096,
+    "max_height": 4096,
+    "dimensions": "SAME",
+    "references": "SAME",
+    "approval": "explicit_decorative_path"
+  },
+  "shared_impact_rules": {
+    "expand_transitive_importers": true,
+    "unresolved_import": "UNCLASSIFIED",
+    "unmapped_path": "UNCLASSIFIED",
+    "viewport_classes": [
+      "mobile",
+      "desktop"
+    ],
+    "shared_paths": [
+      "src/components/common/",
+      "src/components/layout/",
+      "src/app/layout.tsx"
+    ]
+  },
+  "fallback_behavior": {
+    "unclassified": "Normal Storefront Release",
+    "platform_unknown": "Full Platform + Storefront Release",
+    "authority_logic_change": "NORMAL_STRICT_CI"
+  }
+}

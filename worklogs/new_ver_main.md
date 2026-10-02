@@ -1,3 +1,13 @@
+## PRG-20261002 — Storefront Minor Shadow Classifier
+
+- Human-authorized Phase 1 only; Issue none, Risk R4, Lane Strict Change, Application Runtime Activation none. Dedicated Worktree and branch `feat/PRG-20261002-phase1-shadow`, base/protected main `474736bef3f5534af9c0d0824965c230e587c5c1`. Existing primary Worktree files, local Runtime configuration and uncommitted work are untouched.
+- Formal v1.1 SHA-256 verified: `e7e3a6fedfa232d06e00e36f14e79399d03fc6f5dfa8550f801b60d57a2e87a9`. Added offline complete-diff classifier, TypeScript AST/CSS/raster checks, versioned Machine Policy, 19-domain impact map, transitive importer analysis and focused Human Browser Acceptance plan. Canonical source/check/provenance validators are reused through offline adapters.
+- Machine Policy numeric limits remain PROPOSED_SHADOW_ONLY with null approval fields. No Human approval is generated; unapproved policy falls back. Default CI has no Production handoff and records Full/UNKNOWN. Existing alpha.42 pins, Artifact provenance, Required Checks, application code and Production workflow remain unchanged. Independent Shadow workflow uploads observations only; the existing integration test suite includes classifier tests.
+- Initial focused classifier 56 PASS; classifier plus existing provenance/workflow regression 155 PASS; artifact:check and focused ESLint PASS. Added handoff/adapter coverage and final-head results are recorded on the PR. Browser/E2E, Human Acceptance, Production Artifact dispatch, Build/Stage/Activation, Contract publication, Migration, ENV/Secret access and NEW Production connection: not performed.
+- Production impact NONE, CI skip false, blocking authority false. Policy approval, actual Human-assisted evidence, Human GO, merge, Phase 2 and Promotion remain pending. PR/CI completion stops for Human review. Source rollback is a reviewed revert PR with no Runtime operation.
+
+- Final protected-main drift reconciliation: merge `30099a9d8ed8a59b7072dbee398da74c27078e6f` into this dedicated Gate branch. The concurrent prize-exchange component/tests and Worklog are outside the seven protected Gate areas. Only the add/add Worklog conflict is resolved, preserving both records in full; no primary-worktree content is copied. Focused tests and every Required Check are rerun for the resulting final head. This is task-branch baseline integration, not PR merge or Production activation.
+
 # Storefront fix batch local worklog
 
 ## STOREFRONT-FIX-BATCH-20261002 — Initial local-only phase
