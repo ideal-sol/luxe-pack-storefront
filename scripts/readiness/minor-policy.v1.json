@@ -1,151 +1,599 @@
 {
-  "policy_version": "1.0-shadow-proposal",
-  "approved_at": null,
-  "approved_by_role": null,
-  "status": "PROPOSED_SHADOW_ONLY",
-  "critical_paths": [
-    "src/components/auth/",
-    "src/components/account/",
-    "src/components/account-security/",
-    "src/components/payment/",
-    "src/components/points/",
-    "src/components/draw/",
-    "src/components/prizes/",
-    "src/components/address/",
-    "src/components/contact/",
-    "src/components/catalog/",
-    "src/components/advertising/"
-  ],
-  "critical_symbols": [
-    "onClick",
-    "onSubmit",
-    "useEffect",
-    "useState",
-    "fetch",
-    "mutate",
-    "redirect",
-    "router",
-    "payload",
-    "csrf",
-    "sanitizeHtml"
-  ],
+  "policy_version": "1.1.2-operational-approved",
+  "policy_approval": "HUMAN_APPROVED",
   "allowed_change_classes": [
     "scoped_css",
     "literal_className",
     "literal_inline_style",
-    "noncritical_copy",
-    "decorative_raster"
+    "text_only_copy",
+    "static_raster"
   ],
-  "forbidden_change_classes": [
-    "handler",
-    "submit",
-    "state",
-    "effect",
-    "hook",
-    "conditional_rendering",
-    "api_client",
-    "fetch_mutation",
-    "payload",
-    "polling_retry",
-    "routing_redirect",
-    "auth_session",
-    "payment_3ds",
-    "draw",
-    "catalog_logic",
-    "prize_shipping",
-    "save_card",
-    "sms_line",
-    "advertising",
-    "cookie_csrf",
-    "sanitization",
-    "dependency_lockfile",
-    "contract",
-    "env_requirement",
-    "build_runtime_config",
-    "ci_workflow",
-    "security_policy",
-    "dom_structure"
+  "normal_path_patterns": [
+    "^src/styles/font-noto-sans-jp\\.css$",
+    "^(?:\\.github/|scripts/|docs/|vendor/)",
+    "(?:^|/)(?:package\\.json|[^/]*lock[^/]*|[^/]*config[^/]*|proxy\\.[^/]*|middleware\\.[^/]*|\\.env[^/]*)$"
   ],
-  "css_rule_constraints": {
-    "allowed_properties": [
-      "color",
-      "background-color",
-      "border-color",
-      "padding",
-      "padding-top",
-      "padding-right",
-      "padding-bottom",
-      "padding-left",
-      "margin",
-      "margin-top",
-      "margin-right",
-      "margin-bottom",
-      "margin-left",
-      "gap",
-      "row-gap",
-      "column-gap",
-      "border-radius"
+  "authority_path_patterns": [
+    "^scripts/readiness/",
+    "^src/test/readiness",
+    "^\\.github/workflows/readiness-shadow\\.yml$",
+    "^scripts/(?:production-provenance|check-policy|verify-vendored-artifacts)\\.mjs$"
+  ],
+  "copy_attributes": [
+    "aria-label",
+    "aria-description",
+    "alt",
+    "title",
+    "placeholder"
+  ],
+  "css": {
+    "properties": {
+      "color": {
+        "kind": "color",
+        "hex_pattern": "^#(?:[\\da-f]{3}|[\\da-f]{4}|[\\da-f]{6}|[\\da-f]{8})$",
+        "keywords": [
+          "transparent",
+          "currentcolor",
+          "black",
+          "white",
+          "red",
+          "green",
+          "blue",
+          "gray",
+          "grey",
+          "yellow",
+          "orange",
+          "purple",
+          "pink",
+          "teal",
+          "navy",
+          "lime",
+          "aqua",
+          "maroon",
+          "olive",
+          "silver",
+          "fuchsia"
+        ],
+        "rgb_channel_bounds": [
+          0,
+          255
+        ]
+      },
+      "background-color": {
+        "kind": "color",
+        "hex_pattern": "^#(?:[\\da-f]{3}|[\\da-f]{4}|[\\da-f]{6}|[\\da-f]{8})$",
+        "keywords": [
+          "transparent",
+          "currentcolor",
+          "black",
+          "white",
+          "red",
+          "green",
+          "blue",
+          "gray",
+          "grey",
+          "yellow",
+          "orange",
+          "purple",
+          "pink",
+          "teal",
+          "navy",
+          "lime",
+          "aqua",
+          "maroon",
+          "olive",
+          "silver",
+          "fuchsia"
+        ],
+        "rgb_channel_bounds": [
+          0,
+          255
+        ]
+      },
+      "border-color": {
+        "kind": "color",
+        "hex_pattern": "^#(?:[\\da-f]{3}|[\\da-f]{4}|[\\da-f]{6}|[\\da-f]{8})$",
+        "keywords": [
+          "transparent",
+          "currentcolor",
+          "black",
+          "white",
+          "red",
+          "green",
+          "blue",
+          "gray",
+          "grey",
+          "yellow",
+          "orange",
+          "purple",
+          "pink",
+          "teal",
+          "navy",
+          "lime",
+          "aqua",
+          "maroon",
+          "olive",
+          "silver",
+          "fuchsia"
+        ],
+        "rgb_channel_bounds": [
+          0,
+          255
+        ]
+      },
+      "margin": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            0,
+            128
+          ],
+          "rem": [
+            0,
+            8
+          ],
+          "em": [
+            0,
+            8
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 4
+      },
+      "margin-top": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            0,
+            128
+          ],
+          "rem": [
+            0,
+            8
+          ],
+          "em": [
+            0,
+            8
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 1
+      },
+      "margin-right": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            0,
+            128
+          ],
+          "rem": [
+            0,
+            8
+          ],
+          "em": [
+            0,
+            8
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 1
+      },
+      "margin-bottom": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            0,
+            128
+          ],
+          "rem": [
+            0,
+            8
+          ],
+          "em": [
+            0,
+            8
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 1
+      },
+      "margin-left": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            0,
+            128
+          ],
+          "rem": [
+            0,
+            8
+          ],
+          "em": [
+            0,
+            8
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 1
+      },
+      "padding": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            0,
+            128
+          ],
+          "rem": [
+            0,
+            8
+          ],
+          "em": [
+            0,
+            8
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 4
+      },
+      "padding-top": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            0,
+            128
+          ],
+          "rem": [
+            0,
+            8
+          ],
+          "em": [
+            0,
+            8
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 1
+      },
+      "padding-right": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            0,
+            128
+          ],
+          "rem": [
+            0,
+            8
+          ],
+          "em": [
+            0,
+            8
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 1
+      },
+      "padding-bottom": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            0,
+            128
+          ],
+          "rem": [
+            0,
+            8
+          ],
+          "em": [
+            0,
+            8
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 1
+      },
+      "padding-left": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            0,
+            128
+          ],
+          "rem": [
+            0,
+            8
+          ],
+          "em": [
+            0,
+            8
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 1
+      },
+      "gap": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            0,
+            128
+          ],
+          "rem": [
+            0,
+            8
+          ],
+          "em": [
+            0,
+            8
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 2
+      },
+      "row-gap": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            0,
+            128
+          ],
+          "rem": [
+            0,
+            8
+          ],
+          "em": [
+            0,
+            8
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 1
+      },
+      "column-gap": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            0,
+            128
+          ],
+          "rem": [
+            0,
+            8
+          ],
+          "em": [
+            0,
+            8
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 1
+      },
+      "font-size": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            10,
+            64
+          ],
+          "rem": [
+            0.625,
+            4
+          ],
+          "em": [
+            0.625,
+            4
+          ]
+        },
+        "unitless_zero": false,
+        "max_components": 1
+      },
+      "line-height": {
+        "kind": "numeric",
+        "units": {
+          "": [
+            0.8,
+            2.5
+          ],
+          "rem": [
+            0.75,
+            6
+          ],
+          "em": [
+            0.75,
+            6
+          ]
+        },
+        "unitless_zero": false,
+        "max_components": 1
+      },
+      "letter-spacing": {
+        "kind": "numeric",
+        "units": {
+          "em": [
+            -0.1,
+            0.2
+          ],
+          "px": [
+            -2,
+            4
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 1
+      },
+      "border-radius": {
+        "kind": "numeric",
+        "units": {
+          "px": [
+            0,
+            999
+          ],
+          "rem": [
+            0,
+            50
+          ],
+          "em": [
+            0,
+            50
+          ]
+        },
+        "unitless_zero": true,
+        "max_components": 4
+      },
+      "font-weight": {
+        "kind": "numeric",
+        "units": {
+          "": [
+            1,
+            1000
+          ]
+        },
+        "unitless_zero": false,
+        "max_components": 1,
+        "keywords": [
+          "normal",
+          "bold"
+        ]
+      }
+    },
+    "normal_selector_pattern": "(?::root|(?:^|[\\s,>+~])(?:html|body|\\*)(?=$|[\\s,.#:[>+~])|focus|disabled|error|confirm|operational)",
+    "normal_at_rule_patterns": [
+      "^font-face$",
+      "^keyframes$",
+      "^-(?:webkit|moz)-keyframes$"
     ],
-    "numeric_units": [
-      "px",
-      "rem",
-      "em"
-    ],
-    "max_numeric_value": 128,
-    "forbidden_properties": [
-      "display",
-      "visibility",
-      "pointer-events",
-      "opacity",
-      "overflow",
-      "overflow-x",
-      "overflow-y",
-      "clip",
-      "clip-path",
-      "z-index",
-      "position",
-      "top",
-      "left",
-      "right",
-      "bottom",
-      "transform"
-    ],
-    "allowed_class_pattern": "^(?:(?:sm|md|lg|xl):)?(?:p[trblxy]?|m[trblxy]?|gap(?:-x|-y)?|space-[xy])-(?:0|1|2|3|4|5|6|8|10|12|16)$"
-  },
-  "asset_constraints": {
-    "paths": [
-      "src/assets/decorative/"
-    ],
-    "formats": [
-      "png",
-      "jpeg",
-      "webp"
-    ],
-    "max_bytes": 1048576,
-    "max_growth_ratio": 2,
-    "max_width": 4096,
-    "max_height": 4096,
-    "dimensions": "SAME",
-    "references": "SAME",
-    "approval": "explicit_decorative_path"
-  },
-  "shared_impact_rules": {
-    "expand_transitive_importers": true,
-    "unresolved_import": "UNCLASSIFIED",
-    "unmapped_path": "UNCLASSIFIED",
-    "viewport_classes": [
-      "mobile",
-      "desktop"
-    ],
-    "shared_paths": [
-      "src/components/common/",
-      "src/components/layout/",
-      "src/app/layout.tsx"
+    "normal_media_pattern": "prefers-reduced-motion",
+    "normal_paths": [
+      "src/styles/font-noto-sans-jp.css"
     ]
   },
+  "asset_extensions": {
+    ".png": "png",
+    ".jpg": "jpeg",
+    ".jpeg": "jpeg",
+    ".webp": "webp"
+  },
   "fallback_behavior": {
-    "unclassified": "Normal Storefront Release",
+    "storefront": "Normal Storefront Release",
     "platform_unknown": "Full Platform + Storefront Release",
     "authority_logic_change": "NORMAL_STRICT_CI"
-  }
+  },
+  "acceptance_viewports": [
+    "mobile",
+    "desktop"
+  ],
+  "native_html_elements": [
+    "a",
+    "abbr",
+    "address",
+    "area",
+    "article",
+    "aside",
+    "audio",
+    "b",
+    "base",
+    "bdi",
+    "bdo",
+    "blockquote",
+    "body",
+    "br",
+    "button",
+    "canvas",
+    "caption",
+    "cite",
+    "code",
+    "col",
+    "colgroup",
+    "data",
+    "datalist",
+    "dd",
+    "del",
+    "details",
+    "dfn",
+    "dialog",
+    "div",
+    "dl",
+    "dt",
+    "em",
+    "embed",
+    "fieldset",
+    "figcaption",
+    "figure",
+    "footer",
+    "form",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "head",
+    "header",
+    "hgroup",
+    "hr",
+    "html",
+    "i",
+    "iframe",
+    "img",
+    "input",
+    "ins",
+    "kbd",
+    "label",
+    "legend",
+    "li",
+    "link",
+    "main",
+    "map",
+    "mark",
+    "menu",
+    "meta",
+    "meter",
+    "nav",
+    "noscript",
+    "object",
+    "ol",
+    "optgroup",
+    "option",
+    "output",
+    "p",
+    "picture",
+    "pre",
+    "progress",
+    "q",
+    "rp",
+    "rt",
+    "ruby",
+    "s",
+    "samp",
+    "script",
+    "search",
+    "section",
+    "select",
+    "slot",
+    "small",
+    "source",
+    "span",
+    "strong",
+    "style",
+    "sub",
+    "summary",
+    "sup",
+    "table",
+    "tbody",
+    "td",
+    "template",
+    "textarea",
+    "tfoot",
+    "th",
+    "thead",
+    "time",
+    "title",
+    "tr",
+    "track",
+    "u",
+    "ul",
+    "var",
+    "video",
+    "wbr"
+  ]
 }
