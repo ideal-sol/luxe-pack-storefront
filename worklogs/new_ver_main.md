@@ -191,3 +191,81 @@ prohibited. This section supersedes the initial phase's local-only restriction.
 - Final head/tree, fresh self-review and CI outcomes belong to the PR. Branch
   and worktree remain for Human review; no merge, cleanup or main synchronization
   is authorized in this task. Production GO remains outside scope.
+
+## STOREFRONT-CI-SECURITY-BOOTSTRAP-20261005
+
+- Latest Human instruction authorizes a new bootstrap PR containing #136's
+  exact sanitize-html remediation and the exact braces dev-tool exception.
+  Risk R3; Lane: Strict Change; Application Runtime Activation: none; Issue: none.
+  Merge and auto-merge remain explicitly unauthorized.
+- Starting live protected main and fetched origin/main both equal
+  `b9224c900191ede206d89af768a62998f72aca20`, tree
+  `6e376e0933ac7f311f8502254a2e6db4099b97d7`.
+- Dedicated branch `fix/CI-20261005-storefront-security-bootstrap` and a new
+  dedicated worktree isolate this Change. The historical Security HOLD branch
+  and its uncommitted 66-line worklog delta remain untouched and uncopied.
+- Imported exact #136 commit `1188b98c119645e728236c01e0bdd950a0b12e45`.
+  Integration tree equals #136's `10bb862b941439a517b18afd6ef5a7c5d987b350`.
+  package.json and pnpm-lock.yaml remain byte-identical to that commit: only
+  sanitize-html 2.17.6 -> 2.17.7 and its corresponding lock/integrity change.
+  The original #136 worklog is preserved above as historical evidence.
+- Scope: those two dependency files, this worklog, .github/workflows/ci.yml,
+  scripts/ci/security-audit-policy.mjs, src/test/security-audit-policy.test.mjs,
+  and docs/security-audit-policy.md. No Machine Policy, readiness, impact map,
+  classifier, inventory or application source changes.
+- GitHub connector identity was read back as `myong-ideal`. All bootstrap GitHub
+  writes must use that connector account; no Primary/Hkouno or GitHub App writes.
+  Git object publication must preserve the locally reviewed tree exactly.
+
+### Policy and fresh evidence
+
+- Fresh pnpm 11.25.0 evidence from the imported dependency state confirms
+  production info/low/moderate/high/critical = 0/0/0/0/0, raw exit 0. Full counts
+  are 0/0/5/1/0, raw exit 1. GHSA-g8qq-57p8-ggw5 is absent in both audits.
+- Full blocking threshold remains High. The collector requests all-severity
+  JSON with --audit-level info so lower-severity records cannot be hidden by
+  pnpm's output filter. The validator, not that collection filter, applies the
+  unchanged High/Critical blocking rule. Production must be zero at all levels.
+- Moderate evidence remains visible and nonblocking, without a baseline or
+  allowlist: vitest 4.1.10 and @vitest/mocker 4.1.10 (GHSA-82fw-gwwq-j7x9),
+  fast-uri 3.1.7 (GHSA-hrr3-gc8f-f4qj), brace-expansion 1.1.20 and 5.0.11
+  (GHSA-q2hr-2g5m-vwhr). No Moderate remediation or new blocking policy.
+- Sole High exception: GHSA-vfj7-8cjw-p6xm / audit ID 1240992 / braces 3.0.3,
+  exact path `.>eslint-config-next>@next/eslint-plugin-next>fast-glob>micromatch>braces`.
+  Fingerprint: vulnerable_versions <=3.0.3, patched_versions null,
+  patched_versions_unpublished true, CWE-674, CVE/CVSS ABSENT. Any appearance or
+  security-state change invalidates it. Descriptive fields are nonblocking.
+- Machine proof checks root eslint-config-next is dev-only, absent from runtime,
+  optional and peer sections, manifest/importer alignment, each locked chain
+  edge, braces package/version and fresh production-zero evidence. No reliance
+  on the audit's dev flag alone. Raw statuses/counts/errors fail closed.
+- Event-driven invalidation has no expiry or periodic review. A published patch
+  requires remediation. Advisory disappearance is RESOLVED / IMPROVED and PASS.
+  Successful output reports actual findings and applied exceptions separately.
+- Existing artifact, secret and all boundary checks and all five Required Check
+  names remain intact. Readiness-shadow source and workflow remain unchanged.
+
+### Validation, delivery and retained boundaries
+
+- Frozen install, typecheck, lint, policy/artifact/secret checks and every
+  boundary check passed locally. Initial focused tests passed (77 cases);
+  an additional Moderate-policy regression is included in final validation.
+  Fresh policy evaluation passed with 1 current High/Critical, 1 approved exact
+  exception, 0 unapproved High/Critical, 5 Moderate and 0 production findings.
+- Final full-suite counts, builds, clean git-archive validation, final-head fresh
+  audits, fresh GitHub CI and fixed-head self-review are recorded in the new PR
+  after execution. This entry does not predeclare pending results. An initial
+  test harness URL issue and local audit executable invocation failure were
+  corrected; the validator's fail-closed behavior remained intact.
+- #134 at ce1c68b028d16690b129ba36ee064c3ff038ac50 and draft #136 at
+  1188b98c119645e728236c01e0bdd950a0b12e45 are preserved OPEN and UNMERGED.
+  Neither PR is changed or closed by this task. The new PR awaits Human review.
+- No ENV/Secret access, OLD Test/Production deployment, NEW Server operation,
+  runtime restart, Nginx change, DB operation or Contract publication.
+  Migrations created/applied: 0/0. API/auth/point/payment/draw authority unchanged.
+  Browser/E2E and runtime acceptance are not run under this source/CI-only scope.
+- Source rollback requires a reviewed PR; reverting the sanitizer pin would
+  reintroduce its runtime advisory. No runtime rollback applies. Branch/worktree
+  remain for Human review; no main synchronization or cleanup of other worktrees.
+  Final SHA/tree, remote equality, check/build counts and elapsed times belong
+  to the PR evidence so the reviewed source remains immutable.
