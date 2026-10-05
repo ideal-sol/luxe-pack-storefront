@@ -54,7 +54,7 @@ function renderPoints(client: PointClientAdapter, session: AuthSession = PUBLIC_
 describe("SITE-032 Limited Bonus Coin presentation", () => {
   it("preserves the existing Product presentation when limited_bonus is omitted", async () => {
     const { limited_bonus: omittedLimitedBonus, ...product } = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0];
-    renderPoints(pointClient({ products: { data: [product] } }));
+    renderPoints(pointClient({ products: { first_user_offer: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.first_user_offer, data: [product] } }));
 
     expect(omittedLimitedBonus).toBeDefined();
     expect(await screen.findByRole("heading", { name: "スタンダード1000コイン" })).toBeInTheDocument();
@@ -152,7 +152,7 @@ describe("SITE-030 Coin Product read regression", () => {
   it("encodes only the canonical public Product identifier in the detail Route", async () => {
     const canonical = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0];
     const productId = "public/product?review=true";
-    renderPoints(pointClient({ products: { data: [{ ...canonical, id: productId }] } }));
+    renderPoints(pointClient({ products: { first_user_offer: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.first_user_offer, data: [{ ...canonical, id: productId }] } }));
 
     expect(await screen.findByRole("link", { name: "詳細を見る" })).toHaveAttribute(
       "href",
@@ -170,6 +170,7 @@ describe("SITE-030 Coin Product read regression", () => {
   it("preserves category-relative Backend order and first-user eligibility", async () => {
     const first = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[1];
     const products: PointProductCollection = {
+      first_user_offer: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.first_user_offer,
       data: [
         { ...first, id: "0198a001-0000-7000-8000-000000000399", title: "先に返された初回商品" },
         first,
@@ -187,7 +188,7 @@ describe("SITE-030 Coin Product read regression", () => {
   it("shows the Backend first-purchase ineligible reason without enabling purchase", async () => {
     renderPoints(pointClient({ products: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_after_first_purchase }));
     fireEvent.click(await screen.findByRole("tab", { name: "初回ユーザー" }));
-    expect(await screen.findByText("過去にコイン購入があるため、初回ユーザー対象外です。")).toBeInTheDocument();
+    expect(await screen.findByText("この初回ユーザー商品は現在購入できません。")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "現在購入できません" })).toBeDisabled();
   });
 

@@ -6,7 +6,7 @@ settings:
 
 overrides:
   '@oripa/site-schema@2.0.0-alpha.23': file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
-  '@oripa/storefront-client@2.0.0-alpha.42': file:vendor/oripa/LOGIN-GACHA-20261002/oripa-storefront-client-2.0.0-alpha.42.tgz
+  '@oripa/storefront-client@2.0.0-alpha.43': file:vendor/oripa/CONTRACT-20261005/oripa-storefront-client-2.0.0-alpha.43.tgz
   fast-uri@<3.1.7: 3.1.7
   undici@>=8.0.0 <8.10.2: 8.10.2
   nanoid@<3.3.18: 3.3.18
@@ -23,8 +23,8 @@ importers:
         specifier: 1.1.0
         version: 1.1.0
       '@oripa/storefront-client':
-        specifier: file:vendor/oripa/LOGIN-GACHA-20261002/oripa-storefront-client-2.0.0-alpha.42.tgz
-        version: file:vendor/oripa/LOGIN-GACHA-20261002/oripa-storefront-client-2.0.0-alpha.42.tgz
+        specifier: file:vendor/oripa/CONTRACT-20261005/oripa-storefront-client-2.0.0-alpha.43.tgz
+        version: file:vendor/oripa/CONTRACT-20261005/oripa-storefront-client-2.0.0-alpha.43.tgz
       next:
         specifier: 16.3.6
         version: 16.3.6(@babel/core@7.29.7)(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -42,8 +42,8 @@ importers:
         specifier: file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
         version: file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
       '@oripa/storefront-testkit':
-        specifier: file:vendor/oripa/LOGIN-GACHA-20261002/oripa-storefront-testkit-2.0.0-alpha.42.tgz
-        version: file:vendor/oripa/LOGIN-GACHA-20261002/oripa-storefront-testkit-2.0.0-alpha.42.tgz
+        specifier: file:vendor/oripa/CONTRACT-20261005/oripa-storefront-testkit-2.0.0-alpha.43.tgz
+        version: file:vendor/oripa/CONTRACT-20261005/oripa-storefront-testkit-2.0.0-alpha.43.tgz
       '@tailwindcss/postcss':
         specifier: 4.3.3
         version: 4.3.3
@@ -547,14 +547,14 @@ packages:
     version: 2.0.0-alpha.23
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-client@file:vendor/oripa/LOGIN-GACHA-20261002/oripa-storefront-client-2.0.0-alpha.42.tgz':
-    resolution: {integrity: sha512-WbGKoZ20bY5ji0IyKL4DZO2lqPU+7O8qSZPkyE+y8szzf2pYSm/L0qWA3XwzUkiDMJJnPKgBOwkPoK0Gan5fuw==, tarball: file:vendor/oripa/LOGIN-GACHA-20261002/oripa-storefront-client-2.0.0-alpha.42.tgz}
-    version: 2.0.0-alpha.42
+  '@oripa/storefront-client@file:vendor/oripa/CONTRACT-20261005/oripa-storefront-client-2.0.0-alpha.43.tgz':
+    resolution: {integrity: sha512-H8GzS1Z6yh4Wn60f2Zk6AsQXkbxtT2IyNMUSCnIKS8iqhhmF4fMYFkpl5unfrEY9drzqepPZVKmrW0tfFGTE9Q==, tarball: file:vendor/oripa/CONTRACT-20261005/oripa-storefront-client-2.0.0-alpha.43.tgz}
+    version: 2.0.0-alpha.43
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/LOGIN-GACHA-20261002/oripa-storefront-testkit-2.0.0-alpha.42.tgz':
-    resolution: {integrity: sha512-1VoZxe29KMSIf2b9fdapmIB6M+iHsS8JPUdG/mbkT8mPMPwlS0tzk0iMkUe6d88d7duUqaSxW98HUw0rSFz8pQ==, tarball: file:vendor/oripa/LOGIN-GACHA-20261002/oripa-storefront-testkit-2.0.0-alpha.42.tgz}
-    version: 2.0.0-alpha.42
+  '@oripa/storefront-testkit@file:vendor/oripa/CONTRACT-20261005/oripa-storefront-testkit-2.0.0-alpha.43.tgz':
+    resolution: {integrity: sha512-1B+K/qmRkwGvp8BPdlqgJltPFd6806GdKLdrGzLaQdQBZYcReF6/ZwF/ZqeNk6OY4PpBJOEc/hSz7yUV7TWuLA==, tarball: file:vendor/oripa/CONTRACT-20261005/oripa-storefront-testkit-2.0.0-alpha.43.tgz}
+    version: 2.0.0-alpha.43
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
   '@oxc-project/types@0.143.0':
@@ -3123,12 +3123,12 @@ snapshots:
       ajv: 8.20.0
       semver: 7.8.5
 
-  '@oripa/storefront-client@file:vendor/oripa/LOGIN-GACHA-20261002/oripa-storefront-client-2.0.0-alpha.42.tgz': {}
+  '@oripa/storefront-client@file:vendor/oripa/CONTRACT-20261005/oripa-storefront-client-2.0.0-alpha.43.tgz': {}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/LOGIN-GACHA-20261002/oripa-storefront-testkit-2.0.0-alpha.42.tgz':
+  '@oripa/storefront-testkit@file:vendor/oripa/CONTRACT-20261005/oripa-storefront-testkit-2.0.0-alpha.43.tgz':
     dependencies:
       '@oripa/site-schema': file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
-      '@oripa/storefront-client': file:vendor/oripa/LOGIN-GACHA-20261002/oripa-storefront-client-2.0.0-alpha.42.tgz
+      '@oripa/storefront-client': file:vendor/oripa/CONTRACT-20261005/oripa-storefront-client-2.0.0-alpha.43.tgz
 
   '@oxc-project/types@0.143.0': {}
 

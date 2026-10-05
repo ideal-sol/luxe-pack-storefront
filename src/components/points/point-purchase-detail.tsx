@@ -38,6 +38,7 @@ import {
 } from "@/lib/platform";
 import { pointPurchaseDetailRoute } from "@/lib/routes/navigation";
 import { usePointClient } from "./point-client-provider";
+import { useFirstBuyCountdown } from "./use-first-buy-offer";
 import {
   pointProductIneligibleReasonLabels,
   pointProductNumber,
@@ -544,6 +545,9 @@ export function PointPurchaseDetail({
       : session.status === "error" ? { status: "session-error" }
         : !sessionKey || (state.status === "ready" || state.status === "error") && (state.sessionKey !== sessionKey || state.productId !== productId)
           ? { status: "loading" } : state, [client, productId, session.status, sessionKey, state]);
+
+  const refreshOffer = useCallback(() => setRequestKey(value => value + 1), []);
+  useFirstBuyCountdown(displayState.status === "ready" ? displayState.collection : null, refreshOffer);
 
   if (displayState.status === "loading") return <CatalogLoading label={registrationId ? "処理中…" : "コイン購入詳細を読み込み中"} />;
   if (displayState.status === "configuration-unavailable") return <CatalogMessage description="この環境ではコイン商品への接続が設定されていません。" eyebrow="CONFIGURATION" title="コイン購入詳細を表示できません" />;

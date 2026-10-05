@@ -17,7 +17,7 @@ import { PaymentClientProvider } from "@/components/payment/payment-client-provi
 import { saveCardRegistrationResume } from "@/components/payment/card-registration-resume";
 import { PointClientProvider } from "@/components/points/point-client-provider";
 import { PointPurchaseDetail } from "@/components/points/point-purchase-detail";
-import type { AuthClientAdapter, Payment, PaymentCard, PaymentCardCollection, PaymentClientAdapter, PointClientAdapter } from "@/lib/platform";
+import type { AuthClientAdapter, Payment, PaymentCard, PaymentCardCollection, PaymentClientAdapter, PointClientAdapter, PointProductCollection } from "@/lib/platform";
 
 const fincode = vi.hoisted(() => ({
   cleanup: vi.fn(),
@@ -151,17 +151,18 @@ function renderPurchase(
   client = paymentClient(),
   registrationId: string | null = null,
   strict = false,
+  products: PointProductCollection = { ...PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible, data: [product] },
 ) {
   const auth = { getCurrentSession: vi.fn().mockResolvedValue({ data: PUBLIC_AUTH_FIXTURE.authenticated_session, metadata }) } as unknown as AuthClientAdapter;
   const points = {
     getWallet: vi.fn().mockResolvedValue({ data: PUBLIC_POINT_BALANCE_FIXTURES.positive, metadata }),
-    listPointProducts: vi.fn().mockResolvedValue({ data: { data: [product] }, metadata }),
+    listPointProducts: vi.fn().mockResolvedValue({ data: products, metadata }),
   } as unknown as PointClientAdapter;
   const view = () => (
     <SessionProvider client={auth}>
       <PointClientProvider client={points}>
         <PaymentClientProvider client={client}>
-          <PointPurchaseDetail productId={product.id} registrationId={registrationId} />
+          <PointPurchaseDetail productId={products.data[0]!.id} registrationId={registrationId} />
         </PaymentClientProvider>
       </PointClientProvider>
     </SessionProvider>
@@ -196,6 +197,22 @@ describe("SITE-040 / SITE-048 / SITE-049 Payment purchase UI", () => {
   });
 
   afterEach(() => vi.unstubAllGlobals());
+
+  it.each(["active", "expired"] as const)("blocks consumed first-user purchase with a configured Payment client and %s offer", async state => {
+    const fixture = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_after_first_purchase;
+    const client = paymentClient();
+    renderPurchase(client, null, false, {
+      data: [fixture.data[1]],
+      first_user_offer: { ...fixture.first_user_offer, state },
+    });
+    expect(await screen.findByText("この初回ユーザー商品は現在購入できません。")).toBeInTheDocument();
+    const button = screen.getByRole("button", { name: "購入する" });
+    expect(button).toBeDisabled();
+    fireEvent.click(button);
+    expect(client.startPayment).not.toHaveBeenCalled();
+    expect(client.startCardRegistration).not.toHaveBeenCalled();
+    expect(screen.getByRole("region", { name: "購入内容" })).toHaveTextContent("￥1,000");
+  });
 
   async function openSaveConfirmation(client = paymentClient()) {
     renderPurchase(client);

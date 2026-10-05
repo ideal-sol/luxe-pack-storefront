@@ -269,3 +269,103 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   remain for Human review; no main synchronization or cleanup of other worktrees.
   Final SHA/tree, remote equality, check/build counts and elapsed times belong
   to the PR evidence so the reviewed source remains immutable.
+
+## SF24H-20261005 — alpha.43 adoption / integration (2026-10-05, local HOLD)
+
+- Risk R3; Lane Strict Change; Application Runtime Activation deferred.
+  Human authorized REL-043 merge and a new Storefront integration PR, but no
+  Storefront merge or runtime activation. No integration Issue/PR exists yet.
+- Platform PR #541 reviewed head `490ae35e74b8c28c43eb6ba50261eb766941e820`
+  passed live authority, all Required Checks and refreshed fixed-head review
+  (`ideal-sol/oripa#541`, comment 5996647709). Canonical App squash merge:
+  `f02369d6050117f993e027e44c0675bb8af54dec`. Protected main/origin main exact;
+  reviewed tree equals merged tree, content diff zero. Protected-main ledger:
+  latest_immutable `2.0.0-alpha.43`, candidate null, Artifact `11349442812`.
+  Publication lock released after merged-ledger/readback verification.
+- Storefront starting/current protected main:
+  `eead719007d3483ceb4e270a431f6c591430c2fc`. Presentation Authority is OPEN
+  PR #139 exact head `aa3b62b637933fe1b29563e1c8926251c3734486`, original base
+  `aec90bb24e02696d40afd3d19f6459b698ff4d59`. Main's six Readiness paths and
+  PR #139's fourteen paths have no path overlap. New isolated branch
+  `feat/SF24H-20261005-integration`; prior occupied integration worktree and
+  unrelated dirty primary checkouts are preserved, not reset or overwritten.
+- Exact Artifact ID download and outer SHA256, manifest, SHA256SUMS, Client,
+  Testkit, OpenAPI, source/version checks passed. Source remains PR #540 squash
+  `0ce41ab473fd5a4fb44773041ae097ffb40b14ce`, not reconciliation source.
+  Run `37319224331`, attempt 1; all exact hashes and immutable payloads are in
+  `vendor/oripa/CONTRACT-20261005/PROVENANCE.md`. Client/Testkit exact alpha.43
+  pins, Public Contract alpha.39, Site Schema alpha.23 unchanged. No rebuilding
+  or republication, no unrelated dependency update; older vendors unchanged.
+- Normal Home/Header/points/detail use canonical Point Client collection.
+  Backend `first_user_offer` owns active/expired/unauthenticated/unavailable;
+  product eligibility/CTA remain authoritative. Display timer starts with
+  expires_at-as_of and subtracts monotonic elapsed time, then refetches at zero.
+  It does not infer eligibility from wall clock, registration time or storage.
+- Normal display price=grant.total_points; saving=grant.bonus_points; discount
+  uses integer-floor ratio. Hero/Popup select cheapest eligible product with
+  stable Backend ties; maximum OFF is separate across displayed first-user
+  products. Consumed/expired detail retains actual price with disabled purchase.
+  Copy specifies first email verification and each product once, without
+  normal-price-after-expiry conversion. Fixed samples stay Preview-only.
+  PR #139 CSS and original layout tests are byte-identical. Existing Auth,
+  Session, Payment components and Platform adapter source are unchanged.
+- Validation executed: frozen install; artifact, policy, all nine boundary
+  checks, lint, typecheck, secret scan and production build PASS. Focused final
+  run: nine files / 148 tests PASS, including first-buy/layout, Point read/detail,
+  purchase, Card/3DS/Save Card and retained Point/Payment/Draw/Prize contracts.
+  Initial new Popup assertion used a wrong currency formatting expectation;
+  corrected to the existing DOM's exact normal/actual yen text. A concurrent
+  focused run timed out awaiting a Point read; unchanged serialized rerun PASS.
+- Full suite was executed: 57 files / 1120 tests, 1114 PASS / 6 FAIL. Four were
+  stale alpha.42 OpenAPI digest assertions; synced to verified alpha.43 digest
+  and passed in the final focused run. Remaining two Readiness grounding tests
+  reproduce failure because `source-inventory.v1.json` lacks the twelve new
+  src paths. Inventory/tests/classifier/workflow are NOT modified. Requested
+  Human approval for only the twelve path additions to this one fixture;
+  HOLD on scope expansion, commit, push and PR. No full-suite PASS is claimed.
+- Fresh pnpm 11.25.0 security policy audit PASS: production findings zero at all
+  levels, unapproved High/Critical zero, one existing exact dev-only braces
+  exception, five visible Moderate findings. No exception/policy changes.
+- Diff/whitespace, exact Artifact bytes and source/path checks PASS. No migration
+  created/applied (0/0). Browser/E2E/Preview Runtime acceptance NOT RUN. GitHub
+  integration Required Checks NOT STARTED because pre-commit gate is blocked.
+  Source rollback would be a reviewed revert PR; no runtime rollback applies.
+- PR #139 NOT MUTATED / NOT MERGED; integration commit/push/PR/merge NOT PERFORMED;
+  OLD Test NOT DEPLOYED; runtime/Nginx/Production/NEW NOT TOUCHED. No credentials,
+  private server paths or user data are included in the adoption payload.
+
+### Human-approved Source Inventory synchronization / delivery resumed
+
+- Human approved only `scripts/readiness/source-inventory.v1.json` plus this
+  worklog. Before editing, `git ls-files --cached -- src` identified 224 actual
+  tracked files versus 212 inventory entries: exactly 12 missing, 0 extra.
+  Integration was not yet committed: starting HEAD still had 212 src files;
+  the twelve additions were already staged/tracked integration source, not
+  fictional paths inferred from a previous report. After commit the same
+  inventory must equal the exact committed HEAD tree.
+- Mechanically generated lexicographic additions, no deletion or other entry
+  mutation: design first-buy detail route; first-buy connected, home, layout
+  bar, layout preview and offer components; countdown/offer hook; layout and
+  offer presentation helpers; first-buy CSS; contract and layout tests.
+  Missing=0, extra=0, all 224 entries exactly match the tracked src tree.
+- SHA256 comparison against the pre-sync snapshot proves every tracked file
+  except Inventory/Worklog byte-identical. No first-user implementation, pin,
+  classifier, impact map, readiness tests, workflow, Fast Lane condition,
+  Machine Policy or Gate logic change. Previous focused 148-test PASS remains
+  tied to the identical source; those tests also passed in the new full run.
+- Re-executed `pnpm validate`: PASS, including artifact/policy, all nine
+  boundaries, lint, typecheck, full 57-file / 1120-test suite and production
+  build. Dedicated Readiness run: 258 PASS, including both previously failing
+  source-grounding tests. Existing jsdom navigation-not-implemented diagnostics
+  are nonfailing; no Browser/E2E or runtime acceptance is claimed.
+- Fresh secret scan and pnpm 11.25.0 security audit PASS; zero production
+  findings, zero unapproved High/Critical, unchanged single exact approved
+  dev-tool exception and five visible Moderate findings. Diff/whitespace and
+  byte/scope checks PASS. No new application or validation failure.
+- Delivery resumes as one ordinary integration commit and one new PR under
+  SF24H-20261005, Risk R3 / Strict Change / Activation deferred. A tracking
+  Issue records cross-repository Human source-review follow-up. Final head,
+  remote equality, PR/Issue links, exact paths, fixed-head review and live
+  Required Check results are recorded in the PR without further source edits.
+- Stop remains OPEN PR after checks; no merge/auto-merge, PR #139 mutation,
+  deployment, Runtime/Nginx/Production/NEW operation or migration execution.

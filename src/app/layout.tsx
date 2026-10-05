@@ -13,6 +13,7 @@ import { brandIcons, usesBrandIcons } from "@/lib/brand-icons";
 import "@/styles/font-noto-sans-jp.css";
 import "@/styles/globals.css";
 import "@/styles/theme-oripoke.css";
+import "@/styles/first-buy-offer.css";
 
 const siteName = process.env.NEXT_PUBLIC_APP_NAME?.trim() || "OripaZ";
 
@@ -40,7 +41,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <PointClientProvider>
               <PublicClientProvider>
                 <MotionEffects />
-                <SiteHeader />
+                <SiteHeader firstBuyLayoutEnabled={process.env.STOREFRONT_FIRST_BUY_LAYOUT_PREVIEW === "1"} />
                 <main className="site-main">{children}</main>
                 <SiteFooter />
                 <MobileBottomNavigation />
