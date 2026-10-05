@@ -198,7 +198,7 @@ export function PointProductRegion({ products }: { readonly products: readonly P
 export function PointPurchasePage() {
   const { state: session } = useSession();
   const { client, wallet } = usePointClient();
-  const [category, setCategory] = useState<PointProductAudienceCode>("all_users");
+  const [selection, setSelection] = useState<{ readonly sessionKey: string; readonly category: PointProductAudienceCode } | null>(null);
   const [requestKey, setRequestKey] = useState(0);
   const [state, setState] = useState<ProductState>(client ? { status: "loading" } : { status: "configuration-unavailable" });
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -212,7 +212,14 @@ export function PointPurchasePage() {
     if (!client || !sessionKey) return;
     let active = true;
     void client.listPointProducts()
-      .then(({ data }) => { if (active) setState({ collection: data, sessionKey, status: "ready" }); })
+      .then(({ data }) => {
+        if (!active) return;
+        setSelection(previous => previous?.sessionKey === sessionKey ? previous : {
+          sessionKey,
+          category: data.first_user_offer?.state === "active" ? "first_purchase_users" : "all_users",
+        });
+        setState({ collection: data, sessionKey, status: "ready" });
+      })
       .catch((error: unknown) => { if (active) setState({ problem: presentPlatformProblem(error), sessionKey, status: "error" }); });
     return () => { active = false; };
   }, [client, requestKey, sessionKey]);
@@ -227,6 +234,12 @@ export function PointPurchasePage() {
 
   const refreshOffer = useCallback(() => setRequestKey(value => value + 1), []);
   const offer = useFirstBuyCountdown(displayState.status === "ready" ? displayState.collection : null, refreshOffer);
+  const category = selection?.sessionKey === sessionKey ? selection.category : "all_users";
+  const activeOffer = displayState.status === "ready" && displayState.collection.first_user_offer?.state === "active";
+
+  function setCategory(category: PointProductAudienceCode) {
+    if (sessionKey) setSelection({ sessionKey, category });
+  }
 
   const products = useMemo(() => displayState.status === "ready"
     ? displayState.collection.data.filter((product) => product.audience.code === category)
@@ -270,7 +283,7 @@ export function PointPurchasePage() {
               tabIndex={category === item.id ? 0 : -1}
               type="button"
             >
-              {item.label}
+              {item.id === "first_purchase_users" && activeOffer ? "初回ユーザー（24時間限定）" : item.label}
             </button>
           ))}
         </div>

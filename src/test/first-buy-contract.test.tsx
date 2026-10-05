@@ -1,10 +1,12 @@
-import { act, cleanup, render, renderHook, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, renderHook, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PUBLIC_POINT_PRODUCT_FIXTURES } from "@oripa/storefront-testkit/fixtures";
 import type { PointProduct, PointProductCollection } from "@/lib/platform";
 import { firstBuyRemainingMilliseconds, presentFirstBuyDeal, presentFirstBuyOffer } from "@/lib/presentation/first-buy-offer";
 import { FirstBuyBar, FirstBuyHero } from "@/components/points/first-buy-offer";
 import { HomeFirstBuy } from "@/components/points/first-buy-home";
+import { ConnectedFirstBuyHome } from "@/components/points/first-buy-connected";
+import { PointPurchasePage } from "@/components/points/point-purchase-page";
 import { useFirstBuyCountdown, useFirstBuyOffer } from "@/components/points/use-first-buy-offer";
 
 const connected = vi.hoisted(() => ({
@@ -12,10 +14,13 @@ const connected = vi.hoisted(() => ({
   state: { status: "authenticated", session: { user: { id: "synthetic-user" } } },
 }));
 vi.mock("@/components/auth/session-provider", () => ({ useSession: () => ({ state: connected.state }) }));
-vi.mock("@/components/points/point-client-provider", () => ({ usePointClient: () => ({ client: connected.client }) }));
+vi.mock("@/components/points/point-client-provider", () => ({ usePointClient: () => ({ client: connected.client, wallet: { status: "loading" } }) }));
 
 vi.mock("next/link", () => ({ default: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <a href={href} {...props}>{children}</a> }));
-afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); connected.client.listPointProducts.mockReset(); });
+afterEach(() => {
+  cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); connected.client.listPointProducts.mockReset();
+  connected.state = { status: "authenticated", session: { user: { id: "synthetic-user" } } };
+});
 
 function product(id: string, price: number, total: number): PointProduct {
   return {
@@ -33,6 +38,73 @@ function collection(): PointProductCollection {
 }
 
 describe("first-user canonical product presentation", () => {
+  it("initially selects the limited first-user tab, products and countdown strip for active Backend state", async () => {
+    connected.client.listPointProducts.mockResolvedValue({ data: collection() });
+    render(<PointPurchasePage />);
+    expect(await screen.findByRole("tab", { name: "初回ユーザー（24時間限定）" })).toHaveAttribute("aria-selected", "true");
+    const panel = screen.getByRole("tabpanel");
+    expect(within(panel).getAllByRole("article")).toHaveLength(3);
+    expect(panel.querySelector(".fb-strip")).toBeInTheDocument();
+    expect(within(panel).getByRole("timer")).toHaveAccessibleName("この値段で買えるのは残り 00時間00分02秒まで");
+  });
+
+  it.each(["active", "expired"] as const)("retains a manual all-users selection after countdown refetch returns %s", async state => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "performance"] });
+    const data = collection();
+    connected.client.listPointProducts.mockResolvedValueOnce({ data }).mockResolvedValueOnce({
+      data: { ...data, first_user_offer: { ...data.first_user_offer, state, as_of: "2026-10-06T00:00:00Z" } },
+    });
+    render(<PointPurchasePage />);
+    await act(async () => {});
+    expect(screen.getByRole("tab", { name: "初回ユーザー（24時間限定）" })).toHaveAttribute("aria-selected", "true");
+    fireEvent.click(screen.getByRole("tab", { name: "すべてのユーザー" }));
+    await act(async () => vi.advanceTimersByTime(2000));
+    expect(connected.client.listPointProducts).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("tab", { name: "すべてのユーザー" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: state === "active" ? "初回ユーザー（24時間限定）" : "初回ユーザー" })).toHaveAttribute("aria-selected", "false");
+    expect(document.querySelector(".fb-strip")).not.toBeInTheDocument();
+  });
+
+  it.each(["expired", "unavailable", "unauthenticated"] as const)("initially selects all users with the ordinary label for %s", async state => {
+    if (state === "unauthenticated") connected.state.status = "unauthenticated";
+    const data = collection();
+    data.first_user_offer.state = state;
+    connected.client.listPointProducts.mockResolvedValue({ data });
+    render(<PointPurchasePage />);
+    await act(async () => {});
+    expect(connected.client.listPointProducts).toHaveBeenCalledOnce();
+    expect(screen.getByRole("tab", { name: "すべてのユーザー" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "初回ユーザー" })).toHaveAttribute("aria-selected", "false");
+    expect(document.querySelector(".fb-strip")).not.toBeInTheDocument();
+  });
+
+  it("initializes again for a different Session identity", async () => {
+    connected.client.listPointProducts.mockResolvedValue({ data: collection() });
+    const view = render(<PointPurchasePage />);
+    await screen.findByRole("tab", { name: "初回ユーザー（24時間限定）" });
+    fireEvent.click(screen.getByRole("tab", { name: "すべてのユーザー" }));
+    connected.state = { status: "authenticated", session: { user: { id: "another-synthetic-user" } } };
+    view.rerender(<PointPurchasePage />);
+    expect(await screen.findByRole("tab", { name: "初回ユーザー（24時間限定）" })).toHaveAttribute("aria-selected", "true");
+    expect(connected.client.listPointProducts).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([false, true])("automatically opens the normal TOP popup on every visit with partial consumption=%s", async consumed => {
+    const data = collection();
+    if (consumed) data.data[0] = { ...data.data[0]!, eligible: false, cta: { state: "disabled", action: "purchase", reason: "first_purchase_required" } };
+    connected.client.listPointProducts.mockResolvedValue({ data });
+    const view = render(<ConnectedFirstBuyHome />);
+    const popup = await screen.findByRole("dialog");
+    const route = consumed ? "/points/purchase/equal-price" : "/points/purchase/cheapest";
+    expect(within(popup).getByRole("link")).toHaveAttribute("href", route);
+    expect(screen.getAllByRole("link").filter(link => link.getAttribute("href") === route)).toHaveLength(2);
+    fireEvent.click(within(popup).getByRole("button", { name: "閉じる" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    view.unmount();
+    render(<ConnectedFirstBuyHome />);
+    expect(within(await screen.findByRole("dialog")).getByRole("link")).toHaveAttribute("href", route);
+  });
+
   it("derives regular price, saving and integer-floor rate", () => {
     expect(presentFirstBuyDeal(product("fraction", 100, 333))).toMatchObject({
       referencePrice: 333, saving: 233, ratePercent: 69,

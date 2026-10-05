@@ -51,10 +51,16 @@ function renderPoints(client: PointClientAdapter, session: AuthSession = PUBLIC_
   );
 }
 
+async function selectAllUsers() {
+  await screen.findByRole("tab", { name: "初回ユーザー（24時間限定）" });
+  fireEvent.click(screen.getByRole("tab", { name: "すべてのユーザー" }));
+}
+
 describe("SITE-032 Limited Bonus Coin presentation", () => {
   it("preserves the existing Product presentation when limited_bonus is omitted", async () => {
     const { limited_bonus: omittedLimitedBonus, ...product } = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0];
     renderPoints(pointClient({ products: { first_user_offer: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.first_user_offer, data: [product] } }));
+    await selectAllUsers();
 
     expect(omittedLimitedBonus).toBeDefined();
     expect(await screen.findByRole("heading", { name: "スタンダード1000コイン" })).toBeInTheDocument();
@@ -80,6 +86,7 @@ describe("SITE-032 Limited Bonus Coin presentation", () => {
     const canonical = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0].limited_bonus;
     const original = structuredClone(canonical);
     renderPoints(pointClient());
+    await selectAllUsers();
 
     const presentation = await screen.findByRole("region", { name: canonical.presentation.label });
     expect(presentation).toHaveAttribute("data-limited-bonus-state", canonical.state);
@@ -93,7 +100,7 @@ describe("SITE-032 Limited Bonus Coin presentation", () => {
   it("renders the upcoming Backend state without deriving it from the current time", async () => {
     const canonical = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[1].limited_bonus;
     renderPoints(pointClient());
-    fireEvent.click(await screen.findByRole("tab", { name: "初回ユーザー" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "初回ユーザー（24時間限定）" }));
 
     const presentation = await screen.findByRole("region", { name: canonical.presentation.label });
     expect(presentation).toHaveAttribute("data-limited-bonus-state", "upcoming");
@@ -116,6 +123,7 @@ describe("SITE-032 Limited Bonus Coin presentation", () => {
   it("keeps grant.total_points and Limited Bonus separate without adding a normal Bonus row", async () => {
     const product = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0];
     renderPoints(pointClient());
+    await selectAllUsers();
 
     const card = await screen.findByRole("article");
     expect(within(card).getByText(new Intl.NumberFormat("ja-JP").format(product.grant.total_points))).toBeInTheDocument();
@@ -131,6 +139,7 @@ describe("SITE-030 Coin Product read regression", () => {
     const client = pointClient();
     const originalTitle = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0].title;
     const view = renderPoints(client);
+    await selectAllUsers();
 
     await waitFor(() => expect(screen.getByLabelText("現在のコイン残高")).toHaveTextContent("1,000"));
     expect(await screen.findByRole("heading", { name: "スタンダード1000コイン" })).toBeInTheDocument();
@@ -153,6 +162,7 @@ describe("SITE-030 Coin Product read regression", () => {
     const canonical = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0];
     const productId = "public/product?review=true";
     renderPoints(pointClient({ products: { first_user_offer: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.first_user_offer, data: [{ ...canonical, id: productId }] } }));
+    await selectAllUsers();
 
     expect(await screen.findByRole("link", { name: "詳細を見る" })).toHaveAttribute(
       "href",
@@ -178,8 +188,7 @@ describe("SITE-030 Coin Product read regression", () => {
       ],
     };
     renderPoints(pointClient({ products }));
-    await screen.findByRole("heading", { name: "スタンダード1000コイン" });
-    fireEvent.click(screen.getByRole("tab", { name: "初回ユーザー" }));
+    expect(await screen.findByRole("tab", { name: "初回ユーザー（24時間限定）" })).toHaveAttribute("aria-selected", "true");
     const headings = screen.getAllByRole("article").map((card) => within(card).getByRole("heading", { level: 3 }).textContent);
     expect(headings).toEqual(["先に返された初回商品", "初回限定1000コイン"]);
     expect(document.body).not.toHaveTextContent(/購入対象です。|購入可能|購入手続きは準備中/);

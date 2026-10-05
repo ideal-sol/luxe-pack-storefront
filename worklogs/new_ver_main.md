@@ -369,3 +369,42 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   Required Check results are recorded in the PR without further source edits.
 - Stop remains OPEN PR after checks; no merge/auto-merge, PR #139 mutation,
   deployment, Runtime/Nginx/Production/NEW operation or migration execution.
+
+### Human final review — initial points tab only (2026-10-05)
+
+- Rechecked OPEN PR #141 exact reviewed head
+  `64bff7d8655f6c79bc05621806668520136369b4`, protected main
+  `eead719007d3483ceb4e270a431f6c591430c2fc`, auto-merge disabled and clean
+  integration worktree. Same Task/Issue #140, Risk R3 / Strict Change /
+  Activation deferred; no new branch or PR.
+- Only Application Source change: `point-purchase-page.tsx`. The first ready
+  Backend response initializes the Session-keyed tab selection: active selects
+  first_purchase_users, all other states select all_users. The first-user label
+  includes the 24-hour suffix only while the Backend ready state is active.
+  Subsequent reads preserve the user's selection; a different Session identity
+  can initialize anew. No additional qualification or countdown authority.
+- Normal TOP auto-Popup is deliberately unchanged: active offers can open on
+  each visit, including partial consumption with an eligible remaining product.
+  No local-storage/cookie display history. Existing tests now exercise the real
+  ConnectedFirstBuyHome automatic Popup, dismissal/revisit and partial-use lead.
+- Changed tests only: existing first-buy contract and Point purchase UI suites.
+  Added coverage for active initial products/strip, manual all-users selection
+  surviving active/expired countdown refetch, expired/unavailable/anonymous
+  defaults, changed Session identity, and full/partial-use automatic TOP Popup.
+  Existing ordinary-product assertions now explicitly select their target tab.
+- Focused: 6 files / 130 tests PASS. Full: 57 files / 1129 tests PASS, including
+  all Readiness regressions. pnpm validate PASS: Artifact/policy, all nine
+  boundaries, lint, typecheck, tests and production build. Secret/diff checks
+  PASS; fresh pnpm11.25.0 audit PASS with production0, unapproved High/Critical0,
+  unchanged exact dev-tool exception1 and visible Moderate5. A new strip test
+  initially expected the Hero's shorter accessible name; corrected to the
+  existing strip's exact label, with presentation and assertions retained.
+- Byte comparison against the reviewed head confirmed all 641 non-change
+  tracked files unchanged before this worklog append. Final delta is exactly
+  one Application Source, two existing tests and this mandatory Worklog.
+  Popup/Artifact/Contract/pins/pricing/countdown/Payment/3DS/Save Card/Readiness
+  Inventory/classifier/workflow bytes are unchanged. No new src paths.
+- Final normal commit, exact remote head and rerun Required Check evidence are
+  recorded in PR #141. Stop OPEN after ALL PASS; no merge/auto-merge, PR #139
+  mutation, OLD Test deployment, Runtime/Nginx/Production/NEW or migration
+  execution. Browser/E2E/Runtime acceptance NOT RUN under this source-only phase.
