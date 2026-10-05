@@ -77,10 +77,10 @@ jobs:
           corepack prepare pnpm@${PNPM_AUDIT_VERSION} --activate
           audit_root="$(mktemp -d)"
           trap 'rm -rf -- "$audit_root"' EXIT
-          cp pnpm-lock.yaml "$audit_root/pnpm-lock.yaml"
           cd "$audit_root"
           test "$(pnpm --version)" = "$PNPM_AUDIT_VERSION"
-          pnpm audit --audit-level high
+          node "$GITHUB_WORKSPACE/scripts/ci/security-audit-policy.mjs" \
+            --collect "$GITHUB_WORKSPACE" "$audit_root"
 
   integration-gate:
     name: integration-gate
