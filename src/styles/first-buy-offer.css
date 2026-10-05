@@ -1,0 +1,702 @@
+/*
+ * 新規登録から24時間限定のコイン割引（デザイン 2026-10-02「オリポケ_24h割引デザイン」の 24h割引.css）。
+ * 下の「デザイン納品物」の区間は納品物のまま（改変なし）。既存クラスの上書きは無く、追加分はすべて .fb- 接頭辞。
+ * 既存CSSのいちばん後ろに読み込む。実装で足した分は、ファイル末尾の「実装側の追加」にまとめる。
+ */
+
+/* ===== デザイン納品物（ここから） ===== */
+/* ============================================================================
+   オリポケ｜新規登録から24時間限定 コイン割引 — 追加スタイル
+   2026-10-02
+   ----------------------------------------------------------------------------
+   ・既存のCSS変数（--teal / --yellow / --gold / --ink / --danger / --line …）
+     をそのまま使っています。ブランド色を変えた場合も自動で追従します。
+   ・既存クラスは一切上書きしていません。追加分はすべて .fb- 接頭辞です。
+   ・このファイルを既存CSSのいちばん後ろに読み込むだけで動きます。
+   ============================================================================ */
+
+:root {
+  --fb-red: #e2342b;
+  --fb-red-d: #ad201a;
+  --fb-orange: #ff8a2b;
+  --fb-digit-bg: #13302f;
+}
+
+/* 数字は等幅にする（1秒ごとに幅が動かないように） */
+.fb-bar__clock b,
+.fb-clock__num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ============================================================================
+   1. 固定帯（site-header の中・いちばん上に入れる）
+   ============================================================================ */
+.fb-bar {
+  background: linear-gradient(90deg, var(--fb-orange) 0%, var(--fb-red) 55%, var(--fb-red-d) 100%);
+  color: #fff;
+  box-shadow: inset 0 -1px 0 #0003;
+}
+
+.fb-bar__inner {
+  width: 100%;
+  max-width: 1180px;
+  margin-inline: auto;
+  padding: 7px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.fb-bar__tag {
+  background: var(--yellow);
+  color: #46210a;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: .76rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.fb-bar__lead {
+  font-size: .92rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fb-bar__lead b {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--yellow);
+}
+
+.fb-bar__clock {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.fb-bar__clock > span {
+  font-size: .76rem;
+  font-weight: 700;
+  opacity: .9;
+  margin-right: 3px;
+}
+
+.fb-bar__clock b {
+  display: inline-block;
+  min-width: 32px;
+  padding: 3px 5px;
+  border-radius: 7px;
+  background: var(--fb-digit-bg);
+  color: var(--yellow);
+  font-size: 1.1rem;
+  font-weight: 900;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.fb-bar__clock i {
+  font-style: normal;
+  font-weight: 900;
+  opacity: .85;
+}
+
+.fb-bar__cta {
+  background: #fff;
+  color: var(--fb-red);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: .86rem;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 2px 0 #0000001f;
+}
+
+/* 残り1時間を切ったら点滅させる */
+.fb-bar.is-urgent .fb-bar__clock b {
+  animation: fb-pulse 1s steps(1, end) infinite;
+}
+
+@keyframes fb-pulse {
+  0%, 60% { background: var(--fb-digit-bg); color: var(--yellow); }
+  61%, 100% { background: #fff; color: var(--fb-red); }
+}
+
+/* 狭い画面：ボタンと「限定」札を落として、残り時間だけ残す */
+@media (max-width: 720px) {
+  .fb-bar__inner { padding: 6px 14px; gap: 8px; }
+  .fb-bar__tag { display: none; }
+  .fb-bar__lead { font-size: .8rem; }
+  .fb-bar__lead b { font-size: .95rem; }
+  .fb-bar__cta { display: none; }
+  .fb-bar__clock b { min-width: 28px; font-size: .95rem; }
+}
+
+/* ============================================================================
+   2. 大枠（トップ＝ヒーロー直下／コイン購入＝残高カードの下）
+   ----------------------------------------------------------------------------
+   横長。左に言いたいこと、右に残り時間とボタン。縦に積まないので背は低い。
+   ============================================================================ */
+.fb-hero {
+  padding: 22px 0 24px;
+  background:
+    radial-gradient(900px 260px at 50% -40%, #ffe9a877 0%, #ffe9a800 70%),
+    linear-gradient(180deg, var(--paper-deep, #e6f7f5), var(--paper, #f2fbfa));
+}
+
+.fb-hero--inpage {
+  padding: 0;
+  background: none;
+}
+
+/* ページの中に置くときは、上の残高カードと左右をそろえる */
+.fb-hero--inpage .fb-card {
+  max-width: none;
+}
+
+.fb-card {
+  position: relative;
+  max-width: 1040px;
+  margin-inline: auto;
+  background: #fff;
+  border: 3px solid var(--fb-red);
+  border-radius: 18px;
+  box-shadow: 0 12px 28px #e2342b24;
+  overflow: hidden;
+  text-align: center;
+}
+
+.fb-card__ribbon {
+  background: linear-gradient(90deg, var(--fb-orange), var(--fb-red));
+  color: #fff;
+  font-size: .86rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  padding: 7px 16px;
+}
+
+.fb-card__ribbon span {
+  background: var(--yellow);
+  color: #46210a;
+  border-radius: 999px;
+  padding: 2px 9px;
+  margin-right: 8px;
+  font-size: .74rem;
+}
+
+/* --- 本体＝左右の2段組み ---
+   列幅を決め打ちせず、左右とも中身の幅で置いて、2つまとめて中央に寄せる。
+   仕切り線からの空きは左右とも30pxでそろえる。 */
+.fb-card__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  padding: 16px 24px 18px;
+}
+
+.fb-card__msg {
+  text-align: left;
+}
+
+/* 右側は幅を固定し、時計とボタンの左右の端をそろえる */
+.fb-card__act {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  width: 351px;
+  padding-left: 30px;
+  border-left: 1px dashed #f1bdb8;
+}
+
+.fb-card__title {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.28rem;
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+.fb-off-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  margin: 2px 0 4px;
+}
+
+.fb-off-cap {
+  background: var(--ink);
+  color: #fff;
+  border-radius: 9px;
+  padding: 5px 11px;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+
+.fb-off {
+  display: block;
+  font-size: 3.8rem;
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -.02em;
+  background: linear-gradient(180deg, #ffd76a 0%, #f5a623 48%, #e2342b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 2px #fff;
+  paint-order: stroke fill;
+  filter: drop-shadow(0 3px 0 #00000014);
+}
+
+.fb-off small {
+  font-size: .46em;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.fb-card__sub {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.fb-card__sub s {
+  color: var(--muted);
+  font-weight: 700;
+  text-decoration-thickness: 2px;
+}
+
+.fb-card__sub b {
+  color: var(--fb-red);
+  font-size: 1.28em;
+  font-weight: 900;
+}
+
+/* --- 時計（時・分・秒の3箱） --- */
+.fb-clock {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 9px;
+  margin: 0;
+}
+
+.fb-clock__label {
+  align-self: center;
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 800;
+  margin-right: 6px;
+}
+
+.fb-clock__unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.fb-clock__num {
+  min-width: 86px;
+  padding: 5px 9px 7px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #1d4342, var(--fb-digit-bg));
+  color: var(--yellow);
+  font-size: 2.3rem;
+  font-weight: 900;
+  line-height: 1.1;
+  box-shadow: inset 0 -3px 0 #0000002e, 0 4px 10px #0000001f;
+}
+
+.fb-clock__cap {
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.fb-card.is-urgent .fb-clock__num {
+  background: linear-gradient(180deg, #ef5a4f, var(--fb-red));
+  color: #fff;
+}
+
+/* --- ボタンと注記 --- */
+.fb-cta {
+  display: block;
+  width: 100%;
+  padding: 14px 24px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff9b45, var(--fb-red));
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 900;
+  box-shadow: 0 4px 0 var(--fb-red-d), 0 8px 18px #e2342b3d;
+}
+
+/* 注記は下に1行で敷く */
+.fb-note {
+  margin: 0;
+  padding: 7px 16px 9px;
+  border-top: 1px solid var(--line);
+  background: var(--paper, #f2fbfa);
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 700;
+}
+
+/* --- 未ログイン時（時計は出さず、新規登録へ送る） --- */
+.fb-card--guest {
+  border-color: var(--teal);
+  box-shadow: 0 12px 28px #00beb124;
+}
+
+.fb-card--guest .fb-card__ribbon {
+  background: linear-gradient(90deg, var(--teal-lt, #12d9c7), var(--teal, #00beb1));
+}
+
+.fb-card--guest .fb-card__act {
+  border-left-color: #a9e4df;
+}
+
+.fb-card--guest .fb-cta {
+  background: linear-gradient(180deg, #12d9c7, #00beb1);
+  box-shadow: 0 4px 0 #009085, 0 8px 18px #00beb152;
+}
+
+/* 横に並べられない幅になったら、1段に落とす */
+@media (max-width: 900px) {
+  .fb-card__body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 14px 16px 16px;
+  }
+
+  .fb-card__msg { text-align: center; }
+  .fb-off-row { justify-content: center; }
+
+  .fb-card__act {
+    width: 100%;
+    max-width: 360px;
+    margin-inline: auto;
+    padding-left: 0;
+    padding-top: 13px;
+    border-left: 0;
+    border-top: 1px dashed #f1bdb8;
+  }
+}
+
+@media (max-width: 720px) {
+  .fb-hero { padding: 16px 0 18px; }
+  .fb-card__ribbon { font-size: .78rem; }
+  .fb-card__title { font-size: 1.08rem; }
+  .fb-off { font-size: 2.8rem; }
+  .fb-off-cap { font-size: .9rem; padding: 4px 9px; }
+  .fb-off-row { gap: 7px; }
+  .fb-card__sub { font-size: .9rem; }
+  .fb-clock { gap: 6px; }
+  .fb-clock__label { display: none; }
+  .fb-clock__num { min-width: 64px; font-size: 1.9rem; }
+  .fb-cta { max-width: none; font-size: 1rem; padding: 13px 16px; }
+  .fb-note { font-size: .7rem; }
+}
+
+/* ============================================================================
+   3. コイン商品カード（24時間限定の割引つき）
+   ----------------------------------------------------------------------------
+   おトク額を円で出す形。既存の .point-product-grid の中に、
+   .point-product-card の代わりに .fb-coin を並べる。
+   ============================================================================ */
+.fb-coin {
+  position: relative;
+  background: #fff;
+  border: 2px solid var(--fb-red);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 22px #e2342b1a;
+  text-align: center;
+}
+
+/* 黄色の帯＝いくら得するか */
+.fb-coin__save {
+  padding: 7px 14px;
+  background: var(--yellow);
+  color: #46210a;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.fb-coin__save small {
+  font-size: .6em;
+  font-weight: 900;
+}
+
+.fb-coin__body {
+  padding: 13px 16px 16px;
+}
+
+/* もらえるコイン */
+.fb-coin__get {
+  margin: 0;
+  color: var(--teal-dd, #0b7f7a);
+  font-size: .95rem;
+  font-weight: 800;
+}
+
+.fb-coin__get b {
+  color: var(--teal, #00beb1);
+  font-size: 2.1rem;
+  font-weight: 900;
+  letter-spacing: -.01em;
+  margin-right: 3px;
+}
+
+/* 通常価格（取り消し線）と期間 */
+.fb-coin__was {
+  margin: 2px 0 6px;
+  color: var(--muted);
+  font-size: .9rem;
+  font-weight: 700;
+}
+
+.fb-coin__was s {
+  text-decoration-thickness: 2px;
+}
+
+/* 払う額はボタンの中に入れる */
+.fb-coin__btn {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff9b45, var(--fb-red));
+  color: #fff;
+  font-weight: 900;
+  box-shadow: 0 3px 0 var(--fb-red-d), 0 7px 16px #e2342b36;
+}
+
+.fb-coin__btn b {
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.fb-coin__btn span {
+  font-size: 1rem;
+}
+
+.fb-coin__note {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: .74rem;
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .fb-coin__save { font-size: 1.15rem; }
+  .fb-coin__get b { font-size: 1.95rem; }
+  .fb-coin__btn b { font-size: 1.75rem; }
+}
+
+/* ============================================================================
+   4. ポップアップ（会員登録の直後に1回だけ出す）
+   ============================================================================ */
+.fb-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: #0b1f1ec9;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  animation: fb-fade .22s ease both;
+}
+
+.fb-modal[hidden] { display: none; }
+
+body.fb-modal-open { overflow: hidden; }
+
+.fb-modal__box {
+  position: relative;
+  width: 100%;
+  max-width: 880px;
+  animation: fb-pop .28s cubic-bezier(.2, .9, .3, 1.25) both;
+}
+
+.fb-modal__box .fb-card {
+  max-width: none;
+}
+
+/* ×と文字がぶつからないように右を空ける */
+.fb-modal__box .fb-card__ribbon {
+  padding-right: 38px;
+}
+
+.fb-modal__close {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  z-index: 3;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 1.3rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 16px #00000047;
+}
+
+.fb-modal__later {
+  display: block;
+  margin: 14px auto 0;
+  padding: 6px 10px;
+  border: 0;
+  background: none;
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@keyframes fb-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fb-pop {
+  from { opacity: 0; transform: translateY(16px) scale(.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 720px) {
+  .fb-modal { padding: 14px; }
+  .fb-modal__close { top: -12px; right: -6px; width: 38px; height: 38px; font-size: 1.15rem; }
+  .fb-modal__box .fb-off { font-size: 2.6rem; }
+}
+
+/* ============================================================================
+   5. 一覧のすぐ上の細い時計（「コイン商品」の見出しと商品の間）
+   ----------------------------------------------------------------------------
+   大枠が画面から流れたあとも、カードを見ている最中に残り時間が目に入るように。
+   ============================================================================ */
+.fb-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 0 0 14px;
+  padding: 8px 14px;
+  border: 2px solid var(--fb-red);
+  border-radius: 12px;
+  background: #fff6f4;
+  color: var(--ink);
+  font-size: .92rem;
+  font-weight: 800;
+}
+
+.fb-strip__clock {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.fb-strip__clock b {
+  display: inline-block;
+  min-width: 36px;
+  padding: 3px 6px;
+  border-radius: 8px;
+  background: var(--fb-digit-bg);
+  color: var(--yellow);
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.fb-strip__clock i {
+  font-style: normal;
+  color: var(--fb-red);
+  font-weight: 900;
+}
+
+.fb-strip.is-urgent .fb-strip__clock b {
+  animation: fb-pulse 1s steps(1, end) infinite;
+}
+
+@media (max-width: 720px) {
+  .fb-strip { font-size: .82rem; padding: 7px 10px; }
+  .fb-strip__clock b { min-width: 31px; font-size: 1.1rem; }
+}
+
+/* ===== デザイン納品物（ここまで） ===== */
+
+/* ============================================================================
+   実装側の追加
+   ============================================================================ */
+
+/* コイン購入ページの大枠は、ページ用の余白を重ねずに残高カードと左右をそろえる */
+.fb-hero--inpage { min-width: 0; }
+
+/*
+ * 幅900px以下では大枠を1段にする（依頼文 7章「幅900pxを切ったら自動で1段に落ちます」）。
+ * 納品物は flex の箱に grid-template-columns を指定しており、720〜900px では横並びのまま
+ * 右側の上に仕切り線だけが出るため、縦に積む指定を足す。
+ */
+@media (max-width: 900px) {
+  .fb-card__body { flex-direction: column; }
+}
+
+/* キーボード操作でも押せる場所が分かるようにする（既存ボタンと同じ輪郭） */
+.fb-bar__cta:focus-visible,
+.fb-cta:focus-visible,
+.fb-coin__btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* 動きを減らす設定の端末では、点滅と出現の動きを止める（既存テーマと同じ方針） */
+@media (prefers-reduced-motion: reduce) {
+  .fb-bar.is-urgent .fb-bar__clock b,
+  .fb-strip.is-urgent .fb-strip__clock b,
+  .fb-modal,
+  .fb-modal__box {
+    animation: none;
+  }
+}
+
+/* Layout review controls are separate from the canonical offer card. */
+.fb-preview-note {
+  max-width: 1040px;
+  margin: 24px auto;
+  padding: 12px 16px;
+  border: 1px dashed var(--teal);
+  border-radius: 12px;
+  color: var(--ink);
+  background: #f2fbfa;
+  font-size: .8rem;
+}
+.fb-preview-note nav { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.fb-preview-note a { text-decoration: underline; text-underline-offset: 3px; }
+.fb-preview-note a[aria-current="page"] { font-weight: 900; }
+.fb-preview-note a:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
