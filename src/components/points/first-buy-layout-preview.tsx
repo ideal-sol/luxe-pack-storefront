@@ -59,11 +59,11 @@ export function FirstBuyPointsLayout({ state }: { readonly state: FirstBuyLayout
           {state === "active" && category === "first" && <FirstBuyStrip offer={offer} />}
           {state === "expired" && category === "first" ? <p className="catalog-message">現在、このカテゴリーで表示できるコイン商品はありません。</p> : (
             <div className="point-product-grid">{offer.deals.map(deal => state === "active" && category === "first" ? <FirstBuyCoinCard deal={deal} key={deal.product.id} /> : (
-              <PointProductCardShell key={deal.product.id} badge={category === "first" ? "初回ユーザー" : "すべてのユーザー"} action={<Link className="button button--ghost" href={firstBuyLayoutDetailHref(deal.product.id, state)}>詳細を見る</Link>}>
-                <div className="point-product-card__heading"><h3>{number.format(deal.product.grant.total_points)}コイン</h3><span>販売中</span></div>
+              <PointProductCardShell key={deal.product.id} badge={category === "first" ? "初回ユーザー" : "すべてのユーザー"} action={<div className="point-product-card__actions"><Link className="button button--ghost" href={firstBuyLayoutDetailHref(deal.product.id, state)}>詳細を見る</Link>{state === "unauthenticated" && <Link className="button button--dark" href="/login">ログインして確認</Link>}</div>}>
+                <div className="point-product-card__heading"><h3>{number.format(deal.product.grant.total_points)}コイン</h3><span data-sale-state="available">販売中</span></div>
                 <p className="point-product-card__grant"><strong>{number.format(deal.product.grant.total_points)}</strong><span>コイン</span></p>
                 <dl className="point-product-card__facts"><div><dt>販売価格</dt><dd>{yen.format(category === "first" ? deal.product.price.amount : deal.referencePrice)}</dd></div></dl>
-                {state === "unauthenticated" && <p className="point-product-card__eligibility">購入するにはログインが必要です。</p>}
+                {state === "unauthenticated" && <p className="point-product-card__eligibility point-product-card__eligibility--ineligible">購入するにはログインが必要です。</p>}
               </PointProductCardShell>
             ))}</div>
           )}

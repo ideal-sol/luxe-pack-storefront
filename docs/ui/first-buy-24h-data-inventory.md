@@ -125,7 +125,7 @@ Sharedの「共通」はヘッダー・フッター等の既存shellで共用。
 | 通常card badge/title/販売状態 | 既存product.audience.label / title / sale_state | existing fields | 通常tab、guest初回tab | 既存詳細 | 通常presentationを維持 |
 | 通常card獲得数/価格 | 既存grant.total_points / price.amount | numbers | 通常tab | 詳細 | サンプルは固定通常商品 |
 | 通常card詳細link | 既存product.id | string | 通常tab | 詳細 | 正式接続時の詳細navigation |
-| guest購入案内 | 既存CTA / ineligible_reason | existing union | unauthenticated | 既存詳細 | 今回はcopyのみ、購入判定はしない |
+| guest購入案内・login CTA | 既存CTA / ineligible_reason、`/login` | existing union / static route | unauthenticated | 既存詳細 | 正本の「ログインして確認」を再利用。購入判定はしない |
 | expired初回tabの空表示 | 明示stateと空sample collection | union / array | expiredかつ初回tab | 既存一覧empty | 期限を計算して商品を除去しない |
 | 一覧の実read loading/error/empty | 既存collection / problem / read state | existing union | fixtureなしの既存画面 | 既存一覧 | 正常なread処理を変更しない |
 

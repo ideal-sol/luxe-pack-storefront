@@ -55,6 +55,7 @@ describe("isolated first-buy layout", () => {
     expect(screen.queryByRole("timer")).not.toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "すべてのユーザー" })).toHaveAttribute("aria-selected", "true");
     expect(document.querySelectorAll(".fb-coin")).toHaveLength(0);
+    if (state === "unauthenticated") expect(screen.getAllByRole("link", { name: "ログインして確認" })).toHaveLength(7);
     fireEvent.click(screen.getByRole("tab", { name: "初回ユーザー" }));
     if (state === "expired") expect(within(screen.getByRole("tabpanel")).getByText("現在、このカテゴリーで表示できるコイン商品はありません。")).toBeInTheDocument();
   });
