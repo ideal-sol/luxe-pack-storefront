@@ -1,626 +1,225 @@
 {
-  "map_version": "1.0",
-  "status": "SHADOW_ONLY",
+  "map_version": "1.1",
   "areas": [
     {
-      "area": "Auth / Session",
+      "area": "Auth / Login / Session",
       "paths": [
-        "src/components/auth/",
-        "src/components/account-security/",
-        "src/lib/platform/auth-client.ts"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/login",
-        "/password-reset",
-        "/verify-email"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+        "src/components/auth/login-form.tsx",
+        "src/components/auth/auth-problem.tsx",
+        "src/components/auth/session-provider.tsx",
+        "src/lib/platform/auth-client.ts",
+        "src/app/login/",
+        "src/proxy.ts"
+      ]
     },
     {
-      "area": "Registration",
+      "area": "Registration / Email Verification",
       "paths": [
         "src/components/auth/register-form.tsx",
-        "src/app/register/"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/register"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+        "src/components/auth/verification",
+        "src/app/register/",
+        "src/app/verify-email/"
+      ]
     },
     {
-      "area": "SMS",
+      "area": "Account Security / Password / Email Change",
+      "paths": [
+        "src/components/account-security/",
+        "src/app/password-reset/",
+        "src/app/email-change/",
+        "src/app/mypage/password/",
+        "src/app/mypage/email/"
+      ]
+    },
+    {
+      "area": "SMS / Reauthentication",
       "paths": [
         "src/components/account/sms-",
-        "src/lib/sms-registration-prompt.ts"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/mypage/sms-verification"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+        "src/lib/sms-registration-prompt.ts",
+        "src/lib/platform/sms-problem.ts",
+        "src/app/mypage/sms-verification/"
+      ]
     },
     {
       "area": "Point Purchase",
       "paths": [
-        "src/components/points/"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/points",
-        "/points/purchase/[productId]"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+        "src/components/points/point-purchase",
+        "src/components/points/point-client-provider.tsx",
+        "src/app/points/",
+        "src/lib/platform/point-client.ts"
+      ]
     },
     {
       "area": "Payment / 3DS",
       "paths": [
-        "src/components/payment/"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/points/purchase/thanks",
-        "/mypage/purchases/[paymentId]"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+        "src/components/payment/",
+        "src/lib/platform/payment-",
+        "src/app/points/purchase/thanks/",
+        "src/app/mypage/purchases/"
+      ]
     },
     {
       "area": "Save Card",
       "paths": [
         "src/components/payment/card-",
         "src/components/payment/fincode-card-fields.tsx"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/points/purchase/[productId]"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+      ]
     },
     {
-      "area": "Wallet",
+      "area": "Wallet / Point History",
       "paths": [
-        "src/components/points/point-history",
+        "src/components/points/point-history-page.tsx",
         "src/app/mypage/points/"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/mypage/points"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+      ]
     },
     {
-      "area": "Catalog",
+      "area": "Catalog / Home / Gacha List",
       "paths": [
         "src/components/catalog/",
-        "src/app/gachas/"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/",
-        "/gachas"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+        "src/app/page.tsx",
+        "src/app/gachas/page.tsx",
+        "src/lib/platform/public-client.ts"
+      ]
     },
     {
       "area": "Gacha Detail",
       "paths": [
-        "src/components/catalog/gacha-detail",
-        "src/components/catalog/login-gacha-detail",
+        "src/components/catalog/gacha-detail.tsx",
+        "src/components/catalog/login-gacha-detail.tsx",
+        "src/app/gachas/[slug]/",
         "src/app/login-gachas/"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/gachas/[slug]",
-        "/login-gachas/[gachaId]"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+      ]
     },
     {
       "area": "Draw",
       "paths": [
-        "src/components/draw/"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/gachas/[slug]",
-        "/login-gachas/[gachaId]"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+        "src/components/draw/gacha-draw-panel.tsx",
+        "src/components/draw/login-gacha-draw-panel.tsx",
+        "src/components/draw/draw-client-provider.tsx",
+        "src/lib/platform/draw-"
+      ]
     },
     {
-      "area": "Result / Presentation",
+      "area": "Result / Presentation Video",
       "paths": [
-        "src/components/draw/draw-result",
+        "src/components/draw/draw-result.tsx",
         "src/app/draws/"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/draws/[drawRequestId]/result"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+      ]
     },
     {
       "area": "Prize / Point Exchange",
       "paths": [
-        "src/components/prizes/"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/mypage/prizes"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+        "src/components/prizes/",
+        "src/lib/platform/prize-client.ts",
+        "src/app/mypage/prizes/"
+      ]
     },
     {
-      "area": "Shipping",
+      "area": "Shipping / Address",
       "paths": [
         "src/components/address/",
-        "src/components/prizes/prize-fulfillment"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/mypage/address",
-        "/mypage/prizes"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+        "src/components/prizes/prize-fulfillment.tsx",
+        "src/lib/platform/fulfillment-problem.ts",
+        "src/app/mypage/address/"
+      ]
     },
     {
-      "area": "My Page",
+      "area": "My Page / Histories",
       "paths": [
-        "src/components/account/my-page",
-        "src/app/mypage/"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/mypage"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+        "src/components/account/my-page-top.tsx",
+        "src/components/draw/draw-history-page.tsx",
+        "src/components/payment/payment-history",
+        "src/app/mypage/page.tsx",
+        "src/app/mypage/draws/",
+        "src/app/mypage/purchases/"
+      ]
     },
     {
       "area": "LINE",
       "paths": [
-        "src/components/account/line-",
-        "src/components/account/external-identity"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/mypage/line"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+        "src/components/account/line-account-link.tsx",
+        "src/components/account/external-identity-client-provider.tsx",
+        "src/lib/platform/external-identity-client.ts",
+        "src/app/mypage/line/"
+      ]
     },
     {
-      "area": "Contact",
+      "area": "Contact / Follow-up Inquiry",
       "paths": [
-        "src/components/contact/"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/contact"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+        "src/components/contact/",
+        "src/lib/contact-return.ts",
+        "src/lib/platform/contact-",
+        "src/app/contact/"
+      ]
     },
     {
-      "area": "Advertising / Agency attribution",
+      "area": "Advertising / Agency Attribution",
       "paths": [
         "src/components/advertising/",
-        "src/lib/advertising"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/",
-        "/register",
-        "/mypage/line"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+        "src/lib/advertising-last-click.ts",
+        "src/lib/platform/advertising-client.ts"
+      ]
     },
     {
-      "area": "Managed Content",
+      "area": "Managed Content / Notices / Pages",
       "paths": [
         "src/components/content/",
         "src/app/pages/",
         "src/app/notices/"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "/pages/[slug]",
-        "/notices",
-        "/notices/[noticeId]"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+      ]
     },
     {
-      "area": "Shared layout / providers",
+      "area": "Shared Navigation / Header / Footer / Mobile Nav",
       "paths": [
         "src/components/layout/",
+        "src/lib/routes/navigation.ts"
+      ]
+    },
+    {
+      "area": "Shared Providers / Global Styles",
+      "paths": [
         "src/components/common/",
         "src/app/layout.tsx",
-        "src/assets/decorative/"
-      ],
-      "symbols": [],
-      "shared_dependencies": [
-        "src/components/layout/",
-        "src/components/common/",
-        "src/components/auth/session-provider.tsx"
-      ],
-      "affected_routes": [
-        "*"
-      ],
-      "affected_states": [
-        "initial",
-        "loading",
-        "error",
-        "empty",
-        "success",
-        "disabled",
-        "focus"
-      ],
-      "browser_acceptance_scope": {
-        "viewport_classes": [
-          "mobile",
-          "desktop"
-        ],
-        "reason": "changed component or transitive shared dependency"
-      }
+        "src/app/error.tsx",
+        "src/app/loading.tsx",
+        "src/styles/globals.css",
+        "src/styles/theme-oripoke.css",
+        "src/styles/font-noto-sans-jp.css",
+        "src/lib/platform/browser-client.ts",
+        "src/lib/platform/runtime-configuration.ts",
+        "src/lib/platform/index.ts",
+        "src/lib/platform/problem-details.ts",
+        "src/lib/platform/testing.ts",
+        "src/lib/presentation/",
+        "src/lib/brand-icons.ts"
+      ]
+    }
+  ],
+  "critical_paths": [
+    "src/components/auth/",
+    "src/components/account/",
+    "src/components/account-security/",
+    "src/components/payment/",
+    "src/components/points/",
+    "src/components/draw/",
+    "src/components/prizes/",
+    "src/components/address/",
+    "src/components/contact/",
+    "src/components/catalog/",
+    "src/components/advertising/",
+    "src/lib/platform/",
+    "src/lib/routes/navigation.ts",
+    "src/lib/contact-return.ts",
+    "src/lib/sms-registration-prompt.ts",
+    "src/lib/advertising-last-click.ts",
+    "src/proxy.ts",
+    "src/app/layout.tsx"
+  ],
+  "manual_dependencies": [
+    {
+      "dependency": "src/app/layout.tsx",
+      "consumer_prefix": "src/app/",
+      "consumer_suffix": "/page.tsx"
     }
   ]
 }
