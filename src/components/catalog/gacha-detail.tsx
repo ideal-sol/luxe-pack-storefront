@@ -14,6 +14,7 @@ import { CatalogLoading, CatalogMessage } from "./catalog-message";
 import { gachaSaleStateLabels } from "./gacha-presentation";
 import { usePublicClient } from "./public-client-provider";
 import { GachaDrawPanel } from "@/components/draw/gacha-draw-panel";
+import { gachaPrizeRateRoute } from "@/lib/routes/navigation";
 
 type DetailState =
   | { readonly status: "loading" }
@@ -115,6 +116,10 @@ function DetailContent({ detail, presentation }: { readonly detail: GachaDetail;
           <p>{detail.notices}</p>
         </details>
       )}
+      <Link className="gacha-rate-link" href={gachaPrizeRateRoute(detail.slug)}>
+        <span>提供割合を見る</span>
+        <span aria-hidden="true" className="gacha-rate-link__chevron">›</span>
+      </Link>
       <PrizeSections detail={detail} />
       {detail.description && (
         <section aria-labelledby="gacha-description" className="gacha-description">
