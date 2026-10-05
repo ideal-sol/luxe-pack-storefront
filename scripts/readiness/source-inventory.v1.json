@@ -205,6 +205,7 @@
   "src/test/public-content-ui.test.tsx",
   "src/test/readiness-classifier.test.mjs",
   "src/test/routes.test.ts",
+  "src/test/security-audit-policy.test.mjs",
   "src/test/session-ui.test.tsx",
   "src/test/setup.ts",
   "src/test/sms-verification-ui.test.tsx",
