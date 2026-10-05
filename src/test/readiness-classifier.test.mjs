@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
-import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { applyHandoff, classifyDiff, compareCss, compareTsx, defaultPolicy, defaultImpact, impactFor, seal } from "../../scripts/readiness/classifier.mjs";
 import { replayRequiredChecks, verifyApprovedContract } from "../../scripts/readiness/adapters.mjs";
@@ -9,6 +9,24 @@ const normal = "Normal Storefront Release", full = "Full Platform + Storefront R
 const path = "src/components/common/page-title.tsx";
 const before = 'export function Title() { return <h1 className="small">Hello</h1>; }';
 const styles = '.small { padding: 8px; } .large { padding: 16px; }';
+const repositoryRoot = process.cwd();
+// This explicit tracked-source inventory is shipped in git archive. Validate
+// the entire src tree against it, so missing or extra local files cannot supply
+// false grounding, and do not follow links outside the packaged source tree.
+function packagedSourceInventory() {
+  const packaged = JSON.parse(readFileSync(resolve(repositoryRoot, "scripts/readiness/source-inventory.v1.json"), "utf8"));
+  function walk(directory) {
+    return readdirSync(resolve(repositoryRoot, directory), { withFileTypes: true }).flatMap((entry) => {
+      const file = `${directory}/${entry.name}`;
+      expect(entry.isSymbolicLink(), file).toBe(false);
+      if (entry.isDirectory()) return walk(file);
+      expect(entry.isFile(), file).toBe(true);
+      return [file];
+    });
+  }
+  expect(walk("src").sort()).toEqual(packaged);
+  return packaged;
+}
 function input(file = path, previous = before, next = before.replace("Hello", "Welcome")) {
   const sources = { [path]: before, "src/styles/globals.css": styles,
     "src/app/contact/page.tsx": 'import { Title } from "../../components/common/page-title"; export default Title;' };
@@ -231,14 +249,14 @@ describe("source assets and impact graph", () => {
     const data = input(); data.head_sources[path] += ' import(variable);'; await state(data, "UNCLASSIFIED");
   });
   it("21 areas and protected prefixes are grounded in tracked source", () => {
-    const files = execFileSync("git", ["ls-tree", "-r", "--name-only", "HEAD", "src"], { encoding: "utf8" }).trim().split("\n");
+    const files = packagedSourceInventory();
     expect(defaultImpact.areas).toHaveLength(21);
     for (const prefix of [...defaultImpact.critical_paths, ...defaultImpact.areas.flatMap((area) => area.paths)]) expect(files.some((file) => file.startsWith(prefix)), prefix).toBe(true);
     expect(defaultImpact.manual_dependencies).toHaveLength(1);
   });
   it("real source import graph resolves without external runtime access", () => {
-    const files = execFileSync("git", ["ls-tree", "-r", "--name-only", "HEAD", "src"], { encoding: "utf8" }).trim().split("\n");
-    const sources = Object.fromEntries(files.filter((file) => /\.(tsx?|css)$/.test(file) && !file.startsWith("src/test/")).map((file) => [file, readFileSync(file, "utf8")]));
+    const files = packagedSourceInventory();
+    const sources = Object.fromEntries(files.filter((file) => /\.(tsx?|css)$/.test(file) && !file.startsWith("src/test/")).map((file) => [file, readFileSync(resolve(repositoryRoot, file), "utf8")]));
     expect(impactFor(["src/styles/globals.css"], sources, defaultImpact, defaultPolicy, files).affected_routes).toContain("/points");
   }, 30_000);
 });
@@ -389,5 +407,105 @@ describe("display text under unchanged conditions", () => {
   it("accepts a literal placeholder expression without changing value or handler", async () => {
     const old = 'export const V = () => <input placeholder={"Before"} value={value} onChange={onChange} />;';
     await state(input(path, old, old.replace("Before", "After")), "ELIGIBLE");
+  });
+});
+
+describe("PRG-20261005B presentation proof regressions", () => {
+  it.each(["div", "span", "button", "p", "section", "a"])("native %s retains safe class and style support", async (tag) => {
+    const previous = `export const V = () => <${tag} className="small" style={{ color: "red" }} />;`;
+    await state(input(path, previous, previous.replace("small", "large").replace('"red"', '"blue"')), "ELIGIBLE");
+  });
+  it.each(["Widget", "MyButton", "Card", "UI.Button", "custom-widget", "unknownnative"])("unproved %s class forwarding is UNCLASSIFIED", async (tag) => {
+    const previous = `export const V = () => <${tag} className="small" />;`;
+    const result = await state(input(path, previous, previous.replace("small", "large")), "UNCLASSIFIED");
+    expect(result.classification_reason).toBe("PRESENTATION_FORWARDING_UNPROVEN");
+    expect(result.candidate_lane).toBe(normal);
+    expect(result.fallback_lane).toBe(normal);
+  });
+  it.each(["Widget", "UI.Button", "custom-widget"])("unproved %s style forwarding is UNCLASSIFIED", async (tag) => {
+    const previous = `export const V = () => <${tag} style={{ color: "red" }} />;`;
+    await state(input(path, previous, previous.replace('"red"', '"blue"')), "UNCLASSIFIED");
+  });
+  it("does not accept className used as custom-component control flow", async () => {
+    const previous = 'function Widget({ className }) { return className === "large" ? null : <div />; } export const V = () => <Widget className="small" />;';
+    const next = previous.replace('className="small"', 'className="large"');
+    await state(input(path, previous, next), "UNCLASSIFIED");
+  });
+  it("keeps even apparent custom forwarding unclassified without a forwarding proof", async () => {
+    const previous = 'function Widget({ className }) { return <div className={className} />; } export const V = () => <Widget className="small" />;';
+    await state(input(path, previous, previous.replace('className="small"', 'className="large"')), "UNCLASSIFIED");
+  });
+  it.each(['is="custom-button"', '{...props}'])("customized native element %s needs proof", async (attribute) => {
+    const previous = `export const V = () => <button ${attribute} className="small" />;`;
+    await state(input(path, previous, previous.replace("small", "large")), "UNCLASSIFIED");
+  });
+  it("native HTML policy binds the presentation decision", async () => {
+    const policy = structuredClone(defaultPolicy);
+    policy.native_html_elements = policy.native_html_elements.filter((tag) => tag !== "div");
+    const previous = 'export const V = () => <div className="small" />;';
+    await state(input(path, previous, previous.replace("small", "large")), "UNCLASSIFIED", policy);
+  });
+  it.each([
+    '[class~="large"]', '[class="large"]', '[class*="large"]', '[class^="lar"]',
+    '[CLASS~="LARGE" i]', '[class]', '[data-anything]', '.large[data-state="ready"]',
+    '.large > p', '.ancestor .large', '.large.other', ':is(.large)', ':not(.other)',
+    String.raw`.l\61rge`, '.large, .other', '#container', '*',
+  ])("cannot exclude selector %s from a class change", async (selector) => {
+    const data = input(path, before, before.replace("small", "large"));
+    data.base_sources["src/styles/globals.css"] = data.head_sources["src/styles/globals.css"] = `${styles} ${selector} { display: none; }`;
+    const result = await state(data, "UNCLASSIFIED");
+    expect(result.classification_reason).toBe("CLASS_SELECTOR_UNRESOLVED");
+    expect(result.fallback_lane).toBe(normal);
+  });
+  it.each(["base_sources", "head_sources"])("checks hidden selector dependencies in %s independently", async (tree) => {
+    const data = input(path, before, before.replace("small", "large"));
+    data[tree]["src/styles/globals.css"] += ' [class~="large"] { display: none; }';
+    await state(data, "UNCLASSIFIED");
+  });
+  it("unresolved selectors also matter when the old token is removed", async () => {
+    const data = input(path, before, before.replace("small", "large"));
+    data.base_sources["src/styles/globals.css"] += ' [class~="small"] { display: none; }';
+    await state(data, "UNCLASSIFIED");
+  });
+  it("accepts fully parsed hover selectors and excludes unrelated simple classes", async () => {
+    const data = input(path, before, before.replace("small", "large"));
+    data.base_sources["src/styles/globals.css"] = data.head_sources["src/styles/globals.css"] = `${styles} .large:hover { color: red; } .unrelated { display: none; }`;
+    await state(data, "ELIGIBLE");
+  });
+  it("rejects a directly resolved dangerous declaration", async () => {
+    const data = input(path, before, before.replace("small", "large"));
+    data.base_sources["src/styles/globals.css"] = data.head_sources["src/styles/globals.css"] = '.small { color: blue; } .large { display: none; }';
+    await state(data, "NOT_ELIGIBLE");
+  });
+  it("does not interpret nested rules as independent simple selectors", async () => {
+    const data = input(path, before, before.replace("small", "large"));
+    data.base_sources["src/styles/globals.css"] = data.head_sources["src/styles/globals.css"] = `${styles} .unrelated { .large { color: red; } }`;
+    await state(data, "UNCLASSIFIED");
+  });
+  it("preserves Full fallback without Platform NONE even for unresolved presentation", async () => {
+    const previous = 'export const V = () => <Widget className="small" />;';
+    const data = input(path, previous, previous.replace("small", "large"));
+    data.platform_impact = "UNKNOWN";
+    const result = await state(data, "INDETERMINATE");
+    expect(result.candidate_lane).toBe(full); expect(result.fallback_lane).toBe(full);
+  });
+});
+
+describe("class selector context completeness", () => {
+  it.each(['@scope (.large)', '@supports selector(.large)', '@container style(--class: large)'])("unresolved %s context cannot hide rules for other classes", async (context) => {
+    const data = input(path, before, before.replace("small", "large"));
+    data.base_sources["src/styles/globals.css"] = data.head_sources["src/styles/globals.css"] = `${styles} ${context} { .other { display: none; } }`;
+    await state(data, "UNCLASSIFIED");
+  });
+  it("rejects nesting hidden by an intervening media block", async () => {
+    const data = input(path, before, before.replace("small", "large"));
+    data.base_sources["src/styles/globals.css"] = data.head_sources["src/styles/globals.css"] = `${styles} .other { @media screen { .large { color: red; } } }`;
+    await state(data, "UNCLASSIFIED");
+  });
+  it("retains safe literal class resolution in existing media", async () => {
+    const data = input(path, before, before.replace("small", "large"));
+    data.base_sources["src/styles/globals.css"] = data.head_sources["src/styles/globals.css"] = `@media (min-width: 768px) { ${styles} }`;
+    const result = await state(data, "ELIGIBLE");
+    expect(result.browser_acceptance_plan.affected_breakpoints).toEqual(["(min-width: 768px)"]);
   });
 });

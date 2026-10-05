@@ -59,7 +59,7 @@ remain required. This tool produces none of READY, Human GO or Activation.
 ## Executable policy
 
 `minor-policy.v1.json` supplies class allowlists, source/authority path patterns,
-copy attributes, CSS properties and bounds, selector/media restrictions, image formats, fallback lanes and acceptance viewports. These
+copy attributes, native HTML element names, CSS properties and bounds, selector/media restrictions, image formats, fallback lanes and acceptance viewports. These
 values are consumed by classification; tests mutate policy values to verify the
 binding. Parser syntax checks remain implementation details, not second policy
 allowlists. Unrecognized CSS syntax stays UNCLASSIFIED.
@@ -79,10 +79,23 @@ AST ancestry and call/property node categories provide diagnostic categories;
 identifier matching alone never grants eligibility. Unsupported class/style
 expressions are UNCLASSIFIED. The same checks apply in critical zones.
 
+Native HTML elements can receive eligible literal class/style changes. Custom
+components (including member expressions and custom elements) remain UNCLASSIFIED:
+this implementation does not prove presentation forwarding. A native element
+with `is` or spread attributes also lacks that proof. Existing pure text support
+is unchanged.
+
 Literal class changes must resolve every added/removed token in both source
 trees to declarations containing only allowed properties and values. Unresolved
 imports, generated utilities or complex style dependencies are UNCLASSIFIED;
-there is no spacing-utility naming shortcut. AST-detected JS selector/classList
+there is no spacing-utility naming shortcut. Every stylesheet selector must be
+fully parsed before being excluded from a class change. The initial grammar
+recognizes only `.simple-class` and `.simple-class:hover`. Attribute selectors,
+escapes, combinators, selector lists, nesting and functional pseudo-classes are
+UNCLASSIFIED, including selectors whose relation to the changed token is unclear.
+Related declarations still undergo the existing property/bounds checks. This
+restriction applies to class-token resolution; safe CSS value comparisons retain
+their existing policy. AST-detected JS selector/classList
 usage prevents treating behavioral classes as presentation. Literal inline styles
 must contain only static property assignments, without spreads or variables.
 
@@ -165,3 +178,14 @@ Platform source is not modified.
 The artifact verifier retains the immutable Platform Client/Testkit alignment;
 this change adopts no artifact. Normal CI and readiness-shadow remain unchanged.
 Source rollback is a reviewed revert PR; no runtime activation is required.
+
+## Archive-compatible regression inventory
+
+`source-inventory.v1.json` is the explicit packaged `src/` inventory, generated
+from tracked paths. The same two source-grounding tests compare filesystem files
+to that inventory, reject symlinks/missing/extra files, and run all 21-area/path
+and real-source import-graph assertions in both checkout and `git archive`.
+They never require `.git`, skip an archive test, or use untracked files as
+grounding. When packaged source paths change, refresh this test fixture from
+`git ls-tree -r --name-only HEAD src` and review the inventory delta. This test
+fixture does not replace the classifier's exact Git diff/source-tree authority.

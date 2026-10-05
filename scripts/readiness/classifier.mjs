@@ -110,9 +110,17 @@ function classChange(before, after, policy, sources, details) {
     for (const [path, source] of Object.entries(sources)) {
       if (!path.endsWith(".css")) continue;
       const tree = cssTree(source);
-      tree.walkAtRules("import", () => requireValue(false, "CLASS_STYLE_DEPENDENCY_UNRESOLVED"));
+      tree.walkAtRules((rule) => requireValue(rule.name === "media", "CLASS_STYLE_DEPENDENCY_UNRESOLVED"));
       tree.walkRules((rule) => {
-        if (!(rule.selector.match(/\.[\w-]+/g) ?? []).includes(`.${token}`)) return;
+        // Inspect every selector before excluding it. Attribute selectors,
+        // escapes, combinators, nesting and functional pseudos can reference a
+        // changed token without spelling it as a dot-class selector.
+        const selector = rule.selector.match(/^\.([a-zA-Z_][\w-]*)(?::hover)?$/);
+        requireValue(selector, "CLASS_SELECTOR_UNRESOLVED");
+        for (let ancestor = rule.parent; ancestor; ancestor = ancestor.parent) {
+          requireValue(ancestor.type !== "rule", "CLASS_SELECTOR_UNRESOLVED");
+        }
+        if (selector[1] !== token) return;
         found = true;
         safeSelector(rule.selector, policy);
         safeCssContext(rule, policy, details);
@@ -179,6 +187,12 @@ function displayLiteral(node, tree, policy) {
   const tag = context.parent.parent.tagName?.getText(tree) ?? "";
   return /^[a-z][a-z0-9]*$/.test(tag) && policy.copy_attributes.includes(context.name.getText(tree));
 }
+function requireNativePresentation(attribute, policy) {
+  const element = attribute.parent.parent;
+  requireValue(ts.isIdentifier(element.tagName) && policy.native_html_elements.includes(element.tagName.text)
+    && element.attributes.properties.every((entry) => ts.isJsxAttribute(entry) && entry.name.getText() !== "is"),
+  "PRESENTATION_FORWARDING_UNPROVEN");
+}
 export function compareTsx(path, before, after, policy, sources = {}, details = { breakpoints: new Set(), logic_categories: new Set() }) {
   const oldTree = parse(path, before), newTree = parse(path, after);
   const classes = new Set();
@@ -188,6 +202,10 @@ export function compareTsx(path, before, after, policy, sources = {}, details = 
     reject(oldNode.kind === newNode.kind, "DOM_OR_LOGIC_STRUCTURE_CHANGED");
     if (ts.isJsxAttribute(oldNode) && ts.isJsxAttribute(newNode) && oldNode.name.getText(oldTree) === newNode.name.getText(newTree)) {
       const name = oldNode.name.getText(oldTree);
+      if (name === "className" || name === "style") {
+        requireNativePresentation(oldNode, policy);
+        requireNativePresentation(newNode, policy);
+      }
       if (name === "className") {
         requireValue(oldNode.initializer && newNode.initializer && ts.isStringLiteral(oldNode.initializer) && ts.isStringLiteral(newNode.initializer), "CLASS_EXPRESSION_CHANGED");
         classChange(oldNode.initializer.text, newNode.initializer.text, policy, sources, details);
