@@ -1,6 +1,7 @@
 # Storefront Production Readiness Shadow Classifier
 
-Human specification confirmed; operational approval **PENDING_HUMAN_APPROVAL**.
+Machine Policy operational approval is **HUMAN_APPROVED** for
+`1.1.2-operational-approved`.
 This classifier is SHADOW ONLY. Blocking authority, CI skipping, Fast Lane
 Production use, Phase 2, promotion and Production Human GO are not enabled.
 Application behavior, Platform source and artifact pins are unchanged.
@@ -170,7 +171,7 @@ mobile/desktop viewports. No browser acceptance is fabricated.
 The Strict compatibility fixture reproduces `storefront_strict_record` plus
 source/digest binding from Platform
 `b90a1b931d29755c40f81a030712a7d2fdc7cf57`. It checks typed arrays and evidence,
-pending approval, both Strict lanes and disabled blocking/CI skip. Negative
+Human-approved policy, both Strict lanes and disabled blocking/CI skip. Negative
 fixtures ensure malformed identities, lists, digests and authority fields fail.
 Platform source is not modified.
 

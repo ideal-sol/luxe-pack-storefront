@@ -1,6 +1,6 @@
 {
-  "policy_version": "1.1.1-shadow-alignment",
-  "policy_approval": "PENDING_HUMAN_APPROVAL",
+  "policy_version": "1.1.2-operational-approved",
+  "policy_approval": "HUMAN_APPROVED",
   "allowed_change_classes": [
     "scoped_css",
     "literal_className",

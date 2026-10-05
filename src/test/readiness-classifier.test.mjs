@@ -55,8 +55,9 @@ describe("four-state shadow machine policy alignment", () => {
     const record = await state(input(path, old, old.replace("Before", "After")), "ELIGIBLE");
     expect(record.change_classes).toEqual(["text_only_copy"]);
     expect(record.candidate_lane).toBe(normal);
-    expect(record.policy_approval).toBe("PENDING_HUMAN_APPROVAL");
-    expect(record.unknown_reasons).toContain("MACHINE_POLICY_APPROVAL_PENDING");
+    expect(record.policy_version).toBe("1.1.2-operational-approved");
+    expect(record.policy_approval).toBe("HUMAN_APPROVED");
+    expect(record.unknown_reasons).not.toContain("MACHINE_POLICY_APPROVAL_PENDING");
   });
   it.each(["payment/card-save-confirmation", "auth/auth-problem", "draw/gacha-draw-panel"])("critical %s text is eligible", async (component) => {
     const old = 'export const View = () => <div role="alert">Payment failed</div>;';
@@ -340,7 +341,7 @@ function platformStrictConsumer(record, identity) {
     && record.production_impact === "NONE" && record.record_digest === seal(record).record_digest;
 }
 describe("Platform pinned Strict consumer compatibility", () => {
-  it("accepts actual pending Strict record and exact binding", async () => {
+  it("accepts actual Human-approved Strict record and exact binding", async () => {
     const data = input("scripts/readiness/classifier.mjs");
     const record = await classifyDiff(data);
     expect(platformStrictConsumer(record, { ...data, repository: "ideal-sol/luxe-pack-storefront" })).toBe(true);
@@ -358,11 +359,11 @@ describe("Platform pinned Strict consumer compatibility", () => {
 });
 
 describe("adversarial fallback and reference regressions", () => {
-  it("synthetic branch approval never grants an operational Minor lane", async () => {
+  it("Human-approved shadow policy never grants an operational Minor lane", async () => {
     const policy = { ...defaultPolicy, policy_approval: "HUMAN_APPROVED" };
     const result = await state(input(), "ELIGIBLE", policy);
     expect(result.candidate_lane).toBe(normal);
-    expect(defaultPolicy.policy_approval).toBe("PENDING_HUMAN_APPROVAL");
+    expect(defaultPolicy.policy_approval).toBe("HUMAN_APPROVED");
     expect(defaultPolicy).not.toHaveProperty("approved_at");
     expect(defaultPolicy).not.toHaveProperty("approved_by_role");
   });
