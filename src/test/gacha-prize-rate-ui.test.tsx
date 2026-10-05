@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
 import {
   PUBLIC_CATALOG_FIXTURE,
@@ -154,9 +154,41 @@ describe("提供割合ページ", () => {
   it("注意書きを出す", async () => {
     renderPrizeRate();
 
-    const notes = (await screen.findByText(/販売開始時点の封入数から算出した割合です/)).closest("ul")!;
+    const notes = (await screen.findByText(/公開中の段階に設定された割合です/)).closest("ul")!;
     expect(within(notes).getAllByRole("listitem")).toHaveLength(3);
     expect(notes).toHaveTextContent("特定の賞の当選を保証するものではありません");
+  });
+
+  it.each([{ stages: [] }, { stages: detail.probability_stages.map((stage) => ({ ...stage, is_current: false })) }])(
+    "現在の段階が公開されていなければ、別の段階を選ばず情報なしの案内を出す",
+    async ({ stages }) => {
+      renderPrizeRate(publicClient({ getGachaBySlug: vi.fn().mockResolvedValue(response({ data: { ...detail, probability_stages: stages } })) }));
+      expect(await screen.findByText("公開中の提供割合の情報はありません。")).toBeInTheDocument();
+      expect(document.querySelector(".prize-rate__table")).not.toBeInTheDocument();
+      expect(document.body).not.toHaveTextContent("0.0033%");
+    },
+  );
+
+  it("公開数がない賞や未対応の賞から封入数を推測しない", async () => {
+    const missingStock = { ...detail, ranks: [{ ...detail.ranks[0]!, total_stock: null }], prizes: [] };
+    renderPrizeRate(publicClient({ getGachaBySlug: vi.fn().mockResolvedValue(response({ data: missingStock })) }));
+    await screen.findByRole("heading", { name: detail.title });
+    expect(rowTexts().map((row) => row[1])).toEqual(["封入数—", "封入数—", "封入数—"]);
+    expect(document.querySelector(".prize-rate__row details")).not.toBeInTheDocument();
+  });
+
+  it("別ガチャへ遷移すると、読み込み中に前のガチャの割合を表示しない", async () => {
+    let resolveNext!: (value: ReturnType<typeof response<{ data: GachaDetail }>>) => void;
+    const next = new Promise<ReturnType<typeof response<{ data: GachaDetail }>>>((resolve) => { resolveNext = resolve; });
+    const client = publicClient({ getGachaBySlug: vi.fn().mockResolvedValueOnce(response({ data: detail })).mockReturnValueOnce(next) });
+    const view = renderPrizeRate(client);
+    await screen.findByRole("heading", { name: detail.title });
+    view.rerender(<PublicClientProvider client={client}><GachaPrizeRateView slug="next-gacha" /></PublicClientProvider>);
+    expect(screen.queryByRole("heading", { name: detail.title })).not.toBeInTheDocument();
+    expect(screen.getByText("提供割合を読み込み中")).toBeInTheDocument();
+    await act(async () => { resolveNext(response({ data: { ...detail, slug: "next-gacha", title: "次のガチャ" } })); });
+    expect(await screen.findByRole("heading", { name: "次のガチャ" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ガチャ詳細へ戻る" })).toHaveAttribute("href", "/gachas/next-gacha");
   });
 
   it("現在の段階（is_current）の割合を使い、最低保証とコイン還元があれば行に出す", async () => {

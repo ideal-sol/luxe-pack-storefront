@@ -37,7 +37,7 @@ const number = new Intl.NumberFormat("ja-JP");
 
 /** 現在の抽選に適用されている段階（Platform が is_current で示す）。 */
 function currentStage(detail: GachaDetail) {
-  return detail.probability_stages.find((stage) => stage.is_current) ?? detail.probability_stages[0] ?? null;
+  return detail.probability_stages.find((stage) => stage.is_current) ?? null;
 }
 
 function prizeRateRows(detail: GachaDetail): readonly PrizeRateRow[] {
@@ -128,7 +128,7 @@ function PrizeRateContent({ detail }: { readonly detail: GachaDetail }) {
         </section>
       )}
       <ul className="prize-rate__notes">
-        <li>提供割合は、販売開始時点の封入数から算出した割合です。抽選は残っている口の中から行うため、購入時点の残り口数や当選確率とは異なります。</li>
+        <li>表示している提供割合は、公開中の段階に設定された割合です。封入数は販売開始時点の総数で、購入時点の残り口数や当選確率とは異なります。</li>
         <li>表示している割合は、特定の賞の当選を保証するものではありません。</li>
         <li>提供割合は小数第4位まで表示しています。</li>
       </ul>
@@ -136,7 +136,7 @@ function PrizeRateContent({ detail }: { readonly detail: GachaDetail }) {
   );
 }
 
-export function GachaPrizeRateView({ slug }: { readonly slug: string }) {
+function PrizeRateRequest({ slug }: { readonly slug: string }) {
   const { client, configurationAvailable } = usePublicClient();
   const [requestKey, setRequestKey] = useState(0);
   const [state, setState] = useState<PrizeRateState>(
@@ -173,4 +173,8 @@ export function GachaPrizeRateView({ slug }: { readonly slug: string }) {
     return <CatalogMessage action={retry} description={state.problem.message} eyebrow="ERROR" title="提供割合を取得できませんでした" tone="error" />;
   }
   return <PrizeRateContent detail={state.detail} />;
+}
+
+export function GachaPrizeRateView({ slug }: { readonly slug: string }) {
+  return <PrizeRateRequest key={slug} slug={slug} />;
 }
