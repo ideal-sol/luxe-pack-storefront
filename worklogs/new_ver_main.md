@@ -408,3 +408,35 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   recorded in PR #141. Stop OPEN after ALL PASS; no merge/auto-merge, PR #139
   mutation, OLD Test deployment, Runtime/Nginx/Production/NEW or migration
   execution. Browser/E2E/Runtime acceptance NOT RUN under this source-only phase.
+
+## SFSEC-20261006 — source-map-js production remediation (2026-10-06)
+
+- Human-approved exact dependency scope; Issue #142, Risk R3 / Strict Change /
+  Activation deferred until merge and OLD Test preflight. Dedicated worktree
+  starts at protected main `effe1e1fdf81e230eaeccf5901793a18b5f338a0`.
+- Added only `source-map-js@<1.2.2: 1.2.2` to existing pnpm overrides and
+  canonically resolved the lockfile. Version 1.2.1 is absent; 1.2.2 is the sole
+  resolution. Mechanical normalized-lock comparison proves unrelated package
+  delta zero, including unchanged Next 16.3.6, sanitize-html 2.17.7 and both
+  existing PostCSS versions. No regression-test change was necessary.
+- All 641 other tracked files are byte-identical to the base, excluding only
+  package.json, pnpm-lock.yaml and this mandatory Worklog. Application Source,
+  first-user behavior, alpha.43 Artifact/pins, Site Schema, Readiness, workflows,
+  policy and security controls remain unchanged.
+- Fresh pnpm 11.25.0 audit: production all-severity findings zero and
+  GHSA-68fv-2mgg-jv7q absent. Full audit passes the unchanged canonical policy:
+  one existing exact approved dev-only High exception, five visible Moderate
+  findings, zero unapproved High/Critical. No new exception or suppression.
+- Frozen install PASS; focused Point/first-buy/Payment regression 130 PASS;
+  Readiness 258 PASS; full suite 57 files / 1129 tests PASS; Artifact, policy,
+  all nine boundaries, lint, typecheck, production build, secret/scope and
+  whitespace checks PASS. Existing jsdom navigation diagnostics are nonfailing.
+- Existing Platform OLD Test Artifact 11384020422 exact-ID fresh readback
+  verified against approved outer digest and payload 0ce41ab473fd5a4fb44773041ae097ffb40b14ce.
+  Read-only preflight confirms the unchanged 80-migration ledger including
+  000078/000079/000080, missing zero, healthy APIs and retained rollback sources.
+  No Artifact generation, migration, operational DB or Runtime change occurred.
+- Final commit, PR checks, fresh exact-head review and conditional squash merge
+  are recorded in this Task PR. Human approval permits OLD Test resume only
+  after every gate passes; runtime evidence is recorded separately. Production,
+  NEW and PR #139 remain excluded. Human Browser Acceptance remains pending.
