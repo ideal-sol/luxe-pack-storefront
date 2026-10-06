@@ -1780,3 +1780,92 @@ html[data-motion="ready"] .gacha-card[data-reveal="in"]:hover { transition-delay
   .site-header__nav > a[href="/register"]::after, .button--ghost:not(:disabled)::after { display: none; }
   .home-guide__flow-arrow::after { animation: none; }
 }
+
+/* ==========================================================
+   提供割合（ガチャ詳細の「提供割合を見る」と、提供割合ページ）
+   ========================================================== */
+.gacha-rate-link {
+  align-items: center;
+  background: var(--white);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink);
+  display: flex;
+  font-size: .9rem;
+  font-weight: 800;
+  gap: 12px;
+  justify-content: space-between;
+  min-height: 58px;
+  padding: 14px 20px;
+  transition: border-color .18s, box-shadow .18s;
+}
+.gacha-rate-link:hover { border-color: var(--teal); box-shadow: 0 6px 18px rgba(0, 190, 177, .16); }
+.gacha-rate-link:focus-visible, .prize-rate__back:focus-visible, .prize-rate__row summary:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
+.gacha-rate-link__chevron { color: var(--teal); font-size: 1.5rem; font-weight: 900; line-height: 1; }
+
+.prize-rate { display: grid; gap: 18px; min-width: 0; }
+.prize-rate__back { align-items: center; color: var(--teal-dd); display: inline-flex; font-size: .82rem; font-weight: 800; gap: 6px; justify-self: start; min-height: 44px; }
+.prize-rate__title { color: var(--ink); font-size: clamp(1.15rem, 4.6vw, 1.5rem); font-weight: 900; line-height: 1.45; margin: 0; overflow-wrap: anywhere; }
+.prize-rate__total { margin: 0; }
+.prize-rate__total > div { align-items: baseline; background: var(--paper-deep); border-radius: 12px; display: flex; gap: 16px; justify-content: space-between; padding: 14px 20px; }
+.prize-rate__total dt { color: var(--teal-dd); font-size: .8rem; font-weight: 800; }
+.prize-rate__total dd { color: var(--ink); font-size: 1.5rem; font-variant-numeric: tabular-nums; font-weight: 900; margin: 0; }
+.prize-rate small { font-size: .62em; font-weight: 800; margin-left: 3px; }
+
+.prize-rate__table { background: var(--white); border: 2px solid var(--line); border-radius: 14px; overflow: hidden; }
+.prize-rate__rows, .prize-rate__prizes, .prize-rate__notes { list-style: none; margin: 0; padding: 0; }
+.prize-rate__cells { align-items: center; display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr) minmax(5.5em, auto) minmax(7.2em, auto) 18px; padding: 14px 16px 14px 20px; }
+.prize-rate__head { background: var(--paper-deep); color: var(--teal-dd); font-size: .74rem; font-weight: 800; padding-block: 10px; }
+.prize-rate__head > span:nth-child(n + 2), .prize-rate__count, .prize-rate__percent { text-align: right; }
+.prize-rate__row { border-top: 1px solid var(--line); }
+.prize-rate__rank-name { color: var(--ink); font-size: 1rem; font-weight: 900; overflow-wrap: anywhere; }
+.prize-rate__count, .prize-rate__percent { color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 900; }
+.prize-rate__count { font-size: .98rem; }
+.prize-rate__percent { color: var(--teal-dd); font-size: .98rem; }
+.prize-rate__sr {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+/* 内訳を開ける賞：右端に開閉の矢印を出す */
+.prize-rate__row summary { cursor: pointer; list-style: none; }
+.prize-rate__row summary::-webkit-details-marker { display: none; }
+.prize-rate__row summary::after {
+  border-bottom: 2px solid var(--teal);
+  border-right: 2px solid var(--teal);
+  content: "";
+  grid-column: 4;
+  height: 8px;
+  justify-self: center;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform .18s;
+  width: 8px;
+}
+.prize-rate__row details[open] > summary::after { transform: translateY(2px) rotate(-135deg); }
+.prize-rate__prizes { background: var(--paper); border-top: 1px dashed var(--line); padding: 6px 20px 10px; }
+.prize-rate__prizes li { align-items: baseline; color: var(--ink); display: flex; font-size: .84rem; font-weight: 700; gap: 16px; justify-content: space-between; padding-block: 7px; }
+.prize-rate__prizes li + li { border-top: 1px solid var(--line); }
+.prize-rate__prizes li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.prize-rate__prizes li > span:last-child { flex: none; font-variant-numeric: tabular-nums; font-weight: 900; }
+
+.prize-rate__notes { color: var(--muted); display: grid; font-size: .76rem; font-weight: 700; gap: 6px; line-height: 1.75; }
+.prize-rate__notes li { padding-left: 1.3em; position: relative; }
+.prize-rate__notes li::before { content: "※"; left: 0; position: absolute; }
+
+@media (max-width: 600px) {
+  .prize-rate__cells { gap: 8px; grid-template-columns: minmax(0, 1fr) minmax(4.6em, auto) minmax(6.4em, auto) 14px; padding: 12px 12px 12px 14px; }
+  .prize-rate__rank-name { font-size: .92rem; }
+  .prize-rate__count, .prize-rate__percent { font-size: .9rem; }
+  .prize-rate__prizes { padding-inline: 14px; }
+  .prize-rate__total > div { padding: 12px 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gacha-rate-link, .prize-rate__row summary::after { transition: none; }
+}

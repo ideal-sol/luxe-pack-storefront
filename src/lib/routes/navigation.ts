@@ -50,6 +50,14 @@ export function drawResultRoute(drawRequestId: string) {
   return `/draws/${encodeURIComponent(drawRequestId)}/result`;
 }
 
+export function gachaDetailRoute(slug: string) {
+  return `/gachas/${encodeURIComponent(slug)}`;
+}
+
+export function gachaPrizeRateRoute(slug: string) {
+  return `${gachaDetailRoute(slug)}/prize-rate`;
+}
+
 export function pointPurchaseDetailRoute(productId: string) {
   return `/points/purchase/${encodeURIComponent(productId)}`;
 }
@@ -102,6 +110,7 @@ export const publicRoutes = [
   "/",
   "/gachas",
   "/gachas/[slug]",
+  "/gachas/[slug]/prize-rate",
   "/draws/[drawRequestId]/result",
   "/login",
   "/register",
