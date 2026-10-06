@@ -10,15 +10,14 @@ let root;
 let authority;
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), "alpha41-production-provenance-"));
+  root = mkdtempSync(join(tmpdir(), "alpha43-production-provenance-"));
   authority = structuredClone(approvedSource);
-  for (const file of ["vendor/oripa/SHIPONLY-20260926"]) {
+  for (const file of ["vendor/oripa/CONTRACT-20261005"]) {
     mkdirSync(dirname(join(root, file)), { recursive: true });
     cpSync(file, join(root, file), { recursive: true });
   }
-  // Keep Production authority on its approved alpha.41 source while Preview adopts alpha.42.
   for (const file of ["package.json", "pnpm-lock.yaml"]) {
-    cpSync(`src/test/fixtures/production-alpha41/${file}`, join(root, file));
+    cpSync(file, join(root, file));
   }
 });
 
@@ -36,7 +35,12 @@ function mutateManifest(mutation) {
   authority.manifest_sha256 = createHash("sha256").update(readFileSync(join(root, authority.manifest_path))).digest("hex");
 }
 
-describe("exact alpha.41 Production provenance", () => {
+describe("exact alpha.43 Production provenance", () => {
+  it("rejects predecessor alpha.41 source dependency pins", () => {
+    cpSync("src/test/fixtures/production-alpha41/package.json", join(root, "package.json"));
+    expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
+  });
+
   it("rejects predecessor alpha.40 source dependency pins", () => {
     cpSync("src/test/fixtures/production-alpha40/package.json", join(root, "package.json"));
     expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
@@ -49,28 +53,28 @@ describe("exact alpha.41 Production provenance", () => {
 
   it("accepts approved source pins, immutable artifact identity and every digest", () => {
     expect(validateProvenance(root)).toMatchObject({
-      source_sha: "7da93eb695f38b7cf804eba59a3642da0b9dc073",
-      contract_version: "2.0.0-alpha.41", contract_artifact_id: "10900150259",
-      contract_manifest_sha256: "b3c7d2a28c0c8332eeea90ac43876245baf4a1e4ce6b7d4f646124212d99f7ee",
-      client_pin: "2.0.0-alpha.41", testkit_pin: "2.0.0-alpha.41", public_openapi_pin: "2.0.0-alpha.37",
-      platform_runtime_source_sha: "538a208c025fcc5a7d6f9914d3c428b9ef702dbe",
-      platform_authority_merge_sha: "6deba7e8fe4b85ae43b66b7437b46db94ad7c814",
-      contract_archive_sha256: "6d4cf321249d46145f22ce9551ba709a51dd59453ccbe0bd5004d0782d2dfb50",
-      platform_source_sha: "e2b30805704ed5b9c3fd54492fb86f8b8549bde5",
-      client_sha256: "3565505ed851df91a1ee4b9eeef1a94caae706a6b47725ef1472e5d5048f6f72",
-      testkit_sha256: "56892eafca206e8f504144937169a7ed2974da6f14082347616abafda013bd59",
-      public_openapi_sha256: "2ef9d4d085ad29e4073f6e963d93b68b9e1ecfd8000dc84a330a8a016f30be4b",
+      source_sha: "6aef11464215971b6aa57d10f25e78d05c424cce",
+      contract_version: "2.0.0-alpha.43", contract_artifact_id: "11349442812",
+      contract_manifest_sha256: "1951edf44ef275e3c9bf85ac0ce1417a27bc64e982a607d0a72e49186eb09e74",
+      client_pin: "2.0.0-alpha.43", testkit_pin: "2.0.0-alpha.43", public_openapi_pin: "2.0.0-alpha.39",
+      platform_runtime_source_sha: "4b7d00e8e31223136cd0b70134916d091dfea6cb",
+      platform_authority_merge_sha: "48639e9cdc44e43534e45dbbb1b6eeb1bfc7d591",
+      contract_archive_sha256: "53fb939978eabbf9b636369b15c81369d18305890891715f7bbd864e9b197d14",
+      platform_source_sha: "0ce41ab473fd5a4fb44773041ae097ffb40b14ce",
+      client_sha256: "9f14026a53d24413d860975d5c012988a5381771600b81e8309e5119a10792b0",
+      testkit_sha256: "d5bb5b0d785437e0f400b369ff97663a6c69d4a329c1b82710017087a92af9fb",
+      public_openapi_sha256: "37cdeb7a214d42f0f69458d578a81c5c7869132e2a6cbd02ca8d150f1abf6faa",
     });
   });
 
-  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40"])("rejects %s source pins", (version) => {
+  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40", "2.0.0-alpha.41", "2.0.0-alpha.42"])("rejects %s source pins", (version) => {
     mutateJson("package.json", (value) => {
-      value.dependencies["@oripa/storefront-client"] = `file:vendor/oripa/SHIPONLY-20260926/oripa-storefront-client-${version}.tgz`;
+      value.dependencies["@oripa/storefront-client"] = `file:vendor/oripa/CONTRACT-20261005/oripa-storefront-client-${version}.tgz`;
     });
     expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
   });
 
-  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40"])("rejects %s manifest contract", (version) => {
+  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40", "2.0.0-alpha.41", "2.0.0-alpha.42"])("rejects %s manifest contract", (version) => {
     mutateManifest((manifest) => { manifest.bundle.version = version; });
     expect(() => validateProvenance(root, authority)).toThrow("source and manifest contract mismatch");
   });
@@ -81,6 +85,9 @@ describe("exact alpha.41 Production provenance", () => {
   });
 
   it.each([
+    ["platform_runtime_source_sha", "538a208c025fcc5a7d6f9914d3c428b9ef702dbe"],
+    ["platform_authority_merge_sha", "6deba7e8fe4b85ae43b66b7437b46db94ad7c814"],
+    ["platform_runtime_source_sha", "48639e9cdc44e43534e45dbbb1b6eeb1bfc7d591"],
     ["platform_runtime_source_sha", "e4361ece51fc1249a5cfb2c64cf56d3aa4bb0c29"],
     ["platform_authority_merge_sha", "d823c2f80c1500990289b06da8e5504d7b48c2e5"],
   ])("rejects superseded %s", (field, value) => {
@@ -98,6 +105,23 @@ describe("exact alpha.41 Production provenance", () => {
     expect(() => validateProvenance(root, authority)).toThrow("Contract archive authority mismatch");
   });
 
+  it.each(["missing", "duplicate", "wrong"])("rejects %s canonical workflow provenance", (kind) => {
+    const path = join(root, dirname(authority.manifest_path), "PROVENANCE.md");
+    const content = readFileSync(path, "utf8");
+    const line = "- Canonical workflow: https://github.com/ideal-sol/oripa/actions/runs/37319224331";
+    writeFileSync(path, kind === "missing" ? content.replace(line, "")
+      : kind === "duplicate" ? `${content}\n${line}\n` : content.replace("37319224331", "36223277643"));
+    expect(() => validateProvenance(root)).toThrow("Canonical workflow mismatch");
+  });
+
+  it.each(["missing", "duplicate"])("rejects %s outer archive provenance", (kind) => {
+    const path = join(root, dirname(authority.manifest_path), "PROVENANCE.md");
+    const content = readFileSync(path, "utf8");
+    const line = `- GitHub outer SHA256: \`${authority.contract_archive_sha256}\``;
+    writeFileSync(path, kind === "missing" ? content.replace(line, "") : `${content}\n${line}\n`);
+    expect(() => validateProvenance(root)).toThrow("Contract archive authority mismatch");
+  });
+
   it("rejects wrong Public OpenAPI version", () => {
     mutateManifest((manifest) => { manifest.public_openapi.version = "2.0.0-alpha.35"; });
     expect(() => validateProvenance(root, authority)).toThrow("Public OpenAPI digest mismatch");
@@ -110,7 +134,7 @@ describe("exact alpha.41 Production provenance", () => {
 
   it("rejects a stale Artifact ID in source provenance", () => {
     const path = join(root, dirname(authority.manifest_path), "PROVENANCE.md");
-    writeFileSync(path, readFileSync(path, "utf8").replace("10900150259", "10786577344"));
+    writeFileSync(path, readFileSync(path, "utf8").replace("11349442812", "10786577344"));
     expect(() => validateProvenance(root)).toThrow("Artifact ID mismatch");
   });
 
@@ -171,21 +195,21 @@ describe("exact alpha.41 Production provenance", () => {
     expect(() => validateProvenance(root, authority)).toThrow("Client/Testkit mismatch");
   });
 
-  it.each(["oripa-storefront-client-2.0.0-alpha.41.tgz", "oripa-storefront-testkit-2.0.0-alpha.41.tgz", "public.openapi.json"])(
+  it.each(["oripa-storefront-client-2.0.0-alpha.43.tgz", "oripa-storefront-testkit-2.0.0-alpha.43.tgz", "public.openapi.json"])(
     "rejects changed artifact bytes: %s", (file) => {
       writeFileSync(join(root, dirname(authority.manifest_path), file), "tampered");
       expect(() => validateProvenance(root)).toThrow(/digest mismatch/);
     },
   );
 
-  it.each(["AGENCY-004A", "CONTACT-PREFILL-001", "DRAW-20260925"])("rejects stale %s authority", (directory) => {
+  it.each(["AGENCY-004A", "CONTACT-PREFILL-001", "DRAW-20260925", "SHIPONLY-20260926"])("rejects stale %s authority", (directory) => {
     authority.manifest_path = `vendor/oripa/${directory}/artifact-manifest.json`;
     expect(() => validateProvenance(root, authority)).toThrow("stale provenance authority");
   });
 
   it("rejects a mismatched lockfile pin", () => {
     const path = join(root, "pnpm-lock.yaml");
-    writeFileSync(path, readFileSync(path, "utf8").replaceAll("alpha.41", "alpha.40"));
+    writeFileSync(path, readFileSync(path, "utf8").replaceAll("alpha.43", "alpha.41"));
     expect(() => validateProvenance(root)).toThrow("lockfile pin mismatch");
   });
 
@@ -268,6 +292,7 @@ describe("Production source authority", () => {
   });
 
   it.each(["main", "abc", "A".repeat(40), "0".repeat(40), "f".repeat(40),
+    "7da93eb695f38b7cf804eba59a3642da0b9dc073",
     "342341a82131a7f80a4e7508172f1e764ec7ad84", "b85afec9aba0e72732366e8e12701cef39a06e06"])("rejects invalid or unapproved source %s", async (sha) => {
     await expect(authorize(root, sha, workflow, get)).rejects.toThrow();
   });

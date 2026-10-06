@@ -34,6 +34,7 @@ env:
   NEXT_PUBLIC_SITE_URL: ${{ inputs.site_url }}
   NODE_VERSION: 22.22.3
   PNPM_VERSION: 10.12.1
+  PNPM_AUDIT_VERSION: 11.25.0
 
 jobs:
   build-publish-verify:
@@ -120,7 +121,7 @@ jobs:
           test "$(node --version)" = "v$NODE_VERSION"
           test "$(pnpm --version)" = "$PNPM_VERSION"
           pnpm install --frozen-lockfile
-          test "$(node -p "require('./node_modules/next/package.json').version")" = "16.3.3"
+          test "$(node -p "require('./node_modules/next/package.json').version")" = "16.3.6"
 
       - name: Validate source and contracts
         shell: bash
@@ -128,7 +129,18 @@ jobs:
           set -euo pipefail
           pnpm artifact:check
           pnpm security:check
-          pnpm audit --audit-level high
+          corepack prepare "pnpm@$PNPM_AUDIT_VERSION" --activate
+          (
+            audit_root="$(mktemp -d)"
+            trap 'rm -rf -- "$audit_root"' EXIT
+            cd "$audit_root"
+            export PNPM_CONFIG_FETCH_TIMEOUT=300000
+            test "$(pnpm --version)" = "$PNPM_AUDIT_VERSION"
+            node "$GITHUB_WORKSPACE/runtime/scripts/ci/security-audit-policy.mjs" \
+              --collect "$GITHUB_WORKSPACE/runtime" "$audit_root"
+          )
+          corepack prepare "pnpm@$PNPM_VERSION" --activate
+          test "$(pnpm --version)" = "$PNPM_VERSION"
           pnpm lint
           pnpm typecheck
           pnpm exec vitest run src/test/sms-verification-ui.test.tsx
@@ -190,7 +202,7 @@ jobs:
 
           build_id="$(tr -d '\n' < "$release_root/.next/BUILD_ID")"
           next_version="$(node -p "require('./node_modules/next/package.json').version")"
-          test "$next_version" = "16.3.3"
+          test "$next_version" = "16.3.6"
           node "$GITHUB_WORKSPACE/build-authority/scripts/production-provenance.mjs" validate . "$RUNNER_TEMP/contract-provenance.json"
 
           (
@@ -427,7 +439,7 @@ jobs:
           test "$(node -p "require('./artifact-manifest.json').git_tree")" = "$EXPECTED_GIT_TREE"
           test "$(node -p "require('./artifact-manifest.json').node_version")" = "$NODE_VERSION"
           test "$(node -p "require('./artifact-manifest.json').pnpm_version")" = "$PNPM_VERSION"
-          test "$(node -p "require('./artifact-manifest.json').next_version")" = "16.3.3"
+          test "$(node -p "require('./artifact-manifest.json').next_version")" = "16.3.6"
           node --input-type=module <<'NODE'
           import { readFileSync } from "node:fs";
           import { join } from "node:path";
