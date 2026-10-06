@@ -26,12 +26,37 @@ All seals reuse `classifier.mjs`: sorted object keys, ordered arrays, compact
 UTF-8 JSON, one trailing LF, SHA-256, excluding only the outer `record_digest`.
 Set-like lists must have unique members; the generated machine plan's order is
 preserved. Never hand-edit a sealed record. Hashes establish integrity, **not
-Human authentication**. An operator must obtain the Human handoff and any
-resolution through a trusted Human-controlled channel and retain its reference.
-A role string alone is not proof of who supplied a file. The offline finalizer
-does not authenticate GitHub users or make Human decisions. GitHub snapshots,
-artifact downloads and comment authors must also come from a trusted read-only
-transport. Do not accept an arbitrary PR author's claimed snapshot as authority.
+Human authentication**. Phase 1's Source Authority is the immutable
+`TRUSTED_SHADOW_EVIDENCE_PUBLISHERS = ["myong-ideal"]` in
+`shadow-publisher.mjs`. CLI arguments, record bodies, snapshot allowlists,
+repository permissions and PR authors cannot override it. The Human handoff
+still needs a trusted Human-controlled channel and reference; the finalizer
+only checks its structure and bindings. A local FINALIZED JSON is not yet
+durable Human Authority and earns no Exit credit on its own.
+
+The collector checks GitHub API `user.login` before parsing either observation
+or resolution markers. Untrusted publishers are ignored as Authority evidence,
+with `UNTRUSTED_HUMAN_EVIDENCE_PUBLISHER` recorded. Even malformed untrusted JSON
+cannot poison the trusted stream. A trusted publisher's malformed marker, JSON,
+seal, identity or publication metadata fails closed.
+
+Publisher login, GitHub comment/review ID, exact comment/review URL, repository,
+PR number, evidence kind and record digest are stored in each snapshot row's
+`durable_evidence`. They are collected from API metadata, not from the JSON body.
+The URL must identify that PR and match the ID and comment/review type. A record
+copied to another PR is rejected. The evaluator requires this trusted durable
+publication for every observation and resolution, including historical records.
+
+Window snapshot schema **1.1** requires this provenance and separate observation
+and resolution digest indexes. Old 1.0 snapshots must be reconstructed; they
+cannot be upgraded by the evaluator guessing a publisher. Offline replay uses
+only the sealed collector snapshot, never a caller-supplied publisher option or
+a local record's `confirmed_by_role` claim. GitHub API snapshots and artifact
+downloads must be obtained and retained through a trusted read-only transport.
+As before, an unsigned JSON seal does not authenticate the snapshot's own origin:
+do not accept arbitrary author-provided snapshots or fabricate API responses.
+The offline mode replays authenticated collection evidence; it does not perform
+a new network authentication or assert who physically operated the approved account.
 
 ## Record lifecycle
 
@@ -44,7 +69,9 @@ transport. Do not accept an arbitrary PR author's claimed snapshot as authority.
    plan binding and findings. Validation rebuilds the entire result, rejecting
    even a re-sealed alteration to derived fields.
 5. `comment` emits canonical Markdown suitable for an authorized operator to
-   post to the target PR. It does not post anything itself.
+   post as `myong-ideal` to the target PR. It does not post anything itself.
+6. Reconstruct the window after publication. Only the collector's digest-bound
+   trusted publisher provenance makes that local finalization usable by Exit.
 
 ```bash
 node scripts/readiness/shadow-observation.mjs observe \
@@ -145,6 +172,7 @@ reviews, branches or permissions. No write permission is needed by the workflow.
 ```bash
 node scripts/readiness/shadow-github-adapter.mjs \
   --output /tmp/window.json --observations-output /tmp/observations.json \
+  --resolutions-output /tmp/resolutions.json \
   --machines-output /tmp/machines.json --artifacts /tmp/artifact-input.json
 node scripts/readiness/shadow-window-audit.mjs \
   --snapshot /tmp/window.json --output /tmp/window-audit.json
@@ -172,7 +200,8 @@ expected checks. All other categories, including Gate and dependency changes,
 still require Shadow observation; their exclusion only affects actual counts.
 The offline snapshot contains all identity fields, state/dates, changed files,
 workflow trigger/conclusion/source, artifact presence, verified machine/final
-digests, all historical finalized digests and normal CI conclusions. The evaluator
+digests, all historical finalized digests, resolution digests, trusted publisher
+provenance and normal CI conclusions. The evaluator
 requires every historical finalization from that index, preventing omission of
 an older OPEN finding from the supplied observation directory. It also carries completeness flags, start
 authority/time, protected main SHA and capture time. `auditWindow` validates the
@@ -197,12 +226,27 @@ same PR/head or observation ID fail. New heads preserve older records as STALE;
 only the current source identity counts, while old OPEN findings remain OPEN.
 Do not revise a final record in place to resolve a finding.
 
-An optional resolution manifest is an array of separately sealed Human records:
+A collected resolution manifest is an array of separately sealed Human records:
 `schema_version=1.0`, all `BINDING` fields, `observation_digest`, `finding_id`,
 `status=RESOLVED`, `confirmed_by_role=human_operator`, `resolution_reference`,
 `record_digest`. The original observation and finding must exist and match.
-Missing references, machine roles and duplicate resolutions fail. A resolution
-never overwrites Machine evidence or grants actual-change credit.
+Publish each resolution as `myong-ideal` on its target PR using
+`<!-- shadow-resolution:v1 -->` followed by a fenced JSON block, then re-run the
+collector to obtain both the resolution manifest and matching snapshot provenance.
+The publisher helper emits this canonical form without posting it:
+
+```bash
+node scripts/readiness/shadow-publisher.mjs comment-resolution \
+  --resolution /tmp/human-resolution.json
+```
+
+Arbitrary local resolution JSON, including a valid seal and
+`confirmed_by_role=human_operator`, cannot change OPEN to RESOLVED without its
+trusted durable publication in the reconstructed window. Missing references,
+wrong PR/head/observation/finding bindings, untrusted publishers and conflicting
+resolutions fail. Identical resolution reloads are idempotent. Every indexed
+resolution must be supplied; omitting it fails closed. A resolution never
+overwrites Machine evidence or grants actual-change credit.
 
 ```bash
 node scripts/readiness/shadow-invalidation.mjs --output /tmp/invalidation.json

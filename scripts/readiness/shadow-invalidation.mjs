@@ -3,7 +3,7 @@ import { classifyDiff } from "./classifier.mjs";
 import { AUTHORITY, IDENTITY, authority, bind, canonical, cli, options, requireValue, seal, verifySeal, writeJson } from "./shadow-common.mjs";
 import { observe, validateEnvelope } from "./shadow-observation.mjs";
 
-const implementationFiles = ["classifier.mjs", "shadow-common.mjs", "shadow-observation.mjs", "shadow-window-audit.mjs", "shadow-exit-evaluator.mjs", "shadow-github-adapter.mjs", "shadow-invalidation.mjs"];
+const implementationFiles = ["classifier.mjs", "shadow-common.mjs", "shadow-observation.mjs", "shadow-window-audit.mjs", "shadow-exit-evaluator.mjs", "shadow-github-adapter.mjs", "shadow-publisher.mjs", "shadow-invalidation.mjs"];
 const implementationDigest = () => seal(Object.fromEntries(implementationFiles.map(name => [name, readFileSync(new URL(name, import.meta.url), "utf8")]))).record_digest;
 export const INVALIDATION_CASES = ["machine_digest", "policy_digest", "impact_map_digest", "base_sha", "head_sha", "tree_sha", "stale_observation", "authority_changing_event"];
 

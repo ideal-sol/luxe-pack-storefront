@@ -1,7 +1,8 @@
-import { AUTHORITY, BINDING, CHECKS, REPOSITORY, authority, bind, cli, exactKeys, options, readJson, readRecords, requireValue, seal, string, verifySeal, writeJson } from "./shadow-common.mjs";
+import { AUTHORITY, CHECKS, REPOSITORY, authority, bind, cli, options, readJson, readRecords, requireValue, seal, writeJson } from "./shadow-common.mjs";
 import { validateObservation } from "./shadow-observation.mjs";
 import { auditWindow, currentIdentity } from "./shadow-window-audit.mjs";
 import { validateInvalidation } from "./shadow-invalidation.mjs";
+import { requirePublished, validateResolution } from "./shadow-publisher.mjs";
 
 export function evaluateExit(observations, snapshot, { resolutions = [], invalidation = null } = {}) {
   const window = auditWindow(snapshot);
@@ -9,6 +10,7 @@ export function evaluateExit(observations, snapshot, { resolutions = [], invalid
   const byId = new Map(), byHead = new Map();
   for (const record of observations) {
     validateObservation(record);
+    requirePublished(record, window.rows.find(row => row.pr_number === record.pr_number), "observation");
     const previous = byId.get(record.observation_id);
     requireValue(!previous || previous.record_digest === record.record_digest, "DUPLICATE_OBSERVATION_ID");
     const headKey = `${record.pr_number}:${record.head_sha}`;
@@ -18,17 +20,18 @@ export function evaluateExit(observations, snapshot, { resolutions = [], invalid
   const records = [...byId.values()];
   for (const row of window.rows) requireValue(row.historical_finalized_record_digests.every(digest => records.some(record => record.pr_number === row.pr_number && record.record_digest === digest)), "FINALIZED_HISTORY_OMITTED");
   const findings = records.flatMap(record => record.findings.map(finding => ({ ...finding, observation_digest: record.record_digest })));
-  const resolved = new Set();
+  for (const row of window.rows) requireValue(row.resolution_record_digests.every(digest => resolutions.some(record => record.pr_number === row.pr_number && record.record_digest === digest)), "DURABLE_RESOLUTION_OMITTED");
+  const resolved = new Map();
   for (const resolution of resolutions) {
-    verifySeal(resolution, "RESOLUTION");
-    exactKeys(resolution, ["schema_version", ...BINDING, "observation_digest", "finding_id", "status", "confirmed_by_role", "resolution_reference", "record_digest"], "RESOLUTION");
+    validateResolution(resolution);
+    const publisher = requirePublished(resolution, window.rows.find(row => row.pr_number === resolution.pr_number), "resolution");
     const record = records.find(record => record.record_digest === resolution.observation_digest);
     requireValue(record, "RESOLUTION_OBSERVATION_MISSING"); bind(resolution, record);
-    requireValue(resolution.schema_version === "1.0" && resolution.confirmed_by_role === "human_operator" && resolution.status === "RESOLVED" && string(resolution.resolution_reference), "HUMAN_RESOLUTION_REQUIRED");
     const finding = findings.find(finding => finding.finding_id === resolution.finding_id && finding.observation_digest === resolution.observation_digest);
     requireValue(finding, "RESOLUTION_FINDING_MISSING");
-    requireValue(!resolved.has(finding.finding_id), "DUPLICATE_RESOLUTION"); resolved.add(finding.finding_id);
+    requireValue(!resolved.has(finding.finding_id) || resolved.get(finding.finding_id) === resolution.record_digest, "CONFLICTING_RESOLUTION"); resolved.set(finding.finding_id, resolution.record_digest);
     finding.status = "RESOLVED"; finding.resolution_reference = resolution.resolution_reference;
+    finding.resolution_publisher_evidence_reference = publisher.publisher_evidence_reference;
   }
   const stale = [], qualifying = [];
   for (const record of records) {

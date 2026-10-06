@@ -1,7 +1,9 @@
 import { execFileSync } from "node:child_process";
 import { AUTHORITY, CHECKS, REPOSITORY, WINDOW_START, SHADOW_CHECK, canonical, cli, options, readJson, requireValue, seal, string, timestamp, writeJson } from "./shadow-common.mjs";
-import { observe, validateEnvelope, validateObservation } from "./shadow-observation.mjs";
+import { observe, validateEnvelope } from "./shadow-observation.mjs";
 import { auditWindow, currentIdentity } from "./shadow-window-audit.mjs";
+import { PUBLISHER_SNAPSHOT_VERSION, recordsFromComments } from "./shadow-publisher.mjs";
+export { recordsFromComments } from "./shadow-publisher.mjs";
 
 const prefix = `/repos/${REPOSITORY}`;
 function matchesRun(run, pr) {
@@ -26,21 +28,6 @@ async function pages(get, path, key = null) {
   throw new Error("GITHUB_PAGINATION_LIMIT");
 }
 
-export function recordsFromComments(comments) {
-  const records = [];
-  for (const comment of comments) {
-    if (!comment.body?.includes("<!-- shadow-observation:v1 -->")) continue;
-    const matches = [...comment.body.matchAll(/<!-- shadow-observation:v1 -->\s*```json\s*([\s\S]*?)\s*```/g)];
-    requireValue(matches.length > 0, "DURABLE_COMMENT_MALFORMED");
-    for (const match of matches) {
-      const record = JSON.parse(match[1]);
-      validateObservation(record);
-      records.push(record);
-    }
-  }
-  return records;
-}
-
 // get is an authenticated, read-only JSON transport. readArtifact optionally
 // supplies already downloaded artifact JSON by verified artifact/run identity.
 // Missing/expired transport never creates an observation or Human evidence.
@@ -59,7 +46,7 @@ export async function collectWindow(get, { readArtifact = async () => null, capt
   }
   const startedAt = start.commit.committer.date;
   const index = await pages(get, `${prefix}/pulls?state=all&base=main&sort=created&direction=asc`);
-  const observations = [], machines = [], pullRequests = [];
+  const observations = [], resolutions = [], machines = [], pullRequests = [];
   for (const entry of index) {
     if (entry.state === "closed" && Date.parse(entry.merged_at ?? entry.closed_at) <= Date.parse(startedAt) && entry.number !== 134) continue;
     const pr = await get(`${prefix}/pulls/${entry.number}`);
@@ -68,10 +55,16 @@ export async function collectWindow(get, { readArtifact = async () => null, capt
     const head = await get(`${prefix}/git/commits/${pr.head.sha}`);
     const comments = await pages(get, `${prefix}/issues/${entry.number}/comments`);
     const reviews = await pages(get, `${prefix}/pulls/${entry.number}/reviews`);
-    const sealedRecords = recordsFromComments([...comments, ...reviews]);
+    const collected = [
+      recordsFromComments(comments, pr.number), recordsFromComments(reviews, pr.number, "observation", "pull_request_review"),
+      recordsFromComments(comments, pr.number, "resolution"), recordsFromComments(reviews, pr.number, "resolution", "pull_request_review"),
+    ];
+    const sealedRecords = collected.slice(0, 2).flatMap(result => result.records);
+    const sealedResolutions = collected.slice(2).flatMap(result => result.records);
     const identity = { repository: REPOSITORY, pr_number: pr.number, base_sha: pr.base.sha, head_sha: pr.head.sha, tree_sha: head.tree.sha };
     requireValue(sealedRecords.every(record => record.pr_number === pr.number), "COMMENT_PR_MISMATCH");
     observations.push(...sealedRecords);
+    resolutions.push(...sealedResolutions);
     const runs = await pages(get, `${prefix}/actions/runs?event=pull_request&head_sha=${pr.head.sha}`, "workflow_runs");
     const associated = runs.filter(run => run.path === ".github/workflows/readiness-shadow.yml" && matchesRun(run, pr));
     associated.sort((left, right) => Date.parse(right.updated_at) - Date.parse(left.updated_at) || right.id - left.id);
@@ -113,6 +106,9 @@ export async function collectWindow(get, { readArtifact = async () => null, capt
       shadow_source_head_sha: run?.head_sha ?? null, shadow_evidence_reference: run?.html_url ?? null,
       observation_artifact_exists: artifactExists, machine_record_digests: [...new Set(digests)],
       normal_ci_conclusions: normalConclusions,
+      durable_evidence: collected.flatMap(result => result.provenance),
+      ignored_durable_evidence: collected.flatMap(result => result.ignored),
+      resolution_record_digests: [...new Set(sealedResolutions.map(record => record.record_digest))],
       historical_finalized_record_digests: [...new Set(sealedRecords.map(record => record.record_digest))],
       finalized_record_digests: [...new Set(sealedRecords.filter(record => currentIdentity(record, identity)).map(record => record.record_digest))] });
     const fresh = await get(`${prefix}/pulls/${entry.number}`);
@@ -122,15 +118,15 @@ export async function collectWindow(get, { readArtifact = async () => null, capt
   requireValue(canonical(index.map(pr => [pr.number, pr.updated_at])) === canonical(finalIndex.map(pr => [pr.number, pr.updated_at])), "INDEX_CHANGED_DURING_COLLECTION");
   const freshMain = await get(`${prefix}/branches/main`);
   requireValue(freshMain.commit.sha === main.commit.sha && freshMain.protected === true, "MAIN_CHANGED_DURING_COLLECTION");
-  const snapshot = seal({ schema_version: "1.0", repository: REPOSITORY, authority: AUTHORITY, start_authority: WINDOW_START,
+  const snapshot = seal({ schema_version: PUBLISHER_SNAPSHOT_VERSION, repository: REPOSITORY, authority: AUTHORITY, start_authority: WINDOW_START,
     started_at: startedAt, captured_at: capturedAt, protected_main: true, protected_main_sha: main.commit.sha, start_is_ancestor: true,
     index_complete: true, pagination_complete: true, evidence_reference: `https://github.com/${REPOSITORY}/pulls`, pull_requests: pullRequests });
   auditWindow(snapshot);
-  return { snapshot, observations, machines };
+  return { snapshot, observations, resolutions, machines };
 }
 
 cli(import.meta.url, async () => {
-  const opts = options(process.argv.slice(2), ["output", "observations-output", "machines-output"], ["responses", "artifacts"]);
+  const opts = options(process.argv.slice(2), ["output", "observations-output", "resolutions-output", "machines-output"], ["responses", "artifacts"]);
   const responses = opts.responses ? readJson(opts.responses) : null;
   const artifacts = opts.artifacts ? readJson(opts.artifacts) : {};
   const get = async path => {
@@ -138,5 +134,5 @@ cli(import.meta.url, async () => {
     return JSON.parse(execFileSync("gh", ["api", "--method", "GET", path], { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 }));
   };
   const result = await collectWindow(get, { readArtifact: async artifact => artifacts[String(artifact.id)] ?? null });
-  writeJson(opts.output, result.snapshot); writeJson(opts["observations-output"], result.observations); writeJson(opts["machines-output"], result.machines);
+  writeJson(opts.output, result.snapshot); writeJson(opts["observations-output"], result.observations); writeJson(opts["resolutions-output"], result.resolutions); writeJson(opts["machines-output"], result.machines);
 });

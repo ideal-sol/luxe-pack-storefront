@@ -12,6 +12,7 @@ import { auditWindow, categoryFor } from "./shadow-window-audit.mjs";
 import { evaluateExit } from "./shadow-exit-evaluator.mjs";
 import { runInvalidation, validateInvalidation } from "./shadow-invalidation.mjs";
 import { collectWindow, recordsFromComments } from "./shadow-github-adapter.mjs";
+import { PUBLISHER_SNAPSHOT_VERSION, TRUSTED_SHADOW_EVIDENCE_PUBLISHERS, resolutionCommentEvidence } from "./shadow-publisher.mjs";
 
 const now = "2026-10-06T00:00:00.000Z";
 const sha = number => number.toString(16).padStart(40, "0");
@@ -37,14 +38,31 @@ async function fixture(number = 200, kind = "copy") {
   return { machine, envelope, human, checks, record: finalize(envelope, human, checks, now), path };
 }
 
+function published(record, kind = "observation", login = "myong-ideal", prNumber = record.pr_number, id = 10000 + record.pr_number, type = "issue_comment") {
+  return { id, user: { login }, html_url: `https://github.com/${REPOSITORY}/pull/${prNumber}#${type === "issue_comment" ? "issuecomment" : "pullrequestreview"}-${id}`,
+    body: kind === "observation" ? commentEvidence(record) : resolutionCommentEvidence(record) };
+}
+function publication(record, kind = "observation") {
+  return recordsFromComments([published(record, kind)], record.pr_number, kind).provenance;
+}
+function withResolutions(window, resolutions) {
+  return modified(window, w => {
+    for (const record of resolutions) {
+      const row = w.pull_requests.find(row => row.pr_number === record.pr_number);
+      row.resolution_record_digests.push(record.record_digest);
+      row.durable_evidence.push(...publication(record, "resolution"));
+    }
+  });
+}
 function windowFor(records, paths = {}) {
-  return seal({ schema_version: "1.0", repository: REPOSITORY, authority: AUTHORITY, start_authority: WINDOW_START,
+  return seal({ schema_version: PUBLISHER_SNAPSHOT_VERSION, repository: REPOSITORY, authority: AUTHORITY, start_authority: WINDOW_START,
     started_at: "2026-10-05T10:00:00.000Z", captured_at: now, protected_main: true, protected_main_sha: sha(999), start_is_ancestor: true,
     index_complete: true, pagination_complete: true, evidence_reference: "https://example.test/window/fixture-only",
     pull_requests: records.map(record => ({ ...pick(record, IDENTITY), base_ref: "main", state: "merged", created_at: "2026-10-05T11:00:00.000Z", updated_at: now, merged_at: now, closed_at: now, merge_commit_sha: sha(record.pr_number + 2000),
       changed_files: paths[record.pr_number] ?? ["src/components/payment/card-save-confirmation.tsx"], files_complete: true,
       shadow_workflow_triggered: true, shadow_check_conclusion: "success", shadow_source_head_sha: record.head_sha, shadow_evidence_reference: "https://example.test/shadow",
       normal_ci_conclusions: Object.fromEntries(record.check_evidence.checks.filter(check => CHECKS.includes(check.name)).map(check => [check.name, check.conclusion])),
+      durable_evidence: publication(record), resolution_record_digests: [],
       observation_artifact_exists: true, machine_record_digests: [record.machine_record_digest], finalized_record_digests: [record.record_digest], historical_finalized_record_digests: [record.record_digest] })) });
 }
 function modified(value, mutate) { const next = structuredClone(value); mutate(next); return seal(next); }
@@ -59,7 +77,7 @@ describe("sealed observations and separate Human ground truth", () => {
     expect(validateObservation(record)).toEqual(record); expect(record.status).toBe("FINALIZED");
     expect(record.machine_vs_human).toBe("AGREEMENT"); expect(record.machine_minor_candidate).toBe(true);
     expect(record.candidate_lane).toBe(envelope.machine.candidate_lane);
-    expect(recordsFromComments([{ body: commentEvidence(record) }])).toEqual([record]);
+    expect(recordsFromComments([published(record)], record.pr_number).records).toEqual([record]);
   });
   it("produces FP and FN findings OPEN, never self-resolves", async () => {
     const f = await fixture();
@@ -148,7 +166,7 @@ describe("formal Exit aggregation", () => {
       const records = [record, ...fixtures.slice(1).map(f => f.record)];
       const window = windowFor(records);
       expect(evaluateExit(records, window, { invalidation: proof }).status).toBe("SHADOW_EXIT_INCOMPLETE");
-      expect(evaluateExit(records, window, { invalidation: proof, resolutions: [resolution(record)] }).status).toBe("SHADOW_EXIT_CANDIDATE");
+      expect(evaluateExit(records, withResolutions(window, [resolution(record)]), { invalidation: proof, resolutions: [resolution(record)] }).status).toBe("SHADOW_EXIT_CANDIDATE");
       expect(() => evaluateExit(records, window, { resolutions: [modified(resolution(record), r => { r.resolution_reference = ""; })] })).toThrow();
       expect(() => evaluateExit(records, window, { resolutions: [modified(resolution(record), r => { r.confirmed_by_role = "machine"; })] })).toThrow();
     }
@@ -157,7 +175,11 @@ describe("formal Exit aggregation", () => {
     const f = await fixture();
     expect(evaluateExit([f.record, f.record], windowFor([f.record])).counts.qualifying_actual_changes).toBe(1);
     const other = finalize(f.envelope, modified(f.human, h => { h.human_notes = "different"; }), f.checks, now);
-    expect(() => evaluateExit([f.record, other], windowFor([f.record]))).toThrow("DUPLICATE_OBSERVATION_ID");
+    const conflicting = modified(windowFor([f.record]), w => {
+      w.pull_requests[0].durable_evidence.push(...publication(other));
+      w.pull_requests[0].historical_finalized_record_digests.push(other.record_digest);
+    });
+    expect(() => evaluateExit([f.record, other], conflicting)).toThrow("DUPLICATE_OBSERVATION_ID");
     expect(() => validateObservation(modified(f.record, r => { r.observation_id = "another-id"; }))).toThrow();
   });
   it("keeps stale-head findings OPEN while counting only current-head evidence", async () => {
@@ -165,7 +187,7 @@ describe("formal Exit aggregation", () => {
     const old = finalize(f.envelope, modified(f.human, h => { h.minor_eligibility_ground_truth = "NOT_MINOR"; }), f.checks, now);
     const envelope = observe(seal({ ...f.machine, head_sha: sha(900), tree_sha: sha(901) }), 200, now);
     const latest = finalize(envelope, seal({ ...f.human, ...pick(envelope, BINDING) }), seal({ ...f.checks, ...pick(envelope, IDENTITY), checks: f.checks.checks.map(c => ({ ...c, source_head_sha: envelope.head_sha })) }), now);
-    const window = modified(windowFor([latest]), w => { w.pull_requests[0].historical_finalized_record_digests.push(old.record_digest); });
+    const window = modified(windowFor([latest]), w => { w.pull_requests[0].historical_finalized_record_digests.push(old.record_digest); w.pull_requests[0].durable_evidence.push(...publication(old)); });
     const result = evaluateExit([old, latest], window);
     expect(result.counts.qualifying_actual_changes).toBe(1); expect(result.counts.stale_observations).toBe(1);
     expect(result.counts.unresolved_false_positive).toBe(1);
@@ -174,7 +196,7 @@ describe("formal Exit aggregation", () => {
   it("does not count machine artifacts, pre-window observations, #134, open or closed-unmerged PRs", async () => {
     const f = await fixture();
     expect(() => evaluateExit([f.envelope], windowFor([f.record]))).toThrow();
-    const pending = modified(windowFor([f.record]), w => { w.pull_requests[0].finalized_record_digests = []; w.pull_requests[0].historical_finalized_record_digests = []; });
+    const pending = modified(windowFor([f.record]), w => { w.pull_requests[0].finalized_record_digests = []; w.pull_requests[0].historical_finalized_record_digests = []; w.pull_requests[0].durable_evidence = []; });
     expect(evaluateExit([], pending).counts.qualifying_actual_changes).toBe(0);
     for (const mutate of [p => { p.state = "open"; }, p => { p.state = "closed"; }, p => { p.merged_at = "2026-10-01T00:00:00Z"; }]) {
       const w = modified(windowFor([f.record]), w => mutate(w.pull_requests[0]));
@@ -207,7 +229,7 @@ describe("whole-window audit and read-only reconstruction", () => {
     const f = await fixture();
     const window = modified(windowFor([f.record]), w => {
       const row = w.pull_requests[0];
-      row.finalized_record_digests = []; row.historical_finalized_record_digests = [];
+      row.finalized_record_digests = []; row.historical_finalized_record_digests = []; row.durable_evidence = [];
       if (kind === "missing") row.shadow_check_conclusion = "missing";
       if (kind === "artifact_only") { row.machine_record_digests = []; row.finalized_record_digests = []; }
       if (kind === "no_trigger") row.shadow_workflow_triggered = false;
@@ -243,7 +265,7 @@ describe("whole-window audit and read-only reconstruction", () => {
       [`${prefix}/pulls/200`]: pr,
       [`${prefix}/pulls/200/files?per_page=100&page=1`]: [{ filename: f.path }],
       [`${prefix}/git/commits/${pr.head.sha}`]: { tree: { sha: f.record.tree_sha } },
-      [`${prefix}/issues/200/comments?per_page=100&page=1`]: [{ body: commentEvidence(f.record) }],
+      [`${prefix}/issues/200/comments?per_page=100&page=1`]: [published(f.record)],
       [`${prefix}/pulls/200/reviews?per_page=100&page=1`]: [],
       [`${prefix}/actions/runs?event=pull_request&head_sha=${pr.head.sha}&per_page=100&page=1`]: { total_count: 2, workflow_runs: [
         { id: 1, path: ".github/workflows/readiness-shadow.yml", head_sha: pr.head.sha, pull_requests: [{ number: 200 }], created_at: now, updated_at: now, html_url: "https://example.test/run" },
@@ -256,6 +278,21 @@ describe("whole-window audit and read-only reconstruction", () => {
     const get = async path => { expect(responses, path).toHaveProperty(path); return responses[path]; };
     const collected = await collectWindow(get, { capturedAt: now });
     expect(collected.observations).toEqual([f.record]); expect(auditWindow(collected.snapshot).shadow_skip).toBe(0);
+    expect(collected.snapshot.schema_version).toBe(PUBLISHER_SNAPSHOT_VERSION);
+    expect(collected.snapshot.pull_requests[0].durable_evidence).toEqual(publication(f.record));
+    // End-to-end API reconstruction must carry both kinds of durable evidence,
+    // including a trusted review resolution, through the sealed offline snapshot.
+    const fp = finalize(f.envelope, modified(f.human, h => { h.minor_eligibility_ground_truth = "NOT_MINOR"; }), f.checks, now);
+    const r = resolution(fp);
+    responses[`${prefix}/issues/200/comments?per_page=100&page=1`] = [published(fp), { id: 99, user: { login: "attacker" }, body: "<!-- shadow-observation:v1 --> broken" }];
+    responses[`${prefix}/pulls/200/reviews?per_page=100&page=1`] = [published(r, "resolution", "myong-ideal", 200, 456, "pull_request_review")];
+    const reconstructed = await collectWindow(get, { capturedAt: now });
+    expect(reconstructed.resolutions).toEqual([r]);
+    expect(reconstructed.snapshot.pull_requests[0].ignored_durable_evidence).toHaveLength(1);
+    expect(reconstructed.snapshot.pull_requests[0].durable_evidence[1].publisher_evidence_type).toBe("pull_request_review");
+    const replay = evaluateExit(reconstructed.observations, JSON.parse(JSON.stringify(reconstructed.snapshot)), { resolutions: reconstructed.resolutions });
+    expect(replay.counts.unresolved_false_positive).toBe(0);
+    expect(await collectWindow(get, { capturedAt: now })).toEqual(reconstructed);
     // Actual GitHub merged-run responses can have an empty association list.
     pr.head.repo = { full_name: REPOSITORY }; pr.head.ref = "fixture-branch";
     const runs = responses[`${prefix}/actions/runs?event=pull_request&head_sha=${pr.head.sha}&per_page=100&page=1`].workflow_runs;
@@ -269,6 +306,101 @@ describe("whole-window audit and read-only reconstruction", () => {
   });
 });
 
+describe("Human evidence publisher adversarial boundary", () => {
+  async function withFinding() {
+    const f = await fixture();
+    return finalize(f.envelope, modified(f.human, h => { h.minor_eligibility_ground_truth = "NOT_MINOR"; }), f.checks, now);
+  }
+  it.each(["issue_comment", "pull_request_review"])("1. accepts an exact trusted publisher %s and retains provenance", async type => {
+    const { record } = await fixture();
+    const comment = published(record, "observation", "myong-ideal", record.pr_number, 123, type);
+    const result = recordsFromComments([comment], record.pr_number, "observation", type);
+    expect(result.records).toEqual([record]);
+    expect(result.provenance[0]).toMatchObject({ publisher_login: "myong-ideal", publisher_evidence_id: 123,
+      publisher_evidence_reference: comment.html_url, record_digest: record.record_digest, pr_number: record.pr_number });
+    expect(evaluateExit(result.records, windowFor([record])).counts.qualifying_actual_changes).toBe(1);
+    expect(TRUSTED_SHADOW_EVIDENCE_PUBLISHERS).toEqual(["myong-ideal"]);
+    expect(Object.isFrozen(TRUSTED_SHADOW_EVIDENCE_PUBLISHERS)).toBe(true);
+  });
+  it.each(["third-party", "machine[bot]", "Myong-Ideal", ""])("2. identical sealed observation from %s has no Authority or credit", async login => {
+    const { record } = await fixture();
+    const result = recordsFromComments([published(record, "observation", login)], record.pr_number);
+    expect(result.records).toEqual([]); expect(result.provenance).toEqual([]);
+    expect(result.ignored[0].reason).toBe("UNTRUSTED_HUMAN_EVIDENCE_PUBLISHER");
+    const w = modified(windowFor([record]), w => {
+      const row = w.pull_requests[0]; row.finalized_record_digests = []; row.historical_finalized_record_digests = []; row.durable_evidence = [];
+    });
+    expect(evaluateExit(result.records, w).counts.qualifying_actual_changes).toBe(0);
+    expect(() => evaluateExit([record], w)).toThrow("TRUSTED_DURABLE_PUBLISHER_PROVENANCE_REQUIRED");
+  });
+  it.each(["observation", "resolution"])("3. untrusted malformed %s marker cannot poison trusted collection", async kind => {
+    const record = kind === "observation" ? (await fixture()).record : resolution(await withFinding());
+    const trusted = published(record, kind);
+    const malicious = { ...published(record, kind, "attacker"), body: `<!-- shadow-${kind}:v1 -->\n\`\`\`json\n{broken` };
+    const result = recordsFromComments([malicious, trusted], record.pr_number, kind);
+    expect(result.records).toEqual([record]); expect(result.ignored).toHaveLength(1);
+  });
+  it.each(["observation", "resolution"])("4. trusted malformed %s fails closed, including a second broken marker", async kind => {
+    const record = kind === "observation" ? (await fixture()).record : resolution(await withFinding());
+    const trusted = published(record, kind);
+    for (const body of [`<!-- shadow-${kind}:v1 -->\n\`\`\`json\n{broken\n\`\`\``, `${trusted.body}\n<!-- shadow-${kind}:v1 --> incomplete`]) {
+      expect(() => recordsFromComments([{ ...trusted, body }], record.pr_number, kind)).toThrow();
+    }
+  });
+  it("5. Machine-created local Human-role resolution cannot resolve a finding", async () => {
+    const record = await withFinding(), local = resolution(record), w = windowFor([record]);
+    expect(local.confirmed_by_role).toBe("human_operator");
+    expect(() => evaluateExit([record], w, { resolutions: [local] })).toThrow("TRUSTED_DURABLE_PUBLISHER_PROVENANCE_REQUIRED");
+    expect(evaluateExit([record], w).counts.unresolved_false_positive).toBe(1);
+    const untrusted = recordsFromComments([published(local, "resolution", "machine[bot]")], record.pr_number, "resolution");
+    expect(untrusted.records).toEqual([]);
+  });
+  it("6. trusted durable resolution resolves only its exact bound finding", async () => {
+    const record = await withFinding(), publishedResolution = resolution(record);
+    const w = withResolutions(windowFor([record]), [publishedResolution]);
+    const result = evaluateExit([record], w, { resolutions: [publishedResolution] });
+    expect(result.counts.unresolved_false_positive).toBe(0);
+    expect(result.findings[0].status).toBe("RESOLVED");
+    expect(result.findings[0].resolution_publisher_evidence_reference).toBe(published(publishedResolution, "resolution").html_url);
+    expect(() => evaluateExit([record], w)).toThrow("DURABLE_RESOLUTION_OMITTED");
+  });
+  it.each(["pr_number", "head_sha", "observation_digest", "finding_id", "record_digest"])("7. rejects trusted resolution with wrong %s", async key => {
+    const record = await withFinding(), correct = resolution(record);
+    const wrong = modified(correct, r => { r[key] = key === "pr_number" ? 201 : key === "head_sha" ? sha(998) : key === "finding_id" ? "wrong-finding" : `sha256:${"a".repeat(64)}`; });
+    if (key === "pr_number") {
+      expect(() => recordsFromComments([published(wrong, "resolution", "myong-ideal", 200)], 200, "resolution")).toThrow("COMMENT_PR_MISMATCH");
+    } else if (key === "record_digest") {
+      const changed = modified(correct, r => { r.resolution_reference = "https://example.test/another-resolution"; });
+      expect(() => evaluateExit([record], withResolutions(windowFor([record]), [correct]), { resolutions: [changed] })).toThrow();
+    } else {
+      const w = withResolutions(windowFor([record]), [wrong]);
+      expect(() => evaluateExit([record], w, { resolutions: [wrong] })).toThrow();
+    }
+  });
+  it("8. a trusted observation copied to another PR is rejected", async () => {
+    const { record } = await fixture();
+    expect(() => recordsFromComments([published(record, "observation", "myong-ideal", 201)], 201)).toThrow("COMMENT_PR_MISMATCH");
+  });
+  it("9. role, caller-claimed publisher or legacy snapshot cannot replace collector provenance", async () => {
+    const { record } = await fixture();
+    const w = modified(windowFor([record]), w => { delete w.pull_requests[0].durable_evidence; w.publisher_login = "myong-ideal"; });
+    expect(() => evaluateExit([record], w)).toThrow("TRUSTED_DURABLE_PUBLISHER_PROVENANCE_REQUIRED");
+    expect(() => evaluateExit([record], modified(windowFor([record]), w => { w.schema_version = "1.0"; }))).toThrow("WINDOW_AUTHORITY_INVALID");
+    const untrusted = modified(windowFor([record]), w => { w.pull_requests[0].durable_evidence[0].publisher_login = "attacker"; });
+    expect(() => evaluateExit([record], untrusted)).toThrow("UNTRUSTED_HUMAN_EVIDENCE_PUBLISHER");
+  });
+  it("10. trusted offline replay is deterministic and identical records/resolutions are idempotent", async () => {
+    const record = await withFinding(), r = resolution(record), w = withResolutions(windowFor([record]), [r]);
+    const once = evaluateExit([record], w, { resolutions: [r], invalidation: proof });
+    expect(evaluateExit([record, record], JSON.parse(JSON.stringify(w)), { resolutions: [r, r], invalidation: proof })).toEqual(once);
+  });
+  it.each(["publisher_evidence_id", "publisher_evidence_reference", "pr_number", "record_digest", "evidence_kind"])("rejects re-sealed snapshot provenance with altered %s", async key => {
+    const { record } = await fixture();
+    const w = modified(windowFor([record]), w => { w.pull_requests[0].durable_evidence[0][key] = key === "publisher_evidence_id" || key === "pr_number" ? 999 : key === "evidence_kind" ? "resolution" : "wrong"; });
+    expect(() => evaluateExit([record], w)).toThrow();
+  });
+});
+
 describe("offline CLI and immutable outputs", () => {
   it("runs finalizer/evaluator outside a Git worktree and emits JSON HOLD on bad evidence", async () => {
     const f = await fixture(); const dir = mkdtempSync(join(tmpdir(), "shadow-cli-"));
@@ -279,5 +411,7 @@ describe("offline CLI and immutable outputs", () => {
     const run = spawnSync(process.execPath, [join(process.cwd(), "scripts/readiness/shadow-exit-evaluator.mjs"), "--observations", join(dir, "bad.json"), "--window", join(dir, "window.json"), "--output", join(dir, "exit.json")], { cwd: dir });
     expect(run.status).toBe(1); expect(JSON.parse(readFileSync(join(dir, "exit.json"))).status).toBe("HOLD_EVIDENCE_INVALID");
     expect(canonical(AUTHORITY)).toContain("1.1.2-operational-approved");
-  });
+  // Two cold Node processes load the classifier dependencies. Allow startup
+  // time on shared runners without changing any fail-closed assertions.
+  }, 30_000);
 });

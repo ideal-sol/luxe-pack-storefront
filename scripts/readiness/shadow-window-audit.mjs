@@ -1,4 +1,5 @@
 import { AUTHORITY, CHECKS, IDENTITY, REPOSITORY, WINDOW_START, SHADOW_CHECK, authority, bind, cli, enumeration, identity, object, options, pick, readJson, requireValue, seal, sha, string, strings, timestamp, verifySeal, writeJson } from "./shadow-common.mjs";
+import { PUBLISHER_SNAPSHOT_VERSION, validatePublisherProvenance } from "./shadow-publisher.mjs";
 
 // Exclusions affect actual-change counting, not observation coverage. Mixed
 // source/tooling changes remain real changes; unknown paths are never excluded.
@@ -20,7 +21,7 @@ export function currentIdentity(record, row) {
 
 export function auditWindow(snapshot) {
   verifySeal(snapshot, "WINDOW_SNAPSHOT");
-  requireValue(snapshot.schema_version === "1.0" && snapshot.repository === REPOSITORY && snapshot.start_authority === WINDOW_START, "WINDOW_AUTHORITY_INVALID");
+  requireValue(snapshot.schema_version === PUBLISHER_SNAPSHOT_VERSION && snapshot.repository === REPOSITORY && snapshot.start_authority === WINDOW_START, "WINDOW_AUTHORITY_INVALID");
   authority(snapshot.authority);
   requireValue(snapshot.index_complete === true && snapshot.pagination_complete === true && string(snapshot.evidence_reference), "WINDOW_INDEX_INCOMPLETE");
   requireValue(sha(snapshot.protected_main_sha) && snapshot.protected_main === true && snapshot.start_is_ancestor === true, "WINDOW_BASELINE_INVALID");
@@ -47,6 +48,14 @@ export function auditWindow(snapshot) {
     strings(pr.machine_record_digests, "MACHINE_RECORD_DIGESTS");
     strings(pr.finalized_record_digests, "FINALIZED_RECORD_DIGESTS");
     strings(pr.historical_finalized_record_digests, "HISTORICAL_RECORD_DIGESTS");
+    strings(pr.resolution_record_digests, "RESOLUTION_RECORD_DIGESTS");
+    requireValue(Array.isArray(pr.durable_evidence), "TRUSTED_DURABLE_PUBLISHER_PROVENANCE_REQUIRED");
+    for (const provenance of pr.durable_evidence) validatePublisherProvenance(provenance, pr.pr_number);
+    for (const [kind, digests] of [["observation", pr.historical_finalized_record_digests], ["resolution", pr.resolution_record_digests]]) {
+      const published = pr.durable_evidence.filter(entry => entry.evidence_kind === kind);
+      requireValue(digests.every(digest => published.some(entry => entry.record_digest === digest)), "TRUSTED_DURABLE_PUBLISHER_PROVENANCE_REQUIRED");
+      requireValue(published.every(entry => digests.includes(entry.record_digest)), "PUBLISHER_EVIDENCE_INDEX_MISMATCH");
+    }
     requireValue(pr.finalized_record_digests.every(digest => pr.historical_finalized_record_digests.includes(digest)), "WINDOW_FINALIZATION_HISTORY_MISSING");
     requireValue([...pr.machine_record_digests, ...pr.historical_finalized_record_digests].every(digest => /^sha256:[0-9a-f]{64}$/.test(digest)), "WINDOW_DIGEST_INVALID");
     object(pr.normal_ci_conclusions, "WINDOW_CI");
@@ -61,10 +70,11 @@ export function auditWindow(snapshot) {
       finalized_observation_exists: pr.finalized_record_digests.length > 0,
       machine_record_digests: pr.machine_record_digests, finalized_record_digests: pr.finalized_record_digests,
       historical_finalized_record_digests: pr.historical_finalized_record_digests,
+      durable_evidence: pr.durable_evidence, resolution_record_digests: pr.resolution_record_digests,
       normal_ci_conclusions: pr.normal_ci_conclusions,
       skipped, indeterminate: inWindow && pr.state !== "closed" && category === "INDETERMINATE" };
   });
-  return seal({ schema_version: "1.0", repository: REPOSITORY, authority: AUTHORITY, start_authority: WINDOW_START,
+  return seal({ schema_version: PUBLISHER_SNAPSHOT_VERSION, repository: REPOSITORY, authority: AUTHORITY, start_authority: WINDOW_START,
     protected_main_sha: snapshot.protected_main_sha, captured_at: snapshot.captured_at,
     snapshot_digest: snapshot.record_digest, universe: "All main-target PRs open at/after approval or closed/merged after approval; #134 excluded; all open/merged categories require shadow observation",
     rows, shadow_skip: rows.filter(row => row.skipped).length, indeterminate: rows.filter(row => row.indeterminate).length });
