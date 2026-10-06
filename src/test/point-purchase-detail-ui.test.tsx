@@ -54,6 +54,17 @@ async function renderDetail({
 }
 
 describe("SITE-040 Coin Purchase Detail", () => {
+  it.each(["expired", "unavailable"] as const)("keeps direct first-user detail disabled when Backend state is %s", async state => {
+    const fixture = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_after_first_purchase;
+    await renderDetail({
+      client: pointClient({ ...fixture, first_user_offer: { ...fixture.first_user_offer, state } }),
+      productId: fixture.data[1].id,
+    });
+    expect(await screen.findByText("この初回ユーザー商品は現在購入できません。")).toHaveAttribute("data-eligible", "false");
+    expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
+    expect(screen.getByRole("region", { name: "購入内容" })).toHaveTextContent("￥1,000");
+  });
+
   it("resolves an exact canonical Product and renders the canonical purchase summary", async () => {
     const client = pointClient();
     const view = await renderDetail({ client });
@@ -107,7 +118,7 @@ describe("SITE-040 Coin Purchase Detail", () => {
       id: "public-no-bonus-product",
       limited_bonus: inactiveLimited,
     };
-    await renderDetail({ client: pointClient({ data: [product] }), productId: product.id });
+    await renderDetail({ client: pointClient({ first_user_offer: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.first_user_offer, data: [product] }), productId: product.id });
     const summary = await screen.findByRole("region", { name: "購入内容" });
     expect(within(summary).queryByText("ボーナスコイン")).not.toBeInTheDocument();
     expect(within(summary).queryByText("期間限定ボーナスコイン")).not.toBeInTheDocument();
@@ -193,7 +204,7 @@ describe("SITE-040 Coin Purchase Detail", () => {
       grant: { bonus_points: 0, paid_points: 888_888_888_888, total_points: 1 },
     };
     expect(omittedLimitedBonus).toBeDefined();
-    const view = await renderDetail({ client: pointClient({ data: [product] }), productId: product.id });
+    const view = await renderDetail({ client: pointClient({ first_user_offer: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.first_user_offer, data: [product] }), productId: product.id });
 
     expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent("とても長いコイン商品名");
     expect(screen.getByText("￥999,999,999,999")).toBeInTheDocument();

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
 import { useToast } from "@/components/common/toast-provider";
 import { presentAuthProblem } from "@/lib/platform";
@@ -11,7 +11,10 @@ import { usePointClient } from "@/components/points/point-client-provider";
 const pointNumber = new Intl.NumberFormat("ja-JP");
 export const brandLogoAppName = "オリポケ";
 
-export function SiteHeader() {
+import { ConnectedFirstBuyBar } from "@/components/points/first-buy-connected";
+import { FirstBuyLayoutBar } from "@/components/points/first-buy-layout-bar";
+
+export function SiteHeader({ firstBuyLayoutEnabled = false }: { readonly firstBuyLayoutEnabled?: boolean }) {
   const appName = process.env.NEXT_PUBLIC_APP_NAME;
   // オリポケのロゴ画像（マーク＋ロゴ文字）はサイト名がオリポケのときだけ使う。他の名前ではマーク＋テキスト表示。
   const brandLogo = appName?.trim() === brandLogoAppName;
@@ -56,6 +59,7 @@ export function SiteHeader() {
   const unauthenticated = state.status === "unauthenticated" || state.status === "session-expired";
   return (
     <header className="site-header" data-scrolled={scrolled ? "true" : undefined}>
+      <Suspense fallback={null}>{firstBuyLayoutEnabled ? <FirstBuyLayoutBar /> : <ConnectedFirstBuyBar />}</Suspense>
       <div className="page-container site-header__main">
         <div className="site-header__brand">
           <Link aria-label={appName ? `${appName} ホーム` : "ホーム"} className={brandLogo ? "wordmark wordmark--logo" : "wordmark"} href="/">

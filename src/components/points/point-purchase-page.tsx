@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { FirstBuyHero, FirstBuyStrip, FirstBuyCoinCard } from "./first-buy-offer";
+import { useFirstBuyCountdown } from "./use-first-buy-offer";
+import { presentFirstBuyDeal } from "@/lib/presentation/first-buy-offer";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
 import { CatalogLoading, CatalogMessage } from "@/components/catalog/catalog-message";
 import {
@@ -33,7 +36,7 @@ export const pointProductSaleStateLabels: Readonly<Record<PointProductSaleState,
 export const pointProductIneligibleReasonLabels: Readonly<Record<Exclude<PointProductIneligibleReason, null>, string>> = {
   authentication_required: "購入するにはログインが必要です。",
   audience_not_eligible: "この商品の対象条件を満たしていません。",
-  first_purchase_required: "過去にコイン購入があるため、初回ユーザー対象外です。",
+  first_purchase_required: "この初回ユーザー商品は現在購入できません。",
   sale_ended: "この商品の販売は終了しました。",
   sale_not_started: "この商品の販売はまだ開始されていません。",
 };
@@ -144,6 +147,8 @@ export function LimitedBonusPresentation({ limitedBonus }: { readonly limitedBon
 }
 
 function PointProductCard({ product }: { readonly product: PointProduct }) {
+  const deal = product.eligible && product.cta.state === "enabled" && product.audience.code === "first_purchase_users" ? presentFirstBuyDeal(product) : null;
+  if (deal && !product.limited_bonus?.presentation.is_visible) return <FirstBuyCoinCard deal={deal} />;
   const reason = product.ineligible_reason ? pointProductIneligibleReasonLabels[product.ineligible_reason] : null;
   const limitedBonus = product.limited_bonus;
   return (
@@ -193,7 +198,7 @@ export function PointProductRegion({ products }: { readonly products: readonly P
 export function PointPurchasePage() {
   const { state: session } = useSession();
   const { client, wallet } = usePointClient();
-  const [category, setCategory] = useState<PointProductAudienceCode>("all_users");
+  const [selection, setSelection] = useState<{ readonly sessionKey: string; readonly category: PointProductAudienceCode } | null>(null);
   const [requestKey, setRequestKey] = useState(0);
   const [state, setState] = useState<ProductState>(client ? { status: "loading" } : { status: "configuration-unavailable" });
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -207,7 +212,14 @@ export function PointPurchasePage() {
     if (!client || !sessionKey) return;
     let active = true;
     void client.listPointProducts()
-      .then(({ data }) => { if (active) setState({ collection: data, sessionKey, status: "ready" }); })
+      .then(({ data }) => {
+        if (!active) return;
+        setSelection(previous => previous?.sessionKey === sessionKey ? previous : {
+          sessionKey,
+          category: data.first_user_offer?.state === "active" ? "first_purchase_users" : "all_users",
+        });
+        setState({ collection: data, sessionKey, status: "ready" });
+      })
       .catch((error: unknown) => { if (active) setState({ problem: presentPlatformProblem(error), sessionKey, status: "error" }); });
     return () => { active = false; };
   }, [client, requestKey, sessionKey]);
@@ -219,6 +231,15 @@ export function PointPurchasePage() {
       : !sessionKey || (state.status === "ready" || state.status === "error") && state.sessionKey !== sessionKey
         ? { status: "loading" }
         : state, [client, session.status, sessionKey, state]);
+
+  const refreshOffer = useCallback(() => setRequestKey(value => value + 1), []);
+  const offer = useFirstBuyCountdown(displayState.status === "ready" ? displayState.collection : null, refreshOffer);
+  const category = selection?.sessionKey === sessionKey ? selection.category : "all_users";
+  const activeOffer = displayState.status === "ready" && displayState.collection.first_user_offer?.state === "active";
+
+  function setCategory(category: PointProductAudienceCode) {
+    if (sessionKey) setSelection({ sessionKey, category });
+  }
 
   const products = useMemo(() => displayState.status === "ready"
     ? displayState.collection.data.filter((product) => product.audience.code === category)
@@ -245,6 +266,7 @@ export function PointPurchasePage() {
   return (
     <div className="point-purchase">
       <PointBalanceSummary wallet={wallet} />
+      {offer && <FirstBuyHero offer={offer} />}
       <section aria-labelledby="point-category-title" className="point-category-section">
         <header><p>PRODUCT CATEGORY</p><h2 id="point-category-title">商品カテゴリー</h2></header>
         <div aria-label="コイン商品カテゴリー" className="point-category-tabs" role="tablist">
@@ -261,7 +283,7 @@ export function PointPurchasePage() {
               tabIndex={category === item.id ? 0 : -1}
               type="button"
             >
-              {item.label}
+              {item.id === "first_purchase_users" && activeOffer ? "初回ユーザー（24時間限定）" : item.label}
             </button>
           ))}
         </div>
@@ -271,7 +293,10 @@ export function PointPurchasePage() {
         {displayState.status === "configuration-unavailable" && <CatalogMessage description="コイン商品を表示できませんでした、時間をおいて再度お試しください" eyebrow="ERROR" title="コイン商品を表示できません" tone="error" />}
         {displayState.status === "session-error" && <CatalogMessage description="現在、コイン商品を表示できませんでした、時間をおいて再度お試しください" eyebrow="ERROR" title="コイン商品を表示できません" tone="error" />}
         {displayState.status === "error" && <CatalogMessage action={() => { setState({ status: "loading" }); setRequestKey((value) => value + 1); }} description={displayState.problem.message} eyebrow="ERROR" title="コイン商品を取得できませんでした" tone="error" />}
-        {displayState.status === "ready" && <PointProductRegion products={products} />}
+        {displayState.status === "ready" && <>
+          {offer?.state === "active" && category === "first_purchase_users" && <FirstBuyStrip offer={offer} />}
+          <PointProductRegion products={products} />
+        </>}
       </div>
     </div>
   );
