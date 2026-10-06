@@ -5,6 +5,9 @@ import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 
 const workflow = readFileSync(".github/workflows/production-artifact.yml", "utf8");
+const sourceValidation = workflow.match(
+  /- name: Validate source and contracts\n[\s\S]*?run: \|\n([\s\S]*?)(?=\n      - name:)/,
+)?.[1];
 const apiBase = "/api" + "/v2";
 const validation = workflow.match(
   /- name: Validate production site URL\n[\s\S]*?node --input-type=module <<'NODE'\n([\s\S]*?)\n          NODE/,
@@ -20,6 +23,66 @@ function validate(value?: string) {
     env,
   });
 }
+
+describe("production artifact canonical audit toolchain", () => {
+  it("pins both toolchains and Next without changing the manifest toolchain", () => {
+    expect(workflow).toContain("PNPM_VERSION: 10.12.1");
+    expect(workflow).toContain("PNPM_AUDIT_VERSION: 11.25.0");
+    expect(workflow.match(/16\.3\.6/g)).toHaveLength(3);
+    expect(workflow).not.toContain("16.3.3");
+    expect(workflow).not.toContain("pnpm audit --audit-level high");
+    expect(workflow).toContain("pnpm_version: process.env.PNPM_VERSION");
+    expect(sourceValidation).toContain('audit_root="$(mktemp -d)"');
+    expect(sourceValidation).toContain('cd "$audit_root"');
+    expect(sourceValidation).toContain('--collect "$GITHUB_WORKSPACE/runtime" "$audit_root"');
+  });
+
+  it.each([
+    { auditExit: "0", restoreVersion: "10.12.1", passes: true },
+    { auditExit: "1", restoreVersion: "10.12.1", passes: false },
+    { auditExit: "0", restoreVersion: "11.25.0", passes: false },
+  ])("fails closed and restores the normal toolchain: %j", ({ auditExit, restoreVersion, passes }) => {
+    expect(sourceValidation).toBeTruthy();
+    const result = spawnSync("bash", ["-s"], {
+      encoding: "utf8",
+      env: {
+        ...process.env, PNPM_VERSION: "10.12.1", PNPM_AUDIT_VERSION: "11.25.0",
+        GITHUB_WORKSPACE: "/synthetic-workspace", AUDIT_EXIT: auditExit, RESTORE_VERSION: restoreVersion,
+      },
+      input: `
+        active_version=10.12.1
+        corepack() {
+          if [ "$2" = "pnpm@11.25.0" ]; then active_version=11.25.0;
+          else active_version="$RESTORE_VERSION"; fi
+        }
+        pnpm() {
+          if [ "$1" = "--version" ]; then printf '%s\\n' "$active_version";
+          else printf 'command:%s version:%s\\n' "$1" "$active_version"; fi
+        }
+        node() {
+          test "$active_version" = 11.25.0 || return 90
+          test "$1" = "$GITHUB_WORKSPACE/runtime/scripts/ci/security-audit-policy.mjs" || return 91
+          test "$2" = --collect || return 92
+          test "$3" = "$GITHUB_WORKSPACE/runtime" || return 93
+          test "$PWD" = "$4" && test -d "$4" || return 94
+          test "$PNPM_CONFIG_FETCH_TIMEOUT" = 300000 || return 95
+          printf 'audit:11.25.0 isolated\\n'
+          return "$AUDIT_EXIT"
+        }
+        ${sourceValidation}
+      `,
+    });
+    expect(result.stdout).toContain("audit:11.25.0 isolated");
+    if (passes) {
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain("command:lint version:10.12.1");
+      expect(result.stdout).toContain("command:test version:10.12.1");
+    } else {
+      expect(result.status).not.toBe(0);
+      expect(result.stdout).not.toContain("command:lint");
+    }
+  });
+});
 
 describe("production artifact site URL authority", () => {
   it("requires an explicit non-secret input without a domain default", () => {
@@ -113,23 +176,23 @@ describe("production artifact application name authority", () => {
           "SOURCE_SHA", "TESTKIT_PIN", "WORKFLOW_SHA",
         ]) env[name] = `fixture-${name}`;
         Object.assign(env, {
-          SOURCE_SHA: "db02898cecf6b5d1646401c56579f592be3c4f4e",
+          SOURCE_SHA: "6aef11464215971b6aa57d10f25e78d05c424cce",
           WORKFLOW_SHA: "b".repeat(40),
           RUNNER_TEMP: root, NEXT_PUBLIC_APP_NAME: appName,
           NEXT_PUBLIC_SITE_URL: "https://example.com", NEXT_PUBLIC_PLATFORM_API_BASE_URL: apiBase,
         });
         const provenance = {
-          source_sha: env.SOURCE_SHA, contract_version: "2.0.0-alpha.41", contract_artifact_id: "10900150259",
-          contract_manifest_sha256: "b3c7d2a28c0c8332eeea90ac43876245baf4a1e4ce6b7d4f646124212d99f7ee",
-          contract_manifest_path: "vendor/oripa/SHIPONLY-20260926/artifact-manifest.json",
-          platform_runtime_source_sha: "e4361ece51fc1249a5cfb2c64cf56d3aa4bb0c29",
-          platform_authority_merge_sha: "d823c2f80c1500990289b06da8e5504d7b48c2e5",
-          contract_archive_sha256: "6d4cf321249d46145f22ce9551ba709a51dd59453ccbe0bd5004d0782d2dfb50",
-          platform_source_sha: "e2b30805704ed5b9c3fd54492fb86f8b8549bde5",
-          client_pin: "2.0.0-alpha.41", testkit_pin: "2.0.0-alpha.41", public_openapi_pin: "2.0.0-alpha.37",
-          client_sha256: "3565505ed851df91a1ee4b9eeef1a94caae706a6b47725ef1472e5d5048f6f72",
-          testkit_sha256: "56892eafca206e8f504144937169a7ed2974da6f14082347616abafda013bd59",
-          public_openapi_sha256: "2ef9d4d085ad29e4073f6e963d93b68b9e1ecfd8000dc84a330a8a016f30be4b",
+          source_sha: env.SOURCE_SHA, contract_version: "2.0.0-alpha.43", contract_artifact_id: "11349442812",
+          contract_manifest_sha256: "1951edf44ef275e3c9bf85ac0ce1417a27bc64e982a607d0a72e49186eb09e74",
+          contract_manifest_path: "vendor/oripa/CONTRACT-20261005/artifact-manifest.json",
+          platform_runtime_source_sha: "4b7d00e8e31223136cd0b70134916d091dfea6cb",
+          platform_authority_merge_sha: "48639e9cdc44e43534e45dbbb1b6eeb1bfc7d591",
+          contract_archive_sha256: "53fb939978eabbf9b636369b15c81369d18305890891715f7bbd864e9b197d14",
+          platform_source_sha: "0ce41ab473fd5a4fb44773041ae097ffb40b14ce",
+          client_pin: "2.0.0-alpha.43", testkit_pin: "2.0.0-alpha.43", public_openapi_pin: "2.0.0-alpha.39",
+          client_sha256: "9f14026a53d24413d860975d5c012988a5381771600b81e8309e5119a10792b0",
+          testkit_sha256: "d5bb5b0d785437e0f400b369ff97663a6c69d4a329c1b82710017087a92af9fb",
+          public_openapi_sha256: "37cdeb7a214d42f0f69458d578a81c5c7869132e2a6cbd02ca8d150f1abf6faa",
         };
         writeFileSync(join(root, "contract-provenance.json"), JSON.stringify(provenance));
         const result = spawnSync(process.execPath, ["--input-type=module"], {

@@ -1,74 +1,90 @@
-# Production release authority — alpha.41
+# Production release authority — alpha.43
 
-Authority/provenance synchronization only. Human approved exact Storefront Runtime
-Source `7da93eb695f38b7cf804eba59a3642da0b9dc073` (merged PR #126), with OLD Test
-Technical, Human Browser Acceptance and Security Production Acceptance PASS. Production Build dispatch, new-server
-operations and Production Activation are not authorized by this change.
-`activation_authorized` remains false.
+PRODAUTH-20261006 is a Strict Change with Application Runtime Activation `none`.
+Human approves exact Storefront Runtime Source
+`6aef11464215971b6aa57d10f25e78d05c424cce` (merged PR #143), with OLD Test
+Technical, Human Browser Acceptance and target-specific Security PASS.
+`activation_authorized` remains false. Production/NEW connections, Snapshot,
+Migration, DB writes, routing/ENV changes and Runtime Activation are prohibited.
+The release-specific Human waiver permits evidence reuse and Candidate bind
+after both fresh artifacts pass, stopping at `TECHNICALLY_READY_CANDIDATE`.
+It is not Production GO and expires with this release or a changed release scope.
 
 ## Separate runtime and workflow sources
 
-The approved Runtime Source stays `7da93eb695f38b7cf804eba59a3642da0b9dc073`.
-The authority PR's merge SHA is workflow/metadata authority only; it must never
+The approved Runtime Source stays `6aef11464215971b6aa57d10f25e78d05c424cce`.
+This authority PR's merge SHA is workflow/metadata authority only; it must never
 replace the approved Runtime Source. The canonical `production-artifact.yml`
-remains unchanged: approval code comes from protected current main, while the
-application checkout uses the exact approved source.
+checks out approval code from protected current main and application code from
+the exact approved source. Source authorization and artifact verification are
+unchanged. Both the Source PR and current workflow authority require successful
+checks. Empty squash checks are accepted only through the merged internal PR,
+identical reviewed/merge trees and successful reviewed-head checks. Failed
+current checks never fall back to another commit.
 
-Both the Source PR and current workflow authority require successful checks.
-Empty squash checks are accepted only through the merged internal PR, identical
-reviewed/merge trees and successful reviewed-head checks. Failed current checks
-never fall back to another commit. Missing or arbitrary source approvals fail.
+## Exact Contract authority
 
-## Exact contract authority
+The existing immutable `vendor/oripa/CONTRACT-20261005/PROVENANCE.md` and manifest
+are the canonical alpha.43 readback. Their bytes and all package pins are unchanged.
 
-The existing immutable `vendor/oripa/SHIPONLY-20260926/PROVENANCE.md` and manifest
-are the canonical alpha.41 readback. Their original bytes are unchanged.
+- Client/Testkit: `2.0.0-alpha.43`.
+- Artifact ID: `11349442812`; canonical workflow: `37319224331`.
+- Manifest: `vendor/oripa/CONTRACT-20261005/artifact-manifest.json`.
+- Manifest SHA-256: `1951edf44ef275e3c9bf85ac0ce1417a27bc64e982a607d0a72e49186eb09e74`.
+- Client SHA-256: `9f14026a53d24413d860975d5c012988a5381771600b81e8309e5119a10792b0`.
+- Testkit SHA-256: `d5bb5b0d785437e0f400b369ff97663a6c69d4a329c1b82710017087a92af9fb`.
+- Public OpenAPI: `2.0.0-alpha.39` (independent version).
+- Public OpenAPI SHA-256: `37cdeb7a214d42f0f69458d578a81c5c7869132e2a6cbd02ca8d150f1abf6faa`.
+- Outer archive SHA-256: `53fb939978eabbf9b636369b15c81369d18305890891715f7bbd864e9b197d14`.
+- Contract Artifact Source: `0ce41ab473fd5a4fb44773041ae097ffb40b14ce`.
 
-- Client/Testkit: `2.0.0-alpha.41`.
-- Artifact ID: `10900150259`; canonical workflow: `36223277643`.
-- Manifest: `vendor/oripa/SHIPONLY-20260926/artifact-manifest.json`.
-- Manifest SHA-256: `b3c7d2a28c0c8332eeea90ac43876245baf4a1e4ce6b7d4f646124212d99f7ee`.
-- Client SHA-256: `3565505ed851df91a1ee4b9eeef1a94caae706a6b47725ef1472e5d5048f6f72`.
-- Testkit SHA-256: `56892eafca206e8f504144937169a7ed2974da6f14082347616abafda013bd59`.
-- Public OpenAPI: `2.0.0-alpha.37` (independent version).
-- Public OpenAPI SHA-256: `2ef9d4d085ad29e4073f6e963d93b68b9e1ecfd8000dc84a330a8a016f30be4b`.
-- Outer archive SHA-256: `6d4cf321249d46145f22ce9551ba709a51dd59453ccbe0bd5004d0782d2dfb50`.
-- Contract Artifact Source: `e2b30805704ed5b9c3fd54492fb86f8b8549bde5`.
+Fresh GitHub exact-ID download agrees with all approved digests and the vendored
+artifact bytes. No Contract rebuild or republication is allowed. Computed
+digests do not replace approved values.
 
-The manifest/package/OpenAPI bytes are checked against these existing canonical
-values. Computed digests do not replace approved values. The archive digest and
-Artifact ID are read back from canonical provenance; no archive is reissued.
+The provenance parser follows the existing alpha.43 document's separate
+Artifact ID, canonical workflow URL and GitHub outer SHA256 lines, retaining
+single-entry and exact-value checks. The published document itself is unchanged.
 
-The separately recorded Platform Runtime Source
-`538a208c025fcc5a7d6f9914d3c428b9ef702dbe` and Platform authority merge
-`6deba7e8fe4b85ae43b66b7437b46db94ad7c814` are synchronized to the final
-Human-provided Platform authorities. This does not change Platform source or
-substitute the Runtime Source for Contract Artifact Source.
+Platform Runtime Source is separately fixed at
+`4b7d00e8e31223136cd0b70134916d091dfea6cb` (Security PR #543).
+Platform Production Authority is
+`48639e9cdc44e43534e45dbbb1b6eeb1bfc7d591` (Authority PR #545).
+Neither substitutes for Contract Artifact Source or Storefront Runtime Source.
 
-The verifier updates only the two fixed Platform runtime/authority values.
-Validation and authorization logic, Contract pins and all digest checks remain
-unchanged. Historical alpha.39/alpha.40 fixtures remain rejection evidence.
+## Exact build and Security toolchains
 
-## Approved runtime target
+The runtime is Next.js `16.3.6`; only the three exact-version assertions are
+synchronized from `16.3.3`. Normal artifact pnpm remains `10.12.1`, including
+the manifest version, frozen install, build, prune and package verification.
 
-Human approved the exact merged Phase5 source from PR #126, with Browser and
-Security Production Acceptance PASS. This sync starts from that protected main
-and changes only authority metadata, provenance constants, focused tests and
-this document. It does not incorporate additional application changes.
-Unapproved Runtime delta: NONE.
+Human additionally approves replacing the stale raw High-level audit command
+with the unchanged `scripts/ci/security-audit-policy.mjs`. As in canonical CI,
+an isolated audit directory uses exact pnpm `11.25.0`. Production findings must
+be zero across every severity; unapproved High/Critical fail. The existing
+dev-only braces 3.0.3 exception applies only to its exact approved fingerprint.
+No exception, Moderate baseline, suppression or threshold is added or changed.
+After a successful audit, corepack restores pnpm `10.12.1` and an exact version
+assertion must pass before lint, tests, build, prune or packaging proceeds.
+An audit or restoration failure prevents downstream steps.
 
 ## Verification and rollout boundary
 
-Focused tests cover acceptance of this authority and rejection of old sources,
-old/mixed pins, invalid IDs/digests, untrusted checks and reviewed-tree mismatch.
-Run the repository's existing Required Checks and fresh fixed-head self-review.
-Their ordinary CI tests/build do not dispatch the Production artifact workflow.
-After Squash Merge, invoke the canonical authorization function against live
-GitHub readback and validate provenance on the exact Runtime Source, without
-workflow dispatch or Production Build.
+Focused tests retain source/check/tree, immutable artifact and digest guards,
+reject historical alpha.39/alpha.40/alpha.41 fixtures, and exercise audit
+isolation, audit failure and incorrect-toolchain-restoration failure.
+Ruleset Required Checks and fresh exact-head self-review are mandatory. Under
+the release-only waiver, pending non-Required checks do not block; completed
+Security/Source/Artifact/Contract/Migration or SEV-0/SEV-1 failures still HOLD.
+Existing accepted Runtime Source full validation is reused without local reruns.
+Application, dependency, Contract, migration and ENV source deltas are NONE.
 
-Authority Sync Runtime Application delta: NONE. Dependencies: NONE. Migration:
-NONE. ENV: NONE. Worker: NONE. No Platform changes, new-server operations, service
-restarts or activation are part of this sync. OLD Test Runtime remains at the
-approved application source. Human Browser Acceptance is already PASS and is not
-rerun. Rollback for this change is a reviewed authority-metadata/verifier revert.
+Human separately authorizes one fresh canonical ARM64 artifact dispatch after
+authority merge and current authorization checks, followed by exact-ID download,
+digest/provenance/package verification and native runtime smoke. The canonical
+public app name is read back from the previous verified Production artifact,
+not inferred from test fixtures. CI verification artifacts are not release artifacts.
+PR #144 remains OPEN/UNMERGED through preparation and final release closure.
+No other PR is incorporated. Human Browser Acceptance is already PASS.
+Rollback of this authority change requires a reviewed authority-only revert;
+existing runtimes and rollback artifacts remain untouched.
