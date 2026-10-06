@@ -84,7 +84,8 @@ describe("gacha detail UI", () => {
     expect(screen.getByRole("img", { name: rank.lineup_image.alt_text! }).getAttribute("src")
       ?.endsWith(rank.lineup_image.path)).toBe(true);
     expect(screen.queryByText(/設定総数/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/提供割合/)).not.toBeInTheDocument();
+    // 割合そのものは詳細に出さない（SITE-023）。出すのは提供割合ページへのリンクだけ。
+    expect(screen.getAllByText(/提供割合/).map((element) => element.textContent)).toEqual(["提供割合を見る"]);
     expect(screen.queryByText(rank.rank_id)).not.toBeInTheDocument();
     expect(screen.getAllByText("販売中")).toHaveLength(2);
     expect(screen.getByText("対象: 初回ユーザー")).toBeInTheDocument();

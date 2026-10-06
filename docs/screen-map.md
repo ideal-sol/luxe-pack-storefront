@@ -7,6 +7,7 @@
 | `/` | Canonical top Banner carousel, categories, Backend-visible gacha summaries, notices, and Platform Card Registration Return dispatch | MIG-062P catalog behavior retained; SITE-048 accepts only `card_registration_id` correlated to tab-local opaque resume state and performs no mutation at the root router |
 | `/gachas` | Backend-ordered gacha cards, category filter, and cursor continuation | alpha.9 sale/eligibility/display flags; Testkit verified |
 | `/gachas/[slug]` | Public pack detail and Draw entry | alpha.34 Prize-associated Rank lineup image／name／configured stock in canonical order; Backend-configured requested counts; no Rank or remaining-count inference |
+| `/gachas/[slug]/prize-rate` | Prize rate page opened from the Pack detail link: total count, Platform-returned Rank rates, and disclosed inventory counts | `getGachaBySlug` only; current-stage `rank_probabilities` shown as returned (ppm written as %), no Frontend rate calculation |
 | `/draws/[drawRequestId]/result` | Completed Draw result | Authenticated `getDrawRequest` recovery; alpha.34 Rank name／result image／video snapshots; reload performs GET only and never reads current Rank presentation |
 | `/notices` | Public notices | Content Client-connected cursor list; Testkit verified |
 | `/notices/[noticeId]` | Public notice detail | Content Client-connected canonical HTML; sanitized before rendering |
