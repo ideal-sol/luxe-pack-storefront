@@ -53,7 +53,7 @@ describe("exact alpha.43 Production provenance", () => {
 
   it("accepts approved source pins, immutable artifact identity and every digest", () => {
     expect(validateProvenance(root)).toMatchObject({
-      source_sha: "6aef11464215971b6aa57d10f25e78d05c424cce",
+      source_sha: "0d81ef59f6867fe806c0efcb0b2c77ea1d05ad7b",
       contract_version: "2.0.0-alpha.43", contract_artifact_id: "11349442812",
       contract_manifest_sha256: "1951edf44ef275e3c9bf85ac0ce1417a27bc64e982a607d0a72e49186eb09e74",
       client_pin: "2.0.0-alpha.43", testkit_pin: "2.0.0-alpha.43", public_openapi_pin: "2.0.0-alpha.39",

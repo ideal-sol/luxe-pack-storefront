@@ -176,7 +176,7 @@ describe("production artifact application name authority", () => {
           "SOURCE_SHA", "TESTKIT_PIN", "WORKFLOW_SHA",
         ]) env[name] = `fixture-${name}`;
         Object.assign(env, {
-          SOURCE_SHA: "6aef11464215971b6aa57d10f25e78d05c424cce",
+          SOURCE_SHA: "0d81ef59f6867fe806c0efcb0b2c77ea1d05ad7b",
           WORKFLOW_SHA: "b".repeat(40),
           RUNNER_TEMP: root, NEXT_PUBLIC_APP_NAME: appName,
           NEXT_PUBLIC_SITE_URL: "https://example.com", NEXT_PUBLIC_PLATFORM_API_BASE_URL: apiBase,
