@@ -440,3 +440,47 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   are recorded in this Task PR. Human approval permits OLD Test resume only
   after every gate passes; runtime evidence is recorded separately. Production,
   NEW and PR #139 remain excluded. Human Browser Acceptance remains pending.
+
+## PRIZERATE-RESTORE-20261006 — prize-rate OLD Test restoration (2026-10-06)
+
+- Latest Human authorization: restore the accepted prize-rate presentation from
+  OPEN/unmerged PR #137 through a new integration PR, conditionally squash merge
+  only after all gates pass, then activate only OLD Test. Risk R3; Lane Strict
+  Change; Application Runtime Activation immediate, limited to OLD Test.
+  Tracking Issue #147 and final delivery evidence are recorded in the integration PR.
+- Dedicated branch `fix/PRIZERATE-RESTORE-20261006` starts at protected main
+  `76a898862f039926736ce150048984338a235d8a`. Existing occupied/dirty worktrees
+  remain untouched. No dedicated worktree deletion is authorized.
+- Reapplied PR #137 commits in original order as the exact 11-file patch:
+  `c4d2bc6bd0dc9ee35f2b22f7d47095e492f6c7be`, then
+  `2e8b324aec24603b57d95fdbb64419bc44c886c4`. Every resulting imported file is
+  byte-identical to PR #137 head. Live PR state/base/head match Human authority;
+  the five later main commits have no overlapping imported path.
+- Parallel local-only Readiness worktree has no staged, unstaged or branch
+  delta in source-inventory against current main. Mechanical tracked-src minus
+  inventory equals exactly the four authorized additions: prize-rate route,
+  component, presentation helper and UI test. Existing entries and their order
+  are preserved. No classifier, map, policy, workflow or Readiness test changes.
+- Display uses only the current is_current stage and Backend total_ppm converted
+  to four decimal percent. Rank counts require show_total_stock and non-null
+  stock; undisclosed Rank Prize counts stay hidden. Existing GachaDetail/client
+  only; no Endpoint, Contract or generated Artifact changes. Client/Testkit
+  alpha.43, Site Schema alpha.23 and source-map-js 1.2.2 remain exactly pinned.
+- Frozen install, focused 37 tests, Artifact/policy, all nine boundaries,
+  secret scan, lint/typecheck and exact scope/byte checks PASS. Fresh pnpm
+  11.25.0 canonical audit PASS: production all-severity findings 0, unapproved
+  High/Critical 0, exact approved dev-only High exception 1, visible Moderate 5.
+  Full suite 58 files / 1160 tests, Readiness 258 tests and production build PASS.
+  The full run includes first-user Popup/24h/countdown/points, Payment/Card/3DS/
+  Save Card, Session/Wallet, Login Gacha, Draw/result/video and shipping-only
+  Prize regressions. Existing jsdom navigation diagnostics are nonfailing.
+  Fresh final-head audit and exact-head Readiness evidence are recorded in the PR.
+- Remaining acceptance: Required Checks, fresh fixed-head self-review, squash
+  merge and OLD Test canonical candidate deployment on a free port. Preserve
+  existing rollback source `6aef11464215971b6aa57d10f25e78d05c424cce` and runtime.
+  Technical PC/mobile and feature regression evidence is recorded in the PR.
+  NEW layout comparison starts only after OLD Test technical acceptance passes.
+- Platform, migrations, database, Auth/Session, Point/Payment/Card/3DS/Save Card,
+  Draw/Wallet/Login Gacha authority, Production/NEW and PR #137 are unchanged.
+  Source rollback is a reviewed revert; OLD Test routing rollback retains the
+  prior runtime. Human Browser Acceptance remains PENDING.
