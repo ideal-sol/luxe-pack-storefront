@@ -1,9 +1,9 @@
 {
   "schema_version": "1.0",
   "repository": "ideal-sol/luxe-pack-storefront",
-  "source_sha": "6aef11464215971b6aa57d10f25e78d05c424cce",
-  "source_pr": 143,
-  "authority": "Human-approved exact Runtime Source: PR #143 merged source; OLD Test Technical PASS, Human Browser Acceptance PASS and target-specific Security PASS; Contract alpha.43 immutable Authority; Platform Runtime and Production Authority are separately bound; Production Artifact Build is separately authorized; NEW, Migration and Activation remain unauthorized",
+  "source_sha": "0d81ef59f6867fe806c0efcb0b2c77ea1d05ad7b",
+  "source_pr": 148,
+  "authority": "Human-approved exact Runtime Source: PR #148 merged source; accepted prize-rate patch restored byte-identically on current main; Required Checks, OLD Test Technical, Human Browser Acceptance and Security PASS reused under PRIZERATE-PRODUCTION-20261006; Contract alpha.43 and Platform Runtime/Production Authority unchanged; one fresh canonical Production Artifact Build authorized; NEW, Migration and Activation remain unauthorized",
   "activation_authorized": false,
   "contract_version": "2.0.0-alpha.43",
   "artifact_id": "11349442812",

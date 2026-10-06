@@ -484,3 +484,54 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   Draw/Wallet/Login Gacha authority, Production/NEW and PR #137 are unchanged.
   Source rollback is a reviewed revert; OLD Test routing rollback retains the
   prior runtime. Human Browser Acceptance remains PENDING.
+
+## PRIZERATE-PRODUCTION-20261006 — minimal Production artifact preparation
+
+- Human continuation authorizes only Production Authority Sync and one fresh
+  canonical Storefront Production artifact. Risk R3; Lane Strict Change;
+  Application Runtime Activation none. Isolated retained worktree reused;
+  branch `chore/PRIZERATE-PRODUCTION-20261006`, base/runtime source
+  `0d81ef59f6867fe806c0efcb0b2c77ea1d05ad7b` from merged PR #148.
+- Fresh readback: Storefront protected main equals the exact Runtime Source;
+  Platform protected main equals `48639e9cdc44e43534e45dbbb1b6eeb1bfc7d591`.
+  PR #148 is MERGED; PR #144 and PR #137 remain OPEN/UNMERGED.
+- Authority changes only Runtime Source, source PR and authorization wording.
+  Corresponding two test fixtures change only their exact source SHA literals;
+  provenance documentation and this mandatory Worklog record the new scope.
+  Application Source, helpers, workflows, Security policy, dependencies, all
+  Contract/provenance bytes and Readiness source/logic remain unchanged.
+- Reuse PR #148 Required Checks, focused 37, full 1160, Readiness 258,
+  production build, production audit all severities 0 and unapproved
+  High/Critical 0. OLD Test Technical PASS and Human-confirmed Browser PASS
+  are accepted under the latest Human decision; no local re-execution of
+  those checks, OLD Test activation or browser acceptance is performed.
+- Run only scope/byte/secret checks and affected authority tests locally;
+  all new Authority PR Required Checks must pass without skip or bypass.
+  Pending non-Required checks do not block. No same-head CI rerun is allowed.
+  Fresh exact-head self-review requires SEV-0/SEV-1 zero before squash merge.
+- After merge, dispatch the unchanged canonical Production artifact workflow
+  once for exact Runtime Source, app name オリポケ, site https://ori-poke.com
+  and API base /api/v2. Bind exact tree, authority, alpha.43 Contract and
+  Platform provenance; verify native ARM64, Next 16.3.6, source-map-js 1.2.2,
+  production-zero audit, exact Artifact ID/digests/Build ID, exact-ID download
+  and canonical runtime smoke. Final delivery evidence is recorded in the PR.
+- Platform Runtime `4b7d00e8e31223136cd0b70134916d091dfea6cb`, Platform
+  Production Authority `48639e9cdc44e43534e45dbbb1b6eeb1bfc7d591`, Contract
+  alpha.43 / Artifact 11349442812, database, workers, deferred Scheduler and
+  ENV remain unchanged. No migration creation/application, Snapshot, NEW
+  connection, Production activation, Nginx or Worker/Scheduler operation.
+  activation_authorized remains false. Stop at
+  PRIZERATE_PRODUCTION_ARTIFACT_READY; reviewed authority-only revert is the
+  rollback path, with existing runtimes and rollback artifacts retained.
+- Human requests a temporary pause after the minimal five-file authority patch.
+  Work remains uncommitted on the isolated task branch. Authority PR creation,
+  Required Checks, self-review, squash merge and Artifact dispatch are pending.
+  Resume with affected authority tests and exact scope validation; preserve
+  the accepted Runtime Source evidence without rerunning it.
+- Human resumes the Task. Checkpoint bytes and both live protected main SHAs
+  still match. Affected authority tests 2 files / 118 PASS; exact five-file
+  scope, unchanged Application/dependency/workflow/Contract/provenance,
+  exact-source-only test literal changes, whitespace and secret checks PASS.
+  Accepted Runtime validation remains reused; no local Full/build/audit or
+  OLD Test acceptance rerun. Issue/PR and fixed final-head delivery evidence
+  are recorded through the GitHub App transport before the single dispatch.

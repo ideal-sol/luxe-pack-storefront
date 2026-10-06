@@ -1,18 +1,19 @@
 # Production release authority — alpha.43
 
-PRODAUTH-20261006 is a Strict Change with Application Runtime Activation `none`.
+PRIZERATE-PRODUCTION-20261006 is a Strict Change with Application Runtime Activation `none`.
 Human approves exact Storefront Runtime Source
-`6aef11464215971b6aa57d10f25e78d05c424cce` (merged PR #143), with OLD Test
+`0d81ef59f6867fe806c0efcb0b2c77ea1d05ad7b` (merged PR #148), with OLD Test
 Technical, Human Browser Acceptance and target-specific Security PASS.
 `activation_authorized` remains false. Production/NEW connections, Snapshot,
 Migration, DB writes, routing/ENV changes and Runtime Activation are prohibited.
-The release-specific Human waiver permits evidence reuse and Candidate bind
-after both fresh artifacts pass, stopping at `TECHNICALLY_READY_CANDIDATE`.
+The release-specific Human decision permits accepted PR #148 validation and
+acceptance evidence reuse, then one fresh Storefront artifact, stopping at
+`PRIZERATE_PRODUCTION_ARTIFACT_READY`. Platform artifact generation is excluded.
 It is not Production GO and expires with this release or a changed release scope.
 
 ## Separate runtime and workflow sources
 
-The approved Runtime Source stays `6aef11464215971b6aa57d10f25e78d05c424cce`.
+The approved Runtime Source stays `0d81ef59f6867fe806c0efcb0b2c77ea1d05ad7b`.
 This authority PR's merge SHA is workflow/metadata authority only; it must never
 replace the approved Runtime Source. The canonical `production-artifact.yml`
 checks out approval code from protected current main and application code from
@@ -84,7 +85,11 @@ authority merge and current authorization checks, followed by exact-ID download,
 digest/provenance/package verification and native runtime smoke. The canonical
 public app name is read back from the previous verified Production artifact,
 not inferred from test fixtures. CI verification artifacts are not release artifacts.
-PR #144 remains OPEN/UNMERGED through preparation and final release closure.
+PR #144 and PR #137 remain OPEN/UNMERGED through preparation and final release closure.
 No other PR is incorporated. Human Browser Acceptance is already PASS.
+OLD Test deployment and acceptance are reused without another activation or
+browser checkpoint. Same-head CI reruns are prohibited. Platform Runtime,
+Production Authority, Contract alpha.43, database, workers, deferred Scheduler
+and ENV remain unchanged; no migration or Snapshot is required.
 Rollback of this authority change requires a reviewed authority-only revert;
 existing runtimes and rollback artifacts remain untouched.
