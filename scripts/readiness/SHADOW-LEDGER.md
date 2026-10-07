@@ -7,10 +7,14 @@ contributes **zero** actual changes. Application source and Platform are untouch
 
 ## Authority and transport
 
-The window starts at Operational Approval commit
-`eead719007d3483ceb4e270a431f6c591430c2fc`, not a fixed number of days ago.
-PR #134 and pre-approval observations never count. The branch is based on the
-current protected main, independently of the window's historical start.
+Machine Policy Authority starts at approval commit
+`eead719007d3483ceb4e270a431f6c591430c2fc`. Historical collection still starts
+there. Operational Shadow Measurement starts separately at
+`d077fb4710597ac96eb3967a3415a4f067a52f12`, whose committer date is
+`2026-10-07T05:07:18Z`. Both must be ancestors of protected main. Neither start
+is added to the Machine Policy AUTHORITY object or observation bindings.
+Implementation merge time, collector time and PR creation time cannot replace
+these starts. The two baseline changes themselves receive no actual credit.
 
 The approved authority is pinned in `shadow-common.mjs` and verified against
 the existing policy files on every validation:
@@ -213,7 +217,7 @@ cannot be hidden by a tooling exclusion. Unknown file categories are
 evaluated after explicitly ignoring accompanying `docs/`, Markdown worklogs and
 root Markdown documentation; any application/public file still takes precedence.
 Unknown substantive paths are
-`INDETERMINATE` and block Exit. Open real PRs remain visible and their pending
+`INDETERMINATE`; Operational cases block Exit and pre-ledger cases remain visible as history. Operational open real PRs remain visible and their pending
 Human finalizations block Exit; they do not yet contribute actual counts.
 Pre-window workflow artifacts remain visible as transport metadata but do not
 satisfy approved-window observation coverage. Before Exit, re-collect a fresh complete snapshot; no offline tool can prove a
@@ -223,7 +227,7 @@ saved snapshot is still the latest GitHub state without doing that read.
 
 Identical PR/head/tree/digest reloads are idempotent. Conflicting records for the
 same PR/head or observation ID fail. New heads preserve older records as STALE;
-only the current source identity counts, while old OPEN findings remain OPEN.
+only an eligible Operational current source identity counts, while old OPEN findings remain OPEN.
 Do not revise a final record in place to resolve a finding.
 
 A collected resolution manifest is an array of separately sealed Human records:
@@ -272,7 +276,7 @@ change. Synthetic probes are never actual-change evidence or Human PASS.
 | CI problems = 0, acceptance misses = 0 | Separate OPEN findings and Human resolution records |
 | authority reuse PASS | At least two qualifying observations with exact pinned approved authority |
 | authority invalidation PASS | Executed negative-probe report with implementation digest |
-| Shadow skip = 0 | Whole-window expected workflow, successful check and actual verified observation |
+| Shadow skip = 0 | Operational expected workflow, successful check and post-start verified observation |
 
 The output has `schema_version`, `authority`, `window`, `counts`, `conditions`,
 `blocking_gaps`, `status`, `record_digest` and a readable progress summary.
@@ -305,3 +309,110 @@ Platform's existing Strict consumer remains compatible with the unchanged
 classifier record. Production/Preview deployments, runtime restarts, DB,
 migrations, contracts, artifact activation, merge and auto-merge are outside
 this change's authorization.
+
+
+## Operational Measurement extension (snapshot 1.1)
+
+This is Storefront Minor Fast Lane Shadow measurement (formal v1.1 sections
+43–45), not Gate-wide Blocking Authority Promotion (section 7.1). There is no
+fixed duration or minimum Production release count for Gate-wide Exit.
+
+Existing `start_authority`, `started_at`, `start_is_ancestor` and `authority`
+retain Machine Policy Authority / historical-collection meanings. Add
+`measurement_start_authority`, `measurement_started_at` and
+`measurement_start_is_ancestor`. The collector reads the exact measurement
+commit's committer date and checks it against the approved time. The old
+`in_window`, `shadow_skip` and `indeterminate` audit fields retain historical
+scope. New `operational` counts and per-row `in_measurement_window`,
+`measurement_status`, `operational_observations`, `operational_skipped` and
+`actual_credit_allowed` are derived by the auditor, not caller overrides.
+
+A legacy 1.1 snapshot can be audited as history. Its
+`measurement_evidence_status` is `MEASUREMENT_EVIDENCE_MISSING`; it cannot
+produce Operational Exit. The evaluator emits `HOLD_EVIDENCE_INVALID`, and the
+audit CLI exits nonzero. No schema 1.2 or record-format migration is needed.
+Older binaries cannot interpret this extension and must not be used to evaluate
+Operational measurement. Observation, Human, resolution and publisher formats
+remain unchanged; all additions are covered by the existing canonical seal.
+
+Each current row carries `measurement_evidence`: the selected exact-head
+workflow run's id, event, path, source head, URL, creation/update times and
+identity-bound observation descriptors. Descriptors identify artifact/run or
+trusted durable observation digest, machine digest and original `generated_at`.
+Only a run created strictly after the start and a machine generated strictly
+after the start, within that run's interval, provide Operational coverage.
+Classifier-only artifacts lack an original machine timestamp: their reconstructed
+envelopes remain historical transport and earn no Operational coverage.
+Artifact presence alone, updated_at alone, late Human finalization/publication
+and a rerun of a pre-start run do not prove a new measurement. Such reruns need
+a new run with proven timing; this minimal collector does not infer attempt
+boundaries. The current-run/head and normal CI contradiction checks remain.
+
+| Current PR case | Coverage | Actual credit |
+| --- | --- | --- |
+| Created after start, open/merged | Required even without observations | Only merged real comparable Human-qualified changes |
+| Pre-start head proven by a historical checkpoint, no fresh observation | Historical only (unless merged after start) | Zero |
+| Same pre-start head with fresh observation | Allowed; independent Human/fail-closed conditions still apply | Zero actual/class/critical/actual-derived reuse |
+| Proven new post-start head | Required, even if the workflow did not run | Existing qualification rules, with changed source content |
+| Merged after start | Required; merge time alone proves no new source | Only with independent new-source evidence |
+| Closed unmerged | No expected workflow | Zero |
+| Tooling/security/docs/test only | Required when Operational | Zero |
+| Missing or ambiguous source boundary | MEASUREMENT_BOUNDARY_UNKNOWN; Candidate blocked | Zero |
+
+A new source is proven by a checkpoint at/after the boundary followed by a
+changed current head/tree before capture. Actual credit requires both head and
+tree to change; a base-only update or same-tree rebase grants no actual credit.
+An identity already evidenced before activation remains an old identity, even
+if later restored. Exact observation identity still includes base/head/tree.
+PR updated_at, commit author/committer dates and first discovery cannot prove
+head-change timing. A change between a pre-start checkpoint and now straddles
+the boundary and remains UNKNOWN. Timestamp ties do not prove "after".
+
+### Historical checkpoints and gaps
+
+The optional collector `--checkpoints /path/to/prior-snapshots.json` accepts an
+array of **existing trusted collector snapshots**, including legacy 1.1.
+`collectWindow(get, {checkpoints})` provides the same input offline. Before use,
+the collector validates each original seal, repository, approved Authority,
+complete index, identities and provenance; future captures are rejected.
+Synthetic test snapshots and arbitrary caller-sealed JSON are not operational
+Authority. Preserve authenticated API transport and original snapshots externally.
+
+The current snapshot's `historical_rows` retains original PR rows, capture time,
+source snapshot digest and evidence reference, including missing observations
+and indeterminate categories. Repeated identical inputs are deduplicated.
+These are collector-projected historical facts, not newly finalized observations;
+the source digest is a reference, not a signature or proof without the trusted
+original. Current history indexes must still include all older finalizations
+and resolutions. Omission fails closed rather than silently deleting findings.
+
+Known pre-ledger gaps such as #137/#139 and historical indeterminate #146 stay
+visible; there is no PR-number exclusion allowlist. If their earlier identity
+state is not available in trusted evidence, retain UNKNOWN. Current API data
+must not be backdated into a checkpoint or used to invent a past gap/PASS.
+Retain previous snapshots when collecting so head transitions do not erase gaps.
+Historical gap counts are displayed independently of Operational skips; the
+former never become newly measured successes or new skips solely due to start.
+
+The evaluator validates all observations, trusted publication and historical
+completeness before selecting `operational_current` and `qualifying`. Findings
+remain global across the boundary and stale heads; only an existing exact-bound
+trusted resolution closes them. Historical fail-closed FAIL also remains a veto.
+Positive fail-closed evidence, finalization and actual-derived reuse require
+Operational records. Invalidation remains bound to implementation content and
+must be regenerated after this Source change. It grants no actual credit.
+
+### Limits and rollback
+
+The existing evaluator's three-class count does not select Promotion classes;
+per-target-class samples still require separate review. Existing all-OPEN-FN
+blocking, two-qualifying-record reuse and single explicit fail-closed confirmation
+retain their limited meanings; they do not establish all formal Boundary/UNKNOWN
+fallback checks or Gate-wide readiness. No automatic Promotion, Fast Lane,
+Blocking Authority, Phase 2 or Production Human GO is introduced.
+
+Rollback is a reviewed Source/configuration revert, retaining every snapshot,
+observation, resolution and finding. Suspend use of the affected Operational
+Candidate output; an old evaluator's authority-window counts are not replacement
+Operational results. No Runtime, deployment, DB, ENV, Contract or Artifact
+activation/migration is involved. Existing application and workflow are unchanged.

@@ -1,4 +1,4 @@
-import { AUTHORITY, CHECKS, IDENTITY, REPOSITORY, WINDOW_START, SHADOW_CHECK, authority, bind, cli, enumeration, identity, object, options, pick, readJson, requireValue, seal, sha, string, strings, timestamp, verifySeal, writeJson } from "./shadow-common.mjs";
+import { AUTHORITY, OPERATIONAL_SHADOW_MEASUREMENT_START, OPERATIONAL_SHADOW_MEASUREMENT_STARTED_AT, CHECKS, IDENTITY, REPOSITORY, MACHINE_POLICY_AUTHORITY_START, SHADOW_CHECK, authority, bind, cli, enumeration, identity, object, options, pick, readJson, requireValue, seal, sha, string, strings, timestamp, verifySeal, writeJson } from "./shadow-common.mjs";
 import { PUBLISHER_SNAPSHOT_VERSION, validatePublisherProvenance } from "./shadow-publisher.mjs";
 
 // Exclusions affect actual-change counting, not observation coverage. Mixed
@@ -19,9 +19,54 @@ export function currentIdentity(record, row) {
   return IDENTITY.every(key => record[key] === row[key]);
 }
 
+function auditRow(pr, snapshot) {
+  identity(pr);
+  enumeration(pr.state, ["open", "closed", "merged"], "PR_STATE");
+  timestamp(pr.created_at); timestamp(pr.updated_at);
+  requireValue(pr.base_ref === "main" && pr.files_complete === true, "PR_SCOPE_INCOMPLETE");
+  if (pr.state === "merged") { timestamp(pr.merged_at); requireValue(sha(pr.merge_commit_sha), "MERGE_IDENTITY_MISSING"); }
+  if (pr.state === "closed") timestamp(pr.closed_at);
+  const endAt = pr.state === "merged" ? pr.merged_at : pr.state === "closed" ? pr.closed_at : snapshot.captured_at;
+  const inWindow = pr.pr_number !== 134 && pr.merge_commit_sha !== MACHINE_POLICY_AUTHORITY_START && Date.parse(endAt) > Date.parse(snapshot.started_at);
+  const category = categoryFor(pr.changed_files);
+  const excluded = !inWindow ? "BEFORE_WINDOW" : pr.state === "closed" ? "CLOSED_UNMERGED" : category === "REAL_STOREFRONT" || category === "INDETERMINATE" ? null : category;
+  const expected = inWindow && pr.state !== "closed";
+  requireValue(typeof pr.shadow_workflow_triggered === "boolean" && typeof pr.observation_artifact_exists === "boolean", "SHADOW_EVIDENCE_INVALID");
+  enumeration(pr.shadow_check_conclusion, ["missing", "pending", "success", "failure", "cancelled", "timed_out", "skipped", "neutral", "action_required"], "SHADOW_CHECK");
+  if (pr.shadow_workflow_triggered) requireValue(string(pr.shadow_evidence_reference) && pr.shadow_source_head_sha === pr.head_sha, "SHADOW_HEAD_MISMATCH");
+  strings(pr.machine_record_digests, "MACHINE_RECORD_DIGESTS");
+  strings(pr.finalized_record_digests, "FINALIZED_RECORD_DIGESTS");
+  strings(pr.historical_finalized_record_digests, "HISTORICAL_RECORD_DIGESTS");
+  strings(pr.resolution_record_digests, "RESOLUTION_RECORD_DIGESTS");
+  requireValue(Array.isArray(pr.durable_evidence), "TRUSTED_DURABLE_PUBLISHER_PROVENANCE_REQUIRED");
+  for (const provenance of pr.durable_evidence) validatePublisherProvenance(provenance, pr.pr_number);
+  for (const [kind, digests] of [["observation", pr.historical_finalized_record_digests], ["resolution", pr.resolution_record_digests]]) {
+    const published = pr.durable_evidence.filter(entry => entry.evidence_kind === kind);
+    requireValue(digests.every(digest => published.some(entry => entry.record_digest === digest)), "TRUSTED_DURABLE_PUBLISHER_PROVENANCE_REQUIRED");
+    requireValue(published.every(entry => digests.includes(entry.record_digest)), "PUBLISHER_EVIDENCE_INDEX_MISMATCH");
+  }
+  requireValue(pr.finalized_record_digests.every(digest => pr.historical_finalized_record_digests.includes(digest)), "WINDOW_FINALIZATION_HISTORY_MISSING");
+  requireValue([...pr.machine_record_digests, ...pr.historical_finalized_record_digests].every(digest => /^sha256:[0-9a-f]{64}$/.test(digest)), "WINDOW_DIGEST_INVALID");
+  object(pr.normal_ci_conclusions, "WINDOW_CI");
+  requireValue(Object.keys(pr.normal_ci_conclusions).every(name => CHECKS.includes(name)), "WINDOW_CI_NAME_INVALID");
+  for (const conclusion of Object.values(pr.normal_ci_conclusions)) enumeration(conclusion, ["pending", "success", "failure", "cancelled", "timed_out", "skipped", "neutral", "action_required"], "WINDOW_CI_CONCLUSION");
+  const actualObservation = pr.machine_record_digests.length > 0 || pr.finalized_record_digests.length > 0;
+  const skipped = expected && (!pr.shadow_workflow_triggered || pr.shadow_check_conclusion !== "success" || !actualObservation);
+  return { ...pick(pr, IDENTITY), state: pr.state, category, exclusion_reason: excluded, in_window: inWindow,
+    expected_shadow_workflow: expected, shadow_workflow_triggered: pr.shadow_workflow_triggered,
+    shadow_check_name: SHADOW_CHECK, shadow_check_conclusion: pr.shadow_check_conclusion,
+    observation_artifact_exists: pr.observation_artifact_exists, actual_shadow_observation: actualObservation,
+    finalized_observation_exists: pr.finalized_record_digests.length > 0,
+    machine_record_digests: pr.machine_record_digests, finalized_record_digests: pr.finalized_record_digests,
+    historical_finalized_record_digests: pr.historical_finalized_record_digests,
+    durable_evidence: pr.durable_evidence, resolution_record_digests: pr.resolution_record_digests,
+    normal_ci_conclusions: pr.normal_ci_conclusions,
+    skipped, indeterminate: inWindow && pr.state !== "closed" && category === "INDETERMINATE" };
+}
+
 export function auditWindow(snapshot) {
   verifySeal(snapshot, "WINDOW_SNAPSHOT");
-  requireValue(snapshot.schema_version === PUBLISHER_SNAPSHOT_VERSION && snapshot.repository === REPOSITORY && snapshot.start_authority === WINDOW_START, "WINDOW_AUTHORITY_INVALID");
+  requireValue(snapshot.schema_version === PUBLISHER_SNAPSHOT_VERSION && snapshot.repository === REPOSITORY && snapshot.start_authority === MACHINE_POLICY_AUTHORITY_START, "WINDOW_AUTHORITY_INVALID");
   authority(snapshot.authority);
   requireValue(snapshot.index_complete === true && snapshot.pagination_complete === true && string(snapshot.evidence_reference), "WINDOW_INDEX_INCOMPLETE");
   requireValue(sha(snapshot.protected_main_sha) && snapshot.protected_main === true && snapshot.start_is_ancestor === true, "WINDOW_BASELINE_INVALID");
@@ -30,54 +75,122 @@ export function auditWindow(snapshot) {
   requireValue(Array.isArray(snapshot.pull_requests), "WINDOW_INDEX_MALFORMED");
   const numbers = new Set();
   const rows = snapshot.pull_requests.map(pr => {
-    identity(pr);
     requireValue(!numbers.has(pr.pr_number), "WINDOW_DUPLICATE_PR"); numbers.add(pr.pr_number);
-    enumeration(pr.state, ["open", "closed", "merged"], "PR_STATE");
-    timestamp(pr.created_at); timestamp(pr.updated_at);
-    requireValue(pr.base_ref === "main" && pr.files_complete === true, "PR_SCOPE_INCOMPLETE");
-    if (pr.state === "merged") { timestamp(pr.merged_at); requireValue(sha(pr.merge_commit_sha), "MERGE_IDENTITY_MISSING"); }
-    if (pr.state === "closed") timestamp(pr.closed_at);
-    const endAt = pr.state === "merged" ? pr.merged_at : pr.state === "closed" ? pr.closed_at : snapshot.captured_at;
-    const inWindow = pr.pr_number !== 134 && pr.merge_commit_sha !== WINDOW_START && Date.parse(endAt) > Date.parse(snapshot.started_at);
-    const category = categoryFor(pr.changed_files);
-    const excluded = !inWindow ? "BEFORE_WINDOW" : pr.state === "closed" ? "CLOSED_UNMERGED" : category === "REAL_STOREFRONT" || category === "INDETERMINATE" ? null : category;
-    const expected = inWindow && pr.state !== "closed";
-    requireValue(typeof pr.shadow_workflow_triggered === "boolean" && typeof pr.observation_artifact_exists === "boolean", "SHADOW_EVIDENCE_INVALID");
-    enumeration(pr.shadow_check_conclusion, ["missing", "pending", "success", "failure", "cancelled", "timed_out", "skipped", "neutral", "action_required"], "SHADOW_CHECK");
-    if (pr.shadow_workflow_triggered) requireValue(string(pr.shadow_evidence_reference) && pr.shadow_source_head_sha === pr.head_sha, "SHADOW_HEAD_MISMATCH");
-    strings(pr.machine_record_digests, "MACHINE_RECORD_DIGESTS");
-    strings(pr.finalized_record_digests, "FINALIZED_RECORD_DIGESTS");
-    strings(pr.historical_finalized_record_digests, "HISTORICAL_RECORD_DIGESTS");
-    strings(pr.resolution_record_digests, "RESOLUTION_RECORD_DIGESTS");
-    requireValue(Array.isArray(pr.durable_evidence), "TRUSTED_DURABLE_PUBLISHER_PROVENANCE_REQUIRED");
-    for (const provenance of pr.durable_evidence) validatePublisherProvenance(provenance, pr.pr_number);
-    for (const [kind, digests] of [["observation", pr.historical_finalized_record_digests], ["resolution", pr.resolution_record_digests]]) {
-      const published = pr.durable_evidence.filter(entry => entry.evidence_kind === kind);
-      requireValue(digests.every(digest => published.some(entry => entry.record_digest === digest)), "TRUSTED_DURABLE_PUBLISHER_PROVENANCE_REQUIRED");
-      requireValue(published.every(entry => digests.includes(entry.record_digest)), "PUBLISHER_EVIDENCE_INDEX_MISMATCH");
-    }
-    requireValue(pr.finalized_record_digests.every(digest => pr.historical_finalized_record_digests.includes(digest)), "WINDOW_FINALIZATION_HISTORY_MISSING");
-    requireValue([...pr.machine_record_digests, ...pr.historical_finalized_record_digests].every(digest => /^sha256:[0-9a-f]{64}$/.test(digest)), "WINDOW_DIGEST_INVALID");
-    object(pr.normal_ci_conclusions, "WINDOW_CI");
-    requireValue(Object.keys(pr.normal_ci_conclusions).every(name => CHECKS.includes(name)), "WINDOW_CI_NAME_INVALID");
-    for (const conclusion of Object.values(pr.normal_ci_conclusions)) enumeration(conclusion, ["pending", "success", "failure", "cancelled", "timed_out", "skipped", "neutral", "action_required"], "WINDOW_CI_CONCLUSION");
-    const actualObservation = pr.machine_record_digests.length > 0 || pr.finalized_record_digests.length > 0;
-    const skipped = expected && (!pr.shadow_workflow_triggered || pr.shadow_check_conclusion !== "success" || !actualObservation);
-    return { ...pick(pr, IDENTITY), state: pr.state, category, exclusion_reason: excluded, in_window: inWindow,
-      expected_shadow_workflow: expected, shadow_workflow_triggered: pr.shadow_workflow_triggered,
-      shadow_check_name: SHADOW_CHECK, shadow_check_conclusion: pr.shadow_check_conclusion,
-      observation_artifact_exists: pr.observation_artifact_exists, actual_shadow_observation: actualObservation,
-      finalized_observation_exists: pr.finalized_record_digests.length > 0,
-      machine_record_digests: pr.machine_record_digests, finalized_record_digests: pr.finalized_record_digests,
-      historical_finalized_record_digests: pr.historical_finalized_record_digests,
-      durable_evidence: pr.durable_evidence, resolution_record_digests: pr.resolution_record_digests,
-      normal_ci_conclusions: pr.normal_ci_conclusions,
-      skipped, indeterminate: inWindow && pr.state !== "closed" && category === "INDETERMINATE" };
+    return auditRow(pr, snapshot);
   });
-  return seal({ schema_version: PUBLISHER_SNAPSHOT_VERSION, repository: REPOSITORY, authority: AUTHORITY, start_authority: WINDOW_START,
+  const historical = snapshot.historical_rows ?? [];
+  requireValue(Array.isArray(historical), "HISTORICAL_ROWS_INVALID");
+  const historyKeys = new Set();
+  const historicalRows = historical.map(entry => {
+    timestamp(entry.captured_at);
+    requireValue(Date.parse(entry.captured_at) <= Date.parse(snapshot.captured_at) &&
+      /^sha256:[0-9a-f]{64}$/.test(entry.source_snapshot_digest) && string(entry.source_evidence_reference), "HISTORICAL_SOURCE_INVALID");
+    const key = seal(entry).record_digest;
+    requireValue(!historyKeys.has(key), "DUPLICATE_HISTORICAL_ROW"); historyKeys.add(key);
+    const row = auditRow(entry.row, { ...snapshot, captured_at: entry.captured_at });
+    requireValue(Date.parse(entry.row.created_at) <= Date.parse(entry.captured_at) &&
+      Date.parse(entry.row.updated_at) <= Date.parse(entry.captured_at), "HISTORICAL_CAPTURE_DATE_INVALID");
+    requireValue(numbers.has(row.pr_number), "HISTORICAL_PR_OMITTED");
+    return { ...entry, audit: row };
+  });
+  const measurementFields = ["measurement_start_authority", "measurement_started_at", "measurement_start_is_ancestor"];
+  const hasMeasurement = measurementFields.some(key => Object.hasOwn(snapshot, key));
+  let operational = null;
+  if (hasMeasurement) {
+    requireValue(snapshot.measurement_start_authority === OPERATIONAL_SHADOW_MEASUREMENT_START &&
+      snapshot.measurement_start_is_ancestor === true, "MEASUREMENT_BASELINE_INVALID");
+    timestamp(snapshot.measurement_started_at);
+    requireValue(Date.parse(snapshot.measurement_started_at) === Date.parse(OPERATIONAL_SHADOW_MEASUREMENT_STARTED_AT) &&
+      Date.parse(snapshot.started_at) <= Date.parse(snapshot.measurement_started_at) &&
+      Date.parse(snapshot.measurement_started_at) <= Date.parse(snapshot.captured_at), "MEASUREMENT_DATES_INVALID");
+    for (let i = 0; i < rows.length; i++) Object.assign(rows[i], measurementFor(snapshot.pull_requests[i], snapshot, historical));
+    operational = {
+      shadow_skip: rows.filter(row => row.operational_skipped).length,
+      indeterminate: rows.filter(row => row.in_measurement_window && row.category === "INDETERMINATE").length,
+      boundary_unknown: rows.filter(row => row.measurement_status === "MEASUREMENT_BOUNDARY_UNKNOWN").length,
+    };
+  }
+  // Historical finalizations and resolutions must remain indexed even if the
+  // current GitHub response no longer contains their original publication.
+  for (const old of historicalRows) {
+    const row = rows.find(row => row.pr_number === old.row.pr_number);
+    for (const key of ["historical_finalized_record_digests", "resolution_record_digests"])
+      requireValue(old.row[key].every(digest => row[key].includes(digest)), "HISTORICAL_EVIDENCE_OMITTED");
+  }
+  return seal({ schema_version: PUBLISHER_SNAPSHOT_VERSION, repository: REPOSITORY, authority: AUTHORITY, start_authority: MACHINE_POLICY_AUTHORITY_START,
     protected_main_sha: snapshot.protected_main_sha, captured_at: snapshot.captured_at,
     snapshot_digest: snapshot.record_digest, universe: "All main-target PRs open at/after approval or closed/merged after approval; #134 excluded; all open/merged categories require shadow observation",
+    measurement_start_authority: snapshot.measurement_start_authority ?? null,
+    measurement_started_at: snapshot.measurement_started_at ?? null,
+    measurement_start_is_ancestor: snapshot.measurement_start_is_ancestor ?? null,
+    measurement_evidence_status: hasMeasurement ? "PRESENT" : "MEASUREMENT_EVIDENCE_MISSING",
+    operational, historical_rows: historicalRows,
     rows, shadow_skip: rows.filter(row => row.skipped).length, indeterminate: rows.filter(row => row.indeterminate).length });
+}
+
+function measurementFor(pr, snapshot, history) {
+  const start = Date.parse(snapshot.measurement_started_at), captured = Date.parse(snapshot.captured_at);
+  const evidence = pr.measurement_evidence;
+  object(evidence, "MEASUREMENT_EVIDENCE");
+  requireValue(Array.isArray(evidence.observations), "MEASUREMENT_OBSERVATIONS_INVALID");
+  const run = evidence.run;
+  if (run !== null) {
+    object(run, "MEASUREMENT_RUN"); timestamp(run.created_at); timestamp(run.updated_at);
+    requireValue(Number.isSafeInteger(run.id) && run.id > 0 && run.head_sha === pr.head_sha &&
+      run.path === ".github/workflows/readiness-shadow.yml" && run.event === "pull_request" &&
+      run.html_url === pr.shadow_evidence_reference && pr.shadow_workflow_triggered &&
+      Date.parse(run.created_at) <= Date.parse(run.updated_at) && Date.parse(run.updated_at) <= captured, "MEASUREMENT_RUN_INVALID");
+  } else requireValue(!pr.shadow_workflow_triggered, "MEASUREMENT_RUN_MISSING");
+  const fresh = [];
+  for (const entry of evidence.observations) {
+    identity(entry); timestamp(entry.generated_at);
+    requireValue(currentIdentity(entry, pr) && pr.machine_record_digests.includes(entry.machine_record_digest), "MEASUREMENT_OBSERVATION_MISMATCH");
+    requireValue(["artifact", "durable"].includes(entry.source), "MEASUREMENT_SOURCE_INVALID");
+    if (entry.source === "durable") requireValue(pr.finalized_record_digests.includes(entry.observation_digest) &&
+      pr.durable_evidence.some(p => p.evidence_kind === "observation" && p.record_digest === entry.observation_digest), "MEASUREMENT_PUBLICATION_MISSING");
+    if (entry.source === "artifact") requireValue(Number.isSafeInteger(entry.artifact_id) && entry.artifact_id > 0, "MEASUREMENT_ARTIFACT_INVALID");
+    requireValue(run && entry.run_id === run.id && Date.parse(entry.generated_at) >= Date.parse(run.created_at) &&
+      Date.parse(entry.generated_at) <= Date.parse(run.updated_at), "MEASUREMENT_RUN_BINDING_INVALID");
+    if (Date.parse(run.created_at) > start && Date.parse(entry.generated_at) > start) fresh.push(entry);
+  }
+  const checkpoints = history.filter(entry => entry.row.pr_number === pr.pr_number);
+  const sameSource = row => row.head_sha === pr.head_sha && row.tree_sha === pr.tree_sha;
+  const oldSource = checkpoints.some(entry => Date.parse(entry.captured_at) <= start && sameSource(entry.row));
+  // A checkpoint after the boundary followed by a different head proves timing;
+  // commit dates, generic PR updated_at and first discovery do not.
+  const changedAfter = checkpoints.some(entry => Date.parse(entry.captured_at) >= start && Date.parse(entry.captured_at) < captured && !sameSource(entry.row));
+  const newContent = checkpoints.some(entry => Date.parse(entry.captured_at) >= start && Date.parse(entry.captured_at) < captured &&
+    entry.row.head_sha !== pr.head_sha && entry.row.tree_sha !== pr.tree_sha);
+  const createdAfter = Date.parse(pr.created_at) > start;
+  const endedBefore = pr.state === "merged" && Date.parse(pr.merged_at) <= start;
+  const excluded = pr.state === "closed" || endedBefore || pr.merge_commit_sha === MACHINE_POLICY_AUTHORITY_START ||
+    pr.merge_commit_sha === OPERATIONAL_SHADOW_MEASUREMENT_START || pr.pr_number === 134;
+  const unknown = !excluded && !createdAfter && !oldSource && !changedAfter;
+  const mergedAfter = pr.state === "merged" && Date.parse(pr.merged_at) > start;
+  const subject = !excluded && (createdAfter || changedAfter || mergedAfter || fresh.length > 0);
+  return {
+    in_measurement_window: subject,
+    measurement_status: excluded ? "EXCLUDED" : unknown ? "MEASUREMENT_BOUNDARY_UNKNOWN" : subject ? "OPERATIONAL" : "HISTORICAL_PRE_LEDGER",
+    actual_credit_allowed: !excluded && !oldSource && (createdAfter || newContent),
+    operational_observations: fresh,
+    operational_skipped: subject && (!pr.shadow_workflow_triggered || pr.shadow_check_conclusion !== "success" || fresh.length === 0),
+  };
+}
+
+// Prior snapshots are authenticated transport inputs, just like the current
+// snapshot. A seal alone does not authenticate a caller-supplied checkpoint.
+export function collectHistoricalRows(checkpoints, capturedAt) {
+  requireValue(Array.isArray(checkpoints), "CHECKPOINTS_INVALID"); timestamp(capturedAt);
+  const entries = new Map();
+  for (const snapshot of checkpoints) {
+    auditWindow(snapshot);
+    requireValue(Date.parse(snapshot.captured_at) <= Date.parse(capturedAt), "FUTURE_CHECKPOINT");
+    for (const entry of [...(snapshot.historical_rows ?? []), ...snapshot.pull_requests.map(row => ({
+      source_snapshot_digest: snapshot.record_digest, source_evidence_reference: snapshot.evidence_reference,
+      captured_at: snapshot.captured_at, row,
+    }))]) entries.set(seal(entry).record_digest, entry);
+  }
+  return [...entries.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, entry]) => entry);
 }
 
 export function assertCurrent(record, snapshot) {
@@ -91,5 +204,5 @@ cli(import.meta.url, () => {
   const opts = options(process.argv.slice(2), ["snapshot", "output"]);
   const result = auditWindow(readJson(opts.snapshot));
   writeJson(opts.output, result);
-  if (result.shadow_skip || result.indeterminate) process.exitCode = 1;
+  if (!result.operational || result.operational.shadow_skip || result.operational.indeterminate || result.operational.boundary_unknown) process.exitCode = 1;
 });

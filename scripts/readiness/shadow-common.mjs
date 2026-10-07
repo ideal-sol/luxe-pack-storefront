@@ -5,7 +5,10 @@ import { canonical, seal, defaultPolicy, defaultImpact } from "./classifier.mjs"
 
 export { canonical, seal };
 export const REPOSITORY = "ideal-sol/luxe-pack-storefront";
-export const WINDOW_START = "eead719007d3483ceb4e270a431f6c591430c2fc";
+export const MACHINE_POLICY_AUTHORITY_START = "eead719007d3483ceb4e270a431f6c591430c2fc";
+export const OPERATIONAL_SHADOW_MEASUREMENT_START = "d077fb4710597ac96eb3967a3415a4f067a52f12";
+// Commit identity is authoritative; the collector independently reads its committer date.
+export const OPERATIONAL_SHADOW_MEASUREMENT_STARTED_AT = "2026-10-07T05:07:18Z";
 export const AUTHORITY = Object.freeze({
   policy_version: "1.1.2-operational-approved",
   policy_digest: "sha256:5f63edbed26a20a41e6fddde1ad74761348d45e4cfd3db611b0888bfefab938f",

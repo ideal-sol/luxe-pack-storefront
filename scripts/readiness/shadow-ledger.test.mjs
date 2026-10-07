@@ -6,15 +6,17 @@ import { join } from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import { beforeAll, describe, expect, it } from "vitest";
 import { classifyDiff, defaultPolicy, defaultImpact } from "./classifier.mjs";
-import { AUTHORITY, BINDING, CHECKS, IDENTITY, REPOSITORY, SHADOW_CHECK, WINDOW_START, canonical, pick, seal } from "./shadow-common.mjs";
+import { AUTHORITY, BINDING, CHECKS, IDENTITY, REPOSITORY, SHADOW_CHECK, MACHINE_POLICY_AUTHORITY_START, OPERATIONAL_SHADOW_MEASUREMENT_START, OPERATIONAL_SHADOW_MEASUREMENT_STARTED_AT, canonical, pick, seal } from "./shadow-common.mjs";
 import { commentEvidence, finalize, observe, plannedItems, validateEnvelope, validateObservation } from "./shadow-observation.mjs";
-import { auditWindow, categoryFor } from "./shadow-window-audit.mjs";
+import { auditWindow, categoryFor, collectHistoricalRows } from "./shadow-window-audit.mjs";
 import { evaluateExit } from "./shadow-exit-evaluator.mjs";
 import { runInvalidation, validateInvalidation } from "./shadow-invalidation.mjs";
 import { collectWindow, recordsFromComments } from "./shadow-github-adapter.mjs";
 import { PUBLISHER_SNAPSHOT_VERSION, TRUSTED_SHADOW_EVIDENCE_PUBLISHERS, resolutionCommentEvidence } from "./shadow-publisher.mjs";
 
-const now = "2026-10-06T00:00:00.000Z";
+const now = "2026-10-07T05:20:00.000Z";
+const beforeStart = "2026-10-06T00:00:00.000Z";
+const afterStart = "2026-10-07T05:10:00.000Z";
 const sha = number => number.toString(16).padStart(40, "0");
 let proof;
 beforeAll(async () => { proof = await runInvalidation(); });
@@ -55,12 +57,18 @@ function withResolutions(window, resolutions) {
   });
 }
 function windowFor(records, paths = {}) {
-  return seal({ schema_version: PUBLISHER_SNAPSHOT_VERSION, repository: REPOSITORY, authority: AUTHORITY, start_authority: WINDOW_START,
+  return seal({ schema_version: PUBLISHER_SNAPSHOT_VERSION, repository: REPOSITORY, authority: AUTHORITY, start_authority: MACHINE_POLICY_AUTHORITY_START,
     started_at: "2026-10-05T10:00:00.000Z", captured_at: now, protected_main: true, protected_main_sha: sha(999), start_is_ancestor: true,
+    measurement_start_authority: OPERATIONAL_SHADOW_MEASUREMENT_START,
+    measurement_started_at: OPERATIONAL_SHADOW_MEASUREMENT_STARTED_AT, measurement_start_is_ancestor: true, historical_rows: [],
     index_complete: true, pagination_complete: true, evidence_reference: "https://example.test/window/fixture-only",
-    pull_requests: records.map(record => ({ ...pick(record, IDENTITY), base_ref: "main", state: "merged", created_at: "2026-10-05T11:00:00.000Z", updated_at: now, merged_at: now, closed_at: now, merge_commit_sha: sha(record.pr_number + 2000),
+    pull_requests: records.map(record => ({ ...pick(record, IDENTITY), base_ref: "main", state: "merged", created_at: afterStart, updated_at: now, merged_at: now, closed_at: now, merge_commit_sha: sha(record.pr_number + 2000),
       changed_files: paths[record.pr_number] ?? ["src/components/payment/card-save-confirmation.tsx"], files_complete: true,
       shadow_workflow_triggered: true, shadow_check_conclusion: "success", shadow_source_head_sha: record.head_sha, shadow_evidence_reference: "https://example.test/shadow",
+      measurement_evidence: { run: { id: record.pr_number, created_at: record.generated_at, updated_at: now,
+        head_sha: record.head_sha, event: "pull_request", path: ".github/workflows/readiness-shadow.yml", html_url: "https://example.test/shadow" },
+        observations: [{ ...pick(record, IDENTITY), machine_record_digest: record.machine_record_digest, generated_at: record.generated_at,
+          source: "artifact", artifact_id: record.pr_number, run_id: record.pr_number }] },
       normal_ci_conclusions: Object.fromEntries(record.check_evidence.checks.filter(check => CHECKS.includes(check.name)).map(check => [check.name, check.conclusion])),
       durable_evidence: publication(record), resolution_record_digests: [],
       observation_artifact_exists: true, machine_record_digests: [record.machine_record_digest], finalized_record_digests: [record.record_digest], historical_finalized_record_digests: [record.record_digest] })) });
@@ -231,8 +239,8 @@ describe("whole-window audit and read-only reconstruction", () => {
       const row = w.pull_requests[0];
       row.finalized_record_digests = []; row.historical_finalized_record_digests = []; row.durable_evidence = [];
       if (kind === "missing") row.shadow_check_conclusion = "missing";
-      if (kind === "artifact_only") { row.machine_record_digests = []; row.finalized_record_digests = []; }
-      if (kind === "no_trigger") row.shadow_workflow_triggered = false;
+      if (kind === "artifact_only") { row.machine_record_digests = []; row.finalized_record_digests = []; row.measurement_evidence.observations = []; }
+      if (kind === "no_trigger") { row.shadow_workflow_triggered = false; row.measurement_evidence = { run: null, observations: [] }; }
       if (kind === "failure") row.shadow_check_conclusion = "failure";
     });
     expect(evaluateExit([], window).conditions.shadow_skip).toBe(false);
@@ -257,8 +265,10 @@ describe("whole-window audit and read-only reconstruction", () => {
     const prefix = `/repos/${REPOSITORY}`;
     const responses = {
       [`${prefix}/branches/main`]: { protected: true, commit: { sha: sha(999) } },
-      [`${prefix}/commits/${WINDOW_START}`]: { commit: { committer: { date: "2026-10-05T10:00:00Z" } } },
-      [`${prefix}/compare/${WINDOW_START}...${sha(999)}`]: { status: "ahead" },
+      [`${prefix}/commits/${MACHINE_POLICY_AUTHORITY_START}`]: { commit: { committer: { date: "2026-10-05T10:00:00Z" } } },
+      [`${prefix}/compare/${MACHINE_POLICY_AUTHORITY_START}...${sha(999)}`]: { status: "ahead" },
+      [`${prefix}/commits/${OPERATIONAL_SHADOW_MEASUREMENT_START}`]: { commit: { committer: { date: OPERATIONAL_SHADOW_MEASUREMENT_STARTED_AT } } },
+      [`${prefix}/compare/${OPERATIONAL_SHADOW_MEASUREMENT_START}...${sha(999)}`]: { status: "ahead" },
       [`${prefix}/contents/scripts/readiness/minor-policy.v1.json?ref=${sha(999)}`]: { encoding: "base64", content: Buffer.from(JSON.stringify(defaultPolicy)).toString("base64") },
       [`${prefix}/contents/scripts/readiness/impact-map.v1.json?ref=${sha(999)}`]: { encoding: "base64", content: Buffer.from(JSON.stringify(defaultImpact)).toString("base64") },
       [`${prefix}/pulls?state=all&base=main&sort=created&direction=asc&per_page=100&page=1`]: [pr],
@@ -268,7 +278,7 @@ describe("whole-window audit and read-only reconstruction", () => {
       [`${prefix}/issues/200/comments?per_page=100&page=1`]: [published(f.record)],
       [`${prefix}/pulls/200/reviews?per_page=100&page=1`]: [],
       [`${prefix}/actions/runs?event=pull_request&head_sha=${pr.head.sha}&per_page=100&page=1`]: { total_count: 2, workflow_runs: [
-        { id: 1, path: ".github/workflows/readiness-shadow.yml", head_sha: pr.head.sha, pull_requests: [{ number: 200 }], created_at: now, updated_at: now, html_url: "https://example.test/run" },
+        { id: 1, event: "pull_request", path: ".github/workflows/readiness-shadow.yml", head_sha: pr.head.sha, pull_requests: [{ number: 200 }], created_at: now, updated_at: now, html_url: "https://example.test/run" },
         { id: 2, path: ".github/workflows/ci.yml", head_sha: pr.head.sha, pull_requests: [{ number: 200 }], updated_at: now },
       ] },
       [`${prefix}/actions/runs/1/jobs?per_page=100&page=1`]: { total_count: 1, jobs: [{ name: SHADOW_CHECK, conclusion: "success" }] },
@@ -279,6 +289,34 @@ describe("whole-window audit and read-only reconstruction", () => {
     const collected = await collectWindow(get, { capturedAt: now });
     expect(collected.observations).toEqual([f.record]); expect(auditWindow(collected.snapshot).shadow_skip).toBe(0);
     expect(collected.snapshot.schema_version).toBe(PUBLISHER_SNAPSHOT_VERSION);
+    expect(collected.snapshot.measurement_started_at).toBe(OPERATIONAL_SHADOW_MEASUREMENT_STARTED_AT);
+    for (const [start, error] of [[MACHINE_POLICY_AUTHORITY_START, "MACHINE_POLICY_AUTHORITY_START_NOT_ANCESTOR"], [OPERATIONAL_SHADOW_MEASUREMENT_START, "MEASUREMENT_START_NOT_ANCESTOR"]]) {
+      const path = `${prefix}/compare/${start}...${sha(999)}`;
+      responses[path].status = "behind";
+      await expect(collectWindow(get, { capturedAt: now })).rejects.toThrow(error);
+      responses[path].status = "ahead";
+    }
+    const artifactCollection = await collectWindow(get, { capturedAt: now,
+      readArtifact: async () => ({ "shadow-observation-machine.json": f.envelope }) });
+    expect(auditWindow(artifactCollection.snapshot).operational.shadow_skip).toBe(0);
+    responses[`${prefix}/issues/200/comments?per_page=100&page=1`] = [];
+    const rawOnly = await collectWindow(get, { capturedAt: now,
+      readArtifact: async () => ({ "readiness-shadow.json": f.machine }) });
+    expect(rawOnly.machines).toHaveLength(1);
+    expect(auditWindow(rawOnly.snapshot).operational.shadow_skip).toBe(1);
+    expect(evaluateExit([], rawOnly.snapshot).counts.qualifying_actual_changes).toBe(0);
+    const oldEnvelope = observe(f.machine, f.record.pr_number, beforeStart);
+    const oldRecord = finalize(oldEnvelope, f.human, f.checks, now);
+    responses[`${prefix}/issues/200/comments?per_page=100&page=1`] = [published(oldRecord)];
+    const shadowRun = responses[`${prefix}/actions/runs?event=pull_request&head_sha=${pr.head.sha}&per_page=100&page=1`].workflow_runs[0];
+    shadowRun.created_at = beforeStart;
+    for (const artifact of [null, { "shadow-observation-machine.json": oldEnvelope }]) {
+      const oldCollection = await collectWindow(get, { capturedAt: now, readArtifact: async () => artifact });
+      expect(evaluateExit(oldCollection.observations, oldCollection.snapshot).counts.qualifying_actual_changes).toBe(0);
+      expect(auditWindow(oldCollection.snapshot).operational.shadow_skip).toBe(1);
+    }
+    shadowRun.created_at = now;
+    responses[`${prefix}/issues/200/comments?per_page=100&page=1`] = [published(f.record)];
     expect(collected.snapshot.pull_requests[0].durable_evidence).toEqual(publication(f.record));
     // End-to-end API reconstruction must carry both kinds of durable evidence,
     // including a trusted review resolution, through the sealed offline snapshot.
@@ -414,4 +452,178 @@ describe("offline CLI and immutable outputs", () => {
   // Two cold Node processes load the classifier dependencies. Allow startup
   // time on shared runners without changing any fail-closed assertions.
   }, 30_000);
+});
+
+// Synthetic identities and times only; these are never operational evidence.
+describe("separate operational measurement boundary", () => {
+  function withoutMeasurement(window) {
+    return modified(window, w => {
+      for (const key of ["measurement_start_authority", "measurement_started_at", "measurement_start_is_ancestor", "historical_rows"]) delete w[key];
+    });
+  }
+  function gapCheckpoint(record, capturedAt = beforeStart) {
+    return modified(withoutMeasurement(windowFor([record])), w => {
+      w.captured_at = capturedAt;
+      const row = w.pull_requests[0];
+      row.created_at = "2026-10-05T12:00:00Z"; row.updated_at = capturedAt; row.state = "open"; row.merged_at = null; row.closed_at = null;
+      row.shadow_workflow_triggered = false; row.shadow_check_conclusion = "missing"; row.observation_artifact_exists = false;
+      row.machine_record_digests = []; row.finalized_record_digests = []; row.historical_finalized_record_digests = [];
+      row.durable_evidence = []; row.measurement_evidence = { run: null, observations: [] };
+    });
+  }
+  function withHistory(window, checkpoints) {
+    return modified(window, w => { w.historical_rows = collectHistoricalRows(checkpoints, w.captured_at); });
+  }
+  function preExisting(window) {
+    return modified(window, w => { w.pull_requests[0].created_at = "2026-10-05T12:00:00Z"; });
+  }
+  it("pins separate starts without extending Machine Policy Authority bindings", () => {
+    expect(MACHINE_POLICY_AUTHORITY_START).toBe("eead719007d3483ceb4e270a431f6c591430c2fc");
+    expect(OPERATIONAL_SHADOW_MEASUREMENT_START).toBe("d077fb4710597ac96eb3967a3415a4f067a52f12");
+    expect(MACHINE_POLICY_AUTHORITY_START).not.toBe(OPERATIONAL_SHADOW_MEASUREMENT_START);
+    expect(OPERATIONAL_SHADOW_MEASUREMENT_STARTED_AT).toBe("2026-10-07T05:07:18Z");
+    expect(Object.keys(AUTHORITY)).toEqual(["policy_version", "policy_digest", "impact_map_version", "impact_map_digest"]);
+  });
+  it.each(["start_is_ancestor", "measurement_start_is_ancestor"])("rejects false %s", async key => {
+    const f = await fixture();
+    expect(() => auditWindow(modified(windowFor([f.record]), w => { w[key] = false; }))).toThrow(/BASELINE_INVALID/);
+  });
+  it("replays legacy history but cannot evaluate Operational Exit without measurement fields", async () => {
+    const f = await fixture(), legacy = withoutMeasurement(windowFor([f.record]));
+    expect(auditWindow(legacy).measurement_evidence_status).toBe("MEASUREMENT_EVIDENCE_MISSING");
+    expect(() => evaluateExit([f.record], legacy)).toThrow("MEASUREMENT_EVIDENCE_MISSING");
+    expect(() => auditWindow(modified(windowFor([f.record]), w => { w.measurement_started_at = now; }))).toThrow("MEASUREMENT_DATES_INVALID");
+  });
+  it.each([137, 139, 146])("retains pre-ledger gap/indeterminate #%s without new Operational skips", async number => {
+    const f = await fixture(number);
+    const checkpoint = modified(gapCheckpoint(f.record), w => { if (number === 146) w.pull_requests[0].changed_files = ["unknown.file"]; });
+    const window = withHistory(modified(windowFor([f.record]), w => { w.pull_requests = structuredClone(checkpoint.pull_requests); }), [checkpoint]);
+    const audit = auditWindow(window), result = evaluateExit([], window);
+    expect(audit.historical_rows).toHaveLength(1);
+    expect(audit.historical_rows[0].audit.skipped).toBe(true);
+    expect(audit.historical_rows[0].audit.indeterminate).toBe(number === 146);
+    expect(audit.rows[0].measurement_status).toBe("HISTORICAL_PRE_LEDGER");
+    expect(result.counts.shadow_skip).toBe(0); expect(result.counts.indeterminate).toBe(0);
+    expect(result.counts.qualifying_actual_changes).toBe(0);
+    expect(audit.rows[0].shadow_check_conclusion).toBe("missing");
+    expect(audit.rows[0].category).toBe(number === 146 ? "INDETERMINATE" : "REAL_STOREFRONT");
+  });
+  it("permits fresh same-old-head coverage and independent conditions, never actual/class/critical/reuse credit", async () => {
+    const f = await fixture(200, "dynamic"), checkpoint = gapCheckpoint(f.record);
+    const w = withHistory(preExisting(windowFor([f.record])), [checkpoint]);
+    const result = evaluateExit([f.record], w);
+    expect(result.window.rows[0].measurement_status).toBe("OPERATIONAL");
+    expect(result.counts.shadow_skip).toBe(0); expect(result.counts.not_finalized).toBe(0);
+    expect(result.conditions.fail_closed).toBe(true);
+    expect(result.counts.qualifying_actual_changes).toBe(0); expect(result.counts.distinct_change_classes).toBe(0);
+    expect(result.counts.critical_file_presentation_only).toBe(0); expect(result.conditions.authority_reuse).toBe(false);
+  });
+  it("proves post-start head change with a post-start checkpoint and retains the old gap", async () => {
+    const f = await fixture(), prior = modified(gapCheckpoint(f.record, afterStart), w => {
+      w.pull_requests[0].head_sha = sha(800); w.pull_requests[0].tree_sha = sha(801);
+    });
+    const w = withHistory(preExisting(windowFor([f.record])), [prior]);
+    expect(evaluateExit([f.record], w).counts.qualifying_actual_changes).toBe(1);
+    const missing = modified(w, w => {
+      const row = w.pull_requests[0]; row.state = "open";
+      row.shadow_workflow_triggered = false; row.shadow_check_conclusion = "missing";
+      row.machine_record_digests = []; row.finalized_record_digests = []; row.historical_finalized_record_digests = []; row.durable_evidence = [];
+      row.measurement_evidence = { run: null, observations: [] };
+    });
+    const result = evaluateExit([], missing);
+    expect(result.counts.shadow_skip).toBe(1); expect(result.counts.measurement_boundary_unknown).toBe(0);
+    expect(result.window.historical_rows[0].audit.skipped).toBe(true);
+  });
+  it("unknown timing stays UNKNOWN despite merge, updated_at, discovery or a fresh run", async () => {
+    const f = await fixture(), w = preExisting(windowFor([f.record]));
+    const result = evaluateExit([f.record], w);
+    expect(result.counts.measurement_boundary_unknown).toBe(1);
+    expect(result.window.rows[0].measurement_status).toBe("MEASUREMENT_BOUNDARY_UNKNOWN");
+    expect(result.counts.qualifying_actual_changes).toBe(0);
+    expect(result.status).toBe("SHADOW_EXIT_INCOMPLETE");
+    const before = modified(gapCheckpoint(f.record), w => { w.pull_requests[0].head_sha = sha(800); w.pull_requests[0].tree_sha = sha(801); });
+    expect(evaluateExit([f.record], withHistory(w, [before])).counts.measurement_boundary_unknown).toBe(1);
+  });
+  it("new post-start PR needs coverage before any observation exists", async () => {
+    const f = await fixture();
+    const w = modified(windowFor([f.record]), w => {
+      const row = w.pull_requests[0]; row.state = "open"; row.shadow_workflow_triggered = false;
+      row.machine_record_digests = []; row.finalized_record_digests = []; row.historical_finalized_record_digests = []; row.durable_evidence = [];
+      row.measurement_evidence = { run: null, observations: [] };
+    });
+    expect(evaluateExit([], w).counts.shadow_skip).toBe(1);
+    const closed = modified(w, w => { w.pull_requests[0].state = "closed"; });
+    expect(evaluateExit([], closed).counts.shadow_skip).toBe(0);
+    expect(evaluateExit([], closed).counts.qualifying_actual_changes).toBe(0);
+  });
+  it.each(["scripts/readiness/shadow-common.mjs", "package.json", "docs/notes.md", "src/test/example.test.ts"])("requires coverage but gives no actual credit for %s", async path => {
+    const f = await fixture(), w = windowFor([f.record], { [f.record.pr_number]: [path] });
+    expect(evaluateExit([f.record], w).counts.qualifying_actual_changes).toBe(0);
+    const missing = modified(w, w => { w.pull_requests[0].measurement_evidence.observations = []; });
+    expect(evaluateExit([f.record], missing).counts.shadow_skip).toBe(1);
+  });
+  it.each(["head_sha", "tree_sha", "base_sha"])("stale %s cannot earn Operational credit", async key => {
+    const f = await fixture();
+    const w = modified(windowFor([f.record]), w => {
+      const row = w.pull_requests[0]; row[key] = sha(777);
+      row.finalized_record_digests = []; row.machine_record_digests = [];
+      row.shadow_workflow_triggered = false; row.measurement_evidence = { run: null, observations: [] };
+    });
+    const result = evaluateExit([f.record], w);
+    expect(result.counts.qualifying_actual_changes).toBe(0); expect(result.counts.stale_observations).toBe(1);
+  });
+  it("late finalization and publication never turn an old machine into a new measurement", async () => {
+    const f = await fixture(200, "dynamic"), envelope = observe(f.machine, 200, beforeStart);
+    const record = finalize(envelope, f.human, f.checks, now);
+    const result = evaluateExit([record], windowFor([record]));
+    expect(result.counts.qualifying_actual_changes).toBe(0);
+    expect(result.counts.not_finalized).toBe(1); expect(result.conditions.fail_closed).toBe(false);
+    expect(result.counts.shadow_skip).toBe(1);
+  });
+  it("historical OPEN findings block even when all five Operational samples qualify", async () => {
+    const f = await fixture(199), envelope = observe(f.machine, 199, beforeStart);
+    const old = finalize(envelope, modified(f.human, h => { h.minor_eligibility_ground_truth = "NOT_MINOR"; }), f.checks, beforeStart);
+    const actual = await Promise.all([fixture(200), fixture(201, "css"), fixture(202, "style"), fixture(203), fixture(204, "dynamic")]);
+    const records = [old, ...actual.map(f => f.record)];
+    const w = modified(windowFor(records), w => { w.pull_requests[0].merged_at = beforeStart; });
+    const result = evaluateExit(records, w, { invalidation: proof });
+    expect(result.counts.qualifying_actual_changes).toBe(5);
+    expect(result.counts.unresolved_false_positive).toBe(1); expect(result.status).toBe("SHADOW_EXIT_INCOMPLETE");
+    expect(() => evaluateExit(records.slice(1), w)).toThrow("FINALIZED_HISTORY_OMITTED");
+  });
+  it("old-head successes cannot satisfy the five/three/critical conditions", async () => {
+    const fixtures = await Promise.all([fixture(200), fixture(201, "css"), fixture(202, "style"), fixture(203), fixture(204, "dynamic")]);
+    const records = fixtures.map(f => f.record);
+    const w = withHistory(modified(windowFor(records), w => { for (const row of w.pull_requests) row.created_at = beforeStart; }), records.map(r => gapCheckpoint(r)));
+    const result = evaluateExit(records, w, { invalidation: proof });
+    expect(result.counts.shadow_skip).toBe(0); expect(result.counts.qualifying_actual_changes).toBe(0);
+    expect(result.conditions.actual_changes).toBe(false); expect(result.conditions.change_classes).toBe(false); expect(result.conditions.critical_presentation).toBe(false);
+    expect(result.blocking_authority).toBe(false); expect(result.fast_lane_production_enabled).toBe(false);
+    expect(result.phase_2_started).toBe(false); expect(result.promotion).toBe("NOT_STARTED");
+    expect(result).not.toHaveProperty("human_go"); expect(result).not.toHaveProperty("production_human_go");
+  });
+  it("validates prior snapshots, preserves history on reload and rejects omitted historical findings", async () => {
+    const f = await fixture(), prior = gapCheckpoint(f.record);
+    expect(collectHistoricalRows([prior, prior], now)).toEqual(collectHistoricalRows([prior], now));
+    const current = withHistory(preExisting(windowFor([f.record])), [prior]);
+    expect(evaluateExit([f.record, f.record], current)).toEqual(evaluateExit([f.record], JSON.parse(JSON.stringify(current))));
+    for (const mutate of [w => { w.record_digest = "bad"; }, w => { w.repository = "wrong/repo"; }, w => { w.authority.policy_digest = "bad"; }, w => { w.pull_requests[0].head_sha = "bad"; }]) {
+      const bad = structuredClone(prior); mutate(bad);
+      // Verify shape/Authority/identity independently of the outer integrity seal.
+      expect(() => collectHistoricalRows([bad.record_digest === "bad" ? bad : seal(bad)], now)).toThrow();
+    }
+    const withFinding = windowFor([f.record]);
+    const omitted = modified(withHistory(windowFor([f.record]), [withFinding]), w => {
+      w.pull_requests[0].historical_finalized_record_digests = []; w.pull_requests[0].finalized_record_digests = []; w.pull_requests[0].durable_evidence = [];
+    });
+    expect(() => auditWindow(omitted)).toThrow("HISTORICAL_EVIDENCE_OMITTED");
+  });
+  it("collector transport is GET-only; SHADOW workflow has no production handoff", () => {
+    const source = readFileSync(new URL("./shadow-github-adapter.mjs", import.meta.url), "utf8");
+    expect(source).toContain('["api", "--method", "GET", path]');
+    expect(source).not.toMatch(/"(?:POST|PUT|PATCH|DELETE)"/);
+    const workflow = readFileSync(new URL("../../.github/workflows/readiness-shadow.yml", import.meta.url), "utf8");
+    expect(workflow).toContain("contents: read");
+    expect(workflow).not.toMatch(/contents: write|deploy|kubectl|docker|human.go/i);
+  });
 });
