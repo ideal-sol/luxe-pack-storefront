@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved, within } from "@testing-library/react";
 import {
   PUBLIC_AUTH_FIXTURE,
   PUBLIC_POINT_BALANCE_FIXTURES,
@@ -43,24 +43,26 @@ function pointClientWithNonCanonicalProducts(products: unknown) {
   } as unknown as PointClientAdapter;
 }
 
-function renderPoints(client: PointClientAdapter, session: AuthSession = PUBLIC_AUTH_FIXTURE.authenticated_session) {
-  return render(
+async function renderPoints(client: PointClientAdapter, session: AuthSession = PUBLIC_AUTH_FIXTURE.authenticated_session) {
+  const view = render(
     <SessionProvider client={authClient(session)}>
       <PointClientProvider client={client}><PointsPage /></PointClientProvider>
     </SessionProvider>,
   );
+  // Observe the Product read before querying roles, independently of 24h eligibility.
+  await waitForElementToBeRemoved(screen.getByText("コイン商品を読み込み中"));
+  return view;
 }
 
-async function selectAllUsers() {
-  await screen.findByRole("tab", { name: "初回ユーザー（24時間限定）" });
+function selectAllUsers() {
   fireEvent.click(screen.getByRole("tab", { name: "すべてのユーザー" }));
 }
 
 describe("SITE-032 Limited Bonus Coin presentation", () => {
   it("preserves the existing Product presentation when limited_bonus is omitted", async () => {
     const { limited_bonus: omittedLimitedBonus, ...product } = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0];
-    renderPoints(pointClient({ products: { first_user_offer: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.first_user_offer, data: [product] } }));
-    await selectAllUsers();
+    await renderPoints(pointClient({ products: { first_user_offer: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_after_first_purchase.first_user_offer, data: [product] } }));
+    selectAllUsers();
 
     expect(omittedLimitedBonus).toBeDefined();
     expect(await screen.findByRole("heading", { name: "スタンダード1000コイン" })).toBeInTheDocument();
@@ -76,7 +78,7 @@ describe("SITE-032 Limited Bonus Coin presentation", () => {
     const nonCanonicalTransportPayload = {
       data: [{ ...PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0], limited_bonus: null }],
     };
-    renderPoints(pointClientWithNonCanonicalProducts(nonCanonicalTransportPayload));
+    await renderPoints(pointClientWithNonCanonicalProducts(nonCanonicalTransportPayload));
 
     expect(await screen.findByText("1,100")).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "期間限定ボーナスコイン" })).not.toBeInTheDocument();
@@ -85,8 +87,8 @@ describe("SITE-032 Limited Bonus Coin presentation", () => {
   it("renders the active Backend state, canonical presentation, amount, and JST period", async () => {
     const canonical = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0].limited_bonus;
     const original = structuredClone(canonical);
-    renderPoints(pointClient());
-    await selectAllUsers();
+    await renderPoints(pointClient());
+    selectAllUsers();
 
     const presentation = await screen.findByRole("region", { name: canonical.presentation.label });
     expect(presentation).toHaveAttribute("data-limited-bonus-state", canonical.state);
@@ -98,9 +100,10 @@ describe("SITE-032 Limited Bonus Coin presentation", () => {
   });
 
   it("renders the upcoming Backend state without deriving it from the current time", async () => {
-    const canonical = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[1].limited_bonus;
-    renderPoints(pointClient());
-    fireEvent.click(await screen.findByRole("tab", { name: "初回ユーザー（24時間限定）" }));
+    const products = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_after_first_purchase;
+    const canonical = products.data[1].limited_bonus;
+    await renderPoints(pointClient({ products }));
+    fireEvent.click(screen.getByRole("tab", { name: "初回ユーザー" }));
 
     const presentation = await screen.findByRole("region", { name: canonical.presentation.label });
     expect(presentation).toHaveAttribute("data-limited-bonus-state", "upcoming");
@@ -111,7 +114,7 @@ describe("SITE-032 Limited Bonus Coin presentation", () => {
 
   it("omits the canonical inactive presentation when Backend is_visible is false", async () => {
     const canonical = PUBLIC_POINT_PRODUCT_FIXTURES.unavailable.data[0].limited_bonus;
-    renderPoints(pointClient({ products: PUBLIC_POINT_PRODUCT_FIXTURES.unavailable }));
+    await renderPoints(pointClient({ products: PUBLIC_POINT_PRODUCT_FIXTURES.unavailable }));
 
     expect(await screen.findByRole("heading", { name: "スタンダード1000コイン" })).toBeInTheDocument();
     expect(canonical.state).toBe("inactive");
@@ -122,8 +125,8 @@ describe("SITE-032 Limited Bonus Coin presentation", () => {
 
   it("keeps grant.total_points and Limited Bonus separate without adding a normal Bonus row", async () => {
     const product = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0];
-    renderPoints(pointClient());
-    await selectAllUsers();
+    await renderPoints(pointClient());
+    selectAllUsers();
 
     const card = await screen.findByRole("article");
     expect(within(card).getByText(new Intl.NumberFormat("ja-JP").format(product.grant.total_points))).toBeInTheDocument();
@@ -138,8 +141,8 @@ describe("SITE-030 Coin Product read regression", () => {
   it("renders canonical totals and converts only Backend currency terminology", async () => {
     const client = pointClient();
     const originalTitle = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0].title;
-    const view = renderPoints(client);
-    await selectAllUsers();
+    const view = await renderPoints(client);
+    selectAllUsers();
 
     await waitFor(() => expect(screen.getByLabelText("現在のコイン残高")).toHaveTextContent("1,000"));
     expect(await screen.findByRole("heading", { name: "スタンダード1000コイン" })).toBeInTheDocument();
@@ -158,11 +161,30 @@ describe("SITE-030 Coin Product read regression", () => {
     expect(view.container).not.toHaveTextContent(/ポイント|\bpt\b/i);
   });
 
+  it.each([
+    ["active", PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible],
+    ["unavailable", PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_after_first_purchase],
+    ["expired", PUBLIC_POINT_PRODUCT_FIXTURES.unavailable],
+  ] as const)("renders normal all-users products independently of the %s 24h offer", async (state, products) => {
+    const client = pointClient({ products });
+    await renderPoints(client);
+
+    expect(products.first_user_offer.state).toBe(state);
+    expect(screen.getByRole("tab", {
+      name: state === "active" ? "初回ユーザー（24時間限定）" : "初回ユーザー",
+    })).toHaveAttribute("aria-selected", state === "active" ? "true" : "false");
+    selectAllUsers();
+
+    expect(screen.getByRole("tab", { name: "すべてのユーザー" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("heading", { name: "スタンダード1000コイン" })).toBeInTheDocument();
+    expect(client.listPointProducts).toHaveBeenCalledOnce();
+  });
+
   it("encodes only the canonical public Product identifier in the detail Route", async () => {
     const canonical = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0];
     const productId = "public/product?review=true";
-    renderPoints(pointClient({ products: { first_user_offer: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.first_user_offer, data: [{ ...canonical, id: productId }] } }));
-    await selectAllUsers();
+    await renderPoints(pointClient({ products: { first_user_offer: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.first_user_offer, data: [{ ...canonical, id: productId }] } }));
+    selectAllUsers();
 
     expect(await screen.findByRole("link", { name: "詳細を見る" })).toHaveAttribute(
       "href",
@@ -171,7 +193,7 @@ describe("SITE-030 Coin Product read regression", () => {
   });
 
   it("renders zero balance and a canonical empty product collection", async () => {
-    renderPoints(pointClient({ balance: PUBLIC_POINT_BALANCE_FIXTURES.zero, products: PUBLIC_POINT_PRODUCT_FIXTURES.anonymous_empty }));
+    await renderPoints(pointClient({ balance: PUBLIC_POINT_BALANCE_FIXTURES.zero, products: PUBLIC_POINT_PRODUCT_FIXTURES.anonymous_empty }));
     await waitFor(() => expect(screen.getByLabelText("現在のコイン残高")).toHaveTextContent("0"));
     expect(await screen.findByText("コイン商品はありません")).toBeInTheDocument();
     expect(screen.queryByRole("article")).not.toBeInTheDocument();
@@ -187,7 +209,7 @@ describe("SITE-030 Coin Product read regression", () => {
         PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0],
       ],
     };
-    renderPoints(pointClient({ products }));
+    await renderPoints(pointClient({ products }));
     expect(await screen.findByRole("tab", { name: "初回ユーザー（24時間限定）" })).toHaveAttribute("aria-selected", "true");
     const headings = screen.getAllByRole("article").map((card) => within(card).getByRole("heading", { level: 3 }).textContent);
     expect(headings).toEqual(["先に返された初回商品", "初回限定1000コイン"]);
@@ -195,7 +217,7 @@ describe("SITE-030 Coin Product read regression", () => {
   });
 
   it("shows the Backend first-purchase ineligible reason without enabling purchase", async () => {
-    renderPoints(pointClient({ products: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_after_first_purchase }));
+    await renderPoints(pointClient({ products: PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_after_first_purchase }));
     fireEvent.click(await screen.findByRole("tab", { name: "初回ユーザー" }));
     expect(await screen.findByText("この初回ユーザー商品は現在購入できません。")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "現在購入できません" })).toBeDisabled();
@@ -204,7 +226,7 @@ describe("SITE-030 Coin Product read regression", () => {
   it("uses the canonical anonymous login CTA", async () => {
     const client = pointClient();
     client.listPointProducts = vi.fn().mockResolvedValue({ data: PUBLIC_POINT_PRODUCT_FIXTURES.anonymous, metadata });
-    renderPoints(client, PUBLIC_AUTH_FIXTURE.anonymous_session);
+    await renderPoints(client, PUBLIC_AUTH_FIXTURE.anonymous_session);
     expect(await screen.findByRole("link", { name: "ログインして確認" })).toHaveAttribute("href", "/login");
     expect(screen.getByLabelText("現在のコイン残高")).toHaveTextContent("--");
     await waitFor(() => expect(client.getWallet).not.toHaveBeenCalled());
