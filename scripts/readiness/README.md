@@ -6,6 +6,9 @@ This classifier is SHADOW ONLY. Blocking authority, CI skipping, Fast Lane
 Production use, Phase 2, promotion and Production Human GO are not enabled.
 Application behavior, Platform source and artifact pins are unchanged.
 
+For separate Human finalization, durable PR evidence, whole-window auditing and
+the Phase 1 Exit evaluator, see [SHADOW-LEDGER.md](SHADOW-LEDGER.md).
+
 ## Offline use and authority
 
 ```bash
@@ -177,7 +180,8 @@ Platform source is not modified.
 
 `adapters.mjs` retains existing offline Required Check/source/provenance consumers.
 The artifact verifier retains the immutable Platform Client/Testkit alignment;
-this change adopts no artifact. Normal CI and readiness-shadow remain unchanged.
+this change adopts no artifact. Normal CI retains its existing gates; the Shadow
+ledger extends readiness-shadow evidence transport without changing its lanes.
 Source rollback is a reviewed revert PR; no runtime activation is required.
 
 ## Archive-compatible regression inventory
