@@ -351,39 +351,52 @@ boundaries. The current-run/head and normal CI contradiction checks remain.
 | Current PR case | Coverage | Actual credit |
 | --- | --- | --- |
 | Created after start, open/merged | Required even without observations | Only merged real comparable Human-qualified changes |
-| Pre-start head proven by a historical checkpoint, no fresh observation | Historical only (unless merged after start) | Zero |
-| Same pre-start head with fresh observation | Allowed; independent Human/fail-closed conditions still apply | Zero actual/class/critical/actual-derived reuse |
-| Proven new post-start head | Required, even if the workflow did not run | Existing qualification rules, with changed source content |
-| Merged after start | Required; merge time alone proves no new source | Only with independent new-source evidence |
+| Pre-existing PR, local checkpoint only, no fresh observation | Historical context only (unless merged after start); source boundary UNKNOWN | Zero |
+| Same pre-start head with fresh observation | Allowed only with exact workflow/machine timing evidence; source boundary remains UNKNOWN | Zero actual/class/critical/actual-derived reuse |
+| Pre-existing PR with a locally claimed post-start new head | Checkpoint cannot establish source timing or coverage obligation; source boundary UNKNOWN | Zero |
+| Merged after start | Required; merge time alone proves no new source | Only PRs created after start can currently qualify |
 | Closed unmerged | No expected workflow | Zero |
 | Tooling/security/docs/test only | Required when Operational | Zero |
 | Missing or ambiguous source boundary | MEASUREMENT_BOUNDARY_UNKNOWN; Candidate blocked | Zero |
 
-A new source is proven by a checkpoint at/after the boundary followed by a
-changed current head/tree before capture. Actual credit requires both head and
-tree to change; a base-only update or same-tree rebase grants no actual credit.
-An identity already evidenced before activation remains an old identity, even
-if later restored. Exact observation identity still includes base/head/tree.
-PR updated_at, commit author/committer dates and first discovery cannot prove
-head-change timing. A change between a pre-start checkpoint and now straddles
-the boundary and remains UNKNOWN. Timestamp ties do not prove "after".
+The current collector has no independently machine-verifiable historical
+checkpoint origin. Consequently no caller-supplied checkpoint establishes
+oldSource, changedAfter, newContent or post-start source timing. Every otherwise
+eligible pre-existing PR remains `MEASUREMENT_BOUNDARY_UNKNOWN`, receives zero
+actual/class/critical/actual-derived reuse credit and blocks Candidate. This
+also applies to a locally claimed same old head or post-start new head.
+Fresh authenticated workflow/machine evidence proves observation timing only:
+it can provide coverage and satisfy existing independent conditions, without
+removing that source-boundary UNKNOWN. New PRs whose collected GitHub creation
+time is strictly after start retain the normal qualification rules.
+
+Exact observation identity still includes base/head/tree. Self-sealed snapshots,
+PR updated_at, commit author/committer dates, current head state, first discovery
+and later Human finalization/publication cannot prove head-change timing.
+Timestamp ties do not prove "after". A future credit-bearing checkpoint path
+requires immutable origin independently verified through authenticated trusted
+transport. That transport is not implemented or implied by this correction.
 
 ### Historical checkpoints and gaps
 
 The optional collector `--checkpoints /path/to/prior-snapshots.json` accepts an
-array of **existing trusted collector snapshots**, including legacy 1.1.
+array of structurally valid snapshots as **non-credit historical context**,
+including legacy 1.1. Caller claims of trusted origin confer no Authority.
 `collectWindow(get, {checkpoints})` provides the same input offline. Before use,
 the collector validates each original seal, repository, approved Authority,
 complete index, identities and provenance; future captures are rejected.
-Synthetic test snapshots and arbitrary caller-sealed JSON are not operational
-Authority. Preserve authenticated API transport and original snapshots externally.
+Those checks establish structure and integrity, not authenticated historical
+origin. Neither a canonical SHA seal nor an evidence URL grants source-timing
+Authority. Measurement eligibility never reads these checkpoints. Preserve
+authenticated API transport and original snapshots externally; no caller flag
+or locally constructed snapshot enables credit.
 
 The current snapshot's `historical_rows` retains original PR rows, capture time,
 source snapshot digest and evidence reference, including missing observations
 and indeterminate categories. Repeated identical inputs are deduplicated.
-These are collector-projected historical facts, not newly finalized observations;
-the source digest is a reference, not a signature or proof without the trusted
-original. Current history indexes must still include all older finalizations
+These are retained historical context, not machine-authenticated historical
+facts or newly finalized observations. The source digest is a reference, not a
+signature or origin proof. Current history indexes must still include all older finalizations
 and resolutions. Omission fails closed rather than silently deleting findings.
 
 Known pre-ledger gaps such as #137/#139 and historical indeterminate #146 stay

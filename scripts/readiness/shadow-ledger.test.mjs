@@ -502,7 +502,9 @@ describe("separate operational measurement boundary", () => {
     expect(audit.historical_rows).toHaveLength(1);
     expect(audit.historical_rows[0].audit.skipped).toBe(true);
     expect(audit.historical_rows[0].audit.indeterminate).toBe(number === 146);
-    expect(audit.rows[0].measurement_status).toBe("HISTORICAL_PRE_LEDGER");
+    expect(audit.rows[0].measurement_status).toBe("MEASUREMENT_BOUNDARY_UNKNOWN");
+    expect(audit.rows[0].in_measurement_window).toBe(false);
+    expect(result.conditions.measurement_boundary).toBe(false);
     expect(result.counts.shadow_skip).toBe(0); expect(result.counts.indeterminate).toBe(0);
     expect(result.counts.qualifying_actual_changes).toBe(0);
     expect(audit.rows[0].shadow_check_conclusion).toBe("missing");
@@ -512,18 +514,27 @@ describe("separate operational measurement boundary", () => {
     const f = await fixture(200, "dynamic"), checkpoint = gapCheckpoint(f.record);
     const w = withHistory(preExisting(windowFor([f.record])), [checkpoint]);
     const result = evaluateExit([f.record], w);
-    expect(result.window.rows[0].measurement_status).toBe("OPERATIONAL");
+    expect(result.window.rows[0].measurement_status).toBe("MEASUREMENT_BOUNDARY_UNKNOWN");
+    expect(result.window.rows[0].in_measurement_window).toBe(true);
+    expect(result.conditions.measurement_boundary).toBe(false);
     expect(result.counts.shadow_skip).toBe(0); expect(result.counts.not_finalized).toBe(0);
     expect(result.conditions.fail_closed).toBe(true);
     expect(result.counts.qualifying_actual_changes).toBe(0); expect(result.counts.distinct_change_classes).toBe(0);
     expect(result.counts.critical_file_presentation_only).toBe(0); expect(result.conditions.authority_reuse).toBe(false);
   });
-  it("proves post-start head change with a post-start checkpoint and retains the old gap", async () => {
+  it("retains a caller-sealed post-start different-head checkpoint without granting source timing or credit", async () => {
     const f = await fixture(), prior = modified(gapCheckpoint(f.record, afterStart), w => {
       w.pull_requests[0].head_sha = sha(800); w.pull_requests[0].tree_sha = sha(801);
     });
     const w = withHistory(preExisting(windowFor([f.record])), [prior]);
-    expect(evaluateExit([f.record], w).counts.qualifying_actual_changes).toBe(1);
+    const observed = evaluateExit([f.record], w);
+    expect(observed.counts.qualifying_actual_changes).toBe(0);
+    expect(observed.counts.distinct_change_classes).toBe(0);
+    expect(observed.counts.critical_file_presentation_only).toBe(0);
+    expect(observed.conditions.authority_reuse).toBe(false);
+    expect(observed.conditions.measurement_boundary).toBe(false);
+    expect(observed.window.rows[0].actual_credit_allowed).toBe(false);
+    expect(observed.status).toBe("SHADOW_EXIT_INCOMPLETE");
     const missing = modified(w, w => {
       const row = w.pull_requests[0]; row.state = "open";
       row.shadow_workflow_triggered = false; row.shadow_check_conclusion = "missing";
@@ -531,8 +542,49 @@ describe("separate operational measurement boundary", () => {
       row.measurement_evidence = { run: null, observations: [] };
     });
     const result = evaluateExit([], missing);
-    expect(result.counts.shadow_skip).toBe(1); expect(result.counts.measurement_boundary_unknown).toBe(0);
+    // An unauthenticated checkpoint cannot create an Operational subject either.
+    expect(result.counts.shadow_skip).toBe(0); expect(result.counts.measurement_boundary_unknown).toBe(1);
+    expect(result.window.rows[0].in_measurement_window).toBe(false);
     expect(result.window.historical_rows[0].audit.skipped).toBe(true);
+  });
+  it.each(["same-old-head", "different-pre-start-head", "different-post-start-head"])("caller-created %s context cannot change Operational eligibility", async kind => {
+    const f = await fixture(200, "dynamic"), w = preExisting(windowFor([f.record]));
+    const checkpoint = modified(gapCheckpoint(f.record, kind === "different-post-start-head" ? afterStart : beforeStart), prior => {
+      if (kind !== "same-old-head") { prior.pull_requests[0].head_sha = sha(800); prior.pull_requests[0].tree_sha = sha(801); }
+      prior.pull_requests[0].changed_files = ["unknown.file"];
+    });
+    const baseline = evaluateExit([f.record], w);
+    const result = evaluateExit([f.record], withHistory(w, [checkpoint]));
+    expect(result.counts).toEqual(baseline.counts);
+    expect(result.conditions).toEqual(baseline.conditions);
+    expect(result.window.rows).toEqual(baseline.window.rows);
+    expect(result.window.historical_rows).toHaveLength(1);
+    expect(result.window.historical_rows[0].row).toEqual(checkpoint.pull_requests[0]);
+    expect(result.window.historical_rows[0].audit.skipped).toBe(true);
+    expect(result.window.historical_rows[0].audit.indeterminate).toBe(true);
+    expect(result.counts.measurement_boundary_unknown).toBe(1);
+    expect(result.counts.qualifying_actual_changes).toBe(0);
+    expect(result.status).toBe("SHADOW_EXIT_INCOMPLETE");
+  });
+  it("fresh same-old-head coverage needs workflow and original machine timing independently of checkpoints", async () => {
+    const f = await fixture(), w = withHistory(preExisting(windowFor([f.record])), [gapCheckpoint(f.record)]);
+    const result = evaluateExit([f.record], w);
+    expect(result.counts.shadow_skip).toBe(0);
+    expect(result.counts.qualifying_actual_changes).toBe(0);
+    expect(result.conditions.measurement_boundary).toBe(false);
+    const noObservation = modified(w, w => { w.pull_requests[0].measurement_evidence.observations = []; });
+    expect(evaluateExit([f.record], noObservation).counts.shadow_skip).toBe(1);
+    const noRun = modified(w, w => { w.pull_requests[0].measurement_evidence.run = null; });
+    expect(() => evaluateExit([f.record], noRun)).toThrow("MEASUREMENT_RUN_MISSING");
+  });
+  it("post-start new PR qualifies without any checkpoint evidence", async () => {
+    const f = await fixture(), w = windowFor([f.record]);
+    expect(w.historical_rows).toEqual([]);
+    const result = evaluateExit([f.record], w);
+    expect(result.window.rows[0].measurement_status).toBe("OPERATIONAL");
+    expect(result.window.rows[0].actual_credit_allowed).toBe(true);
+    expect(result.counts.qualifying_actual_changes).toBe(1);
+    expect(result.counts.measurement_boundary_unknown).toBe(0);
   });
   it("unknown timing stays UNKNOWN despite merge, updated_at, discovery or a fresh run", async () => {
     const f = await fixture(), w = preExisting(windowFor([f.record]));

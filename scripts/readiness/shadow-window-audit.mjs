@@ -103,7 +103,7 @@ export function auditWindow(snapshot) {
     requireValue(Date.parse(snapshot.measurement_started_at) === Date.parse(OPERATIONAL_SHADOW_MEASUREMENT_STARTED_AT) &&
       Date.parse(snapshot.started_at) <= Date.parse(snapshot.measurement_started_at) &&
       Date.parse(snapshot.measurement_started_at) <= Date.parse(snapshot.captured_at), "MEASUREMENT_DATES_INVALID");
-    for (let i = 0; i < rows.length; i++) Object.assign(rows[i], measurementFor(snapshot.pull_requests[i], snapshot, historical));
+    for (let i = 0; i < rows.length; i++) Object.assign(rows[i], measurementFor(snapshot.pull_requests[i], snapshot));
     operational = {
       shadow_skip: rows.filter(row => row.operational_skipped).length,
       indeterminate: rows.filter(row => row.in_measurement_window && row.category === "INDETERMINATE").length,
@@ -128,7 +128,7 @@ export function auditWindow(snapshot) {
     rows, shadow_skip: rows.filter(row => row.skipped).length, indeterminate: rows.filter(row => row.indeterminate).length });
 }
 
-function measurementFor(pr, snapshot, history) {
+function measurementFor(pr, snapshot) {
   const start = Date.parse(snapshot.measurement_started_at), captured = Date.parse(snapshot.captured_at);
   const evidence = pr.measurement_evidence;
   object(evidence, "MEASUREMENT_EVIDENCE");
@@ -153,32 +153,28 @@ function measurementFor(pr, snapshot, history) {
       Date.parse(entry.generated_at) <= Date.parse(run.updated_at), "MEASUREMENT_RUN_BINDING_INVALID");
     if (Date.parse(run.created_at) > start && Date.parse(entry.generated_at) > start) fresh.push(entry);
   }
-  const checkpoints = history.filter(entry => entry.row.pr_number === pr.pr_number);
-  const sameSource = row => row.head_sha === pr.head_sha && row.tree_sha === pr.tree_sha;
-  const oldSource = checkpoints.some(entry => Date.parse(entry.captured_at) <= start && sameSource(entry.row));
-  // A checkpoint after the boundary followed by a different head proves timing;
-  // commit dates, generic PR updated_at and first discovery do not.
-  const changedAfter = checkpoints.some(entry => Date.parse(entry.captured_at) >= start && Date.parse(entry.captured_at) < captured && !sameSource(entry.row));
-  const newContent = checkpoints.some(entry => Date.parse(entry.captured_at) >= start && Date.parse(entry.captured_at) < captured &&
-    entry.row.head_sha !== pr.head_sha && entry.row.tree_sha !== pr.tree_sha);
+  // Caller-supplied checkpoints have no independently verified origin. Keep
+  // them as historical context only; they cannot prove old/new source timing,
+  // remove an UNKNOWN boundary, create coverage obligations or grant credit.
+  // Fresh workflow/machine evidence proves observation timing, not head timing.
   const createdAfter = Date.parse(pr.created_at) > start;
   const endedBefore = pr.state === "merged" && Date.parse(pr.merged_at) <= start;
   const excluded = pr.state === "closed" || endedBefore || pr.merge_commit_sha === MACHINE_POLICY_AUTHORITY_START ||
     pr.merge_commit_sha === OPERATIONAL_SHADOW_MEASUREMENT_START || pr.pr_number === 134;
-  const unknown = !excluded && !createdAfter && !oldSource && !changedAfter;
+  const unknown = !excluded && !createdAfter;
   const mergedAfter = pr.state === "merged" && Date.parse(pr.merged_at) > start;
-  const subject = !excluded && (createdAfter || changedAfter || mergedAfter || fresh.length > 0);
+  const subject = !excluded && (createdAfter || mergedAfter || fresh.length > 0);
   return {
     in_measurement_window: subject,
-    measurement_status: excluded ? "EXCLUDED" : unknown ? "MEASUREMENT_BOUNDARY_UNKNOWN" : subject ? "OPERATIONAL" : "HISTORICAL_PRE_LEDGER",
-    actual_credit_allowed: !excluded && !oldSource && (createdAfter || newContent),
+    measurement_status: excluded ? "EXCLUDED" : unknown ? "MEASUREMENT_BOUNDARY_UNKNOWN" : "OPERATIONAL",
+    actual_credit_allowed: !excluded && createdAfter,
     operational_observations: fresh,
     operational_skipped: subject && (!pr.shadow_workflow_triggered || pr.shadow_check_conclusion !== "success" || fresh.length === 0),
   };
 }
 
-// Prior snapshots are authenticated transport inputs, just like the current
-// snapshot. A seal alone does not authenticate a caller-supplied checkpoint.
+// Structural/integrity validation does not authenticate checkpoint origin.
+// Retain these inputs for non-credit history; measurementFor never uses them.
 export function collectHistoricalRows(checkpoints, capturedAt) {
   requireValue(Array.isArray(checkpoints), "CHECKPOINTS_INVALID"); timestamp(capturedAt);
   const entries = new Map();
