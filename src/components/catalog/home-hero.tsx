@@ -1,3 +1,4 @@
+import { brandAssetUrl } from "@/lib/brand-assets";
 import Link from "next/link";
 import { informationNavigation } from "@/lib/routes/navigation";
 import { HomeHeroCards } from "./home-hero-cards";
@@ -62,7 +63,7 @@ export function HomeHero() {
       <div className="page-container home-hero__inner">
         <div className="home-hero__character home-hero__character--left" aria-hidden="true">
           {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
-          <img alt="" className="home-hero__pokezou" height={444} src="/brand/pokezou_sd.webp" width={310} />
+          <img alt="" className="home-hero__pokezou" height={444} src={brandAssetUrl("pokezou_sd.webp")} width={310} />
         </div>
         <div className="home-hero__copy">
           <p className="home-hero__badge"><b aria-hidden="true" />ポケモンカード専門のオンラインオリパ<b aria-hidden="true" /></p>
@@ -81,9 +82,9 @@ export function HomeHero() {
         </div>
         <div className="home-hero__character home-hero__character--right" aria-hidden="true">
           {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
-          <img alt="" className="home-hero__dog home-hero__fukumaru" height={268} src="/brand/fukumaru_hashiru.webp" width={328} />
+          <img alt="" className="home-hero__dog home-hero__fukumaru" height={268} src={brandAssetUrl("fukumaru_hashiru.webp")} width={328} />
           {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
-          <img alt="" className="home-hero__orika" height={424} src="/brand/orika_sd.webp" width={255} />
+          <img alt="" className="home-hero__orika" height={424} src={brandAssetUrl("orika_sd.webp")} width={255} />
         </div>
       </div>
       <svg aria-hidden="true" className="home-hero__wave" preserveAspectRatio="none" viewBox="0 0 1440 46">

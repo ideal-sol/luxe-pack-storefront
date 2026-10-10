@@ -1,3 +1,4 @@
+import { brandAssetUrl } from "@/lib/brand-assets";
 import Link from "next/link";
 import {
   accountNavigation,
@@ -12,7 +13,7 @@ export function SiteFooter() {
       <div className="page-container site-footer__grid">
         <div className="site-footer__brand">
           {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
-          <img alt="" aria-hidden="true" className="wordmark__mark" height={100} src="/brand/mark.svg" width={100} />
+          <img alt="" aria-hidden="true" className="wordmark__mark" height={100} src={brandAssetUrl("mark.svg")} width={100} />
           <div>
             <strong>{appName}</strong>
             <p>ポケモンカード専門のオンラインオリジナルパック販売サイトです。獲得した景品は、景品ごとに利用可能な方法で発送依頼またはコイン交換を行えます。</p>

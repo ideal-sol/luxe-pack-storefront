@@ -460,3 +460,60 @@ describe("canonical Draw presentation and full results", () => {
     expect(document.querySelectorAll(".draw-snapshot-card")).toHaveLength(0);
   });
 });
+
+describe("CloudFront Draw presentation", () => {
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL", "https://cdn.example.test");
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+  });
+  afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllEnvs(); });
+
+  it.each(["ended", "skip", "error"])("preserves result order, points and GET-only replay after %s", async (event) => {
+    const data = fullResult(10);
+    data.presentation = { ...representative, video_snapshot: { ...representative.video_snapshot, path: "/rank-effects/Gold_V1.mp4" } };
+    data.results = data.results!.map((item, index) => ({ ...item,
+      rank_lineup_image: { ...drawSnapshot.rank_lineup_image, path: `/rank-masters/Rank_${index}.png` },
+      prize: { ...item.prize!, presentation_asset: { ...drawSnapshot.prize.presentation_asset, path: `/gacha/prize_${index}.webp` } },
+    }));
+    data.prize_counts = data.prize_counts.map((item) => ({ ...item, prize: { ...item.prize, presentation_asset: { ...drawSnapshot.prize.presentation_asset, path: "/gacha/aggregate.webp" } } }));
+    const client = drawClient({ getDrawRequest: vi.fn().mockResolvedValue(response(data)) });
+    const view = renderResult(client);
+    const video = await screen.findByLabelText("代表演出動画");
+    expect(video).toHaveAttribute("src", "https://cdn.example.test/rank-effects/Gold_V1.mp4");
+    if (event === "skip") fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
+    else if (event === "error") fireEvent.error(video);
+    else fireEvent.ended(video);
+    expectFullResults(data);
+    document.querySelectorAll(".draw-snapshot-card").forEach((card, index) => {
+      expect(card.querySelector(".draw-snapshot-card__image img")).toHaveAttribute("src", `https://cdn.example.test/gacha/prize_${index}.webp`);
+      expect(card.querySelector(".rank-lineup-image img")).toHaveAttribute("src", `https://cdn.example.test/rank-masters/Rank_${index}.png`);
+    });
+    expect(screen.getByText("消費コイン").nextElementSibling).toHaveTextContent(data.point_cost_total.toLocaleString("ja-JP"));
+    expect(screen.getByRole("link", { name: "獲得アイテムを確認" })).toHaveAttribute("href", "/mypage/prizes");
+    view.unmount();
+    renderResult(client);
+    fireEvent.ended(await screen.findByLabelText("代表演出動画"));
+    expectFullResults(data);
+    expect(client.getDrawRequest).toHaveBeenCalledTimes(2);
+    expect(client.createDraw).not.toHaveBeenCalled();
+  });
+
+  it("uses image placeholders and skips an invalid video without another mutation", async () => {
+    const data = fullResult(1);
+    data.presentation = { ...representative, video_snapshot: { ...representative.video_snapshot, path: "https://evil.example/video.mp4" } };
+    const client = drawClient({ getDrawRequest: vi.fn().mockResolvedValue(response(data)) });
+    renderResult(client);
+    await screen.findByRole("heading", { level: 1, name: "抽選結果" });
+    expect(document.querySelector("img, video")).toBeNull();
+    expect(client.createDraw).not.toHaveBeenCalled();
+  });
+
+  it("keeps a 503 retry GET-only without generating a replacement Draw", async () => {
+    const getDrawRequest = vi.fn().mockRejectedValue(new ApiProblemError({ code: "DRAW_RESULT_UNAVAILABLE", status: 503, title: "Unavailable", type: "https://example.test/problems/unavailable", retryable: true, request_id: "synthetic" }));
+    const client = drawClient({ getDrawRequest });
+    renderResult(client);
+    fireEvent.click(await screen.findByRole("button", { name: "もう一度確認する" }));
+    await waitFor(() => expect(getDrawRequest).toHaveBeenCalledTimes(2));
+    expect(client.createDraw).not.toHaveBeenCalled();
+  });
+});

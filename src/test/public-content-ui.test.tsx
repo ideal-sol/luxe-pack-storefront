@@ -168,3 +168,25 @@ describe("safe canonical content", () => {
     expect(screen.getByRole("link", { name: "Safe" })).toHaveAttribute("href", "/notices");
   });
 });
+
+it("keeps uncontracted Notice HTML images inert even when CloudFront is enabled", () => {
+  vi.stubEnv("NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL", "https://cdn.example.test");
+  try {
+    render(<SafeContent html={'<p>Notice</p><img src="/gacha/notice.webp"><img src="https://evil.example/a.png">'} />);
+    expect(screen.getByText("Notice")).toBeInTheDocument();
+    expect(document.querySelector("img")).toBeNull();
+  } finally { vi.unstubAllEnvs(); }
+});
+
+it("renders a contracted Notice image through CloudFront with a failure placeholder", async () => {
+  vi.stubEnv("NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL", "https://cdn.example.test");
+  try {
+    const data = { ...notice, asset: { id: "notice-image", path: "/gacha/Notice.webp", alt_text: "Notice image", checksum_sha256: "0".repeat(64) } };
+    renderPublic(<NoticeDetail noticeId={notice.id} />, publicClient({ getNotice: vi.fn().mockResolvedValue(response(data)) }));
+    const image = await screen.findByRole("img", { name: "Notice image" });
+    expect(image).toHaveAttribute("src", "https://cdn.example.test/gacha/Notice.webp");
+    fireEvent.error(image);
+    expect(document.querySelector("img")).toBeNull();
+    expect(screen.getByText("IMAGE PREPARING")).toBeInTheDocument();
+  } finally { vi.unstubAllEnvs(); }
+});

@@ -1,5 +1,6 @@
 "use client";
 
+import { brandAssetUrl } from "@/lib/brand-assets";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { presentPlatformProblem, type LoginGachaSummary, type PlatformProblemPresentation } from "@/lib/platform";
@@ -42,7 +43,7 @@ export const homeLoginBonusSampleItems: readonly HomeLoginBonusItem[] = [
   {
     conditionLabel: "ログインボーナス企画",
     imageAlt: "ログボでアド確（全口510コイン確定）",
-    imageSrc: "/brand/login-bonus/logbo-adokaku.webp",
+    imageSrc: brandAssetUrl("login-bonus/logbo-adokaku.webp"),
     limitLabel: "口数の上限なし",
     pricePoints: 500,
     subtitle: "（全口510コイン確定）",
@@ -51,7 +52,7 @@ export const homeLoginBonusSampleItems: readonly HomeLoginBonusItem[] = [
   {
     conditionLabel: "ログインボーナス企画",
     imageAlt: "毎日1回ログボ（毎日タダ引き）",
-    imageSrc: "/brand/login-bonus/logbo-mainichi.webp",
+    imageSrc: brandAssetUrl("login-bonus/logbo-mainichi.webp"),
     limitLabel: "1日1回",
     pricePoints: 0,
     subtitle: "（毎日タダ引き）",
@@ -60,7 +61,7 @@ export const homeLoginBonusSampleItems: readonly HomeLoginBonusItem[] = [
   {
     conditionLabel: "新規登録の方かぎり",
     imageAlt: "初回無料（新規登録者向け）",
-    imageSrc: "/brand/login-bonus/logbo-shokai.webp",
+    imageSrc: brandAssetUrl("login-bonus/logbo-shokai.webp"),
     limitLabel: "お一人さま1回",
     pricePoints: 0,
     subtitle: "（新規登録者向け）",
@@ -175,7 +176,7 @@ export function HomeLoginBonus({ items = homeLoginBonusSampleItems, state, retry
           watermark="FREE"
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
-          <img alt="" aria-hidden="true" className="home-peek home-peek--left" height={220} src="/brand/sd_pokezou_ooatari.webp" width={164} />
+          <img alt="" aria-hidden="true" className="home-peek home-peek--left" height={220} src={brandAssetUrl("sd_pokezou_ooatari.webp")} width={164} />
         </HomeSectionHeading>
         {state?.status === "loading" && <CatalogLoading label="ログインボーナスを読み込み中" />}
         {state?.status === "error" && <CatalogMessage {...(retry ? { action: retry } : {})} description={state.problem.message} eyebrow="ERROR" title="ログインボーナスを取得できませんでした" tone="error" />}

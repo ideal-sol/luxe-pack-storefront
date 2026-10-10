@@ -309,3 +309,19 @@ describe("gacha detail UI", () => {
     expect(screen.getByText("このガチャの抽選対象です。")).toBeInTheDocument();
   });
 });
+
+it("resolves new detail, lineup and prize images through CloudFront", async () => {
+  vi.stubEnv("NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL", "https://cdn.example.test");
+  try {
+    const next = { ...detail,
+      presentation_asset: { ...detail.presentation_asset!, path: "/gacha/detail.webp", media_type: "image" as const },
+      ranks: detail.ranks.map((item) => ({ ...item, lineup_image: { ...item.lineup_image!, path: "/rank-masters/lineup.webp", media_type: "image" as const } })),
+      prizes: detail.prizes!.map((item) => ({ ...item, presentation_asset: { ...item.presentation_asset!, path: "/gacha/prize.webp", media_type: "image" as const } })),
+    };
+    renderDetail(publicClient({ getGachaBySlug: vi.fn().mockResolvedValue(response({ data: next })) }));
+    await screen.findByRole("heading", { level: 1, name: detail.title });
+    expect(document.querySelector(".gacha-detail__visual img")).toHaveAttribute("src", "https://cdn.example.test/gacha/detail.webp");
+    expect(document.querySelector(".rank-lineup-image img")).toHaveAttribute("src", "https://cdn.example.test/rank-masters/lineup.webp");
+    expect(document.querySelector(".prize-rank__prize img")).toHaveAttribute("src", "https://cdn.example.test/gacha/prize.webp");
+  } finally { vi.unstubAllEnvs(); }
+});

@@ -1,5 +1,6 @@
 "use client";
 
+import { resolveAssetUrl } from "@/lib/asset-url";
 import { useEffect, useState } from "react";
 import { useOptionalPublicClient } from "./public-client-provider";
 
@@ -27,7 +28,8 @@ export function HomeHeroCards() {
         if (!active) return;
         setImages(data.data
           .map((gacha) => (gacha.presentation_asset?.media_type === "image" ? gacha.presentation_asset.path : null))
-          .filter((path): path is string => Boolean(path?.startsWith("/") && !path.startsWith("//"))));
+          .map((path) => resolveAssetUrl(path))
+          .filter((path): path is string => path !== null));
       })
       .catch(() => undefined);
     return () => { active = false; };

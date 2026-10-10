@@ -1,5 +1,6 @@
 "use client";
 
+import { brandAssetUrl } from "@/lib/brand-assets";
 import Link from "next/link";
 import { useEffect, useState, type FocusEvent } from "react";
 import type {
@@ -180,7 +181,7 @@ export function PublicHome() {
 
       <div aria-hidden="true" className="home-walk">
         {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
-        <img alt="" height={268} src="/brand/fukumaru_hashiru.webp" width={328} />
+        <img alt="" height={268} src={brandAssetUrl("fukumaru_hashiru.webp")} width={328} />
       </div>
 
       {/* 無料・ログインボーナス（注目の企画とガチャ一覧の間。表示のみ、抽選は Platform 側） */}
@@ -200,7 +201,7 @@ export function PublicHome() {
         <PageContainer className="home-content">
           <HomeSectionHeading id="home-lineup-heading" lead="コインでお引きいただくガチャです。並べ替えと絞り込みもご利用いただけます。" title="ガチャ一覧" watermark="LINEUP">
             {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
-            <img alt="" aria-hidden="true" className="home-peek home-peek--right" height={190} src="/brand/sd_fukumaru_ooyorokobi.webp" width={176} />
+            <img alt="" aria-hidden="true" className="home-peek home-peek--right" height={190} src={brandAssetUrl("sd_fukumaru_ooyorokobi.webp")} width={176} />
           </HomeSectionHeading>
           <div className="gacha-toolbar">
             <span aria-hidden="true" className="gacha-toolbar__label">並べ替え</span>
@@ -241,7 +242,7 @@ export function PublicHome() {
         <PageContainer>
           <HomeSectionHeading id="home-notice-heading" title="お知らせ" watermark="NEWS">
             {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
-            <img alt="" aria-hidden="true" className="home-peek home-peek--left" height={220} src="/brand/sd_pokezou_ooatari.webp" width={164} />
+            <img alt="" aria-hidden="true" className="home-peek home-peek--left" height={220} src={brandAssetUrl("sd_pokezou_ooatari.webp")} width={164} />
           </HomeSectionHeading>
           <p className="home-notices__more"><Link href="/notices">一覧を見る <span>→</span></Link></p>
           {notices.length > 0 ? (

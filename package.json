@@ -12,7 +12,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm brand-assets:check && next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "next typegen && tsc --noEmit",
@@ -31,7 +31,9 @@
     "point-boundary:check": "node scripts/check-point-boundary.mjs",
     "payment-boundary:check": "node scripts/check-payment-boundary.mjs",
     "security:check": "node scripts/check-secrets.mjs",
-    "validate": "pnpm artifact:check && pnpm policy:check && pnpm auth-boundary:check && pnpm line-identity-boundary:check && pnpm catalog-boundary:check && pnpm content-boundary:check && pnpm gacha-detail-boundary:check && pnpm draw-boundary:check && pnpm prize-boundary:check && pnpm point-boundary:check && pnpm payment-boundary:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "validate": "pnpm artifact:check && pnpm policy:check && pnpm auth-boundary:check && pnpm line-identity-boundary:check && pnpm catalog-boundary:check && pnpm content-boundary:check && pnpm gacha-detail-boundary:check && pnpm draw-boundary:check && pnpm prize-boundary:check && pnpm point-boundary:check && pnpm payment-boundary:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "brand-assets:generate": "node scripts/brand-assets.mjs --write",
+    "brand-assets:check": "node scripts/brand-assets.mjs --check"
   },
   "dependencies": {
     "@fincode/js": "1.1.0",

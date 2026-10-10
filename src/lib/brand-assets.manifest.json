@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "version": "sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63",
+  "files": [
+    {
+      "relative_path": "fukumaru_hashiru.webp",
+      "content_type": "image/webp",
+      "byte_size": 20664,
+      "sha256": "a3cdac3841d320a664021c9c0dd28a87508ed65768cfc4b53c7d6a5798bf89fb",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/fukumaru_hashiru.webp"
+    },
+    {
+      "relative_path": "icons/android-192.png",
+      "content_type": "image/png",
+      "byte_size": 58907,
+      "sha256": "66c4321def03868ad088bfbacf008f9bf0fb65d7c10a45793d391b8d5277239e",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/icons/android-192.png"
+    },
+    {
+      "relative_path": "icons/android-512-maskable.png",
+      "content_type": "image/png",
+      "byte_size": 228679,
+      "sha256": "36b691e0e601e9721c070dcdbe28b13b3827b6000b88c87c0969db44d66f02f8",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/icons/android-512-maskable.png"
+    },
+    {
+      "relative_path": "icons/android-512.png",
+      "content_type": "image/png",
+      "byte_size": 332262,
+      "sha256": "62cd1b79f27e611385ac6b2953655d2b9e9d8f1c08d80d79749f4ac2a28a73d5",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/icons/android-512.png"
+    },
+    {
+      "relative_path": "icons/apple-touch-icon.png",
+      "content_type": "image/png",
+      "byte_size": 52657,
+      "sha256": "44fa375105b00d538bfba83c353f3103d8d0b287dcc8afe5c6f9ee27aecbb251",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/icons/apple-touch-icon.png"
+    },
+    {
+      "relative_path": "icons/favicon-16.png",
+      "content_type": "image/png",
+      "byte_size": 474,
+      "sha256": "a8776450eeedbb2063ba6be2ca189c301c2fd2ae4c2132d73a4d9fec383c8ef6",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/icons/favicon-16.png"
+    },
+    {
+      "relative_path": "icons/favicon-180.png",
+      "content_type": "image/png",
+      "byte_size": 9258,
+      "sha256": "29d44bcfb8951d98341558b820f353a1906e5b39f11995007ac3009da2b5a236",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/icons/favicon-180.png"
+    },
+    {
+      "relative_path": "icons/favicon-32.png",
+      "content_type": "image/png",
+      "byte_size": 949,
+      "sha256": "aad02672130690924948d8ac78d4df4dd79dc1f9ac8c4431c3665a03268e2e86",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/icons/favicon-32.png"
+    },
+    {
+      "relative_path": "icons/favicon-48.png",
+      "content_type": "image/png",
+      "byte_size": 1428,
+      "sha256": "6c0b51bedff935579f49790d333218e7b806d1e6bec95c5d1b2f49ae14e97fc7",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/icons/favicon-48.png"
+    },
+    {
+      "relative_path": "icons/favicon.ico",
+      "content_type": "image/x-icon",
+      "byte_size": 2932,
+      "sha256": "0bc70df315a6001bf98f5f986462d72adbfaec68e144738708e4ceddb7bc5516",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/icons/favicon.ico"
+    },
+    {
+      "relative_path": "login-bonus/logbo-adokaku.webp",
+      "content_type": "image/webp",
+      "byte_size": 164492,
+      "sha256": "1cff76dc1e05b490ce620984cc871e09c9e4e08fa9bf0f877989c76ff2f5cb43",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/login-bonus/logbo-adokaku.webp"
+    },
+    {
+      "relative_path": "login-bonus/logbo-mainichi.webp",
+      "content_type": "image/webp",
+      "byte_size": 134594,
+      "sha256": "79920be5b9b8688eae910104fc6d359c1b19f8b226bbf6d0a5ec730c179e8c67",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/login-bonus/logbo-mainichi.webp"
+    },
+    {
+      "relative_path": "login-bonus/logbo-shokai.webp",
+      "content_type": "image/webp",
+      "byte_size": 167400,
+      "sha256": "6de23397c61496084cdefb8a571701e74444e7a6f1a8c546e8a16bd4f99b60a2",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/login-bonus/logbo-shokai.webp"
+    },
+    {
+      "relative_path": "logo.webp",
+      "content_type": "image/webp",
+      "byte_size": 5926,
+      "sha256": "16f4ad1374cda0c25b0c9bcb6e37e4b932ac8402aeacc49dc00fb5f5093500ef",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/logo.webp"
+    },
+    {
+      "relative_path": "mark.svg",
+      "content_type": "image/svg+xml",
+      "byte_size": 351,
+      "sha256": "34aa79f816a2158e86aaea48c7c4af436138bdc49f1ea68ae3c52767e3099981",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/mark.svg"
+    },
+    {
+      "relative_path": "orika_sd.webp",
+      "content_type": "image/webp",
+      "byte_size": 48554,
+      "sha256": "cd5eefaee126757cf89339eb6a524059d8e425c5e19ba0260569bf3622278b02",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/orika_sd.webp"
+    },
+    {
+      "relative_path": "pokezou_sd.webp",
+      "content_type": "image/webp",
+      "byte_size": 39484,
+      "sha256": "73d51358c7b893f70a45878326c7f605e28c6291c8d58a93d0b2098a697f262b",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/pokezou_sd.webp"
+    },
+    {
+      "relative_path": "sd_fukumaru_ooyorokobi.webp",
+      "content_type": "image/webp",
+      "byte_size": 12740,
+      "sha256": "ff5ebcb1e639a1d913474d5b3646b3e009e9f1f9295eed4935de839e9c6cc16e",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/sd_fukumaru_ooyorokobi.webp"
+    },
+    {
+      "relative_path": "sd_fukumaru_osuwari.webp",
+      "content_type": "image/webp",
+      "byte_size": 14724,
+      "sha256": "276e580dbc442dab3da4a0893088cb5a94b339fdc7f03147d9af13842676517e",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/sd_fukumaru_osuwari.webp"
+    },
+    {
+      "relative_path": "sd_orika_egao.webp",
+      "content_type": "image/webp",
+      "byte_size": 16060,
+      "sha256": "565fb3c9f8f09182c20c0a36ab7baebd080bc8c5d277cf938049cc9f6ea7ed37",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/sd_orika_egao.webp"
+    },
+    {
+      "relative_path": "sd_orika_wink.webp",
+      "content_type": "image/webp",
+      "byte_size": 15538,
+      "sha256": "847899ecc4743a8eb2c84db8303324e4ddc097cd7c3f6207fc196ffbc38ca00c",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/sd_orika_wink.webp"
+    },
+    {
+      "relative_path": "sd_pokezou_makasero.webp",
+      "content_type": "image/webp",
+      "byte_size": 13068,
+      "sha256": "224aa5cd5591115ded6966c1c295b3944eee8e1893e510d2df97631afc0c198b",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/sd_pokezou_makasero.webp"
+    },
+    {
+      "relative_path": "sd_pokezou_ooatari.webp",
+      "content_type": "image/webp",
+      "byte_size": 16788,
+      "sha256": "25f1539e3ab7550fedca6df2cac8208e79709cc9a97344dee749137cc58735bb",
+      "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/sd_pokezou_ooatari.webp"
+    }
+  ]
+}

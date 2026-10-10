@@ -6,6 +6,7 @@ import type { ContentNotice, PlatformProblemPresentation } from "@/lib/platform"
 import { isPlatformNotFound, presentPlatformProblem } from "@/lib/platform";
 import { CatalogLoading, CatalogMessage } from "@/components/catalog/catalog-message";
 import { usePublicClient } from "@/components/catalog/public-client-provider";
+import { CatalogAsset } from "@/components/catalog/catalog-asset";
 import { SafeContent } from "./safe-content";
 
 type NoticeDetailState =
@@ -70,6 +71,7 @@ export function NoticeDetail({ noticeId }: { readonly noticeId: string }) {
         </div>
         <h1>{state.notice.title}</h1>
       </header>
+      {state.notice.asset && <CatalogAsset alt={state.notice.asset.alt_text ?? state.notice.title} src={state.notice.asset.path} />}
       <SafeContent html={state.notice.body_html} />
     </article>
   );
