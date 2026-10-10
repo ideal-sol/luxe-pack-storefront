@@ -55,8 +55,8 @@ Neither substitutes for Contract Artifact Source or Storefront Runtime Source.
 
 ## Exact build and Security toolchains
 
-The runtime is Next.js `16.3.6`; only the three exact-version assertions are
-synchronized from `16.3.3`. Normal artifact pnpm remains `10.12.1`, including
+The alpha.43 authority change synchronized the three Next.js assertions from
+`16.3.3` to `16.3.6`. Normal artifact pnpm remains `10.12.1`, including
 the manifest version, frozen install, build, prune and package verification.
 
 Human additionally approves replacing the stale raw High-level audit command
@@ -93,3 +93,23 @@ Production Authority, Contract alpha.43, database, workers, deferred Scheduler
 and ENV remain unchanged; no migration or Snapshot is required.
 Rollback of this authority change requires a reviewed authority-only revert;
 existing runtimes and rollback artifacts remain untouched.
+
+## Next.js security source update — 2026-10-10
+
+`STOREFRONT-NEXTSEC-20261010` pins Next.js and eslint-config-next to `16.3.8`
+and synchronizes all three workflow assertions: installed package, packaging
+version and re-downloaded artifact manifest. Node remains `22.22.3`, normal
+pnpm remains `10.12.1`, and isolated audit pnpm remains `11.25.0`. The security
+policy and its exact dev-only exception are unchanged.
+
+This is source/test/CI preparation only. It does not authorize a new Runtime
+Source, reuse historical acceptance for a new candidate, dispatch the workflow,
+publish an artifact or activate a runtime. Existing release SHA authorities,
+checksums, Build ID, Contract provenance, ARM64 verification and Human release
+checks remain intact; a future candidate needs its own exact source authority.
+
+The S3 Production Candidate task must separately integrate and verify the
+CloudFront build inputs `NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL` and
+`NEXT_PUBLIC_STATIC_ASSET_BASE_URL`. They are not added to this workflow here.
+PR #154 is excluded from this change and requires separate regression after
+the dependency fix is merged through Human review.
