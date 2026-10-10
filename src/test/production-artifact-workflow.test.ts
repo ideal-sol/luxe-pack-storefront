@@ -28,8 +28,9 @@ describe("production artifact canonical audit toolchain", () => {
   it("pins both toolchains and Next without changing the manifest toolchain", () => {
     expect(workflow).toContain("PNPM_VERSION: 10.12.1");
     expect(workflow).toContain("PNPM_AUDIT_VERSION: 11.25.0");
-    expect(workflow.match(/16\.3\.6/g)).toHaveLength(3);
+    expect(workflow.match(/16\.3\.8/g)).toHaveLength(3);
     expect(workflow).not.toContain("16.3.3");
+    expect(workflow).not.toContain("16.3.6");
     expect(workflow).not.toContain("pnpm audit --audit-level high");
     expect(workflow).toContain("pnpm_version: process.env.PNPM_VERSION");
     expect(sourceValidation).toContain('audit_root="$(mktemp -d)"');
