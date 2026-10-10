@@ -151,7 +151,7 @@ describe("Storefront exact dev-tool security policy", () => {
 
   it.each(["dependencies", "optionalDependencies", "peerDependencies"])("rejects a runtime root in %s", section => {
     const input = evidence();
-    input.manifest[section] = { ...input.manifest[section], "eslint-config-next": "16.3.6" };
+    input.manifest[section] = { ...input.manifest[section], "eslint-config-next": manifest.devDependencies["eslint-config-next"] };
     expect(() => validateEvidence(input)).toThrow();
   });
 
@@ -169,7 +169,7 @@ describe("Storefront exact dev-tool security policy", () => {
     ["missing lock", ""],
     ["wrong version", lockfile.replaceAll("braces@3.0.3", "braces@3.0.2")],
     ["wrong chain", lockfile.replace("      micromatch: 4.0.8", "      different-package: 4.0.8")],
-    ["manifest drift", lockfile.replace("specifier: 16.3.6", "specifier: 16.3.5")],
+    ["manifest drift", lockfile.replace(`specifier: ${manifest.dependencies.next}`, "specifier: 0.0.0")],
     ["unsupported schema", lockfile.replace("lockfileVersion: '9.0'", "lockfileVersion: '8.0'")],
   ])("rejects %s", (_name, badLock) => {
     expect(() => validateEvidence({ ...evidence(), lockfile: badLock })).toThrow();

@@ -121,7 +121,7 @@ jobs:
           test "$(node --version)" = "v$NODE_VERSION"
           test "$(pnpm --version)" = "$PNPM_VERSION"
           pnpm install --frozen-lockfile
-          test "$(node -p "require('./node_modules/next/package.json').version")" = "16.3.6"
+          test "$(node -p "require('./node_modules/next/package.json').version")" = "16.3.8"
 
       - name: Validate source and contracts
         shell: bash
@@ -202,7 +202,7 @@ jobs:
 
           build_id="$(tr -d '\n' < "$release_root/.next/BUILD_ID")"
           next_version="$(node -p "require('./node_modules/next/package.json').version")"
-          test "$next_version" = "16.3.6"
+          test "$next_version" = "16.3.8"
           node "$GITHUB_WORKSPACE/build-authority/scripts/production-provenance.mjs" validate . "$RUNNER_TEMP/contract-provenance.json"
 
           (
@@ -439,7 +439,7 @@ jobs:
           test "$(node -p "require('./artifact-manifest.json').git_tree")" = "$EXPECTED_GIT_TREE"
           test "$(node -p "require('./artifact-manifest.json').node_version")" = "$NODE_VERSION"
           test "$(node -p "require('./artifact-manifest.json').pnpm_version")" = "$PNPM_VERSION"
-          test "$(node -p "require('./artifact-manifest.json').next_version")" = "16.3.6"
+          test "$(node -p "require('./artifact-manifest.json').next_version")" = "16.3.8"
           node --input-type=module <<'NODE'
           import { readFileSync } from "node:fs";
           import { join } from "node:path";
