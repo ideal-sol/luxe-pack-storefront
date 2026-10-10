@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { resolveAssetUrl } from "@/lib/asset-url";
 import { useState } from "react";
 import type { GachaDetail } from "@/lib/platform";
 
@@ -9,8 +10,8 @@ export function RankLineupImage({ image, name }: {
   readonly name: string;
 }) {
   const [failedPath, setFailedPath] = useState<string | null>(null);
-  const path = image?.media_type === "image" ? image.path : null;
-  if (!path || !path.startsWith("/") || path.startsWith("//") || path === failedPath) return <span>{name}</span>;
+  const path = resolveAssetUrl(image?.media_type === "image" ? image.path : null);
+  if (!path || path === failedPath) return <span>{name}</span>;
 
   return (
     <span className="rank-lineup-image">

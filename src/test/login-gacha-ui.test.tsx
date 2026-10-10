@@ -126,3 +126,17 @@ describe("login Gacha Draw boundary", () => {
     expect(await screen.findByRole("alert")).toBeInTheDocument(); expect(router.push).not.toHaveBeenCalled(); expect(refreshWallet).not.toHaveBeenCalled();
   });
 });
+
+it("uses CloudFront for new login Gacha list and detail thumbnails", async () => {
+  vi.stubEnv("NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL", "https://cdn.example.test");
+  try {
+    const thumbnail = { id: "image", path: "/gacha/Login_New.webp", media_type: "image" as const, mime_type: "image/webp", checksum_sha256: "1".repeat(64), alt_text: "New login" };
+    const api = client([{ ...daily, thumbnail }]);
+    const list = render(wrap(<HomeLoginBonusFeed />, api));
+    expect(await screen.findByRole("img", { name: "New login" })).toHaveAttribute("src", "https://cdn.example.test/gacha/Login_New.webp");
+    list.unmount();
+    vi.mocked(api.getLoginGacha).mockResolvedValue(response({ data: { ...detail, thumbnail } }));
+    render(wrap(<LoginGachaDetailView gachaId={id} />, api));
+    expect(await screen.findByRole("img", { name: "New login" })).toHaveAttribute("src", "https://cdn.example.test/gacha/Login_New.webp");
+  } finally { vi.unstubAllEnvs(); }
+});

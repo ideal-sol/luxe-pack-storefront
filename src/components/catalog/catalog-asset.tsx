@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { resolveAssetUrl } from "@/lib/asset-url";
 import { useState } from "react";
 
 export function CatalogAsset({
@@ -15,18 +16,19 @@ export function CatalogAsset({
   readonly src?: string | null;
 }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
-  const usable = Boolean(src?.startsWith("/") && !src.startsWith("//") && failedSrc !== src);
+  const url = resolveAssetUrl(src);
+  const usable = url && failedSrc !== url;
 
   return (
     <div className="catalog-asset">
-      {usable && src ? (
+      {usable ? (
         <Image
           alt={alt ?? ""}
           fill
-          onError={() => setFailedSrc(src)}
+          onError={() => setFailedSrc(url)}
           priority={priority}
           sizes="(min-width: 1080px) 25vw, (min-width: 720px) 42vw, 90vw"
-          src={src}
+          src={url}
           unoptimized
         />
       ) : (

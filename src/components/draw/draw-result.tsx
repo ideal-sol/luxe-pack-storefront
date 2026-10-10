@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { resolveAssetUrl } from "@/lib/asset-url";
 import { useEffect, useRef, useState } from "react";
 import type { PublicComponents } from "@oripa/storefront-client/types";
 import { ApiProblemError } from "@oripa/storefront-client";
@@ -50,10 +51,10 @@ function ResultMessage({
   );
 }
 
-// Keep the existing same-origin snapshot URL convention; never select another asset.
+// Resolve only the representative snapshot supplied by the Platform.
 function usablePresentation(presentation: DrawResponse["presentation"]): presentation is DrawPresentation {
   const video = presentation?.video_snapshot;
-  return video?.media_type === "video" && video.path.startsWith("/") && !video.path.startsWith("//");
+  return video?.media_type === "video" && resolveAssetUrl(video.path) !== null;
 }
 
 function RepresentativeVideo({ presentation, onFinished }: {
@@ -82,7 +83,7 @@ function RepresentativeVideo({ presentation, onFinished }: {
         playsInline
         preload="metadata"
         ref={videoRef}
-        src={video.path}
+        src={resolveAssetUrl(video.path) ?? undefined}
       />
       <button className="button button--dark draw-presentation__skip" onClick={finish} type="button">スキップ</button>
     </section>

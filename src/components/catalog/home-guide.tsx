@@ -1,3 +1,4 @@
+import { brandAssetUrl } from "@/lib/brand-assets";
 import Link from "next/link";
 import { HomeSectionHeading } from "./home-section-heading";
 
@@ -26,10 +27,10 @@ const paymentNotes = [
 ] as const;
 
 const flowSteps = [
-  { image: "/brand/sd_orika_egao.webp", width: 153, height: 208, title: "会員登録", body: "メールアドレスとパスワードで登録します。" },
-  { image: "/brand/sd_pokezou_makasero.webp", width: 133, height: 200, title: "コイン購入", body: "購入画面で商品の内容を確認し、案内に沿って購入します。" },
-  { image: "/brand/sd_fukumaru_osuwari.webp", width: 215, height: 200, title: "ガチャを引く", body: "企画の内容と利用条件を確認して引きます。獲得した景品は結果画面で確認できます。" },
-  { image: "/brand/sd_orika_wink.webp", width: 138, height: 216, title: "景品を受け取る", body: "景品ごとに利用可能な方法で発送依頼・コイン交換を行います。" },
+  { image: brandAssetUrl("sd_orika_egao.webp"), width: 153, height: 208, title: "会員登録", body: "メールアドレスとパスワードで登録します。" },
+  { image: brandAssetUrl("sd_pokezou_makasero.webp"), width: 133, height: 200, title: "コイン購入", body: "購入画面で商品の内容を確認し、案内に沿って購入します。" },
+  { image: brandAssetUrl("sd_fukumaru_osuwari.webp"), width: 215, height: 200, title: "ガチャを引く", body: "企画の内容と利用条件を確認して引きます。獲得した景品は結果画面で確認できます。" },
+  { image: brandAssetUrl("sd_orika_wink.webp"), width: 138, height: 216, title: "景品を受け取る", body: "景品ごとに利用可能な方法で発送依頼・コイン交換を行います。" },
 ] as const;
 
 const assurances = [
@@ -111,7 +112,7 @@ export function HomeGuide() {
             watermark="COIN"
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
-            <img alt="" aria-hidden="true" className="home-peek home-peek--guide" height={216} src="/brand/sd_orika_wink.webp" width={138} />
+            <img alt="" aria-hidden="true" className="home-peek home-peek--guide" height={216} src={brandAssetUrl("sd_orika_wink.webp")} width={138} />
           </HomeSectionHeading>
           <ul className="home-guide__plans">
             {coinPlans.map((plan) => (

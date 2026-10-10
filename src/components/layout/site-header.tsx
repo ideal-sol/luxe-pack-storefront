@@ -1,5 +1,6 @@
 "use client";
 
+import { brandAssetUrl } from "@/lib/brand-assets";
 import Link from "next/link";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
@@ -65,10 +66,10 @@ export function SiteHeader({ firstBuyLayoutEnabled = false }: { readonly firstBu
           <Link aria-label={appName ? `${appName} ホーム` : "ホーム"} className={brandLogo ? "wordmark wordmark--logo" : "wordmark"} href="/">
             {brandLogo ? (
               // eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要
-              <img alt="" aria-hidden="true" className="wordmark__logo" height={96} src="/brand/logo.webp" width={402} />
+              <img alt="" aria-hidden="true" className="wordmark__logo" height={96} src={brandAssetUrl("logo.webp")} width={402} />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要
-              <img alt="" aria-hidden="true" className="wordmark__mark" height={100} src="/brand/mark.svg" width={100} />
+              <img alt="" aria-hidden="true" className="wordmark__mark" height={100} src={brandAssetUrl("mark.svg")} width={100} />
             )}
             <strong className={brandLogo ? "wordmark__name wordmark__name--visually-hidden" : "wordmark__name"}>{appName}</strong>
           </Link>

@@ -159,3 +159,17 @@ describe("SITE-028 current-user Gacha history", () => {
     expect(screen.getAllByRole("img", { name: "Fixtureガチャ" })).toHaveLength(3);
   });
 });
+
+it("renders new history thumbnails through CloudFront without a draw mutation", async () => {
+  vi.stubEnv("NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL", "https://cdn.example.test");
+  try {
+    const data = { ...PUBLIC_DRAW_HISTORY_FIXTURES.multiple, items: PUBLIC_DRAW_HISTORY_FIXTURES.multiple.items.map((item, index) => ({
+      ...item, gacha: { ...item.gacha, presentation_asset: item.gacha.presentation_asset ? { ...item.gacha.presentation_asset, path: `/gacha/history_${index}.webp` } : null },
+    })) };
+    const client = drawClient({ listDrawHistory: vi.fn().mockResolvedValue({ data, metadata }) });
+    renderHistory(client);
+    const rows = await screen.findAllByRole("listitem");
+    expect(rows[0]!.querySelector("img")).toHaveAttribute("src", "https://cdn.example.test/gacha/history_0.webp");
+    expect(client.createDraw).not.toHaveBeenCalled();
+  } finally { vi.unstubAllEnvs(); }
+});

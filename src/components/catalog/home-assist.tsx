@@ -1,5 +1,6 @@
 "use client";
 
+import { brandAssetUrl } from "@/lib/brand-assets";
 import Link from "next/link";
 import { useState } from "react";
 import { informationNavigation } from "@/lib/routes/navigation";
@@ -19,7 +20,7 @@ export function HomeAssist() {
         迷ったら、まずは<Link href={informationNavigation[0].href}>はじめての方へ</Link>をご覧ください。
       </p>
       {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
-      <img alt="" aria-hidden="true" className="home-assist__character" height={208} src="/brand/sd_orika_egao.webp" width={153} />
+      <img alt="" aria-hidden="true" className="home-assist__character" height={208} src={brandAssetUrl("sd_orika_egao.webp")} width={153} />
       <button aria-label="ご案内を閉じる" className="home-assist__close" onClick={() => setDismissed(true)} type="button">×</button>
     </aside>
   );

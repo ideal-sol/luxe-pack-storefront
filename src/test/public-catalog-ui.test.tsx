@@ -12,6 +12,7 @@ import { SessionProvider } from "@/components/auth/session-provider";
 import { GachaCatalog } from "@/components/catalog/gacha-catalog";
 import { GachaCard } from "@/components/catalog/gacha-card";
 import { PublicClientProvider } from "@/components/catalog/public-client-provider";
+import { HomeHeroCards } from "@/components/catalog/home-hero-cards";
 import { PublicHome } from "@/components/catalog/public-home";
 import type { AuthClientAdapter, GachaSummary, PublicCatalogAdapter } from "@/lib/platform";
 
@@ -431,4 +432,19 @@ describe("public catalog UI", () => {
     await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 6 }));
     expect(screen.getByRole("button", { name: "すべて" })).toHaveAttribute("aria-pressed", "true");
   });
+});
+
+it("resolves new TOP banners, catalog cards and decorative Gacha images through CloudFront", async () => {
+  vi.stubEnv("NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL", "https://cdn.example.test");
+  try {
+    const banners = { ...PUBLIC_TOP_BANNERS_FIXTURE.response, items: PUBLIC_TOP_BANNERS_FIXTURE.response.items.map((item) => ({ ...item, image_url: "/top-banner/New_Banner.webp" })) };
+    const gacha = { ...summary, presentation_asset: { ...summary.presentation_asset!, path: "/gacha/New_Card.webp", media_type: "image" as const } };
+    renderPublic(<><HomeHeroCards /><PublicHome /></>, publicClient({
+      listBanners: vi.fn().mockResolvedValue(response(banners)),
+      listGachas: vi.fn().mockResolvedValue(response({ ...gachaCollection, data: [gacha] })),
+    }));
+    await waitFor(() => expect(document.querySelector('.home-banner img')).toHaveAttribute("src", "https://cdn.example.test/top-banner/New_Banner.webp"));
+    await waitFor(() => expect(document.querySelector('.home-hero__card img')).toHaveAttribute("src", "https://cdn.example.test/gacha/New_Card.webp"));
+    expect(document.querySelector('.gacha-card img[src="https://cdn.example.test/gacha/New_Card.webp"]')).toHaveAttribute("src", "https://cdn.example.test/gacha/New_Card.webp");
+  } finally { vi.unstubAllEnvs(); }
 });

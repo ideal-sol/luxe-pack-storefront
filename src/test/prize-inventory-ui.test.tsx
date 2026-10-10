@@ -413,3 +413,16 @@ describe("prize inventory UI", () => {
     expect(screen.getByRole("heading", { name: "両方可能な景品" })).toBeInTheDocument();
   });
 });
+
+it("renders a new acquired prize through CloudFront without mutating it", async () => {
+  vi.stubEnv("NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL", "https://cdn.example.test");
+  try {
+    const item = { ...both, presentation: { ...both.presentation!, image: { ...base.presentation!.image!, path: "/gacha/new-prize.webp", media_type: "image" as const } } };
+    const api = client({ listPrizes: vi.fn().mockResolvedValue(response({ items: [item], next_cursor: null })) });
+    renderInventory(api);
+    await screen.findByText(item.presentation.name);
+    expect(document.querySelector(".inventory-card__image img")).toHaveAttribute("src", "https://cdn.example.test/gacha/new-prize.webp");
+    expect(api.exchangePrizes).not.toHaveBeenCalled();
+    expect(api.createShippingRequest).not.toHaveBeenCalled();
+  } finally { vi.unstubAllEnvs(); }
+});
