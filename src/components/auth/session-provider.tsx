@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { isAuthProblemError } from "@oripa/storefront-client";
+import { SESSION_ACCESS_REJECTED } from "@/lib/platform/browser-client";
 import {
   createBrowserAuthClient,
   PlatformConfigurationError,
@@ -45,6 +46,8 @@ export type SessionState =
   | { readonly status: "session-expired" }
   | { readonly status: "error" };
 
+export type SmsAccessState = "loading" | "verified" | "unverified" | "error";
+
 function sessionState(data: AuthSession): SessionState {
   return data.authenticated && data.user
     ? { status: "authenticated", session: data }
@@ -52,6 +55,7 @@ function sessionState(data: AuthSession): SessionState {
 }
 
 interface SessionContextValue {
+  readonly smsAccess: SmsAccessState;
   readonly changePassword: (input: PasswordChangeRequest) => Promise<PasswordChanged>;
   readonly completeEmailChange: (input: EmailChangeCompleteRequest) => Promise<EmailChangeCompleted>;
   readonly completeEmailVerification: (input: { readonly user_id: string; readonly hash: string }) => Promise<void>;
@@ -97,11 +101,59 @@ export function SessionProvider({
     client ? { status: "loading" } : { status: "configuration-unavailable" },
   );
   const refreshSequence = useRef(0);
+  const [smsRead, setSmsRead] = useState<{ readonly sequence: number; readonly access: SmsAccessState } | null>(null);
+  const smsRequest = useRef<{ readonly sequence: number; readonly promise: Promise<SmsVerificationStatus> } | null>(null);
 
   const requireClient = useCallback(() => {
     if (!client) throw new PlatformConfigurationError();
     return client;
   }, [client]);
+
+  const getSmsVerificationStatus = useCallback(() => {
+    const sequence = refreshSequence.current;
+    if (smsRequest.current?.sequence === sequence) return smsRequest.current.promise;
+    const promise = Promise.resolve().then(() => requireClient().getSmsVerificationStatus())
+      .then(({ data }) => {
+        if (sequence === refreshSequence.current) {
+          setSmsRead({ sequence, access: data.verified ? "verified" : "unverified" });
+        }
+        return data;
+      })
+      .catch((error: unknown) => {
+        if (sequence === refreshSequence.current) {
+          setSmsRead({ sequence, access: "error" });
+          if (isAuthProblemError(error, "SESSION_EXPIRED") || isAuthProblemError(error, "AUTHENTICATION_REQUIRED")) {
+            refreshSequence.current += 1;
+            setState({ status: "session-expired" });
+          }
+        }
+        throw error;
+      })
+      .finally(() => {
+        if (smsRequest.current?.promise === promise) smsRequest.current = null;
+      });
+    smsRequest.current = { sequence, promise };
+    return promise;
+  }, [requireClient]);
+
+  useEffect(() => {
+    if (state.status === "authenticated") void getSmsVerificationStatus().catch(() => undefined);
+  }, [getSmsVerificationStatus, state]);
+
+  const smsAccess: SmsAccessState = state.status === "authenticated" && smsRead ? smsRead.access : "loading";
+
+  useEffect(() => {
+    const rejected = (event: Event) => {
+      const sequence = ++refreshSequence.current;
+      if ((event as CustomEvent<unknown>).detail === "SMS_VERIFICATION_REQUIRED") {
+        setSmsRead({ sequence, access: "unverified" });
+      } else {
+        setState({ status: "session-expired" });
+      }
+    };
+    window.addEventListener(SESSION_ACCESS_REJECTED, rejected);
+    return () => window.removeEventListener(SESSION_ACCESS_REJECTED, rejected);
+  }, []);
 
   const refreshSession = useCallback(async () => {
     if (!client) {
@@ -109,6 +161,7 @@ export function SessionProvider({
       return;
     }
     const sequence = ++refreshSequence.current;
+    setSmsRead(null);
     setState({ status: "loading" });
     try {
       const { data } = await client.getCurrentSession();
@@ -167,6 +220,7 @@ export function SessionProvider({
     async confirmPasswordReset(input) {
       const { data } = await requireClient().confirmPasswordReset(input, {});
       refreshSequence.current += 1;
+      setSmsRead(null);
       setState(sessionState({ authenticated: data.authenticated, user: data.user }));
       return data;
     },
@@ -174,16 +228,20 @@ export function SessionProvider({
       const { data } = await requireClient().createEmailChangeRequest(input, {});
       return data;
     },
-    async getSmsVerificationStatus() {
-      const { data } = await requireClient().getSmsVerificationStatus();
-      return data;
-    },
+    getSmsVerificationStatus,
     async login(input) {
       await requireClient().login(input);
       await refreshSession();
     },
     async logout() {
-      await requireClient().logout();
+      refreshSequence.current += 1;
+      setState({ status: "loading" });
+      try {
+        await requireClient().logout();
+      } catch (error) {
+        setState({ status: "error" });
+        throw error;
+      }
       refreshSequence.current += 1;
       setState({
         status: "unauthenticated",
@@ -216,11 +274,13 @@ export function SessionProvider({
       return data;
     },
     state,
+    smsAccess,
     async verifySmsCode(input) {
       const { data } = await requireClient().verifySmsCode(input, {});
+      await refreshSession();
       return data;
     },
-  }), [refreshSession, requireClient, state]);
+  }), [getSmsVerificationStatus, refreshSession, requireClient, smsAccess, state]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

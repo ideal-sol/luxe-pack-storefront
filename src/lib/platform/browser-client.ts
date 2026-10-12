@@ -10,7 +10,21 @@ export type BrowserClientOverrides = Pick<
   "cookie_reader" | "fetch"
 >;
 
-export const callGlobalFetch: typeof globalThis.fetch = (input, init) => globalThis.fetch(input, init);
+export const SESSION_ACCESS_REJECTED = "storefront:session-access-rejected";
+
+export const callGlobalFetch: typeof globalThis.fetch = async (input, init) => {
+  const response = await globalThis.fetch(input, init);
+  if (typeof window !== "undefined" && (response.status === 401 || response.status === 403)) {
+    try {
+      const problem: unknown = await response.clone().json();
+      if (problem && typeof problem === "object" && "code" in problem &&
+          ["SESSION_EXPIRED", "AUTHENTICATION_REQUIRED", "SMS_VERIFICATION_REQUIRED"].includes(String(problem.code))) {
+        window.dispatchEvent(new CustomEvent(SESSION_ACCESS_REJECTED, { detail: problem.code }));
+      }
+    } catch {}
+  }
+  return response;
+};
 
 export function createBrowserPlatformTransport(
   configuration: PlatformRuntimeConfiguration = readPlatformRuntimeConfiguration(),

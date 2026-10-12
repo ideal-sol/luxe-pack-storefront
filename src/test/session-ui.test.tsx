@@ -36,6 +36,7 @@ function client(overrides: Partial<AuthClientAdapter> = {}): AuthClientAdapter {
   return {
     completeEmailVerification: vi.fn().mockResolvedValue(response(authenticated)),
     getCurrentSession: vi.fn().mockResolvedValue(response(anonymous)),
+    getSmsVerificationStatus: vi.fn().mockResolvedValue(response({ verified: true, phone: null, phone_masked: null, verified_at: null, challenge: null })),
     login: vi.fn().mockResolvedValue(response(authenticated)),
     logout: vi.fn().mockResolvedValue(response(undefined, 204)),
     register: vi.fn().mockResolvedValue(response({ status: "pending_verification", user_id: "0198a001-0000-7000-8000-000000000502" }, 202)),
@@ -146,6 +147,8 @@ describe("authentication UI", () => {
     fireEvent.submit(form);
     expect(register).toHaveBeenCalledTimes(1);
     expect(register).toHaveBeenCalledWith({
+      full_name: "",
+      birth_date: "",
       email: "fixture@example.test",
       password: "fixture-password",
       redirect_path: "/mypage",
@@ -200,7 +203,7 @@ describe("authentication UI", () => {
     await screen.findByText("メール認証が完了しました");
     expect(completeEmailVerification).toHaveBeenCalledTimes(1);
     expect(getCurrentSession).toHaveBeenCalledTimes(2);
-    expect(consumeSmsRegistrationPrompt("0198a001-0000-7000-8000-000000000502")).toBe(true);
+    expect(consumeSmsRegistrationPrompt("0198a001-0000-7000-8000-000000000502")).toBe(false);
   });
 
   it("renders a safe typed error when email verification fails", async () => {

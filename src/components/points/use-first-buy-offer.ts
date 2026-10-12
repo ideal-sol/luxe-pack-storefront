@@ -30,9 +30,9 @@ export function useFirstBuyCountdown(collection: PointProductCollection | null, 
 }
 
 export function useFirstBuyOffer() {
-  const { state: session } = useSession();
+  const { state: session, smsAccess } = useSession();
   const { client } = usePointClient();
-  const sessionKey = session.status === "authenticated" ? session.session.user?.id
+  const sessionKey = session.status === "authenticated" ? `${session.session.user?.id}:${smsAccess}`
     : session.status === "unauthenticated" || session.status === "session-expired" ? "anonymous" : null;
   const [read, setRead] = useState<{ readonly key: string; readonly collection: PointProductCollection } | null>(null);
   const [revision, setRevision] = useState(0);
@@ -45,5 +45,5 @@ export function useFirstBuyOffer() {
       .catch(() => { if (active) setRead(null); });
     return () => { active = false; };
   }, [client, sessionKey, revision]);
-  return useFirstBuyCountdown(read && read.key === sessionKey ? read.collection : null, refresh);
+  return useFirstBuyCountdown(read && read.key === sessionKey && (session.status !== "authenticated" || smsAccess === "verified") ? read.collection : null, refresh);
 }

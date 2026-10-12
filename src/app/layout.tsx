@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { MotionEffects } from "@/components/common/motion-effects";
 import { ToastProvider } from "@/components/common/toast-provider";
 import { SessionProvider } from "@/components/auth/session-provider";
+import { MemberRouteAccess } from "@/components/auth/member-access";
 import { PublicClientProvider } from "@/components/catalog/public-client-provider";
 import { PointClientProvider } from "@/components/points/point-client-provider";
 import { brandIcons, usesBrandIcons } from "@/lib/brand-icons";
@@ -42,7 +43,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <PublicClientProvider>
                 <MotionEffects />
                 <SiteHeader firstBuyLayoutEnabled={process.env.STOREFRONT_FIRST_BUY_LAYOUT_PREVIEW === "1"} />
-                <main className="site-main">{children}</main>
+                <main className="site-main"><MemberRouteAccess>{children}</MemberRouteAccess></main>
                 <SiteFooter />
                 <MobileBottomNavigation />
               </PublicClientProvider>

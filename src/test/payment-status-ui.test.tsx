@@ -66,8 +66,11 @@ function expectNoReturnMutation(adapter: ReturnType<typeof returnClient>) {
   expect(adapter.startPayment).not.toHaveBeenCalled();
 }
 
-function renderThanks(adapter: PaymentClientAdapter, pid: string | null = "payment-public-reference") {
-  const auth = { getCurrentSession: vi.fn().mockResolvedValue({ data: PUBLIC_AUTH_FIXTURE.authenticated_session, metadata }) } as unknown as AuthClientAdapter;
+function renderThanks(adapter: PaymentClientAdapter, pid: string | null = "payment-public-reference", smsVerified = true) {
+  const auth = {
+    getCurrentSession: vi.fn().mockResolvedValue({ data: PUBLIC_AUTH_FIXTURE.authenticated_session, metadata }),
+    getSmsVerificationStatus: vi.fn().mockResolvedValue({ data: { verified: smsVerified, phone: null, phone_masked: null, verified_at: null, challenge: null }, metadata }),
+  } as unknown as AuthClientAdapter;
   render(
     <SessionProvider client={auth}>
       <PaymentClientProvider client={adapter}>
@@ -78,6 +81,15 @@ function renderThanks(adapter: PaymentClientAdapter, pid: string | null = "payme
 }
 
 describe("SITE-040 / SITE-047 Payment status UI", () => {
+  it("keeps in-progress Payment status readable but withholds unpaid resume before SMS", async () => {
+    const adapter = client({ ...payment("processing"), method: "konbini" });
+    renderThanks(adapter, "payment-public-reference", false);
+    await screen.findByRole("heading", { name: "コンビニ決済のご案内" });
+    await screen.findByRole("link", { name: "SMS認証へ" });
+    expect(adapter.getPayment).toHaveBeenCalled();
+    expect(adapter.resumeUnpaidPayment).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "コンビニ決済案内ページへ" })).not.toBeInTheDocument();
+  });
   beforeEach(() => refreshWallet.mockClear());
 
   it("retains the minimal success copy and links to Purchase History", async () => {

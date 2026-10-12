@@ -16,6 +16,7 @@ import { gachaDetailRoute, gachaPrizeRateRoute, publicRoutes } from "@/lib/route
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@/components/points/point-client-provider", () => ({ usePointClient: () => ({ refreshWallet: vi.fn() }) }));
+vi.mock("@/components/auth/session-provider", () => ({ useSession: () => ({ state: { status: "authenticated", session: { user: { id: "fixture-user" } } }, smsAccess: "verified" }) }));
 
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 const fixture = PUBLIC_CATALOG_FIXTURE.data as GachaDetail;

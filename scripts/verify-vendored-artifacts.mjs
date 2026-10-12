@@ -4,36 +4,37 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 
 const root = process.cwd();
-const vendor = path.join(root, "vendor/oripa/CONTRACT-20261005");
+const vendor = path.join(root, "vendor/oripa/SIGNUP-SMS-GATE-20261012");
 const retainedVendor = path.join(root, "vendor/oripa/SHIPONLY-20260926");
 const schemaVendor = path.join(root, "vendor/oripa/MIG-063B");
-const bundleVersion = "2.0.0-alpha.43";
-const predecessorBundleVersion = "2.0.0-alpha.42";
-const publicApiVersion = "2.0.0-alpha.39";
+const bundleVersion = "2.0.0-alpha.44";
+const predecessorBundleVersion = "2.0.0-alpha.43";
+const publicApiVersion = "2.0.0-alpha.40";
 const siteSchemaVersion = "2.0.0-alpha.23";
-const sourceCommit = "0ce41ab473fd5a4fb44773041ae097ffb40b14ce";
+const sourceCommit = "8f4c79d2964186f704f14f4ddc2af228bf1047c9";
 const expected = new Map([
   [
     "SHA256SUMS",
-    "c7027c25f1a9c8070061ff75767e9483eef7732c9ab2240c7d787b89b6487fac"
+    "587c17804f4c3a45acfcbf58cf280a68a390760a716d5ab0704449b44de8ad77"
   ],
   [
-    "oripa-storefront-client-2.0.0-alpha.43.tgz",
-    "9f14026a53d24413d860975d5c012988a5381771600b81e8309e5119a10792b0"
+    "oripa-storefront-client-2.0.0-alpha.44.tgz",
+    "49d8026b1bc21f641b3c36f53f88cb0b620d7e45dd80ad9e7d95e5124001ce80"
   ],
   [
     "artifact-manifest.json",
-    "1951edf44ef275e3c9bf85ac0ce1417a27bc64e982a607d0a72e49186eb09e74"
+    "1b12edfd6ddf54fca221a45cd3be4181861f5b49b3b8eba2f5c5aba45b42c692"
   ],
   [
-    "oripa-storefront-testkit-2.0.0-alpha.43.tgz",
-    "d5bb5b0d785437e0f400b369ff97663a6c69d4a329c1b82710017087a92af9fb"
+    "oripa-storefront-testkit-2.0.0-alpha.44.tgz",
+    "0b7865beacc4a37202549b0b30d2068f4db1ea84c28bd9628e8be5094d15d99e"
   ],
   [
     "public.openapi.json",
-    "37cdeb7a214d42f0f69458d578a81c5c7869132e2a6cbd02ca8d150f1abf6faa"
+    "0041ff6a99f4bfb9c162a434d14c8924aa6763e8c81e7a3933e079e189366d1c"
   ]
 ]);
 const retainedExpected = new Map([
@@ -60,11 +61,11 @@ const retainedExpected = new Map([
 ]);
 const publishedPackages = new Map([
   ["@oripa/storefront-client", {
-    file: "oripa-storefront-client-2.0.0-alpha.43.tgz",
+    file: "oripa-storefront-client-2.0.0-alpha.44.tgz",
     version: bundleVersion,
   }],
   ["@oripa/storefront-testkit", {
-    file: "oripa-storefront-testkit-2.0.0-alpha.43.tgz",
+    file: "oripa-storefront-testkit-2.0.0-alpha.44.tgz",
     version: bundleVersion,
   }],
 ]);
@@ -93,6 +94,15 @@ for (const [file, digest] of expected) {
 for (const [file, digest] of retainedExpected) {
   if (sha256(path.join(retainedVendor, file)) !== digest) throw new Error(`Retained alpha.41 digest mismatch: ${file}`);
 }
+for (const [file, digest] of [
+  ["SHA256SUMS", "c7027c25f1a9c8070061ff75767e9483eef7732c9ab2240c7d787b89b6487fac"],
+  ["artifact-manifest.json", "1951edf44ef275e3c9bf85ac0ce1417a27bc64e982a607d0a72e49186eb09e74"],
+  ["oripa-storefront-client-2.0.0-alpha.43.tgz", "9f14026a53d24413d860975d5c012988a5381771600b81e8309e5119a10792b0"],
+  ["oripa-storefront-testkit-2.0.0-alpha.43.tgz", "d5bb5b0d785437e0f400b369ff97663a6c69d4a329c1b82710017087a92af9fb"],
+  ["public.openapi.json", "37cdeb7a214d42f0f69458d578a81c5c7869132e2a6cbd02ca8d150f1abf6faa"],
+]) {
+  if (sha256(path.join(root, "vendor/oripa/CONTRACT-20261005", file)) !== digest) throw new Error(`Retained alpha.43 digest mismatch: ${file}`);
+}
 const retainedInventory = readdirSync(retainedVendor).sort();
 const expectedRetainedInventory = [...retainedExpected.keys(), "PROVENANCE.md"].sort();
 if (JSON.stringify(retainedInventory) !== JSON.stringify(expectedRetainedInventory)) {
@@ -115,8 +125,8 @@ const sums = new Map(
     }),
 );
 for (const file of [
-  "oripa-storefront-client-2.0.0-alpha.43.tgz",
-  "oripa-storefront-testkit-2.0.0-alpha.43.tgz",
+  "oripa-storefront-client-2.0.0-alpha.44.tgz",
+  "oripa-storefront-testkit-2.0.0-alpha.44.tgz",
   "public.openapi.json",
 ]) {
   if (sums.get(file) !== expected.get(file)) throw new Error(`SHA256SUMS mismatch: ${file}`);
@@ -124,18 +134,18 @@ for (const file of [
 if (sums.size !== 3) throw new Error("SHA256SUMS entry set is invalid");
 
 const manifest = JSON.parse(readFileSync(path.join(vendor, "artifact-manifest.json"), "utf8"));
-if (manifest.task_id !== "CONTRACT-20261005" || manifest.source_commit !== sourceCommit) {
+if (manifest.task_id !== "SIGNUP-SMS-GATE-20261012" || manifest.source_commit !== sourceCommit) {
   throw new Error("Artifact provenance mismatch");
 }
 if (manifest.bundle?.version !== bundleVersion || manifest.bundle?.predecessor !== predecessorBundleVersion ||
-    manifest.bundle?.release_mode !== "contract-additive" || manifest.bundle?.immutable !== true) {
+    manifest.bundle?.release_mode !== "contract-breaking" || manifest.bundle?.immutable !== true) {
   throw new Error("Contract-breaking bundle declaration mismatch");
 }
 if (manifest.public_openapi?.file !== "public.openapi.json" ||
     manifest.public_openapi?.version !== publicApiVersion ||
     manifest.public_openapi?.sha256 !== expected.get("public.openapi.json") ||
     manifest.public_openapi?.operation_count !== 78 ||
-    manifest.public_openapi?.breaking_change !== false) {
+    manifest.public_openapi?.breaking_change !== true) {
   throw new Error("Referenced Public OpenAPI manifest entry mismatch");
 }
 const manifestPackages = new Map((manifest.packages ?? []).map((entry) => [entry.name, entry]));
@@ -157,7 +167,7 @@ if (schemaEntry?.disposition !== "referenced" || schemaEntry.file !== undefined 
 if (manifestPackages.size !== 3 || manifest.packages?.length !== 3) throw new Error("Package manifest is incomplete");
 
 const provenance = readFileSync(path.join(vendor, "PROVENANCE.md"), "utf8");
-for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "CONTRACT-20261005", "37319224331", "11349442812", "53fb939978eabbf9b636369b15c81369d18305890891715f7bbd864e9b197d14", ...expected.values(), referencedSiteSchema.sha256]) {
+for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "SIGNUP-SMS-GATE-20261012", "38247721027", "11745799489", "63388a1fcf0b6d7105834d074d947123fe865036de55541193c7bb8dd08715ac", ...expected.values(), referencedSiteSchema.sha256]) {
   if (!provenance.includes(value)) throw new Error(`Artifact provenance is incomplete: ${value}`);
 }
 if (/\/(?:var\/(?:www|lib)|home)\//.test(provenance)) {
@@ -537,8 +547,33 @@ if (JSON.stringify(firstUserOffer?.required) !== JSON.stringify(["state", "expir
 }
 const operationIds = (document) => new Set(Object.values(document.paths ?? {}).flatMap((pathItem) =>
   Object.values(pathItem).flatMap((operation) => operation?.operationId ? [operation.operationId] : [])));
+const smsRequiredOperations = new Set([
+  "createDraw", "getDrawRequest", "listUserPrizes", "getWallet", "listPointLedgerEntries", "listDrawHistory",
+  "getLineFriendState", "getUserPrize", "exchangeUserPrizes", "listShippingAddresses", "createShippingAddress",
+  "getShippingAddress", "updateShippingAddress", "deleteShippingAddress", "listShippingRequests", "createShippingRequest",
+  "getShippingRequest", "createPayment", "resumeUnpaidPayment", "listMyPayments", "listPaymentCards",
+  "getPaymentCardUiBootstrap", "createPaymentCardRegistrationIntent", "startPaymentCardRegistration",
+]);
+const smsDefaultResponseOperations = new Set(["resumeUnpaidPayment", "listMyPayments", "startPaymentCardRegistration"]);
 for (const [path, contract] of Object.entries(predecessorOpenApi.paths)) {
-  if (JSON.stringify(contract) !== JSON.stringify(openApi.paths[path])) throw new Error(`Standard operation changed: ${path}`);
+  const expectedContract = structuredClone(contract);
+  for (const operation of Object.values(expectedContract)) {
+    if (!smsRequiredOperations.has(operation.operationId)) continue;
+    operation["x-sms-verification"] = "required";
+    if (!smsDefaultResponseOperations.has(operation.operationId)) operation.responses["403"] = {
+      description: "SMS_VERIFICATION_REQUIRED。現在の電話番号のSMS認証が必要。",
+      content: { "application/problem+json": { schema: { $ref: "#/components/schemas/ProblemDetails" } } },
+    };
+  }
+  if (!isDeepStrictEqual(expectedContract, openApi.paths[path])) throw new Error(`Standard operation changed outside approved SMS gate: ${path}`);
+}
+const registrationInput = openApi.components?.schemas?.UserRegistrationRequest;
+if (!isDeepStrictEqual(registrationInput?.required, ["full_name", "birth_date", "email", "password"]) ||
+    registrationInput?.properties?.birth_date?.format !== "date" ||
+    registrationInput?.properties?.full_name?.maxLength !== 255 ||
+    !generatedTypes.includes("full_name: string;") || !generatedTypes.includes("birth_date: string;") ||
+    openApi.components?.schemas?.ExternalIdentityStartRequest?.required?.includes("birth_date")) {
+  throw new Error("Canonical signup input contract mismatch");
 }
 const currentOperations = operationIds(openApi);
 const predecessorOperations = operationIds(predecessorOpenApi);
@@ -684,8 +719,8 @@ for (const content of [packageJsonText, lockfileText]) {
     throw new Error("Server-specific file dependency");
   }
   for (const required of [
-    "vendor/oripa/CONTRACT-20261005/oripa-storefront-client-2.0.0-alpha.43.tgz",
-    "vendor/oripa/CONTRACT-20261005/oripa-storefront-testkit-2.0.0-alpha.43.tgz",
+    "vendor/oripa/SIGNUP-SMS-GATE-20261012/oripa-storefront-client-2.0.0-alpha.44.tgz",
+    "vendor/oripa/SIGNUP-SMS-GATE-20261012/oripa-storefront-testkit-2.0.0-alpha.44.tgz",
     "vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
   ]) {
     if (!content.includes(required)) throw new Error(`Canonical package pin is missing: ${required}`);
@@ -697,6 +732,8 @@ if (JSON.parse(packageJsonText).dependencies?.["@fincode/js"] !== "1.1.0" ||
   throw new Error("Canonical fincode SDK dependency is not exactly pinned");
 }
 for (const obsolete of [
+  "oripa-storefront-client-2.0.0-alpha.43.tgz",
+  "oripa-storefront-testkit-2.0.0-alpha.43.tgz",
   "oripa-storefront-client-2.0.0-alpha.42.tgz",
   "oripa-storefront-testkit-2.0.0-alpha.42.tgz",
   "oripa-storefront-client-2.0.0-alpha.41.tgz",

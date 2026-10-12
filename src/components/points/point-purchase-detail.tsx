@@ -3,6 +3,7 @@
 import { StorefrontTransportError } from "@oripa/storefront-client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
+import { MemberAccess } from "@/components/auth/member-access";
 import { LoginRequiredState } from "@/components/common/state-panel";
 import { CatalogLoading, CatalogMessage } from "@/components/catalog/catalog-message";
 import { FincodeCardFields, type FincodeCardFieldsHandle } from "@/components/payment/fincode-card-fields";
@@ -513,7 +514,46 @@ function ProductDetail({
   );
 }
 
-export function PointPurchaseDetail({
+export function PointPurchaseDetail(props: {
+  readonly pid?: string | null;
+  readonly productId: string;
+  readonly registrationId?: string | null;
+}) {
+  const { state, smsAccess } = useSession();
+  const { client } = usePaymentClient();
+  return <>
+    {state.status === "authenticated" && (smsAccess === "unverified" || smsAccess === "error") && client && (
+      <>
+        <PaymentReturnAlert client={client} pid={props.pid ?? null} productId={props.productId} />
+        {props.registrationId && <CardReturnStatus productId={props.productId} registrationId={props.registrationId} />}
+      </>
+    )}
+    <MemberAccess loading={<CatalogLoading label={props.registrationId ? "処理中…" : "コイン購入詳細を読み込み中"} />}><PointPurchaseDetailContent {...props} /></MemberAccess>
+  </>;
+}
+
+function CardReturnStatus({ productId, registrationId }: { readonly productId: string; readonly registrationId: string }) {
+  const { client } = usePaymentClient();
+  const [status, setStatus] = useState<"loading" | "complete" | "pending" | "error">("loading");
+  useEffect(() => {
+    if (!client) return;
+    let active = true;
+    void Promise.resolve().then(() => {
+      const context = readCardRegistrationResume();
+      if (context?.registrationId !== registrationId || context.productId !== productId) throw new Error("Card return unavailable");
+      return client.getCardRegistration(registrationId);
+    }).then(({ data }) => {
+      if (active) setStatus(data.status === "completed" ? "complete" : "pending");
+    }).catch(() => { if (active) setStatus("error"); });
+    return () => { active = false; };
+  }, [client, productId, registrationId]);
+  return <p role="status">{status === "loading" ? "カード登録状況を確認中…" : status === "complete"
+    ? "カード登録を確認しました。購入を続けるにはSMS認証を完了してください。"
+    : status === "error" ? "カード登録状況を確認できませんでした。SMS認証後に再確認してください。"
+    : "カード登録はまだ完了していません。SMS認証後に再確認してください。"}</p>;
+}
+
+function PointPurchaseDetailContent({
   pid = null,
   productId,
   registrationId = null,

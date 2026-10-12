@@ -142,7 +142,7 @@ describe("Contact registration defaults", () => {
     expect(screen.getByLabelText("電話番号")).toHaveValue("0312345678");
     fireEvent.click(screen.getByRole("button", { name: "お問い合わせを送信" }));
     await waitFor(() => expect(submitContact).toHaveBeenCalledWith(expect.objectContaining({ name: "Contact Name", email: "contact@example.test", phone: "0312345678", inquiry_id: PUBLIC_CONTACT_FIXTURE.follow_up_input.inquiry_id }), expect.anything()));
-    expect(auth.getSmsVerificationStatus).toHaveBeenCalledOnce();
+    expect(auth.getSmsVerificationStatus).toHaveBeenCalledTimes(2);
     for (const mutation of [auth.createEmailChangeRequest, auth.sendSmsVerification, auth.verifySmsCode]) expect(mutation).not.toHaveBeenCalled();
   });
 

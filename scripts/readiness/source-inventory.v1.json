@@ -51,6 +51,7 @@
   "src/components/advertising/advertising-capture.tsx",
   "src/components/auth/auth-problem.tsx",
   "src/components/auth/login-form.tsx",
+  "src/components/auth/member-access.tsx",
   "src/components/auth/register-form.tsx",
   "src/components/auth/session-provider.tsx",
   "src/components/auth/verification-error.tsx",
@@ -160,6 +161,7 @@
   "src/lib/presentation/prize-rate.ts",
   "src/lib/routes/navigation.ts",
   "src/lib/sms-registration-prompt.ts",
+  "src/lib/sms-return.ts",
   "src/proxy.ts",
   "src/styles/first-buy-offer.css",
   "src/styles/font-noto-sans-jp.css",
@@ -231,6 +233,7 @@
   "src/test/security-audit-policy.test.mjs",
   "src/test/session-ui.test.tsx",
   "src/test/setup.ts",
+  "src/test/signup-sms-gate.test.tsx",
   "src/test/sms-verification-ui.test.tsx",
   "src/test/states.test.tsx",
   "src/test/visual-convergence.test.ts"

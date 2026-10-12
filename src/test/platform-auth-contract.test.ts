@@ -35,8 +35,8 @@ describe("alpha.43 authentication, account security, and SMS contract", () => {
   it("imports the canonical immutable Client, Schema, and Testkit versions", () => {
     for (const [packageName, version] of Object.entries({
       "site-schema": "2.0.0-alpha.23",
-      "storefront-client": "2.0.0-alpha.43",
-      "storefront-testkit": "2.0.0-alpha.43",
+      "storefront-client": "2.0.0-alpha.44",
+      "storefront-testkit": "2.0.0-alpha.44",
     })) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
       expect(packageJson.version).toBe(version);
@@ -53,7 +53,7 @@ describe("alpha.43 authentication, account security, and SMS contract", () => {
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/auth/session` }, { body: session, status: 200 });
 
     await expect(harness.client.getCurrentSession()).resolves.toMatchObject({ data: session });
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.43", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.44", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -70,7 +70,7 @@ describe("alpha.43 authentication, account security, and SMS contract", () => {
       { method: "POST", url: `${origin}/auth/register` },
       { body: PUBLIC_AUTH_FIXTURE.pending_registration, status: 202 },
     );
-    await expect(registration.client.register({ email: "fixture@example.test", password: "fixture-password", redirect_path: "/mypage" }))
+    await expect(registration.client.register({ full_name: "登録テスト", birth_date: "2000-01-01", email: "fixture@example.test", password: "fixture-password", redirect_path: "/mypage" }))
       .resolves.toMatchObject({ data: PUBLIC_AUTH_FIXTURE.pending_registration });
     registration.mock.assertExhausted();
 
@@ -82,7 +82,7 @@ describe("alpha.43 authentication, account security, and SMS contract", () => {
     );
     await expect(login.client.login({ email: "fixture@example.test", password: "fixture-password" }))
       .resolves.toMatchObject({ data: PUBLIC_AUTH_FIXTURE.authenticated_session });
-    assertBrowserRequestBoundary(login.mock.requests[1]!, { client_version: "2.0.0-alpha.43", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(login.mock.requests[1]!, { client_version: "2.0.0-alpha.44", site_version: "0.1.0" });
     login.mock.assertExhausted();
   });
 
@@ -93,7 +93,7 @@ describe("alpha.43 authentication, account security, and SMS contract", () => {
       { method: "POST", url: `${origin}/auth/register` },
       problem("INVALID_REQUEST", 422, { email: ["The email field is invalid."] }),
     );
-    await expect(registration.client.register({ email: "invalid", password: "fixture-password", redirect_path: "/" }))
+    await expect(registration.client.register({ full_name: "登録テスト", birth_date: "2000-01-01", email: "invalid", password: "fixture-password", redirect_path: "/" }))
       .rejects.toMatchObject({ code: "INVALID_REQUEST", errors: { email: ["The email field is invalid."] } });
 
     const login = createAuthClientTestHarness(csrf);
@@ -178,7 +178,7 @@ describe("alpha.43 authentication, account security, and SMS contract", () => {
       redirect_path: "/",
     });
     assertBrowserRequestBoundary(request.mock.requests[1]!, {
-      client_version: "2.0.0-alpha.43",
+      client_version: "2.0.0-alpha.44",
       site_version: "0.1.0",
     });
 
@@ -298,7 +298,7 @@ describe("alpha.43 authentication, account security, and SMS contract", () => {
     await expect(status.client.getSmsVerificationStatus()).resolves.toMatchObject({
       data: PUBLIC_SMS_VERIFICATION_FIXTURES.unverified,
     });
-    assertBrowserRequestBoundary(status.mock.requests[0]!, { client_version: "2.0.0-alpha.43", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(status.mock.requests[0]!, { client_version: "2.0.0-alpha.44", site_version: "0.1.0" });
 
     const send = createAuthClientTestHarness(csrf);
     enqueueCsrf(send);

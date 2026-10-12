@@ -13,6 +13,7 @@ import {
   type SmsVerificationStatus,
 } from "@/lib/platform";
 import { formatVerifiedPhone, normalizeJapaneseMobilePhone } from "@/lib/presentation/phone";
+import { smsReturnDestination } from "@/lib/sms-return";
 
 type Stage = "phone" | "reauthentication" | "otp" | "verified";
 
@@ -247,7 +248,6 @@ export function SmsVerification({ pollIntervalMs = POLL_INTERVAL_MS }: { readonl
       setCode("");
       setPhone("");
       setCompletionMessage(changingPhone ? "電話番号を変更しました。" : "SMS認証が完了しました。");
-      if (changingPhone) await refreshSession();
       await refreshSmsStatus();
     } catch (error) {
       handleProblem(error, "otp");
@@ -304,7 +304,7 @@ export function SmsVerification({ pollIntervalMs = POLL_INTERVAL_MS }: { readonl
 
   return (
     <div className="sms-verification">
-      <Link className="sms-verification__back" href="/mypage">← マイページへ戻る</Link>
+      <Link className="sms-verification__back" href={status?.verified ? smsReturnDestination() : "/mypage"}>← マイページへ戻る</Link>
 
       {stage === "verified" && status?.verified && status.phone ? (
         <section aria-labelledby="sms-verification-heading" className="sms-verification-card sms-verification-card--verified">

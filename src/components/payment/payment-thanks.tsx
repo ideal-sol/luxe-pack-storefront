@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
+import { MemberAccess } from "@/components/auth/member-access";
 import { LoginRequiredState } from "@/components/common/state-panel";
 import { CatalogLoading } from "@/components/catalog/catalog-message";
 import { usePointClient } from "@/components/points/point-client-provider";
@@ -108,9 +109,9 @@ function UnpaidGuide({ payment }: { readonly payment: Payment }) {
       </dl>
       <p className="payment-unpaid-guide__information">{copy.information}</p>
       {error ? <p className="payment-inline-error" role="alert">{error}</p> : null}
-      <button className="button button--dark" disabled={busy} onClick={resume} type="button">
+      <MemberAccess><button className="button button--dark" disabled={busy} onClick={resume} type="button">
         {busy ? "案内を確認中…" : copy.cta}
-      </button>
+      </button></MemberAccess>
       <p className="payment-unpaid-guide__note">{copy.note}</p>
     </section>
   );
