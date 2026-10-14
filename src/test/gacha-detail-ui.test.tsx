@@ -11,9 +11,11 @@ import { PublicClientProvider } from "@/components/catalog/public-client-provide
 import { DrawClientProvider } from "@/components/draw/draw-client-provider";
 import type { DrawClientAdapter, GachaDetail, GachaPresentationState, PublicCatalogAdapter } from "@/lib/platform";
 
-const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+const { push, access } = vi.hoisted(() => ({ push: vi.fn(), access: { smsAccess: "verified" } }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 vi.mock("@/components/points/point-client-provider", () => ({ usePointClient: () => ({ refreshWallet: vi.fn() }) }));
+vi.mock("@/components/auth/session-provider", () => ({ useSession: () => ({ state: { status: "authenticated", session: { user: { id: "fixture-user" } } }, smsAccess: access.smsAccess }) }));
+afterEach(() => { access.smsAccess = "verified"; });
 
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 const detail = PUBLIC_CATALOG_FIXTURE.data as GachaDetail;
@@ -59,6 +61,15 @@ function presentationResponse(next: GachaPresentationState) {
 }
 
 describe("gacha detail UI", () => {
+  it("preserves the public lineup while withholding personal eligibility and Draw before SMS", async () => {
+    access.smsAccess = "unverified";
+    renderDetail();
+    expect(await screen.findByRole("heading", { level: 1, name: detail.title })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "SMS認証へ" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("日次抽選回数")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "1回抽選する" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "提供割合を見る" })).toBeInTheDocument();
+  });
   it("labels only the canonical shipping-only lineup prize", async () => {
     const lineup = detail.prizes![0]!;
     const normal = { ...lineup, id: "normal", name: "通常景品", shipping_only: false };

@@ -16,9 +16,17 @@ beforeEach(() => {
     mkdirSync(dirname(join(root, file)), { recursive: true });
     cpSync(file, join(root, file), { recursive: true });
   }
-  for (const file of ["package.json", "pnpm-lock.yaml"]) {
-    cpSync(file, join(root, file));
-  }
+  const client = "file:vendor/oripa/CONTRACT-20261005/oripa-storefront-client-2.0.0-alpha.43.tgz";
+  const testkit = "file:vendor/oripa/CONTRACT-20261005/oripa-storefront-testkit-2.0.0-alpha.43.tgz";
+  writeFileSync(join(root, "package.json"), JSON.stringify({
+    dependencies: { "@oripa/storefront-client": client },
+    devDependencies: { "@oripa/storefront-testkit": testkit },
+  }));
+  writeFileSync(join(root, "pnpm-lock.yaml"), [
+    "lockfileVersion: '9.0'", "importers:", "  .:", "    dependencies:",
+    "      '@oripa/storefront-client':", `        specifier: ${client}`, `        version: ${client}`,
+    "    devDependencies:", "      '@oripa/storefront-testkit':", `        specifier: ${testkit}`, `        version: ${testkit}`, "",
+  ].join("\n"));
 });
 
 afterEach(() => rmSync(root, { recursive: true, force: true }));
@@ -36,6 +44,11 @@ function mutateManifest(mutation) {
 }
 
 describe("exact alpha.43 Production provenance", () => {
+  it("rejects current alpha.44 source until separate Production authorization", () => {
+    cpSync("package.json", join(root, "package.json"));
+    cpSync("pnpm-lock.yaml", join(root, "pnpm-lock.yaml"));
+    expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
+  });
   it("rejects predecessor alpha.41 source dependency pins", () => {
     cpSync("src/test/fixtures/production-alpha41/package.json", join(root, "package.json"));
     expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");

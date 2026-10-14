@@ -535,3 +535,58 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   Accepted Runtime validation remains reused; no local Full/build/audit or
   OLD Test acceptance rerun. Issue/PR and fixed final-head delivery evidence
   are recorded through the GitHub App transport before the single dispatch.
+
+## SIGNUP-SMS-GATE-20261012 — Storefront source / Human review checkpoint
+
+- Risk R4; Lane: Strict Change; Application Runtime Activation: deferred.
+  Source-only implementation, validation and one PR; Human approval is required
+  before merge. Preview Runtime Acceptance is a separate Human checkpoint.
+- Base: protected main `6a4b57fc4fe20bb384e766c5653fe23a006d33fa`, verified live.
+  Dedicated branch `feat/SIGNUP-SMS-GATE-20261012` and isolated worktree.
+  Source Integration Lock is held during implementation because pending
+  first-buy work overlaps the shared Session/offer surfaces. Other worktrees
+  and their pre-existing changes are preserved.
+- Canonical alpha.44 Artifact 11745799489 from workflow 38247721027,
+  Platform source `8f4c79d2964186f704f14f4ddc2af228bf1047c9`: live readback,
+  outer ZIP and all supplied inner SHA-256 checks PASS. Exact Client/Testkit
+  alpha.44 pins; OpenAPI alpha.40; retained Site Schema alpha.23 and unchanged
+  alpha.43 history. Detailed immutable evidence is in the new vendor provenance.
+- Registration sends required full_name, birth_date, email and password using
+  the existing client/advertising/CSRF boundary. Date/age eligibility remains
+  Backend authority; Google and LINE request fields are unchanged.
+- Root Session Provider owns SMS loading/verified/unverified/error state,
+  suppresses stale reads, refreshes after SMS success, and invalidates access
+  after logout, Session expiry or canonical SMS denial. Common MemberAccess
+  withholds member children until both checks pass and offers safe retry.
+- Root route gate covers My Page/history/prizes/addresses, login Gachas and
+  Draw results. Purchase detail delegates to the same gate so safe existing
+  Payment/Card return status reads remain possible while new operations are
+  withheld. Public catalog/lineup/rates/notices/static pages/products,
+  authentication/recovery/security routes and login-only Contact remain usable.
+  Public Draw controls and wallet data are separately withheld. Payment Thanks
+  retains status polling; unpaid resume requires the same SMS gate.
+- Email completion and login direct unverified users to SMS, preserving the
+  safe Contact login return exception. SMS return navigation accepts only
+  same-origin member routes and bounded opaque callback references, without
+  browser storage of authentication values.
+- first_user_offer remains display authority; pre-verification countdowns are
+  withheld and products are fetched again after SMS status changes. No local
+  first-SMS timestamp, eligibility or payment-consumption rule is introduced.
+- Focused tests cover required payload/date validation, login/email redirects,
+  direct/reload/internal navigation, no member mount during checks, retry,
+  logout/user-switch/stale responses, typed API denial, Contact/public
+  exceptions, Card/Payment recovery and first-buy refresh. Final-head local
+  validation, Required Checks, exact changed-path inventory and machine-readable
+  self-review are recorded in the PR after the final source commit.
+- Production authority remains alpha.43 and intentionally rejects alpha.44
+  source until separate authorization; its regression fixture is independent
+  of the newly adopted source pins. No gate or assertion is weakened.
+- Preview Runtime Acceptance / Browser E2E: NOT RUN, Human checkpoint pending.
+  OLD Test and Production activation: NOT RUN. Runtime Activation count: 0.
+  Migrations created/applied: 0/0. Platform source/ledger/release lock, API
+  contracts, database, payment provider/idempotency implementation, S3/CSV,
+  Nginx/AWS/ENV, secrets and real-user data are out of scope and unchanged.
+- Rollback: a reviewed source revert restoring the coherent prior Client/
+  Testkit pins; no runtime rollback is needed because nothing is activated.
+  Final PR is retained for Human review, with no merge or auto-merge and no
+  branch/worktree cleanup until the subsequent authorized lifecycle step.

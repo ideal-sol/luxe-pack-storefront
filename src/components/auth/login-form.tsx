@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
 import { presentAuthProblem, type AuthProblemPresentation } from "@/lib/platform";
 import { contactLoginReturn } from "@/lib/contact-return";
+import { smsVerificationRoute } from "@/lib/routes/navigation";
 import { AuthProblem, FieldProblem } from "./auth-problem";
 import { useSession } from "./session-provider";
 
@@ -13,7 +14,7 @@ export function LoginForm({ passwordUpdated = false, returnTo }: {
   readonly returnTo?: string | readonly string[] | undefined;
 }) {
   const router = useRouter();
-  const { login, state } = useSession();
+  const { getSmsVerificationStatus, login, state } = useSession();
   const [submitting, setSubmitting] = useState(false);
   const [problem, setProblem] = useState<AuthProblemPresentation | null>(null);
 
@@ -34,7 +35,13 @@ export function LoginForm({ passwordUpdated = false, returnTo }: {
         password: String(data.get("password") ?? ""),
       });
       form.reset();
-      router.replace(contactLoginReturn(returnTo));
+      const destination = contactLoginReturn(returnTo);
+      if (destination === "/contact" || destination.startsWith("/contact?")) {
+        router.replace(destination);
+      } else {
+        const sms = await getSmsVerificationStatus();
+        router.replace(sms.verified ? destination : smsVerificationRoute);
+      }
     } catch (error) {
       setProblem(presentAuthProblem(error));
     } finally {

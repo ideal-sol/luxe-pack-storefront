@@ -56,7 +56,7 @@ export function PointClientProvider({
   readonly children: React.ReactNode;
   readonly client?: PointClientAdapter | null;
 }) {
-  const { state: session } = useSession();
+  const { state: session, smsAccess } = useSession();
   const [client] = useState<PointClientAdapter | null>(() => {
     try {
       return resolveClient(injectedClient);
@@ -71,7 +71,7 @@ export function PointClientProvider({
   const lastPassiveRefreshAtRef = useRef(Number.NEGATIVE_INFINITY);
   const mountedRef = useRef(true);
   const requestSequenceRef = useRef(0);
-  const sessionUserId = session.status === "authenticated" ? session.session.user?.id ?? null : null;
+  const sessionUserId = session.status === "authenticated" && smsAccess === "verified" ? session.session.user?.id ?? null : null;
   const sessionUserIdRef = useRef(sessionUserId);
 
   useEffect(() => {
@@ -199,7 +199,7 @@ export function PointClientProvider({
       ? { status: "unauthenticated" }
       : session.status === "error"
         ? { status: "session-error" }
-        : session.status === "authenticated" && walletRead.status !== "loading" && walletRead.sessionUserId === sessionUserId
+        : session.status === "authenticated" && sessionUserId && walletRead.status !== "loading" && walletRead.sessionUserId === sessionUserId
           ? walletRead.status === "ready"
             ? { balance: walletRead.balance, status: "ready" }
             : { problem: walletRead.problem, status: "error" }

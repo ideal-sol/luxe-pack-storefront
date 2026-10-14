@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { presentAuthProblem, type AuthProblemPresentation } from "@/lib/platform";
-import { markSmsRegistrationPrompt } from "@/lib/sms-registration-prompt";
+import { smsVerificationRoute } from "@/lib/routes/navigation";
 import { AuthProblem } from "./auth-problem";
 import { useSession } from "./session-provider";
 
@@ -53,7 +54,8 @@ export function EmailVerificationCompletion({
   readonly hash: string;
   readonly userId: string;
 }) {
-  const { completeEmailVerification } = useSession();
+  const { completeEmailVerification, state, smsAccess, refreshSession } = useSession();
+  const router = useRouter();
   const started = useRef(false);
   const [status, setStatus] = useState<"loading" | "complete" | "error">("loading");
   const [problem, setProblem] = useState<AuthProblemPresentation | null>(null);
@@ -63,7 +65,6 @@ export function EmailVerificationCompletion({
     started.current = true;
     void completeEmailVerification({ hash, user_id: userId })
       .then(() => {
-        markSmsRegistrationPrompt(userId);
         setStatus("complete");
       })
       .catch((error: unknown) => {
@@ -72,12 +73,21 @@ export function EmailVerificationCompletion({
       });
   }, [completeEmailVerification, hash, userId]);
 
+  useEffect(() => {
+    if (status === "complete" && state.status === "authenticated" && smsAccess === "unverified") router.replace(smsVerificationRoute);
+  }, [router, smsAccess, state.status, status]);
+
   if (status === "loading") return <div aria-live="polite" className="loading-state">メールアドレスを認証しています…</div>;
   return (
     <section className="verification-card">
       <span aria-hidden="true">{status === "complete" ? "✓" : "!"}</span>
       <h2>{status === "complete" ? "メール認証が完了しました" : "メール認証を完了できませんでした"}</h2>
-      {status === "complete" ? <Link className="button button--dark" href="/mypage">マイページへ</Link> : <AuthProblem problem={problem} />}
+      {status === "complete" ? state.status === "authenticated" && smsAccess === "unverified"
+        ? <Link className="button button--dark" href={smsVerificationRoute}>SMS認証へ</Link>
+        : state.status === "error" || smsAccess === "error"
+          ? <button className="button button--ghost" onClick={() => void refreshSession()} type="button">認証状態を再確認</button>
+          : <Link className="button button--dark" href="/mypage">マイページへ</Link>
+        : <AuthProblem problem={problem} />}
       {status === "error" && <Link href="/verify-email">認証メール案内へ</Link>}
     </section>
   );

@@ -31,6 +31,13 @@ export const mobileNavigation = [
 ] as const satisfies readonly NavigationItem[];
 
 export const smsVerificationRoute = "/mypage/sms-verification";
+
+export function requiresSmsVerification(pathname: string): boolean {
+  if ([smsVerificationRoute, "/mypage/email", "/mypage/password", "/mypage/line", "/points/purchase/thanks"].includes(pathname)) return false;
+  return pathname === "/mypage" || pathname.startsWith("/mypage/") ||
+    pathname.startsWith("/draws/") || pathname.startsWith("/login-gachas/") ||
+    pathname.startsWith("/points/purchase/");
+}
 export const lineAccountRoute = "/mypage/line";
 
 export const accountNavigation = [

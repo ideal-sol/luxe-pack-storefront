@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { MemberAccess, SessionBoundContent } from "@/components/auth/member-access";
 import { useEffect, useState } from "react";
 import type {
   GachaDetail,
@@ -130,12 +131,16 @@ function DetailContent({ detail, presentation }: { readonly detail: GachaDetail;
           <p>{detail.description}</p>
         </section>
       )}
-      <GachaDrawPanel detail={detail} presentation={presentation} />
+      <MemberAccess><GachaDrawPanel detail={detail} presentation={presentation} /></MemberAccess>
     </article>
   );
 }
 
 export function GachaDetailView({ slug }: { readonly slug: string }) {
+  return <SessionBoundContent><GachaDetailReader slug={slug} /></SessionBoundContent>;
+}
+
+function GachaDetailReader({ slug }: { readonly slug: string }) {
   const { client, configurationAvailable } = usePublicClient();
   const [requestKey, setRequestKey] = useState(0);
   const [state, setState] = useState<DetailState>(

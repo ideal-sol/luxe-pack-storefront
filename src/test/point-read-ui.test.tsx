@@ -21,6 +21,7 @@ const metadata = { idempotency_replayed: false, status: 200 } as const;
 function authClient(overrides: Partial<AuthClientAdapter> = {}) {
   return {
     getCurrentSession: vi.fn().mockResolvedValue({ data: PUBLIC_AUTH_FIXTURE.authenticated_session, metadata }),
+    getSmsVerificationStatus: vi.fn().mockResolvedValue({ data: { verified: true, phone: null, phone_masked: null, verified_at: null, challenge: null }, metadata }),
     logout: vi.fn(),
     ...overrides,
   } as unknown as AuthClientAdapter;
@@ -71,7 +72,7 @@ describe("SITE-030 Coin history and canonical Wallet presentation", () => {
   it("renders Backend history order, signed deltas, and Coin terminology without mutating canonical labels", async () => {
     const originalLabels = PUBLIC_POINT_HISTORY_FIXTURES.multiple.items.map((entry) => entry.reason.label);
     const view = renderPointUi(<MyPointsPage />);
-    expect(await screen.findByLabelText("現在のコイン残高")).toHaveTextContent("1,000");
+    await waitFor(() => expect(screen.getByLabelText("現在のコイン残高")).toHaveTextContent("1,000"));
     const rows = await screen.findAllByRole("listitem");
     expect(rows).toHaveLength(3);
     expect(within(rows[0]!).getByText("ガチャ利用")).toBeInTheDocument();
@@ -114,7 +115,7 @@ describe("SITE-030 Coin history and canonical Wallet presentation", () => {
     await waitFor(() => expect(screen.getAllByLabelText("現在のコイン残高")).toHaveLength(2));
     const outputs = screen.getAllByLabelText("現在のコイン残高");
     expect(outputs).toHaveLength(2);
-    expect(outputs.every((output) => output.textContent === "1,000")).toBe(true);
+    await waitFor(() => expect(outputs.every((output) => output.textContent === "1,000")).toBe(true));
     const headerBalances = screen.getAllByLabelText("コイン残高");
     expect(headerBalances).toHaveLength(2);
     expect(headerBalances.every((item) => item.textContent === "コイン 1,000")).toBe(true);

@@ -23,6 +23,7 @@ const canonicalProduct = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.da
 function authClient(session: AuthSession = PUBLIC_AUTH_FIXTURE.authenticated_session) {
   return {
     getCurrentSession: vi.fn().mockResolvedValue({ data: session, metadata }),
+    getSmsVerificationStatus: vi.fn().mockResolvedValue({ data: { verified: true, phone: null, phone_masked: null, verified_at: null, challenge: null }, metadata }),
   } as unknown as AuthClientAdapter;
 }
 
@@ -126,7 +127,7 @@ describe("SITE-040 Coin Purchase Detail", () => {
     expect(within(summary).getByText("合計コイン")).toBeInTheDocument();
   });
 
-  it("uses the anonymous collection presentation and treats an expired Session as anonymous", async () => {
+  it("withholds purchase detail and product reads for an expired Session", async () => {
     const expired = new ApiProblemError({
       ...PUBLIC_POINT_READ_PROBLEM_FIXTURES.unauthenticated,
       code: "SESSION_EXPIRED",
@@ -137,8 +138,8 @@ describe("SITE-040 Coin Purchase Detail", () => {
     } as unknown as AuthClientAdapter;
     await renderDetail({ client, sessionClient: expiredSessionClient });
 
-    expect(await screen.findByText("購入するにはログインが必要です。")).toHaveAttribute("data-eligible", "false");
-    expect(client.listPointProducts).toHaveBeenCalledOnce();
+    expect(await screen.findByText("ログインしてください")).toBeInTheDocument();
+    expect(client.listPointProducts).not.toHaveBeenCalled();
     expect(client.getWallet).not.toHaveBeenCalled();
   });
 
@@ -183,14 +184,13 @@ describe("SITE-040 Coin Purchase Detail", () => {
       client: sessionErrorClient,
       sessionClient: { getCurrentSession: vi.fn().mockRejectedValue(new Error("fixture session failure")) } as unknown as AuthClientAdapter,
     });
-    expect(await screen.findByRole("heading", { name: "コイン購入詳細を表示できません" })).toBeInTheDocument();
-    expect(screen.getByText("Sessionを確認できませんでした。時間をおいて再度お試しください。")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent("認証状態を確認できませんでした。");
     expect(sessionErrorClient.listPointProducts).not.toHaveBeenCalled();
 
     screen.getByRole("link", { name: /コイン購入へ戻る/ });
     sessionFailure.unmount();
     const configuration = await renderDetail({ client: null, sessionClient: null });
-    expect(await screen.findByText("この環境ではコイン商品への接続が設定されていません。")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent("認証状態を確認できませんでした。");
     configuration.unmount();
   });
 

@@ -12,14 +12,16 @@ import { useFirstBuyCountdown, useFirstBuyOffer } from "@/components/points/use-
 const connected = vi.hoisted(() => ({
   client: { listPointProducts: vi.fn() },
   state: { status: "authenticated", session: { user: { id: "synthetic-user" } } },
+  smsAccess: "verified",
 }));
-vi.mock("@/components/auth/session-provider", () => ({ useSession: () => ({ state: connected.state }) }));
+vi.mock("@/components/auth/session-provider", () => ({ useSession: () => ({ state: connected.state, smsAccess: connected.smsAccess }) }));
 vi.mock("@/components/points/point-client-provider", () => ({ usePointClient: () => ({ client: connected.client, wallet: { status: "loading" } }) }));
 
 vi.mock("next/link", () => ({ default: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <a href={href} {...props}>{children}</a> }));
 afterEach(() => {
   cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); connected.client.listPointProducts.mockReset();
   connected.state = { status: "authenticated", session: { user: { id: "synthetic-user" } } };
+  connected.smsAccess = "verified";
 });
 
 function product(id: string, price: number, total: number): PointProduct {
@@ -38,6 +40,22 @@ function collection(): PointProductCollection {
 }
 
 describe("first-user canonical product presentation", () => {
+  it("withholds countdown before SMS and refetches the Backend offer after verification", async () => {
+    connected.smsAccess = "unverified";
+    connected.client.listPointProducts.mockResolvedValue({ data: {
+      ...collection(), first_user_offer: { state: "unavailable", expires_at: null, as_of: "2026-10-12T00:00:00Z" },
+    } });
+    const hook = renderHook(() => useFirstBuyOffer());
+    await act(async () => {});
+    expect(hook.result.current).toBeNull();
+    const before = connected.client.listPointProducts.mock.calls.length;
+    connected.client.listPointProducts.mockResolvedValue({ data: collection() });
+    connected.smsAccess = "verified";
+    hook.rerender();
+    await act(async () => {});
+    expect(connected.client.listPointProducts).toHaveBeenCalledTimes(before + 1);
+    expect(hook.result.current?.state).toBe("active");
+  });
   it("initially selects the limited first-user tab, products and countdown strip for active Backend state", async () => {
     connected.client.listPointProducts.mockResolvedValue({ data: collection() });
     render(<PointPurchasePage />);

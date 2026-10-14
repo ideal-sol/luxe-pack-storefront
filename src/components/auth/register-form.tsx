@@ -22,6 +22,8 @@ export function RegisterForm() {
     setProblem(null);
     try {
       const pending = await register({
+        full_name: String(data.get("full_name") ?? ""),
+        birth_date: String(data.get("birth_date") ?? ""),
         email: String(data.get("email") ?? ""),
         password: String(data.get("password") ?? ""),
         redirect_path: "/mypage",
@@ -47,6 +49,17 @@ export function RegisterForm() {
           sessionExpired: false,
         } : problem}
       />
+      <label className="form-field">
+        <span>氏名</span>
+        <input aria-label="氏名" autoComplete="name" disabled={submitting || unavailable} maxLength={255} name="full_name" required type="text" />
+        <FieldProblem field="full_name" problem={problem} />
+      </label>
+      <label className="form-field">
+        <span>生年月日</span>
+        <input aria-label="生年月日" autoComplete="bday" disabled={submitting || unavailable} name="birth_date" required type="date" />
+        <small>18歳以上の方がご登録いただけます。</small>
+        <FieldProblem field="birth_date" problem={problem} />
+      </label>
       <label className="form-field">
         <span>メールアドレス</span>
         <input autoComplete="email" disabled={submitting || unavailable} maxLength={320} name="email" placeholder="mail@example.com" required type="email" />

@@ -14,7 +14,7 @@ import { ApiProblemError, StorefrontTransportError } from "@oripa/storefront-cli
 import { vi } from "vitest";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { PaymentClientProvider } from "@/components/payment/payment-client-provider";
-import { saveCardRegistrationResume } from "@/components/payment/card-registration-resume";
+import { readCardRegistrationResume, saveCardRegistrationResume } from "@/components/payment/card-registration-resume";
 import { PointClientProvider } from "@/components/points/point-client-provider";
 import { PointPurchaseDetail } from "@/components/points/point-purchase-detail";
 import type { AuthClientAdapter, Payment, PaymentCard, PaymentCardCollection, PaymentClientAdapter, PointClientAdapter, PointProductCollection } from "@/lib/platform";
@@ -152,8 +152,12 @@ function renderPurchase(
   registrationId: string | null = null,
   strict = false,
   products: PointProductCollection = { ...PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible, data: [product] },
+  smsVerified = true,
 ) {
-  const auth = { getCurrentSession: vi.fn().mockResolvedValue({ data: PUBLIC_AUTH_FIXTURE.authenticated_session, metadata }) } as unknown as AuthClientAdapter;
+  const auth = {
+    getCurrentSession: vi.fn().mockResolvedValue({ data: PUBLIC_AUTH_FIXTURE.authenticated_session, metadata }),
+    getSmsVerificationStatus: vi.fn().mockResolvedValue({ data: { verified: smsVerified, phone: null, phone_masked: null, verified_at: null, challenge: null }, metadata }),
+  } as unknown as AuthClientAdapter;
   const points = {
     getWallet: vi.fn().mockResolvedValue({ data: PUBLIC_POINT_BALANCE_FIXTURES.positive, metadata }),
     listPointProducts: vi.fn().mockResolvedValue({ data: products, metadata }),
@@ -169,7 +173,7 @@ function renderPurchase(
   );
   const tree = () => strict ? <StrictMode>{view()}</StrictMode> : view();
   const rendered = render(tree());
-  return { ...rendered, rerenderPurchase: () => rendered.rerender(tree()) };
+  return { ...rendered, points, rerenderPurchase: () => rendered.rerender(tree()) };
 }
 
 async function chooseCreditCard() {
@@ -187,6 +191,8 @@ describe("SITE-040 / SITE-048 / SITE-049 Payment purchase UI", () => {
           assign: navigation.assign,
           replace: navigation.replace,
           get pathname() { return browserWindow.location.pathname; },
+          get search() { return browserWindow.location.search; },
+          get origin() { return browserWindow.location.origin; },
         };
         return Reflect.get(target, key);
       },
@@ -197,6 +203,31 @@ describe("SITE-040 / SITE-048 / SITE-049 Payment purchase UI", () => {
   });
 
   afterEach(() => vi.unstubAllGlobals());
+
+  it("blocks product/member reads, new Cards and Payment before SMS verification", async () => {
+    const client = paymentClient();
+    const { points } = renderPurchase(client, null, false, undefined, false);
+    await screen.findByRole("link", { name: "SMS認証へ" });
+    expect(points.listPointProducts).not.toHaveBeenCalled();
+    expect(points.getWallet).not.toHaveBeenCalled();
+    expect(client.listCards).not.toHaveBeenCalled();
+    expect(client.getPaymentCardUiBootstrap).not.toHaveBeenCalled();
+    expect(client.startCardRegistration).not.toHaveBeenCalled();
+    expect(client.startPayment).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "購入する" })).not.toBeInTheDocument();
+  });
+
+  it("allows correlated Card status recovery without continuing Payment before SMS verification", async () => {
+    const client = paymentClient();
+    const registration = PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.completed;
+    saveCardRegistrationResume({ registrationId: registration.id, productId: product.id, paymentIdempotencyKey: "0198a001-0000-7000-8000-000000009999" });
+    renderPurchase(client, registration.id, false, undefined, false);
+    await screen.findByText("カード登録を確認しました。購入を続けるにはSMS認証を完了してください。");
+    expect(client.getCardRegistration).toHaveBeenCalledWith(registration.id);
+    expect(client.reconcileCardRegistration).not.toHaveBeenCalled();
+    expect(client.startPayment).not.toHaveBeenCalled();
+    expect(readCardRegistrationResume()?.phase).toBe("awaiting_return");
+  });
 
   it.each(["active", "expired"] as const)("blocks consumed first-user purchase with a configured Payment client and %s offer", async state => {
     const fixture = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_after_first_purchase;

@@ -152,7 +152,7 @@ describe("prize inventory UI", () => {
       listShippingAddresses: vi.fn().mockRejectedValue(smsRequired),
     });
     const auth = authClient(authenticated, {
-      getSmsVerificationStatus: vi.fn().mockResolvedValue(response(PUBLIC_SMS_VERIFICATION_FIXTURES.unverified)),
+      getSmsVerificationStatus: vi.fn().mockResolvedValue(response(PUBLIC_SMS_VERIFICATION_FIXTURES.verified)),
     });
     const wallet = PUBLIC_POINT_BALANCE_FIXTURES.positive;
     const refreshedWallet = { ...wallet, free_points: 8000, total_points: wallet.paid_points + 8000 };
@@ -192,7 +192,7 @@ describe("prize inventory UI", () => {
       expect(fulfillment.listShippingAddresses).not.toHaveBeenCalled();
       expect(fulfillment.listShippingRequests).not.toHaveBeenCalled();
       expect(fulfillment.getShippingRequest).not.toHaveBeenCalled();
-      expect(auth.getSmsVerificationStatus).not.toHaveBeenCalled();
+      expect(auth.getSmsVerificationStatus).toHaveBeenCalledOnce();
       expect(walletRefresh).toHaveBeenCalledOnce();
       await waitFor(() => expect(screen.getByLabelText("現在のコイン残高")).toHaveTextContent(refreshedWallet.total_points.toLocaleString("ja-JP")));
       expect(point.getWallet).toHaveBeenCalledTimes(2);

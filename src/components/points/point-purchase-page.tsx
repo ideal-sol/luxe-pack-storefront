@@ -196,14 +196,14 @@ export function PointProductRegion({ products }: { readonly products: readonly P
 }
 
 export function PointPurchasePage() {
-  const { state: session } = useSession();
+  const { state: session, smsAccess } = useSession();
   const { client, wallet } = usePointClient();
   const [selection, setSelection] = useState<{ readonly sessionKey: string; readonly category: PointProductAudienceCode } | null>(null);
   const [requestKey, setRequestKey] = useState(0);
   const [state, setState] = useState<ProductState>(client ? { status: "loading" } : { status: "configuration-unavailable" });
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const sessionKey = session.status === "authenticated"
-    ? session.session.user?.id ?? null
+    ? `${session.session.user?.id}:${smsAccess}`
     : session.status === "unauthenticated" || session.status === "session-expired"
       ? "anonymous"
       : null;
@@ -233,7 +233,7 @@ export function PointPurchasePage() {
         : state, [client, session.status, sessionKey, state]);
 
   const refreshOffer = useCallback(() => setRequestKey(value => value + 1), []);
-  const offer = useFirstBuyCountdown(displayState.status === "ready" ? displayState.collection : null, refreshOffer);
+  const offer = useFirstBuyCountdown(displayState.status === "ready" && (session.status !== "authenticated" || smsAccess === "verified") ? displayState.collection : null, refreshOffer);
   const category = selection?.sessionKey === sessionKey ? selection.category : "all_users";
   const activeOffer = displayState.status === "ready" && displayState.collection.first_user_offer?.state === "active";
 

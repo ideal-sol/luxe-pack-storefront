@@ -18,7 +18,10 @@ const jstDateTime = new Intl.DateTimeFormat("ja-JP", {
 });
 
 function authClient(session: AuthSession = PUBLIC_AUTH_FIXTURE.authenticated_session) {
-  return { getCurrentSession: vi.fn().mockResolvedValue({ data: session, metadata }) } as unknown as AuthClientAdapter;
+  return {
+    getCurrentSession: vi.fn().mockResolvedValue({ data: session, metadata }),
+    getSmsVerificationStatus: vi.fn().mockResolvedValue({ data: { verified: true, phone: null, phone_masked: null, verified_at: null, challenge: null }, metadata }),
+  } as unknown as AuthClientAdapter;
 }
 
 function pointClient({
@@ -156,7 +159,7 @@ describe("SITE-030 Coin Product read regression", () => {
     );
     expect(detailLink.querySelector("button")).not.toBeInTheDocument();
     expect(client.getWallet).toHaveBeenCalledOnce();
-    expect(client.listPointProducts).toHaveBeenCalledOnce();
+    expect(client.listPointProducts).toHaveBeenCalledTimes(2);
     expect(PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible.data[0].title).toBe(originalTitle);
     expect(view.container).not.toHaveTextContent(/ポイント|\bpt\b/i);
   });
@@ -177,7 +180,7 @@ describe("SITE-030 Coin Product read regression", () => {
 
     expect(screen.getByRole("tab", { name: "すべてのユーザー" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("heading", { name: "スタンダード1000コイン" })).toBeInTheDocument();
-    expect(client.listPointProducts).toHaveBeenCalledOnce();
+    expect(client.listPointProducts).toHaveBeenCalledTimes(2);
   });
 
   it("encodes only the canonical public Product identifier in the detail Route", async () => {
