@@ -120,6 +120,109 @@ describe("SMS phone ownership verification UI", () => {
     expect(screen.queryByText(/まで有効です/)).not.toBeInTheDocument();
   });
 
+  it("reenters the previous phone without sending and verifies the replacement challenge", async () => {
+    const replacement = { ...PUBLIC_SMS_VERIFICATION_FIXTURES.send_pending, challenge_id: "replacement-challenge", status: "accepted" as const, delivery_state: "accepted" as const };
+    const getSmsVerificationStatus = vi.fn().mockResolvedValue(response(PUBLIC_SMS_VERIFICATION_FIXTURES.unverified));
+    const sendSmsVerification = vi.fn()
+      .mockResolvedValueOnce(response({ ...replacement, challenge_id: "original-challenge" }, 202))
+      .mockResolvedValueOnce(response(replacement, 202));
+    const verifySmsCode = vi.fn().mockRejectedValueOnce(problem("INVALID_SMS_VERIFICATION", 422))
+      .mockImplementationOnce(async () => {
+        getSmsVerificationStatus.mockResolvedValue(response(PUBLIC_SMS_VERIFICATION_FIXTURES.phone_change));
+        return response(PUBLIC_SMS_VERIFICATION_FIXTURES.phone_change);
+      });
+    const resendSmsVerification = vi.fn();
+    renderSms(authClient({ getSmsVerificationStatus, sendSmsVerification, verifySmsCode, resendSmsVerification }));
+    fireEvent.change(await screen.findByLabelText(/携帯電話番号/), { target: { value: "090-1234-5678" } });
+    fireEvent.click(screen.getByRole("button", { name: "認証コードを送信" }));
+    fireEvent.change(await screen.findByLabelText(/認証コード/), { target: { value: "111111" } });
+    fireEvent.click(screen.getByRole("button", { name: "SMS認証を完了" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "電話番号を再入力" })).toBeEnabled());
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "電話番号を再入力" }));
+    expect(screen.getByLabelText(/携帯電話番号/)).toHaveValue("090-1234-5678");
+    expect(screen.queryByLabelText(/認証コード/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(sendSmsVerification).toHaveBeenCalledOnce();
+    expect(resendSmsVerification).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText(/携帯電話番号/), { target: { value: "080-1234-5678" } });
+    fireEvent.click(screen.getByRole("button", { name: "認証コードを送信" }));
+    expect(await screen.findByLabelText(/認証コード/)).toHaveValue("");
+    expect(sendSmsVerification).toHaveBeenLastCalledWith({ phone: "08012345678" }, {});
+    expect(screen.getByRole("button", { name: "再送信（60秒）" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText(/認証コード/), { target: { value: "654321" } });
+    fireEvent.click(screen.getByRole("button", { name: "SMS認証を完了" }));
+    expect(await screen.findByRole("heading", { name: "SMS認証済み" })).toBeInTheDocument();
+    expect(verifySmsCode).toHaveBeenLastCalledWith({ challenge_id: replacement.challenge_id, code: "654321" }, {});
+  });
+
+  it.each([new Error("send unavailable"), problem("RATE_LIMITED", 429, 60)])(
+    "ignores an in-flight poll during reentry and permits retry after send rejection %s", async (failure) => {
+      let resolvePoll!: (value: ReturnType<typeof response<SmsVerificationStatus>>) => void;
+      const poll = new Promise<ReturnType<typeof response<SmsVerificationStatus>>>((resolve) => { resolvePoll = resolve; });
+      const getSmsVerificationStatus = vi.fn().mockResolvedValueOnce(response(PUBLIC_SMS_VERIFICATION_FIXTURES.pending)).mockImplementation(() => poll);
+      const sendSmsVerification = vi.fn().mockRejectedValueOnce(failure)
+        .mockResolvedValueOnce(response(PUBLIC_SMS_VERIFICATION_FIXTURES.send_pending, 202));
+      renderSms(authClient({ getSmsVerificationStatus, sendSmsVerification }));
+      await screen.findByRole("button", { name: "電話番号を再入力" });
+      await waitFor(() => expect(getSmsVerificationStatus).toHaveBeenCalledTimes(2));
+      fireEvent.click(screen.getByRole("button", { name: "電話番号を再入力" }));
+      fireEvent.change(screen.getByLabelText(/携帯電話番号/), { target: { value: "08012345678" } });
+      await act(async () => resolvePoll(response(PUBLIC_SMS_VERIFICATION_FIXTURES.pending)));
+      vi.useFakeTimers();
+      await act(async () => vi.advanceTimersByTimeAsync(100));
+      expect(getSmsVerificationStatus).toHaveBeenCalledTimes(2);
+      expect(screen.getByLabelText(/携帯電話番号/)).toHaveValue("08012345678");
+      expect(sendSmsVerification).not.toHaveBeenCalled();
+
+      await act(async () => fireEvent.click(screen.getByRole("button", { name: "認証コードを送信" })));
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+      expect(screen.getByLabelText(/携帯電話番号/)).toHaveValue("08012345678");
+      expect(screen.getByRole("button", { name: "認証コードを送信" })).toBeEnabled();
+      await act(async () => vi.advanceTimersByTimeAsync(60_000));
+      expect(getSmsVerificationStatus).toHaveBeenCalledTimes(2);
+      await act(async () => fireEvent.click(screen.getByRole("button", { name: "認証コードを送信" })));
+      expect(screen.getByLabelText(/認証コード/)).toHaveValue("");
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(sendSmsVerification).toHaveBeenCalledTimes(2);
+      expect(screen.getByRole("button", { name: "再送信（60秒）" })).toBeDisabled();
+    },
+  );
+
+  it("preserves phone-change reauthentication, including a fresh-auth rejection after reentry", async () => {
+    const reauthenticateUserPassword = vi.fn().mockResolvedValue(response({ method: "password", reauthenticated: true }));
+    const sendSmsVerification = vi.fn()
+      .mockResolvedValueOnce(response(PUBLIC_SMS_VERIFICATION_FIXTURES.send_pending, 202))
+      .mockRejectedValueOnce(problem("FRESH_AUTHENTICATION_REQUIRED", 403))
+      .mockResolvedValueOnce(response(PUBLIC_SMS_VERIFICATION_FIXTURES.send_pending, 202));
+    renderSms(authClient({
+      getSmsVerificationStatus: vi.fn().mockResolvedValue(response(PUBLIC_SMS_VERIFICATION_FIXTURES.verified)),
+      reauthenticateUserPassword,
+      sendSmsVerification,
+    }), 60_000);
+    fireEvent.click(await screen.findByRole("button", { name: "電話番号を変更する" }));
+    expect(screen.queryByLabelText(/携帯電話番号/)).not.toBeInTheDocument();
+    expect(sendSmsVerification).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("現在のパスワード"), { target: { value: "fixture-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "本人確認する" }));
+    fireEvent.change(await screen.findByLabelText(/携帯電話番号/), { target: { value: "08012345678" } });
+    fireEvent.click(screen.getByRole("button", { name: "認証コードを送信" }));
+    fireEvent.click(await screen.findByRole("button", { name: "電話番号を再入力" }));
+    expect(screen.getByRole("heading", { name: "新しい電話番号" })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/携帯電話番号/), { target: { value: "07012345678" } });
+    fireEvent.click(screen.getByRole("button", { name: "認証コードを送信" }));
+    fireEvent.change(await screen.findByLabelText("現在のパスワード"), { target: { value: "fixture-password" } });
+    expect(screen.queryByLabelText(/携帯電話番号/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "本人確認する" }));
+    expect(await screen.findByLabelText(/携帯電話番号/)).toHaveValue("07012345678");
+    expect(reauthenticateUserPassword).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole("button", { name: "認証コードを送信" }));
+    expect(await screen.findByLabelText(/認証コード/)).toBeInTheDocument();
+    expect(sendSmsVerification).toHaveBeenLastCalledWith({ phone: "07012345678" }, {});
+  });
+
   it("shows the challenge expiry in JST and refreshes it after resend", async () => {
     const resendExpiry = "2026-09-03T07:45:00Z";
     const resendSmsVerification = vi.fn().mockResolvedValue(response({

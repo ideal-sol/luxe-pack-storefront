@@ -590,3 +590,29 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   Testkit pins; no runtime rollback is needed because nothing is activated.
   Final PR is retained for Human review, with no merge or auto-merge and no
   branch/worktree cleanup until the subsequent authorized lifecycle step.
+
+## SMS-PHONE-REENTRY-20261014 — Human acceptance follow-up
+
+- Risk R4; Lane: Strict Change; Application Runtime Activation: deferred.
+  Base: live protected main `eaf148cccf695938c12ce57d6ffc0d8cc83291a9`.
+  Isolated worktree/branch `fix/SMS-PHONE-REENTRY-20261014`; source-only PR,
+  no merge or auto-merge before Human approval. No concurrent source integration
+  is performed; no Source Integration Lock is needed for this isolated fix.
+- Add the link-styled phone reentry action to OTP using existing step state and
+  CSS. Preserve the entered number and Backend Challenge, clear OTP/input errors,
+  and send nothing on reentry. Existing send success selects the new Backend
+  Challenge; failures remain retryable. Poll only in OTP and ignore in-flight
+  responses after leaving it, including reauthentication and number editing.
+- Existing send/resend limits, cooldown/429 handling, password reauthentication,
+  verified phone-change and completion flows are unchanged. No Client/Testkit
+  alpha.44, Contract, API, Platform, DB, migration or other auth-flow changes.
+- Focused SMS tests cover reentry, corrected number/new Challenge, cleared code
+  and errors, late polling response, send failure/429 retry and fresh-auth expiry;
+  existing initial verification, resend and phone-change regressions remain.
+  Final-head tests/lint/typecheck/build, Required Checks and machine-readable
+  exact-head source review are recorded in the PR. No source files were added,
+  so the Source Inventory and CSS require no changes.
+- Preview/Browser Acceptance of this fix: NOT RUN, pending Human checkpoint.
+  OLD Test/Production runtime updates: none; migrations created/applied: 0/0.
+  Rollback: reviewed revert of this source-only fix. Retain branch/worktree for
+  Human review; do not modify other occupied worktrees or their existing changes.

@@ -132,7 +132,7 @@ export function SmsVerification({ pollIntervalMs = POLL_INTERVAL_MS }: { readonl
 
   useEffect(() => {
     const challenge = status?.challenge;
-    if (!challenge || challenge.status !== "pending") return;
+    if (stage !== "otp" || !challenge || challenge.status !== "pending") return;
     let active = true;
     const timer = window.setTimeout(() => {
       void getSmsVerificationStatus()
@@ -147,7 +147,7 @@ export function SmsVerification({ pollIntervalMs = POLL_INTERVAL_MS }: { readonl
       active = false;
       window.clearTimeout(timer);
     };
-  }, [applyStatus, getSmsVerificationStatus, pollIntervalMs, status]);
+  }, [applyStatus, getSmsVerificationStatus, pollIntervalMs, stage, status]);
 
   useEffect(() => {
     if (cooldownUntil <= Date.now()) return;
@@ -284,6 +284,14 @@ export function SmsVerification({ pollIntervalMs = POLL_INTERVAL_MS }: { readonl
     setStage("reauthentication");
   }
 
+  function reenterPhone() {
+    if (submittingRef.current) return;
+    setCode("");
+    setPhoneError(null);
+    setProblem(null);
+    setStage("phone");
+  }
+
   if (session.status === "loading") return <LoadingState />;
   if (session.status === "unauthenticated" || session.status === "session-expired") return <LoginRequiredState />;
   if (session.status === "configuration-unavailable" || session.status === "error") return <ErrorState />;
@@ -416,6 +424,7 @@ export function SmsVerification({ pollIntervalMs = POLL_INTERVAL_MS }: { readonl
           <button className="sms-verification__resend" disabled={submitting || cooldownRemaining > 0} onClick={() => void resend()} type="button">
             {cooldownRemaining > 0 ? `再送信（${cooldownRemaining}秒）` : "認証コードを再送信"}
           </button>
+          <button className="sms-verification__resend" disabled={submitting} onClick={reenterPhone} type="button">電話番号を再入力</button>
         </form>
       )}
     </div>
