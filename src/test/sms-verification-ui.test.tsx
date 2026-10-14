@@ -223,6 +223,27 @@ describe("SMS phone ownership verification UI", () => {
     expect(sendSmsVerification).toHaveBeenLastCalledWith({ phone: "07012345678" }, {});
   });
 
+  it("does not reuse an old in-flight status read after a replacement challenge is issued", async () => {
+    let resolvePoll!: (value: ReturnType<typeof response<SmsVerificationStatus>>) => void;
+    const poll = new Promise<ReturnType<typeof response<SmsVerificationStatus>>>((resolve) => { resolvePoll = resolve; });
+    const replacement = { ...PUBLIC_SMS_VERIFICATION_FIXTURES.send_pending, challenge_id: "replacement-challenge", expires_at: "2026-10-14T08:30:00Z" };
+    const replacementStatus = { ...PUBLIC_SMS_VERIFICATION_FIXTURES.accepted, challenge: { ...PUBLIC_SMS_VERIFICATION_FIXTURES.accepted.challenge, id: replacement.challenge_id, expires_at: replacement.expires_at } };
+    const getSmsVerificationStatus = vi.fn().mockResolvedValueOnce(response(PUBLIC_SMS_VERIFICATION_FIXTURES.pending))
+      .mockImplementationOnce(() => poll).mockResolvedValue(response(replacementStatus));
+    renderSms(authClient({ getSmsVerificationStatus, sendSmsVerification: vi.fn().mockResolvedValue(response(replacement, 202)) }));
+    await screen.findByRole("button", { name: "電話番号を再入力" });
+    await waitFor(() => expect(getSmsVerificationStatus).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getByRole("button", { name: "電話番号を再入力" }));
+    fireEvent.change(screen.getByLabelText(/携帯電話番号/), { target: { value: "08012345678" } });
+    vi.useFakeTimers();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "認証コードを送信" })));
+    await act(async () => vi.advanceTimersByTimeAsync(10));
+    await act(async () => resolvePoll(response(PUBLIC_SMS_VERIFICATION_FIXTURES.pending)));
+    expect(screen.getByText("10月14日 17:30")).toHaveAttribute("datetime", replacement.expires_at);
+    await act(async () => vi.advanceTimersByTimeAsync(10));
+    expect(screen.getByText("認証コードを送信しました。")).toBeInTheDocument();
+  });
+
   it("shows the challenge expiry in JST and refreshes it after resend", async () => {
     const resendExpiry = "2026-09-03T07:45:00Z";
     const resendSmsVerification = vi.fn().mockResolvedValue(response({

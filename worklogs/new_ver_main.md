@@ -603,6 +603,9 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   and send nothing on reentry. Existing send success selects the new Backend
   Challenge; failures remain retryable. Poll only in OTP and ignore in-flight
   responses after leaving it, including reauthentication and number editing.
+  Serialize polling reads across step changes so Session-level request deduping
+  cannot reuse a pre-send read and overwrite a newly issued Challenge. A focused
+  regression reproduced this race before the fix and now protects the boundary.
 - Existing send/resend limits, cooldown/429 handling, password reauthentication,
   verified phone-change and completion flows are unchanged. No Client/Testkit
   alpha.44, Contract, API, Platform, DB, migration or other auth-flow changes.

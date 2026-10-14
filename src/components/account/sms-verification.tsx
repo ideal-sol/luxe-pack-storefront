@@ -97,6 +97,7 @@ export function SmsVerification({ pollIntervalMs = POLL_INTERVAL_MS }: { readonl
   const [changingPhone, setChangingPhone] = useState(false);
   const resumeAfterReauthentication = useRef<"phone" | "otp">("phone");
   const submittingRef = useRef(false);
+  const pollRequest = useRef<Promise<SmsVerificationStatus | null> | null>(null);
   const sessionUserId = session.status === "authenticated" ? session.session.user?.id ?? null : null;
 
   const applyStatus = useCallback((next: SmsVerificationStatus) => {
@@ -135,9 +136,12 @@ export function SmsVerification({ pollIntervalMs = POLL_INTERVAL_MS }: { readonl
     if (stage !== "otp" || !challenge || challenge.status !== "pending") return;
     let active = true;
     const timer = window.setTimeout(() => {
-      void getSmsVerificationStatus()
+      const request = Promise.resolve(pollRequest.current).catch(() => null)
+        .then(() => active ? getSmsVerificationStatus() : null);
+      pollRequest.current = request;
+      void request
         .then((next) => {
-          if (active) applyStatus(next);
+          if (active && next) applyStatus(next);
         })
         .catch((error: unknown) => {
           if (active) setProblem(presentSmsProblem(error));
