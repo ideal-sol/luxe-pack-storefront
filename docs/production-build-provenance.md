@@ -1,115 +1,67 @@
-# Production release authority — alpha.43
+# Production release authority — alpha.44
 
-PRIZERATE-PRODUCTION-20261006 is a Strict Change with Application Runtime Activation `none`.
-Human approves exact Storefront Runtime Source
-`0d81ef59f6867fe806c0efcb0b2c77ea1d05ad7b` (merged PR #148), with OLD Test
-Technical, Human Browser Acceptance and target-specific Security PASS.
-`activation_authorized` remains false. Production/NEW connections, Snapshot,
-Migration, DB writes, routing/ENV changes and Runtime Activation are prohibited.
-The release-specific Human decision permits accepted PR #148 validation and
-acceptance evidence reuse, then one fresh Storefront artifact, stopping at
-`PRIZERATE_PRODUCTION_ARTIFACT_READY`. Platform artifact generation is excluded.
-It is not Production GO and expires with this release or a changed release scope.
+PRODPARITY-SF-20261015 implements Human decision PRODUCTION-OLDTEST-PARITY-20261015.
+Strict Change; Application Runtime Activation: none.
+Candidate: PRODUCTION-OLDTEST-PARITY-20261015-CANDIDATE-01.
 
-## Separate runtime and workflow sources
+## Separate exact runtime and control authority
 
-The approved Runtime Source stays `0d81ef59f6867fe806c0efcb0b2c77ea1d05ad7b`.
-This authority PR's merge SHA is workflow/metadata authority only; it must never
-replace the approved Runtime Source. The canonical `production-artifact.yml`
-checks out approval code from protected current main and application code from
-the exact approved source. Source authorization and artifact verification are
-unchanged. Both the Source PR and current workflow authority require successful
-checks. Empty squash checks are accepted only through the merged internal PR,
-identical reviewed/merge trees and successful reviewed-head checks. Failed
-current checks never fall back to another commit.
+- Storefront runtime: `763cd4bb8fabdadce7822a59e8718ef2381394dc`, PR #159.
+- Runtime tree: `979a54f5684d84d75d6da685bfc9d3fef9d1d836`.
+- Platform runtime: `aef1759d072dab48be4b052d53e2ef969feddd9f`, PR #566.
+- Platform Production Authority: `cba63981e443992d7b4f9ebcd0ee219dce38c0f9`.
+- `activation_authorized=false`; the authority merge is control-plane only.
 
-## Exact Contract authority
+Current main must never replace the approved application source. The unchanged
+canonical workflow checks out control and runtime separately, with Required
+Checks and reviewed-tree gates. Failed current checks never fall back.
+RANKVIDEO-MULTI and Migration 000086 are excluded from Platform runtime.
 
-The existing immutable `vendor/oripa/CONTRACT-20261005/PROVENANCE.md` and manifest
-are the canonical alpha.43 readback. Their bytes and all package pins are unchanged.
+## Immutable Contract
 
-- Client/Testkit: `2.0.0-alpha.43`.
-- Artifact ID: `11349442812`; canonical workflow: `37319224331`.
-- Manifest: `vendor/oripa/CONTRACT-20261005/artifact-manifest.json`.
-- Manifest SHA-256: `1951edf44ef275e3c9bf85ac0ce1417a27bc64e982a607d0a72e49186eb09e74`.
-- Client SHA-256: `9f14026a53d24413d860975d5c012988a5381771600b81e8309e5119a10792b0`.
-- Testkit SHA-256: `d5bb5b0d785437e0f400b369ff97663a6c69d4a329c1b82710017087a92af9fb`.
-- Public OpenAPI: `2.0.0-alpha.39` (independent version).
-- Public OpenAPI SHA-256: `37cdeb7a214d42f0f69458d578a81c5c7869132e2a6cbd02ca8d150f1abf6faa`.
-- Outer archive SHA-256: `53fb939978eabbf9b636369b15c81369d18305890891715f7bbd864e9b197d14`.
-- Contract Artifact Source: `0ce41ab473fd5a4fb44773041ae097ffb40b14ce`.
+Client/Testkit alpha.44, Artifact 11745799489, workflow 38247721027, Contract
+source `8f4c79d2964186f704f14f4ddc2af228bf1047c9` (PR #555).
+Manifest: `vendor/oripa/SIGNUP-SMS-GATE-20261012/artifact-manifest.json`.
 
-Fresh GitHub exact-ID download agrees with all approved digests and the vendored
-artifact bytes. No Contract rebuild or republication is allowed. Computed
-digests do not replace approved values.
+| Authority | SHA-256 |
+| --- | --- |
+| Outer ZIP | `63388a1fcf0b6d7105834d074d947123fe865036de55541193c7bb8dd08715ac` |
+| Manifest | `1b12edfd6ddf54fca221a45cd3be4181861f5b49b3b8eba2f5c5aba45b42c692` |
+| Client | `49d8026b1bc21f641b3c36f53f88cb0b620d7e45dd80ad9e7d95e5124001ce80` |
+| Testkit | `0b7865beacc4a37202549b0b30d2068f4db1ea84c28bd9628e8be5094d15d99e` |
+| Public OpenAPI alpha.40 | `0041ff6a99f4bfb9c162a434d14c8924aa6763e8c81e7a3933e079e189366d1c` |
+| SHA256SUMS | `587c17804f4c3a45acfcbf58cf280a68a390760a716d5ab0704449b44de8ad77` |
 
-The provenance parser follows the existing alpha.43 document's separate
-Artifact ID, canonical workflow URL and GitHub outer SHA256 lines, retaining
-single-entry and exact-value checks. The published document itself is unchanged.
+Site Schema alpha.23 is unchanged. Vendor bytes, package pins and lockfile are
+not changed, rebuilt or republished. The strict parser follows the existing
+alpha.44 Workflow line and Outer ZIP table row, requiring one entry and exact
+approved values. Historical alpha.43 and older pins fail closed.
 
-Platform Runtime Source is separately fixed at
-`4b7d00e8e31223136cd0b70134916d091dfea6cb` (Security PR #543).
-Platform Production Authority is
-`48639e9cdc44e43534e45dbbb1b6eeb1bfc7d591` (Authority PR #545).
-Neither substitutes for Contract Artifact Source or Storefront Runtime Source.
+## Evidence reuse and build
 
-## Exact build and Security toolchains
+Human-authorized exact-source OLD Test, CI, Security, SMS receipt, SMS phone
+reentry Browser and S3/CloudFront evidence are reused without repeat deployment,
+Full validation or Acceptance. F5 Technical PASS is reused; F5 Human Production
+Browser confirmation remains pending. F2-B and F6 remain OFF in Production.
 
-The alpha.43 authority change synchronized the three Next.js assertions from
-`16.3.3` to `16.3.6`. Normal artifact pnpm remains `10.12.1`, including
-the manifest version, frozen install, build, prune and package verification.
+Required Checks and fresh exact-head machine-readable self-review with zero
+SEV-0/SEV-1 remain mandatory. Pending non-Required observations alone do not
+block; completed Security/Authority/SEV-0/SEV-1 failures do block.
 
-Human additionally approves replacing the stale raw High-level audit command
-with the unchanged `scripts/ci/security-audit-policy.mjs`. As in canonical CI,
-an isolated audit directory uses exact pnpm `11.25.0`. Production findings must
-be zero across every severity; unapproved High/Critical fail. The existing
-dev-only braces 3.0.3 exception applies only to its exact approved fingerprint.
-No exception, Moderate baseline, suppression or threshold is added or changed.
-After a successful audit, corepack restores pnpm `10.12.1` and an exact version
-assertion must pass before lint, tests, build, prune or packaging proceeds.
-An audit or restoration failure prevents downstream steps.
+After merge, dispatch production-artifact.yml once with exact runtime, app name
+オリポケ, site URL https://ori-poke.com and API base /api/v2. Preserve Next 16.3.8,
+Node 22.22.3, pnpm 10.12.1, isolated audit pnpm 11.25.0, native ARM64 smoke and
+exact-ID re-download. Security policy, thresholds, exceptions and workflow stay
+unchanged.
 
-## Verification and rollout boundary
+The canonical workflow does not bind CloudFront build inputs. This preparation
+does not invent a Production CDN origin or copy OLD Test settings. Production
+CDN activation/build-input suitability remains to resolve before activation.
 
-Focused tests retain source/check/tree, immutable artifact and digest guards,
-reject historical alpha.39/alpha.40/alpha.41 fixtures, and exercise audit
-isolation, audit failure and incorrect-toolchain-restoration failure.
-Ruleset Required Checks and fresh exact-head self-review are mandatory. Under
-the release-only waiver, pending non-Required checks do not block; completed
-Security/Source/Artifact/Contract/Migration or SEV-0/SEV-1 failures still HOLD.
-Existing accepted Runtime Source full validation is reused without local reruns.
-Application, dependency, Contract, migration and ENV source deltas are NONE.
+## Boundaries
 
-Human separately authorizes one fresh canonical ARM64 artifact dispatch after
-authority merge and current authorization checks, followed by exact-ID download,
-digest/provenance/package verification and native runtime smoke. The canonical
-public app name is read back from the previous verified Production artifact,
-not inferred from test fixtures. CI verification artifacts are not release artifacts.
-PR #144 and PR #137 remain OPEN/UNMERGED through preparation and final release closure.
-No other PR is incorporated. Human Browser Acceptance is already PASS.
-OLD Test deployment and acceptance are reused without another activation or
-browser checkpoint. Same-head CI reruns are prohibited. Platform Runtime,
-Production Authority, Contract alpha.43, database, workers, deferred Scheduler
-and ENV remain unchanged; no migration or Snapshot is required.
-Rollback of this authority change requires a reviewed authority-only revert;
-existing runtimes and rollback artifacts remain untouched.
-
-## Next.js security source update — 2026-10-10
-
-`STOREFRONT-NEXTSEC-20261010` pins Next.js and eslint-config-next to `16.3.8`
-and synchronizes all three workflow assertions: installed package, packaging
-version and re-downloaded artifact manifest. Node remains `22.22.3`, normal
-pnpm remains `10.12.1`, and isolated audit pnpm remains `11.25.0`. The security
-policy and its exact dev-only exception are unchanged.
-
-This is source/test/CI preparation only. It does not authorize a new Runtime
-Source, reuse historical acceptance for a new candidate, dispatch the workflow,
-publish an artifact or activate a runtime. Existing release SHA authorities,
-checksums, Build ID, Contract provenance, ARM64 verification and Human release
-checks remain intact; a future candidate needs its own exact source authority.
-
-The S3 Production Candidate task must separately integrate and verify the
-CloudFront build inputs `NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL` and
-`NEXT_PUBLIC_STATIC_ASSET_BASE_URL`. They are not added to this workflow here.
-PR #154 is excluded from this change and requires separate regression after
-the dependency fix is merged through Human review.
+No NEW/Production connection, DB, AWS, ENV, Runtime, Worker or Scheduler operation.
+No Migration execution; target ledger is 85 and 86 is excluded. Production
+routing, payment and topology are not copied from OLD Test. Stop after artifact
+verification. Existing runtime and rollback artifacts stay untouched; authority
+rollback requires a reviewed revert.
