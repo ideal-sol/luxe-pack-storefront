@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
+import { brandAssetUrl, brandAssetVersion } from "@/lib/brand-assets";
 
 const workflow = readFileSync(".github/workflows/production-artifact.yml", "utf8");
 const sourceValidation = workflow.match(
@@ -181,6 +182,8 @@ describe("production artifact application name authority", () => {
           WORKFLOW_SHA: "b".repeat(40),
           RUNNER_TEMP: root, NEXT_PUBLIC_APP_NAME: appName,
           NEXT_PUBLIC_SITE_URL: "https://example.com", NEXT_PUBLIC_PLATFORM_API_BASE_URL: apiBase,
+          NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL: "https://d2c0gdzoj8l46h.cloudfront.net",
+          NEXT_PUBLIC_STATIC_ASSET_BASE_URL: "https://d2c0gdzoj8l46h.cloudfront.net/static-assets",
         });
         const provenance = {
           source_sha: env.SOURCE_SHA, contract_version: "2.0.0-alpha.43", contract_artifact_id: "11349442812",
@@ -208,6 +211,8 @@ describe("production artifact application name authority", () => {
           source_sha: env.SOURCE_SHA, git_tree: env.GIT_TREE, workflow_sha: env.WORKFLOW_SHA,
           build_id: env.BUILD_ID, build_utc: env.BUILD_UTC, file_manifest_sha256: env.FILE_MANIFEST_SHA,
           platform_api_base: apiBase,
+          asset_public_base_url: env.NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL,
+          static_asset_base_url: env.NEXT_PUBLIC_STATIC_ASSET_BASE_URL,
         });
         writeFileSync(join(root, "contract-provenance.json"), JSON.stringify({
           ...provenance, source_sha: "342341a82131a7f80a4e7508172f1e764ec7ad84",
@@ -234,5 +239,113 @@ describe("production artifact application name authority", () => {
       expect(step).toContain(`test "$(node -p "require('./artifact-manifest.json').app_name")" = "$NEXT_PUBLIC_APP_NAME"`);
       expect(step).toContain(`test "$(node -p "require('./artifact-manifest.json').site_url")" = "$NEXT_PUBLIC_SITE_URL"`);
     }
+  });
+});
+
+const dynamicBase = "https://d2c0gdzoj8l46h.cloudfront.net";
+const staticBase = `${dynamicBase}/static-assets`;
+const cdnValidation = workflow.match(
+  /- name: Validate production CDN inputs and resolver\n[\s\S]*?node --experimental-strip-types --input-type=module <<'NODE'\n([\s\S]*?)\n          NODE/,
+)?.[1];
+const bundleValidation = workflow.match(
+  /- name: Verify CDN build output\n[\s\S]*?node --input-type=module <<'NODE'\n([\s\S]*?)\n          NODE/,
+)?.[1];
+const brandSmoke = workflow.match(/          const response = await fetch\("http:\/\/127.0.0.1:3299\/"\);[\s\S]*?(?=\n          NODE)/)?.[0];
+
+function cdnEnvironment(dynamic?: string, fixed?: string) {
+  const env = { ...process.env };
+  delete env.NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL;
+  delete env.NEXT_PUBLIC_STATIC_ASSET_BASE_URL;
+  if (dynamic !== undefined) env.NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL = dynamic;
+  if (fixed !== undefined) env.NEXT_PUBLIC_STATIC_ASSET_BASE_URL = fixed;
+  return env;
+}
+
+describe("production CDN build authority", () => {
+  it("requires both dispatch inputs and validates existing resolver prefixes before dependencies or build", () => {
+    for (const name of ["asset_public_base_url", "static_asset_base_url"]) {
+      expect(workflow).toMatch(new RegExp(`${name}:\\n\\s+description:.*\\n\\s+required: true\\n\\s+type: string`));
+    }
+    expect(workflow).toContain("NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL: ${{ inputs.asset_public_base_url }}");
+    expect(workflow).toContain("NEXT_PUBLIC_STATIC_ASSET_BASE_URL: ${{ inputs.static_asset_base_url }}");
+    expect(cdnValidation).toBeTruthy();
+    expect(cdnValidation).not.toContain("${{");
+    expect(workflow.indexOf("- name: Validate production CDN inputs and resolver"))
+      .toBeLessThan(workflow.indexOf("- name: Set up exact pnpm and frozen dependencies"));
+    const result = spawnSync(process.execPath, ["--experimental-strip-types", "--input-type=module"], {
+      input: cdnValidation, env: cdnEnvironment(dynamicBase, staticBase), encoding: "utf8",
+    });
+    expect(result.stderr).toBe("");
+    expect(result.status).toBe(0);
+    expect(brandAssetVersion).toBe("sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63");
+    for (const file of ["logo.webp", "icons/favicon.ico", "pokezou_sd.webp"]) {
+      expect(brandAssetUrl(file, staticBase)).toBe(`${staticBase}/brand/${brandAssetVersion}/${file}`);
+    }
+  });
+
+  it.each([
+    undefined, "", " ", "http://cdn.example.test", "https://cdn.example.test/", "https://cdn.example.test/path",
+    "https://cdn.example.test?", "https://cdn.example.test?x=1", "https://cdn.example.test#", "https://cdn.example.test#fragment",
+    "https://user:password@cdn.example.test", "https://@cdn.example.test", "https://cdn.example.test:443",
+    " https://cdn.example.test", "https://cdn.example.test\n", "https://cdn.example.test\\path", "https://bad..example.test",
+    "https://%63dn.example.test", "https://cdn.example.test/..", "$(false); `false`",
+  ])("fails closed for malformed Dynamic origin %j", (dynamic) => {
+    expect(cdnValidation).toBeTruthy();
+    expect(spawnSync(process.execPath, ["--experimental-strip-types", "--input-type=module"], {
+      input: cdnValidation, env: cdnEnvironment(dynamic, `${dynamic}/static-assets`), encoding: "utf8",
+    }).status).not.toBe(0);
+  });
+
+  it.each([undefined, "", dynamicBase, `${staticBase}/`, `${staticBase}?`, `${staticBase}#`, `${staticBase}/..`, "https://other.example/static-assets"])(
+    "fails closed for a missing or mismatched Static base %j", (fixed) => {
+      expect(cdnValidation).toBeTruthy();
+      expect(spawnSync(process.execPath, ["--experimental-strip-types", "--input-type=module"], {
+        input: cdnValidation, env: cdnEnvironment(dynamicBase, fixed), encoding: "utf8",
+      }).status).not.toBe(0);
+    },
+  );
+
+  it("compares both manifest fields before tar creation, before upload and after exact-ID download", () => {
+    for (const [field, variable] of [["asset_public_base_url", "NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL"], ["static_asset_base_url", "NEXT_PUBLIC_STATIC_ASSET_BASE_URL"]]) {
+      expect(workflow).toContain(`${field}: process.env.${variable}`);
+      const beforeTar = workflow.indexOf(`'/storefront-release/artifact-manifest.json').${field}`);
+      expect(beforeTar).toBeGreaterThan(0);
+      expect(beforeTar).toBeLessThan(workflow.indexOf('archive_name="luxe-pack-storefront-production-'));
+      for (const name of ["Verify package before publication", "Verify re-download and ARM64 runtime"]) {
+        expect(workflow.split(`- name: ${name}`)[1]?.split("      - name:")[0])
+          .toContain(`test "$(node -p "require('./artifact-manifest.json').${field}")" = "$${variable}"`);
+      }
+    }
+  });
+
+  it.each(["valid", "missing-client", "missing-server"])("checks compiled CDN literals in both bundle surfaces: %s", (mode) => {
+    expect(bundleValidation).toBeTruthy();
+    const root = mkdtempSync(join(tmpdir(), "storefront-cdn-bundle-"));
+    try {
+      mkdirSync(join(root, "src/lib"), { recursive: true });
+      writeFileSync(join(root, "src/lib/brand-assets.manifest.json"), readFileSync("src/lib/brand-assets.manifest.json"));
+      for (const [surface, omitted] of [["static", "missing-client"], ["server", "missing-server"]]) {
+        mkdirSync(join(root, `.next/${surface}`), { recursive: true });
+        writeFileSync(join(root, `.next/${surface}/bundle.js`), mode === omitted ? '"/brand/logo.webp"' : `${JSON.stringify(dynamicBase)};${JSON.stringify(staticBase)};`);
+      }
+      const result = spawnSync(process.execPath, ["--input-type=module"], {
+        cwd: root, input: bundleValidation, env: cdnEnvironment(dynamicBase, staticBase), encoding: "utf8",
+      });
+      expect(result.status === 0).toBe(mode === "valid");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it.each(["valid", "local-only", "missing-favicon"])("checks rendered Brand URLs without runtime CDN environment: %s", (mode) => {
+    expect(brandSmoke).toBeTruthy();
+    expect(workflow).toContain("env -u NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL -u NEXT_PUBLIC_STATIC_ASSET_BASE_URL pnpm exec next start");
+    const files = mode === "missing-favicon" ? ["logo.webp", "pokezou_sd.webp"] : ["logo.webp", "icons/favicon.ico", "pokezou_sd.webp"];
+    const html = files.map(file => `<img src="${mode === "local-only" ? `/brand/${file}` : brandAssetUrl(file, staticBase)}">`).join("");
+    const result = spawnSync(process.execPath, ["--input-type=module"], {
+      input: `globalThis.fetch = async () => ({ ok: true, text: async () => ${JSON.stringify(html)} });\n${brandSmoke}`,
+      env: cdnEnvironment(dynamicBase, staticBase), encoding: "utf8",
+    });
+    expect(result.status === 0).toBe(mode === "valid");
   });
 });
