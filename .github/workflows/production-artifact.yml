@@ -17,6 +17,14 @@ on:
         description: Canonical HTTPS origin for the production artifact (no trailing slash)
         required: true
         type: string
+      asset_public_base_url:
+        description: Canonical HTTPS origin for public dynamic assets
+        required: true
+        type: string
+      static_asset_base_url:
+        description: Dynamic asset origin followed by /static-assets
+        required: true
+        type: string
 
 permissions:
   checks: read
@@ -32,6 +40,8 @@ env:
   NEXT_PUBLIC_PLATFORM_API_BASE_URL: /api/v2
   NEXT_PUBLIC_APP_NAME: ${{ inputs.app_name }}
   NEXT_PUBLIC_SITE_URL: ${{ inputs.site_url }}
+  NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL: ${{ inputs.asset_public_base_url }}
+  NEXT_PUBLIC_STATIC_ASSET_BASE_URL: ${{ inputs.static_asset_base_url }}
   NODE_VERSION: 22.22.3
   PNPM_VERSION: 10.12.1
   PNPM_AUDIT_VERSION: 11.25.0
@@ -112,6 +122,25 @@ jobs:
           }
           NODE
 
+      - name: Validate production CDN inputs and resolver
+        shell: bash
+        run: |
+          node --experimental-strip-types --input-type=module <<'NODE'
+          import { assetOrigin, resolveAssetUrl } from "./src/lib/asset-url.ts";
+          const dynamic = process.env.NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL;
+          const fixed = process.env.NEXT_PUBLIC_STATIC_ASSET_BASE_URL;
+          if (!dynamic || assetOrigin(dynamic) !== dynamic || fixed !== `${dynamic}/static-assets`) {
+            throw new Error("Canonical HTTPS asset origin and matching /static-assets base are required");
+          }
+          for (const prefix of ["gacha", "top-banner", "rank-masters", "rank-effects"]) {
+            const path = `/${prefix}/2026/10/AbC-d_E.01.webp`;
+            if (resolveAssetUrl(path) !== `${dynamic}${path}`) throw new Error("Dynamic asset resolver mismatch");
+          }
+          for (const path of ["/admin-assets/image.webp", "/unknown/image.webp", "/gacha/../image.webp", "//invalid.test/image.webp"]) {
+            if (resolveAssetUrl(path) !== null) throw new Error("Dynamic asset prefix boundary mismatch");
+          }
+          NODE
+
       - name: Set up exact pnpm and frozen dependencies
         shell: bash
         run: |
@@ -154,6 +183,28 @@ jobs:
           pnpm build
           test -s .next/BUILD_ID
           test -s .next/required-server-files.json
+
+      - name: Verify CDN build output
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, readdirSync } from "node:fs";
+          import { join } from "node:path";
+          const brand = JSON.parse(readFileSync("src/lib/brand-assets.manifest.json", "utf8"));
+          if (brand.version !== "sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63" || brand.files.length !== 23) {
+            throw new Error("Approved Brand manifest mismatch");
+          }
+          for (const root of [".next/static", ".next/server"]) {
+            const bundle = readdirSync(root, { recursive: true }).filter(path => path.endsWith(".js"))
+              .map(path => readFileSync(join(root, path), "utf8")).join("\n");
+            for (const value of [process.env.NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL, process.env.NEXT_PUBLIC_STATIC_ASSET_BASE_URL]) {
+              if (!value || ![JSON.stringify(value), `'${value}'`].some(literal => bundle.includes(literal))) {
+                throw new Error(`CDN build input missing from ${root}`);
+              }
+            }
+          }
+          console.log(`CDN build inputs and Brand manifest verified: ${brand.version}`);
+          NODE
 
       - name: Guard SMS TTL production bundle
         shell: bash
@@ -232,8 +283,10 @@ jobs:
             "FILE_MANIFEST_SHA",
             "GIT_TREE",
             "NEXT_PUBLIC_APP_NAME",
+            "NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL",
             "NEXT_PUBLIC_PLATFORM_API_BASE_URL",
             "NEXT_PUBLIC_SITE_URL",
+            "NEXT_PUBLIC_STATIC_ASSET_BASE_URL",
             "NEXT_VERSION_ACTUAL",
             "NODE_VERSION",
             "PNPM_VERSION",
@@ -253,6 +306,7 @@ jobs:
             artifact_format: "tar.gz",
             architecture: "linux/arm64",
             app_name: process.env.NEXT_PUBLIC_APP_NAME,
+            asset_public_base_url: process.env.NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL,
             build_id: process.env.BUILD_ID,
             build_utc: process.env.BUILD_UTC,
             file_manifest: "FILE_SHA256SUMS",
@@ -266,6 +320,7 @@ jobs:
             release_layout: "archive root is the release directory",
             runtime_command: "pnpm exec next start --hostname 127.0.0.1 --port 3200",
             site_url: process.env.NEXT_PUBLIC_SITE_URL,
+            static_asset_base_url: process.env.NEXT_PUBLIC_STATIC_ASSET_BASE_URL,
             source_sha: process.env.SOURCE_SHA,
             workflow_sha: process.env.WORKFLOW_SHA,
           };
@@ -275,6 +330,9 @@ jobs:
             { mode: 0o644 },
           );
           NODE
+
+          test "$(node -p "require(process.env.RUNNER_TEMP + '/storefront-release/artifact-manifest.json').asset_public_base_url")" = "$NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL"
+          test "$(node -p "require(process.env.RUNNER_TEMP + '/storefront-release/artifact-manifest.json').static_asset_base_url")" = "$NEXT_PUBLIC_STATIC_ASSET_BASE_URL"
 
           archive_name="luxe-pack-storefront-production-${SOURCE_SHA}-arm64.tar.gz"
           archive="$publication_root/$archive_name"
@@ -342,6 +400,8 @@ jobs:
           test "$(node -p "require('./artifact-manifest.json').source_sha")" = "$SOURCE_SHA"
           test "$(node -p "require('./artifact-manifest.json').app_name")" = "$NEXT_PUBLIC_APP_NAME"
           test "$(node -p "require('./artifact-manifest.json').site_url")" = "$NEXT_PUBLIC_SITE_URL"
+          test "$(node -p "require('./artifact-manifest.json').asset_public_base_url")" = "$NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL"
+          test "$(node -p "require('./artifact-manifest.json').static_asset_base_url")" = "$NEXT_PUBLIC_STATIC_ASSET_BASE_URL"
           test "$(node -p "require('./artifact-manifest.json').platform_api_base")" = "$NEXT_PUBLIC_PLATFORM_API_BASE_URL"
           test "$(node -p "require('./artifact-manifest.json').architecture")" = "linux/arm64"
           test "$(node -p "require('./artifact-manifest.json').file_manifest_sha256")" = "$(sha256sum FILE_SHA256SUMS | cut -d' ' -f1)"
@@ -435,6 +495,8 @@ jobs:
           test "$(node -p "require('./artifact-manifest.json').source_sha")" = "$SOURCE_SHA"
           test "$(node -p "require('./artifact-manifest.json').app_name")" = "$NEXT_PUBLIC_APP_NAME"
           test "$(node -p "require('./artifact-manifest.json').site_url")" = "$NEXT_PUBLIC_SITE_URL"
+          test "$(node -p "require('./artifact-manifest.json').asset_public_base_url")" = "$NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL"
+          test "$(node -p "require('./artifact-manifest.json').static_asset_base_url")" = "$NEXT_PUBLIC_STATIC_ASSET_BASE_URL"
           test "$(node -p "require('./artifact-manifest.json').platform_api_base")" = "$NEXT_PUBLIC_PLATFORM_API_BASE_URL"
           test "$(node -p "require('./artifact-manifest.json').git_tree")" = "$EXPECTED_GIT_TREE"
           test "$(node -p "require('./artifact-manifest.json').node_version")" = "$NODE_VERSION"
@@ -454,7 +516,7 @@ jobs:
           test "$(pnpm --version)" = "$PNPM_VERSION"
 
           runtime_log="$RUNNER_TEMP/storefront-runtime.log"
-          pnpm exec next start --hostname 127.0.0.1 --port 3299 > "$runtime_log" 2>&1 &
+          env -u NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL -u NEXT_PUBLIC_STATIC_ASSET_BASE_URL pnpm exec next start --hostname 127.0.0.1 --port 3299 > "$runtime_log" 2>&1 &
           runtime_pid=$!
           cleanup() {
             kill "$runtime_pid" 2>/dev/null || true
@@ -476,6 +538,19 @@ jobs:
           fi
           test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3299/)" = "200"
           test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3299/points)" = "200"
+
+          node --input-type=module <<'NODE'
+          const response = await fetch("http://127.0.0.1:3299/");
+          if (!response.ok) throw new Error("CDN Brand smoke failed");
+          const html = await response.text();
+          const version = "sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63";
+          for (const file of ["logo.webp", "icons/favicon.ico", "pokezou_sd.webp"]) {
+            const url = `${process.env.NEXT_PUBLIC_STATIC_ASSET_BASE_URL}/brand/${version}/${file}`;
+            if (!html.includes(url)) throw new Error(`Built CDN Brand URL missing: ${file}`);
+            console.log(`Built CDN Brand URL verified: ${url}`);
+          }
+          if (/(?:src|href)="\/brand\//.test(html)) throw new Error("Local-only Brand URL remains in built HTML");
+          NODE
 
       - name: Record artifact handoff
         shell: bash
@@ -510,5 +585,8 @@ jobs:
             echo "- NEXT_PUBLIC_APP_NAME: $NEXT_PUBLIC_APP_NAME"
             echo "- Site URL: $NEXT_PUBLIC_SITE_URL"
             echo "- Platform API base: $NEXT_PUBLIC_PLATFORM_API_BASE_URL"
+            echo "- Dynamic asset base: $NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL"
+            echo "- Static asset base: $NEXT_PUBLIC_STATIC_ASSET_BASE_URL"
+            echo "- Brand CDN URLs: verified with runtime CDN ENV unset"
             echo "- Runtime smoke: \`HTTP 200 /\`, \`HTTP 200 /points\`"
           } | tee -a "$GITHUB_STEP_SUMMARY"

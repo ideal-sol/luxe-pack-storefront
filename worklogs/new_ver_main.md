@@ -619,3 +619,29 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   OLD Test/Production runtime updates: none; migrations created/applied: 0/0.
   Rollback: reviewed revert of this source-only fix. Retain branch/worktree for
   Human review; do not modify other occupied worktrees or their existing changes.
+
+## PRODPARITY-SF-CDN-BUILD-20261015 — Production CDN artifact
+
+- Risk R4; Lane: Strict Change; Application Runtime Activation: deferred.
+  Candidate PRODUCTION-OLDTEST-PARITY-20261015-CANDIDATE-01. Human authorizes
+  the bounded workflow fix, PR/checks/Squash Merge and one canonical dispatch.
+  Base: fresh protected main `02d63525cc5f4e76318c6d1ecd9c8ebb86886cc5`.
+- Runtime Source remains `763cd4bb8fabdadce7822a59e8718ef2381394dc` (PR #159).
+  Workflow Authority is the new merge SHA, never a replacement Runtime Source.
+  Platform Runtime/Authority and Artifact 11957388823 remain unchanged; Contract
+  alpha.44 / Artifact 11745799489 and Next 16.3.8 are retained.
+- Add required public Dynamic/Static dispatch inputs and Build ENV mapping.
+  Reuse the existing resolver for strict HTTPS-origin/prefix validation; Static
+  must equal Dynamic plus /static-assets. Record both inputs in the manifest
+  and compare before packaging, before upload and after exact-ID re-download.
+  Verify compiled bases and native ARM64 HTML Logo/Favicon/Brand URLs with CDN
+  runtime ENV unset. Retain the approved 23-file Brand manifest/version.
+- Focused workflow tests exercise malformed/mismatched inputs, manifest binding,
+  resolver integration, bundle omissions and local-only Brand regressions.
+  Existing Runtime CI/OLD Test/Human/Security/regression evidence is reused.
+  Required Checks and fresh exact-head self-review remain mandatory; no bypass.
+- Runtime/application source, dependencies/vendor, security policy, ENV files,
+  Platform, DB/migrations, AWS/S3/CloudFront and NEW Production are untouched.
+  No Runtime Activation or Cutover is authorized. Artifact 11957430121 is kept
+  but is not an S3-enabled Production Candidate. PR and artifact handoff record
+  exact hashes, Build ID, one-dispatch evidence and cleanup after completion.
