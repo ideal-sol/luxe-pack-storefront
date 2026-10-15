@@ -172,8 +172,11 @@ jobs:
           test "$(pnpm --version)" = "$PNPM_VERSION"
           pnpm lint
           pnpm typecheck
-          pnpm exec vitest run src/test/sms-verification-ui.test.tsx
-          pnpm test
+          (
+            unset NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL NEXT_PUBLIC_STATIC_ASSET_BASE_URL
+            pnpm exec vitest run src/test/sms-verification-ui.test.tsx
+            pnpm test
+          )
 
       - name: Build exact production application
         shell: bash

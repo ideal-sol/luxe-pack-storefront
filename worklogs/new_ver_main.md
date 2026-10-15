@@ -645,3 +645,19 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   No Runtime Activation or Cutover is authorized. Artifact 11957430121 is kept
   but is not an S3-enabled Production Candidate. PR and artifact handoff record
   exact hashes, Build ID, one-dispatch evidence and cleanup after completion.
+
+### PRODPARITY-CDN-ENV-20261015 — Build/test environment isolation
+
+- The one authorized Production dispatch, Run 38748956400 at Authority
+  c800778ce498c72bedcb85268bd73972163f8e93, failed before Build/publication:
+  public CDN ENV leaked into local-fixture regression tests (29 failures).
+  No Production Artifact or Runtime Activation was produced.
+- Bounded workflow correction: unset only the two CDN variables inside the
+  existing test subprocess group. Run every original test/assertion; retain
+  CDN inputs in the outer Build/manifest/resolver/native-smoke environment.
+  Focused tests prove both test isolation and unchanged outer Build values.
+- Risk R4; Strict Change; Activation deferred. Same three permitted files only;
+  Runtime Source remains 763cd4bb8fabdadce7822a59e8718ef2381394dc. No security
+  policy, Required Check, application, ENV file, Platform or AWS change.
+  No second dispatch or rerun is authorized by this correction. Complete the
+  source repair/checks/merge, then HOLD pending Human approval for another Build.
