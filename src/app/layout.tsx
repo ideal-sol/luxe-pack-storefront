@@ -1,15 +1,11 @@
 import { Suspense } from "react";
 import { AdvertisingCapture } from "@/components/advertising/advertising-capture";
 import type { Metadata, Viewport } from "next";
-import { MobileBottomNavigation } from "@/components/layout/mobile-bottom-navigation";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
+import { StorefrontShell } from "@/components/layout/storefront-shell";
 import { MotionEffects } from "@/components/common/motion-effects";
 import { ToastProvider } from "@/components/common/toast-provider";
 import { SessionProvider } from "@/components/auth/session-provider";
-import { MemberRouteAccess } from "@/components/auth/member-access";
 import { PublicClientProvider } from "@/components/catalog/public-client-provider";
-import { PointClientProvider } from "@/components/points/point-client-provider";
 import { brandIcons, usesBrandIcons } from "@/lib/brand-icons";
 import "@/styles/font-noto-sans-jp.css";
 import "@/styles/globals.css";
@@ -39,15 +35,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Suspense fallback={null}><AdvertisingCapture /></Suspense>
         <ToastProvider>
           <SessionProvider>
-            <PointClientProvider>
-              <PublicClientProvider>
-                <MotionEffects />
-                <SiteHeader firstBuyLayoutEnabled={process.env.STOREFRONT_FIRST_BUY_LAYOUT_PREVIEW === "1"} />
-                <main className="site-main"><MemberRouteAccess>{children}</MemberRouteAccess></main>
-                <SiteFooter />
-                <MobileBottomNavigation />
-              </PublicClientProvider>
-            </PointClientProvider>
+            <PublicClientProvider>
+              <MotionEffects />
+              <StorefrontShell firstBuyLayoutEnabled={process.env.STOREFRONT_FIRST_BUY_LAYOUT_PREVIEW === "1"}>{children}</StorefrontShell>
+            </PublicClientProvider>
           </SessionProvider>
         </ToastProvider>
       </body>

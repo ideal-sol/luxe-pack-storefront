@@ -6,6 +6,7 @@ import { useLayoutEffect, useState } from "react";
 import { presentAuthProblem, type AuthProblemPresentation } from "@/lib/platform";
 import { contactLoginReturn } from "@/lib/contact-return";
 import { smsVerificationRoute } from "@/lib/routes/navigation";
+import { isPreRegisterReturn, preRegisterRoute, preRegisterSmsRoute } from "@/lib/pre-register";
 import { AuthProblem, FieldProblem } from "./auth-problem";
 import { useSession } from "./session-provider";
 
@@ -14,7 +15,7 @@ export function LoginForm({ passwordUpdated = false, returnTo }: {
   readonly returnTo?: string | readonly string[] | undefined;
 }) {
   const router = useRouter();
-  const { getSmsVerificationStatus, login, state } = useSession();
+  const { getPreRegistrationBonus, getSmsVerificationStatus, login, state } = useSession();
   const [submitting, setSubmitting] = useState(false);
   const [problem, setProblem] = useState<AuthProblemPresentation | null>(null);
 
@@ -39,6 +40,11 @@ export function LoginForm({ passwordUpdated = false, returnTo }: {
       if (destination === "/contact" || destination.startsWith("/contact?")) {
         router.replace(destination);
       } else {
+        const bonus = await getPreRegistrationBonus();
+        if (isPreRegisterReturn(returnTo) || ["email_pending", "sms_pending", "pre_registered"].includes(bonus.status)) {
+          router.replace(preRegisterSmsRoute);
+          return;
+        }
         const sms = await getSmsVerificationStatus();
         router.replace(sms.verified ? destination : smsVerificationRoute);
       }
@@ -97,6 +103,7 @@ export function LoginForm({ passwordUpdated = false, returnTo }: {
       </button>
       <p className="auth-form__alternate"><Link href="/password-reset">パスワードを忘れた方はこちら</Link></p>
       <p className="auth-form__alternate">アカウントをお持ちでない方は <Link href="/register">新規登録</Link></p>
+      <p className="auth-form__alternate"><Link href={preRegisterRoute}>事前登録のご案内へ</Link></p>
     </form>
   );
 }
