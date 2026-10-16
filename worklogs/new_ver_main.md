@@ -731,3 +731,18 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   paths, added-path counts and per-file prefixes for each. Focused tests cover
   legacy acceptance and unknown-version rejection. This preserves existing
   build compatibility without broadening Source or Production authorization.
+
+### PR #167 Human Source review: age notice correction (2026-10-16)
+
+- Same Change / branch / PR; retain Strict Change, R3 and deferred Activation.
+  Replace only the contradictory guardian-consent notice with
+  「ご登録は無料です。18歳以上の方のみ登録可能です。」.
+- Add focused assertions for the exact 18+ notice and absence of the old
+  minor/guardian wording. Regression reproduced before the copy correction
+  (1 expected FAIL); corrected focused file PASS, 40/40 tests. Targeted ESLint
+  and git diff --check PASS.
+- Design, approved 11月1日 / 500コイン copy, Contract, brand images and auth
+  logic are unchanged. PREREG-RECOVERY-01 remains the existing SEV-2 Platform
+  Contract limitation; no independent API is added.
+- Final-head Required Checks and fresh fixed-head Source self-review are
+  recorded in PR #167. Keep Draft; no Merge, auto-merge or Runtime changes.

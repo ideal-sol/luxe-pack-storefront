@@ -105,7 +105,7 @@ export function PreRegisterFlow({ initialPendingUserId = null }: { readonly init
         items={[
           `オープンは${preRegisterOpenDateLabel}です。それまでガチャの購入・抽選はできません。`,
           `コインの購入ができるのはオープン後です。${preRegisterBonusCoins}のお渡しもオープン当日です。`,
-          "ご登録は無料です。未成年の方は、親権者など法定代理人の同意が必要です。",
+          "ご登録は無料です。18歳以上の方のみ登録可能です。",
         ]}
       />
     </>

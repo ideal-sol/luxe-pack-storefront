@@ -63,6 +63,8 @@ describe("pre-registration application", () => {
     const adapter = client(fixtures.sms_pending, { getCurrentSession: vi.fn().mockResolvedValue(response(anonymous)) });
     renderWithClient(<PreRegisterFlow />, adapter);
     const form = await fillRegistration();
+    expect(screen.getByText("ご登録は無料です。18歳以上の方のみ登録可能です。")).toBeInTheDocument();
+    expect(screen.queryByText(/未成年の方|親権者|法定代理人/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("パスワード")).toHaveAttribute("minlength", "8");
     expect(screen.getByLabelText("パスワード")).toHaveAttribute("maxlength", "128");
     expect(screen.getByRole("link", { name: "利用規約" })).toHaveAttribute("href", "/pages/terms");
