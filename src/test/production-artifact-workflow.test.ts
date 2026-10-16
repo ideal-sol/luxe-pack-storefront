@@ -329,12 +329,17 @@ describe("production CDN build authority", () => {
     }
   });
 
-  it.each(["valid", "missing-client", "missing-server", "moved-existing", "wrong-new-prefix", "duplicate-path"])("checks compiled CDN literals in both bundle surfaces: %s", (mode) => {
+  it.each(["valid", "valid-legacy", "unknown-version", "missing-client", "missing-server", "moved-existing", "wrong-new-prefix", "duplicate-path"])("checks compiled CDN literals in both bundle surfaces: %s", (mode) => {
     expect(bundleValidation).toBeTruthy();
     const root = mkdtempSync(join(tmpdir(), "storefront-cdn-bundle-"));
     try {
       mkdirSync(join(root, "src/lib"), { recursive: true });
       const manifest = JSON.parse(readFileSync("src/lib/brand-assets.manifest.json", "utf8"));
+      if (mode === "valid-legacy") {
+        manifest.version = "sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63";
+        manifest.files = manifest.files.filter((file: { relative_path: string }) => !["sd_orika_touroku.webp", "sd_pokezou_coin.webp"].includes(file.relative_path));
+      }
+      if (mode === "unknown-version") manifest.version = "sha256-" + "0".repeat(64);
       if (mode === "moved-existing") manifest.files[0].object_key = `static-assets/brand/${manifest.version}/${manifest.files[0].relative_path}`;
       if (mode === "wrong-new-prefix") manifest.files.find((file: { relative_path: string }) => file.relative_path === "sd_orika_touroku.webp").object_key = "static-assets/brand/wrong/sd_orika_touroku.webp";
       if (mode === "duplicate-path") manifest.files[1] = manifest.files[0];
@@ -346,7 +351,7 @@ describe("production CDN build authority", () => {
       const result = spawnSync(process.execPath, ["--input-type=module"], {
         cwd: root, input: bundleValidation, env: cdnEnvironment(dynamicBase, staticBase), encoding: "utf8",
       });
-      expect(result.status === 0).toBe(mode === "valid");
+      expect(result.status === 0).toBe(mode === "valid" || mode === "valid-legacy");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

@@ -196,9 +196,14 @@ jobs:
           const brand = JSON.parse(readFileSync("src/lib/brand-assets.manifest.json", "utf8"));
           const existingVersion = "sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63";
           const addedPaths = new Set(["sd_orika_touroku.webp", "sd_pokezou_coin.webp"]);
-          if (brand.version !== "sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d" || brand.files.length !== 25 ||
-              new Set(brand.files.map(file => file.relative_path)).size !== 25 ||
-              brand.files.filter(file => addedPaths.has(file.relative_path)).length !== 2) {
+          const approvedCounts = new Map([
+            [existingVersion, 23],
+            ["sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d", 25],
+          ]);
+          const expectedCount = approvedCounts.get(brand.version);
+          if (!expectedCount || brand.files.length !== expectedCount ||
+              new Set(brand.files.map(file => file.relative_path)).size !== expectedCount ||
+              brand.files.filter(file => addedPaths.has(file.relative_path)).length !== (expectedCount === 25 ? 2 : 0)) {
             throw new Error("Approved Brand manifest mismatch");
           }
           for (const file of brand.files) {

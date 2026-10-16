@@ -725,3 +725,9 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   Rollback: reviewed Source revert; retain immutable artifacts and brand objects.
   Keep task branch/worktree and Issue open for Human review. Exact final head,
   Required Check summary, self-review and timing are attached to the Draft PR.
+- Source self-review correction: the workflow authority can build a separately
+  approved older Runtime Source. Retain the exact approved legacy 23-file
+  version as well as the new exact 25-file version; validate counts, unique
+  paths, added-path counts and per-file prefixes for each. Focused tests cover
+  legacy acceptance and unknown-version rejection. This preserves existing
+  build compatibility without broadening Source or Production authorization.

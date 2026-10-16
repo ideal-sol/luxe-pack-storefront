@@ -158,5 +158,8 @@ Required Checks and existing Security Gate are unchanged.
 The existing production artifact workflow had a single-prefix / 23-file Brand
 assertion. Its source assertion now requires the approved 25-file version and
 exact old/new per-file keys; negative tests reject moved old keys, wrong new
-prefixes and duplicate paths. No workflow dispatch or production authority
+prefixes and duplicate paths. It also retains the exact approved legacy 23-file
+manifest so a later separately authorized build of the existing approved
+Runtime Source remains possible. Unknown versions fail closed.
+No workflow dispatch or production authority
 change is part of this task.
