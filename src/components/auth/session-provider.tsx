@@ -30,6 +30,9 @@ import {
   type PasswordResetConfirmRequest,
   type PasswordResetRequest,
   type RegistrationRequest,
+  type PreRegistrationRequest,
+  type PreRegistrationCampaign,
+  type PreRegistrationBonus,
   type SmsVerificationAccepted,
   type SmsVerificationConfirmRequest,
   type SmsVerificationSendRequest,
@@ -55,6 +58,9 @@ function sessionState(data: AuthSession): SessionState {
 }
 
 interface SessionContextValue {
+  readonly preRegister: (input: PreRegistrationRequest) => Promise<PendingRegistration>;
+  readonly getPreRegistrationCampaign: () => Promise<PreRegistrationCampaign>;
+  readonly getPreRegistrationBonus: () => Promise<PreRegistrationBonus>;
   readonly smsAccess: SmsAccessState;
   readonly changePassword: (input: PasswordChangeRequest) => Promise<PasswordChanged>;
   readonly completeEmailChange: (input: EmailChangeCompleteRequest) => Promise<EmailChangeCompleted>;
@@ -194,7 +200,26 @@ export function SessionProvider({
       });
   }, [client]);
 
+  const getPreRegistrationCampaign = useCallback(async () => {
+    const { data } = await requireClient().getPreRegistrationCampaign();
+    if (!data.data || !["not_started", "accepting", "closed"].includes(data.data.status)) throw new TypeError("Invalid campaign response");
+    return data.data;
+  }, [requireClient]);
+
+  const getPreRegistrationBonus = useCallback(async () => {
+    const { data } = await requireClient().getPreRegistrationBonus();
+    if (!data.data || !["not_applicant", "email_pending", "sms_pending", "pre_registered", "awaiting_activation", "activated", "not_eligible"].includes(data.data.status)) throw new TypeError("Invalid bonus response");
+    return data.data;
+  }, [requireClient]);
+
   const value = useMemo<SessionContextValue>(() => ({
+    async preRegister(input) {
+      const { data } = await requireClient().preRegister(input);
+      await refreshSession();
+      return data;
+    },
+    getPreRegistrationCampaign,
+    getPreRegistrationBonus,
     async changePassword(input) {
       const { data } = await requireClient().changeUserPassword(input, {});
       await refreshSession();
@@ -280,7 +305,7 @@ export function SessionProvider({
       await refreshSession();
       return data;
     },
-  }), [getSmsVerificationStatus, refreshSession, requireClient, smsAccess, state]);
+  }), [getPreRegistrationBonus, getPreRegistrationCampaign, getSmsVerificationStatus, refreshSession, requireClient, smsAccess, state]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

@@ -1,0 +1,116 @@
+{
+  "schema_version": "1.0",
+  "task_id": "SITE-PREREG-V14-20261016",
+  "purpose": "Design handoff only; no runtime configuration applied",
+  "pages": [
+    "/pre-register",
+    "/pre-register/sms",
+    "/pre-register/thanks",
+    "/login",
+    "/password-reset",
+    "/password-reset/confirm",
+    "/pages/terms",
+    "/pages/privacy",
+    "/verify-email",
+    "/verify-email/error"
+  ],
+  "email_verification_page": "/verify-email/{userId}/{hash}",
+  "same_origin_api": [
+    {
+      "method": "GET",
+      "path": "/auth/session"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/pre-register"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/login"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/email/verification-notification"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/email/verify/{userId}/{hash}"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/password/forgot"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/password/reset"
+    },
+    {
+      "method": "GET",
+      "path": "/campaigns/pre-registration"
+    },
+    {
+      "method": "GET",
+      "path": "/me/pre-registration-bonus"
+    },
+    {
+      "method": "GET",
+      "path": "/me/sms-verification"
+    },
+    {
+      "method": "POST",
+      "path": "/me/sms-verification"
+    },
+    {
+      "method": "POST",
+      "path": "/me/sms-verification/resend"
+    },
+    {
+      "method": "POST",
+      "path": "/me/sms-verification/verify"
+    },
+    {
+      "method": "POST",
+      "path": "/me/password/reauthenticate"
+    },
+    {
+      "method": "GET",
+      "path": "/content/pages/terms"
+    },
+    {
+      "method": "GET",
+      "path": "/content/pages/privacy"
+    },
+    {
+      "method": "GET",
+      "path": "/advertising-code-validation"
+    }
+  ],
+  "api_prefix": "/api/v2",
+  "static_prefixes": [
+    "/_next/",
+    "/brand/",
+    "/fonts/"
+  ],
+  "external_static_prefix": "/static-assets/",
+  "password_reset_landing": {
+    "method": "GET",
+    "path": "/",
+    "query_keys": [
+      "password_reset_user_id",
+      "token"
+    ],
+    "user_id_pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+    "token_pattern": "^[0-9a-f]{64}$",
+    "action": "Forward only this exact recovery request to the existing Next proxy; ordinary / remains protected"
+  },
+  "must_remain_protected": [
+    "/",
+    "/register",
+    "/mypage",
+    "/mypage/sms-verification",
+    "/points",
+    "/gachas"
+  ],
+  "api_security": "Keep existing session, CSRF, Origin, authorization and rate limits; do not add Basic to API subdomain",
+  "runtime_verification": "PENDING; Human GO required"
+}

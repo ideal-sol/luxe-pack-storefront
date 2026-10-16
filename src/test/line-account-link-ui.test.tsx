@@ -32,6 +32,9 @@ function response<T>(data: T) {
 function authClient(session: AuthSession = PUBLIC_AUTH_FIXTURE.authenticated_session): AuthClientAdapter {
   return {
     changeUserPassword: vi.fn(),
+    preRegister: vi.fn(),
+    getPreRegistrationCampaign: vi.fn(),
+    getPreRegistrationBonus: vi.fn(),
     completeEmailChange: vi.fn(),
     completeEmailVerification: vi.fn(),
     confirmPasswordReset: vi.fn(),

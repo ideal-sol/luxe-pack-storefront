@@ -1869,3 +1869,6 @@ html[data-motion="ready"] .gacha-card[data-reveal="in"]:hover { transition-delay
 @media (prefers-reduced-motion: reduce) {
   .gacha-rate-link, .prize-rate__row summary::after { transition: none; }
 }
+.pre-register-shell__header { display: flex; justify-content: center; padding: 20px 16px; }
+.pre-register-shell__header img { height: auto; max-width: 100%; width: 200px; }
+.pre-register-shell .site-main { padding-bottom: 24px; }

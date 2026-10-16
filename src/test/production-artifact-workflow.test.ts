@@ -285,8 +285,11 @@ describe("production CDN build authority", () => {
     });
     expect(result.stderr).toBe("");
     expect(result.status).toBe(0);
-    expect(brandAssetVersion).toBe("sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63");
+    expect(brandAssetVersion).toBe("sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d");
     for (const file of ["logo.webp", "icons/favicon.ico", "pokezou_sd.webp"]) {
+      expect(brandAssetUrl(file, staticBase)).toBe(`${staticBase}/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/${file}`);
+    }
+    for (const file of ["sd_orika_touroku.webp", "sd_pokezou_coin.webp"]) {
       expect(brandAssetUrl(file, staticBase)).toBe(`${staticBase}/brand/${brandAssetVersion}/${file}`);
     }
   });
@@ -326,12 +329,16 @@ describe("production CDN build authority", () => {
     }
   });
 
-  it.each(["valid", "missing-client", "missing-server"])("checks compiled CDN literals in both bundle surfaces: %s", (mode) => {
+  it.each(["valid", "missing-client", "missing-server", "moved-existing", "wrong-new-prefix", "duplicate-path"])("checks compiled CDN literals in both bundle surfaces: %s", (mode) => {
     expect(bundleValidation).toBeTruthy();
     const root = mkdtempSync(join(tmpdir(), "storefront-cdn-bundle-"));
     try {
       mkdirSync(join(root, "src/lib"), { recursive: true });
-      writeFileSync(join(root, "src/lib/brand-assets.manifest.json"), readFileSync("src/lib/brand-assets.manifest.json"));
+      const manifest = JSON.parse(readFileSync("src/lib/brand-assets.manifest.json", "utf8"));
+      if (mode === "moved-existing") manifest.files[0].object_key = `static-assets/brand/${manifest.version}/${manifest.files[0].relative_path}`;
+      if (mode === "wrong-new-prefix") manifest.files.find((file: { relative_path: string }) => file.relative_path === "sd_orika_touroku.webp").object_key = "static-assets/brand/wrong/sd_orika_touroku.webp";
+      if (mode === "duplicate-path") manifest.files[1] = manifest.files[0];
+      writeFileSync(join(root, "src/lib/brand-assets.manifest.json"), JSON.stringify(manifest));
       for (const [surface, omitted] of [["static", "missing-client"], ["server", "missing-server"]]) {
         mkdirSync(join(root, `.next/${surface}`), { recursive: true });
         writeFileSync(join(root, `.next/${surface}/bundle.js`), mode === omitted ? '"/brand/logo.webp"' : `${JSON.stringify(dynamicBase)};${JSON.stringify(staticBase)};`);

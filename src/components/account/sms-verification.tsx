@@ -71,7 +71,13 @@ function deliveryMessage(status: SmsVerificationStatus | null) {
   return { message: "認証コードを送信しています。", tone: "pending" as const };
 }
 
-export function SmsVerification({ pollIntervalMs = POLL_INTERVAL_MS }: { readonly pollIntervalMs?: number }) {
+export function SmsVerification({
+  pollIntervalMs = POLL_INTERVAL_MS, preRegistration = false, onVerified,
+}: {
+  readonly pollIntervalMs?: number;
+  readonly preRegistration?: boolean;
+  readonly onVerified?: () => Promise<void>;
+}) {
   const {
     getSmsVerificationStatus,
     reauthenticatePassword,
@@ -99,6 +105,10 @@ export function SmsVerification({ pollIntervalMs = POLL_INTERVAL_MS }: { readonl
   const submittingRef = useRef(false);
   const pollRequest = useRef<Promise<SmsVerificationStatus | null> | null>(null);
   const sessionUserId = session.status === "authenticated" ? session.session.user?.id ?? null : null;
+  const completed = session.status === "authenticated" && stage === "verified" && status?.verified && !status.challenge;
+  useEffect(() => {
+    if (completed && onVerified) void onVerified();
+  }, [completed, onVerified]);
 
   const applyStatus = useCallback((next: SmsVerificationStatus) => {
     setStatus(next);
@@ -316,7 +326,7 @@ export function SmsVerification({ pollIntervalMs = POLL_INTERVAL_MS }: { readonl
 
   return (
     <div className="sms-verification">
-      <Link className="sms-verification__back" href={status?.verified ? smsReturnDestination() : "/mypage"}>← マイページへ戻る</Link>
+      {!preRegistration && <Link className="sms-verification__back" href={status?.verified ? smsReturnDestination() : "/mypage"}>← マイページへ戻る</Link>}
 
       {stage === "verified" && status?.verified && status.phone ? (
         <section aria-labelledby="sms-verification-heading" className="sms-verification-card sms-verification-card--verified">

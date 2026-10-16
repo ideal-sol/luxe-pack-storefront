@@ -661,3 +661,67 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   policy, Required Check, application, ENV file, Platform or AWS change.
   No second dispatch or rerun is authorized by this correction. Complete the
   source repair/checks/merge, then HOLD pending Human approval for another Build.
+
+## SITE-PREREG-V14-20261016 — Preregistration v1.4 Source / Draft
+
+- Human Change reference: PREREG-V14-STOREFRONT-20261016. Issue #166.
+  Risk R3; Lane Strict Change; Application Runtime Activation deferred.
+  Human authorization ends at Source, tests and a Draft PR. No ready transition,
+  merge, auto-merge or environment activation is authorized.
+- Site base / freshly read origin/main:
+  1c368f61fa53ccd09a344c041eeae63e089aa102. Branch:
+  feat/SITE-PREREG-V14-20261016. Dedicated worktree isolates occupied existing
+  directories and their unrecognized edits; those edits are untouched.
+  Existing open PRs #137/#139 and all worktrees were inspected. CSS additions
+  are separately scoped; main's existing first-buy import/flag are preserved
+  through the shell. No concurrent preregistration Source Change was found.
+- Read START_HERE, integrated v1.4, Platform handoff, implementation prompt,
+  corrected design patch and both new images in order. All supplied SHA256SUMS
+  entries passed. Platform is read-only:
+  Source c4efbee32a7846bc94f7375d0d5f71779aa0ac77; latest confirmed main
+  b5c28015ef94cb80f6702a61b1237cacd91d9863; PRs #571/#574 merged.
+- Downloaded formal Artifact 12031381227, Run 38866011951 attempt 1, through
+  GitHub Actions. Outer digest, all five inner files, Manifest source and
+  immutable ledger agree (25 history records, candidate null). Adopt exact
+  Client/Testkit alpha.45, Public OpenAPI alpha.41 / 81 operations, retained
+  Site Schema alpha.23. Old bundles and Production approval remain unchanged.
+- Implement dedicated preRegister and server-authoritative campaign / bonus
+  reads, three pages, email resend / completion, login resume, reused SMS
+  phone re-entry / OTP lifecycle and guarded thanks. No frontend qualification,
+  cutoff, point grant or wallet mutation. Pending opaque user ID preserves the
+  resend screen on reload without persisting credentials or auth state.
+- Apply approved 500コイン / 11月1日 copy, noindex/dynamic pages, a small recovery
+  shell, X reference and valid-HTTPS-only optional LINE. Preserve all original
+  23 brand bytes/keys; only new two images use the approved new prefix.
+- Handoff documents exact Basic pages, API/CSRF/session/legal/asset requests
+  and the existing conditional password-reset GET / landing. A lost pending
+  ID is not recoverable from Platform's generic email error redirect; users
+  retain the original application URL for resend. OPEN and LINE inputs remain
+  Human decisions. Real Basic / email / SMS / CDN and Human Browser PENDING.
+- Bounded Source build-verifier correction: replace the old 23-file/single-key
+  assertion with the exact approved 25-file mixed-key assertion. Negative
+  regressions reject moved old keys, wrong new prefixes and duplicates.
+  Existing Required Checks, Security Gate, workflow dispatch authority and
+  Production source approval are not weakened or changed.
+- Executed PASS checkpoints: artifact:check, brand-assets:check (25),
+  security:check, all policy / boundary checks, lint, typecheck; existing auth /
+  SMS focus 99 tests; new flow/contract focus 51 tests; workflow/account/basic
+  focus 114 tests; updated client/flow/email focus 164 tests. Local build PASS.
+  Initial full run: 1469 passed / 8 failed of 1477, all failures were old
+  Contract hashes/versions/counts, the legacy single-prefix Brand assertion,
+  or the intentionally added login recovery link. Those expectations and the
+  bounded verifier are corrected; focused reruns PASS. Final full validate,
+  frozen-head CI and machine-readable self-review are recorded in the Draft PR.
+- Localhost fixture browser: PASS 35 checks across 320/360/390/719/720/721/1280px,
+  three routes, signup/reload/resend, email -> SMS -> phone re-entry/wrong OTP ->
+  guarded thanks, seven member states, anonymous/login recovery, closed/not-started
+  campaigns, expired email recovery and reset request. Zero page errors and zero
+  real Backend requests. Mobile scroll reveal and screenshot also executed.
+  This evidence does not establish deployed Basic, actual delivery or Runtime
+  Acceptance. Local test processes use synthetic fixtures only.
+- Migrations created/applied: 0/0. Platform, database, auth policy, accounting,
+  point/payment/draw authority, application ENV, AWS/S3, Basic configuration,
+  OLD Test and Production remain untouched. Runtime Activation count 0.
+  Rollback: reviewed Source revert; retain immutable artifacts and brand objects.
+  Keep task branch/worktree and Issue open for Human review. Exact final head,
+  Required Check summary, self-review and timing are attached to the Draft PR.

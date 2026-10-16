@@ -194,8 +194,18 @@ jobs:
           import { readFileSync, readdirSync } from "node:fs";
           import { join } from "node:path";
           const brand = JSON.parse(readFileSync("src/lib/brand-assets.manifest.json", "utf8"));
-          if (brand.version !== "sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63" || brand.files.length !== 23) {
+          const existingVersion = "sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63";
+          const addedPaths = new Set(["sd_orika_touroku.webp", "sd_pokezou_coin.webp"]);
+          if (brand.version !== "sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d" || brand.files.length !== 25 ||
+              new Set(brand.files.map(file => file.relative_path)).size !== 25 ||
+              brand.files.filter(file => addedPaths.has(file.relative_path)).length !== 2) {
             throw new Error("Approved Brand manifest mismatch");
+          }
+          for (const file of brand.files) {
+            const version = addedPaths.has(file.relative_path) ? brand.version : existingVersion;
+            if (file.object_key !== `static-assets/brand/${version}/${file.relative_path}`) {
+              throw new Error("Approved per-file Brand key mismatch");
+            }
           }
           for (const root of [".next/static", ".next/server"]) {
             const bundle = readdirSync(root, { recursive: true }).filter(path => path.endsWith(".js"))

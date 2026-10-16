@@ -1,38 +1,53 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { ApiProblemError } from "@oripa/storefront-client";
+import { useRef, useState } from "react";
+import { preRegisterLoginHref } from "@/lib/pre-register";
 import { presentAuthProblem, type AuthProblemPresentation } from "@/lib/platform";
 import { AuthProblem, FieldProblem } from "./auth-problem";
 import { EmailVerificationNotice } from "./verification";
 import { useSession } from "./session-provider";
 
-export function RegisterForm() {
-  const { register, state } = useSession();
+export function RegisterForm({
+  preRegistration = false,
+  onRegistered,
+  onClosed,
+}: {
+  readonly preRegistration?: boolean;
+  readonly onRegistered?: (userId: string) => void;
+  readonly onClosed?: () => void;
+} = {}) {
+  const { preRegister, register, state } = useSession();
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [problem, setProblem] = useState<AuthProblemPresentation | null>(null);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting) return;
+    if (submittingRef.current || (preRegistration && !event.currentTarget.reportValidity())) return;
     const form = event.currentTarget;
     const data = new FormData(form);
+    submittingRef.current = true;
     setSubmitting(true);
     setProblem(null);
     try {
-      const pending = await register({
+      const input = {
         full_name: String(data.get("full_name") ?? ""),
         birth_date: String(data.get("birth_date") ?? ""),
         email: String(data.get("email") ?? ""),
         password: String(data.get("password") ?? ""),
-        redirect_path: "/mypage",
-      });
+      };
+      const pending = preRegistration ? await preRegister(input) : await register({ ...input, redirect_path: "/mypage" });
       form.reset();
-      setPendingUserId(pending.user_id);
+      if (onRegistered) onRegistered(pending.user_id);
+      else setPendingUserId(pending.user_id);
     } catch (error) {
       setProblem(presentAuthProblem(error));
+      if (preRegistration && error instanceof ApiProblemError && error.code === "PRE_REGISTRATION_CLOSED") onClosed?.();
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   }
@@ -75,9 +90,9 @@ export function RegisterForm() {
         登録により<Link href="/pages/terms">利用規約</Link>と<Link href="/pages/privacy">プライバシーポリシー</Link>をご確認いただいたものとします。
       </p>
       <button className="button button--accent auth-form__submit" disabled={submitting || unavailable} type="submit">
-        {submitting ? "登録中…" : "新規登録"}
+        {submitting ? "登録中…" : preRegistration ? "無料で事前登録する" : "新規登録"}
       </button>
-      <p className="auth-form__alternate">すでにアカウントをお持ちの方は <Link href="/login">ログイン</Link></p>
+      <p className="auth-form__alternate">すでにアカウントをお持ちの方は <Link href={preRegistration ? preRegisterLoginHref : "/login"}>ログイン</Link></p>
     </form>
   );
 }
