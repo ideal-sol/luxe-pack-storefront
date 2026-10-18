@@ -92,7 +92,7 @@ describe("Account Security entry and Password Reset", () => {
     renderSession(<LoginForm passwordUpdated />, client(anonymous));
     const form = screen.getByRole("button", { name: "ログイン" }).closest("form")!;
     const links = Array.from(form.querySelectorAll("a"));
-    expect(links.map((link) => link.getAttribute("href"))).toEqual(["/password-reset", "/register"]);
+    expect(links.map((link) => link.getAttribute("href"))).toEqual(["/password-reset", "/register", "/pre-register"]);
     expect(links[0]).toHaveTextContent("パスワードを忘れた方はこちら");
     expect(screen.getByRole("status")).toHaveTextContent("パスワードを更新しました");
     expect(screen.getByRole("status")).toHaveTextContent("新しいパスワードでログインしてください");

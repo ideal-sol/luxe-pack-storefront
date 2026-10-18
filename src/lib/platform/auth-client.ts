@@ -15,6 +15,9 @@ type Schemas = PublicComponents["schemas"];
 export type AuthSession = Schemas["UserSession"];
 export type LoginRequest = Schemas["PasswordLoginRequest"];
 export type RegistrationRequest = Schemas["UserRegistrationRequest"];
+export type PreRegistrationRequest = Schemas["PreRegistrationRequest"];
+export type PreRegistrationCampaign = Schemas["PreRegistrationCampaignResponse"]["data"];
+export type PreRegistrationBonus = Schemas["PreRegistrationBonus"];
 export type PendingRegistration = Schemas["PendingRegistration"];
 export type VerificationResendRequest = Schemas["VerificationResendRequest"];
 export type PasswordResetRequest = Schemas["PasswordResetRequest"];
@@ -35,6 +38,9 @@ export type SmsVerificationAccepted = Schemas["SmsVerificationAccepted"];
 export type SmsVerificationStatus = Schemas["SmsVerificationStatus"];
 
 export interface AuthClientAdapter {
+  readonly preRegister: StorefrontIdentityClient["preRegister"];
+  readonly getPreRegistrationCampaign: StorefrontIdentityClient["getPreRegistrationCampaign"];
+  readonly getPreRegistrationBonus: StorefrontIdentityClient["getPreRegistrationBonus"];
   readonly changeUserPassword: StorefrontIdentityClient["changeUserPassword"];
   readonly completeEmailChange: StorefrontIdentityClient["completeEmailChange"];
   readonly completeEmailVerification: StorefrontIdentityClient["completeEmailVerification"];
@@ -56,6 +62,9 @@ export interface AuthClientAdapter {
 export function createAuthClientAdapter(transport: StorefrontTransport): AuthClientAdapter {
   const identity = createStorefrontIdentityClient(transport);
   return {
+    preRegister: (input, options) => identity.preRegister({ ...input, ...advertisingRegistrationFields() }, options),
+    getPreRegistrationCampaign: identity.getPreRegistrationCampaign,
+    getPreRegistrationBonus: identity.getPreRegistrationBonus,
     changeUserPassword: identity.changeUserPassword,
     completeEmailChange: identity.completeEmailChange,
     completeEmailVerification: identity.completeEmailVerification,

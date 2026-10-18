@@ -34,6 +34,7 @@ function deferred<Value>() {
 
 function authClient(overrides: Partial<AuthClientAdapter> = {}): AuthClientAdapter {
   return {
+    getPreRegistrationBonus: vi.fn().mockResolvedValue(response({ data: { status: "not_applicant" } })),
     getCurrentSession: vi.fn().mockResolvedValue(response(authenticated)),
     getSmsVerificationStatus: vi.fn().mockResolvedValue(response(verified)),
     login: vi.fn().mockResolvedValue(response(authenticated)),

@@ -67,6 +67,10 @@ export function presentAuthProblem(error: unknown): AuthProblemPresentation {
       message = "安全確認を完了できませんでした。ページを再読み込みしてお試しください。";
     } else if (isAuthProblemError(error, "AUTH_SERVICE_UNAVAILABLE")) {
       message = "現在、認証サービスを利用できません。時間をおいてお試しください。";
+    } else if (error.code === "PRE_REGISTRATION_CLOSED") {
+      message = "事前登録の受付は終了しました。通常の新規登録をご利用ください。";
+    } else if (isAuthProblemError(error, "INVALID_REGISTRATION")) {
+      message = "氏名・生年月日・メールアドレス・パスワードを確認してください。18歳以上の方のみご登録いただけます。";
     }
 
     return {

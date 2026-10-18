@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63",
+  "version": "sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d",
   "files": [
     {
       "relative_path": "fukumaru_hashiru.webp",
@@ -143,11 +143,25 @@
       "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/sd_orika_egao.webp"
     },
     {
+      "relative_path": "sd_orika_touroku.webp",
+      "content_type": "image/webp",
+      "byte_size": 17756,
+      "sha256": "fb3b8c421ee8eb7679f86a981aa41e6b64c5e12d9d88744a88d32d5c9e691ddb",
+      "object_key": "static-assets/brand/sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d/sd_orika_touroku.webp"
+    },
+    {
       "relative_path": "sd_orika_wink.webp",
       "content_type": "image/webp",
       "byte_size": 15538,
       "sha256": "847899ecc4743a8eb2c84db8303324e4ddc097cd7c3f6207fc196ffbc38ca00c",
       "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/sd_orika_wink.webp"
+    },
+    {
+      "relative_path": "sd_pokezou_coin.webp",
+      "content_type": "image/webp",
+      "byte_size": 18616,
+      "sha256": "1a486e5a66a242d6ac60a1883121c066a6f6b83b08d19c4657be05f716426791",
+      "object_key": "static-assets/brand/sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d/sd_pokezou_coin.webp"
     },
     {
       "relative_path": "sd_pokezou_makasero.webp",

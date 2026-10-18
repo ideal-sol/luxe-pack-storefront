@@ -35,6 +35,7 @@ function response<T>(data: T, status = 200) {
 function client(overrides: Partial<AuthClientAdapter> = {}): AuthClientAdapter {
   return {
     completeEmailVerification: vi.fn().mockResolvedValue(response(authenticated)),
+    getPreRegistrationBonus: vi.fn().mockResolvedValue(response({ data: { status: "not_applicant" } })),
     getCurrentSession: vi.fn().mockResolvedValue(response(anonymous)),
     getSmsVerificationStatus: vi.fn().mockResolvedValue(response({ verified: true, phone: null, phone_masked: null, verified_at: null, challenge: null })),
     login: vi.fn().mockResolvedValue(response(authenticated)),

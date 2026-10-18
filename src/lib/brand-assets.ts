@@ -3,7 +3,6 @@ import manifest from "./brand-assets.manifest.json";
 
 export const brandAssetVersion = manifest.version;
 
-/** One version and one build-time base for all 23 retained local Brand files. */
 export function brandAssetUrl(
   relativePath: string,
   base = process.env.NEXT_PUBLIC_STATIC_ASSET_BASE_URL,

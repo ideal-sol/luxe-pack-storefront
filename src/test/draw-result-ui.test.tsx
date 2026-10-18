@@ -68,6 +68,9 @@ function authClient(authenticated = true): AuthClientAdapter {
     : PUBLIC_AUTH_FIXTURE.anonymous_session;
   return {
     changeUserPassword: vi.fn(),
+    preRegister: vi.fn(),
+    getPreRegistrationCampaign: vi.fn(),
+    getPreRegistrationBonus: vi.fn(),
     completeEmailChange: vi.fn(),
     completeEmailVerification: vi.fn(),
     confirmPasswordReset: vi.fn(),

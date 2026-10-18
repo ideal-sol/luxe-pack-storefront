@@ -11,13 +11,14 @@ async function renderPage(searchParams: Record<string, string | readonly string[
 }
 
 describe("SITE-035 public Email Verification Error Page", () => {
-  it("renders publicly without a Session provider and links to Login and Home", async () => {
+  it("renders publicly without a Session provider and keeps login and recovery outside Basic", async () => {
     await renderPage();
 
     expect(screen.getByRole("heading", { level: 1, name: "メール認証に失敗しました" })).toBeInTheDocument();
     expect(screen.getByText(genericMessage)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "ログインする" })).toHaveAttribute("href", "/login");
-    expect(screen.getByRole("link", { name: "トップへ戻る" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "事前登録のご案内へ" })).toHaveAttribute("href", "/pre-register");
+    expect(document.querySelector('a[href="/"]')).toBeNull();
   });
 
   it("presents the canonical EMAIL_ALREADY_CLAIMED code", async () => {

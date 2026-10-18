@@ -44,10 +44,13 @@ function mutateManifest(mutation) {
 }
 
 describe("exact alpha.44 Production provenance", () => {
-  it("accepts the Human-approved current alpha.44 source pins", () => {
+  it("accepts the retained Human-approved alpha.44 source pins", () => {
+    expect(validateProvenance(root).contract_version).toBe("2.0.0-alpha.44");
+  });
+  it("rejects current alpha.45 source pins under the retained Production authority", () => {
     cpSync("package.json", join(root, "package.json"));
     cpSync("pnpm-lock.yaml", join(root, "pnpm-lock.yaml"));
-    expect(validateProvenance(root).contract_version).toBe("2.0.0-alpha.44");
+    expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
   });
   it("rejects predecessor alpha.41 source dependency pins", () => {
     cpSync("src/test/fixtures/production-alpha41/package.json", join(root, "package.json"));
