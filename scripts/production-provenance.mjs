@@ -23,15 +23,23 @@ function digest(file) {
   return createHash("sha256").update(readFileSync(file)).digest("hex");
 }
 
+function singleProvenanceEntry(provenance, declaration, pattern, message) {
+  const lines = provenance.split(/\r?\n/).filter((line) => declaration.test(line));
+  requireValue(lines.length === 1, message);
+  const match = lines[0].match(pattern);
+  requireValue(match !== null, message);
+  return match[1];
+}
+
 export function validateProvenance(root, authority = approvedSource) {
   const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
   const clientPin = packageJson.dependencies?.["@oripa/storefront-client"];
   const testkitPin = packageJson.devDependencies?.["@oripa/storefront-testkit"];
   const directory = dirname(authority.manifest_path);
-  requireValue(directory === "vendor/oripa/SIGNUP-SMS-GATE-20261012", "stale provenance authority");
-  requireValue(authority.contract_version === "2.0.0-alpha.44", "unapproved contract version");
-  requireValue(authority.platform_runtime_source_sha === "aef1759d072dab48be4b052d53e2ef969feddd9f"
-    && authority.platform_authority_merge_sha === "cba63981e443992d7b4f9ebcd0ee219dce38c0f9",
+  requireValue(directory === "vendor/oripa/PREREG-V14-20261016", "stale provenance authority");
+  requireValue(authority.contract_version === "2.0.0-alpha.45", "unapproved contract version");
+  requireValue(authority.platform_runtime_source_sha === "b5c28015ef94cb80f6702a61b1237cacd91d9863"
+    && authority.platform_authority_merge_sha === "8f9f9a8c9181361a6cbc540b54ddc476ad7fc9d1",
   "Platform runtime authority mismatch");
   const manifestPath = join(root, directory, "artifact-manifest.json");
   requireValue(digest(manifestPath) === authority.manifest_sha256, "manifest digest mismatch");
@@ -40,13 +48,16 @@ export function validateProvenance(root, authority = approvedSource) {
     "source and manifest contract mismatch");
   requireValue(manifest.source_commit === authority.platform_source_sha, "Platform source mismatch");
   const provenance = readFileSync(join(root, directory, "PROVENANCE.md"), "utf8");
-  const identifiers = [...provenance.matchAll(/^- Artifact ID: `([0-9]+)`$/gm)].map((match) => match[1]);
-  requireValue(identifiers.length === 1 && identifiers[0] === authority.artifact_id, "Artifact ID mismatch");
-  const workflows = [...provenance.matchAll(/^- Workflow: https:\/\/github\.com\/ideal-sol\/oripa\/actions\/runs\/([0-9]+)$/gm)].map((match) => match[1]);
-  requireValue(workflows.length === 1 && workflows[0] === "38247721027", "Canonical workflow mismatch");
-  const archives = [...provenance.matchAll(/^\| Outer ZIP \| `([0-9a-f]{64})` \|$/gm)].map((match) => match[1]);
-  requireValue(archives.length === 1 && archives[0] === authority.contract_archive_sha256,
-    "Contract archive authority mismatch");
+  const identifier = singleProvenanceEntry(provenance, /^\s*(?:-\s*)?Artifact ID:/,
+    /^Artifact ID: ([0-9]+); oripa-storefront-contract-2\.0\.0-alpha\.45\.$/, "Artifact ID mismatch");
+  requireValue(identifier === authority.artifact_id, "Artifact ID mismatch");
+  const workflow = singleProvenanceEntry(provenance, /^\s*(?:-\s*)?(?:Publication|Workflow):/,
+    /^Publication: https:\/\/github\.com\/ideal-sol\/oripa\/actions\/runs\/([0-9]+), attempt 1, success\.$/,
+    "Canonical workflow mismatch");
+  requireValue(workflow === "38866011951", "Canonical workflow mismatch");
+  const archive = singleProvenanceEntry(provenance, /^\s*(?:Outer ZIP SHA256:|\| Outer ZIP \|)/,
+    /^Outer ZIP SHA256: ([0-9a-f]{64})\.$/, "Contract archive authority mismatch");
+  requireValue(archive === authority.contract_archive_sha256, "Contract archive authority mismatch");
   const lockfile = readFileSync(join(root, "pnpm-lock.yaml"), "utf8");
   for (const [name, pin, expectedDigest] of [
     ["@oripa/storefront-client", clientPin, authority.client_sha256],
@@ -66,7 +77,7 @@ export function validateProvenance(root, authority = approvedSource) {
   const testkit = manifest.packages.find((entry) => entry.name === "@oripa/storefront-testkit");
   requireValue(testkit.storefront_client_version === authority.contract_version, "Client/Testkit mismatch");
   requireValue(manifest.public_openapi?.file === "public.openapi.json"
-    && authority.public_openapi_version === "2.0.0-alpha.40"
+    && authority.public_openapi_version === "2.0.0-alpha.41"
     && manifest.public_openapi.version === authority.public_openapi_version
     && manifest.public_openapi.sha256 === authority.public_openapi_sha256
     && digest(join(root, directory, "public.openapi.json")) === authority.public_openapi_sha256,

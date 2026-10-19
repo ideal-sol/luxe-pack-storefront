@@ -1,4 +1,83 @@
-# Production release authority — alpha.44
+# Production release authority — alpha.45
+
+SITEPRODAUTH-20261019 / OLDTEST-TO-NEW-PRODUCTION-20261019.
+Risk R3; Lane Strict Change; Application Runtime Activation: deferred.
+This Human GO permits a Draft PR and CI verification only. Ready, merge,
+auto-merge, Production Artifact Build and Runtime Activation need separate GO.
+
+## Current exact authority
+
+- Storefront application: `b8417ea3c209f3fc493a7d835f403ae610d60ee2`, PR #167.
+- Platform runtime: `b5c28015ef94cb80f6702a61b1237cacd91d9863`, PR #574.
+- Platform Production Authority: `8f9f9a8c9181361a6cbc540b54ddc476ad7fc9d1`, PR #591.
+- Published Contract source: `c4efbee32a7846bc94f7375d0d5f71779aa0ac77`.
+- Client/Testkit: `2.0.0-alpha.45`; Artifact `12031381227`.
+- Publication: workflow run `38866011951`, attempt 1, success.
+- Public/Admin OpenAPI: alpha.41; Webhook: alpha.40; Site Schema: alpha.23.
+- Manifest: `vendor/oripa/PREREG-V14-20261016/artifact-manifest.json`.
+- `activation_authorized=false`; latest main is control authority, never an
+  automatic substitute for the fixed application source.
+
+| Current authority | SHA-256 |
+| --- | --- |
+| Outer ZIP | `19472639f0fa5afe1aa14663d93587f19f28df8f79e0fa784621d2dffc4054d2` |
+| Manifest | `0fd03ceb42cf316fc01de0c9757ee20be3bc1242b25cd52bc20870c50c2ce3a5` |
+| Client | `4a78f26395807fd0eff231249c9f2547d416de4a439309605fee9cd903433c4e` |
+| Testkit | `8e6577375c864a0681aa475ee39c6c7a0958bc09c754a92cd1252f543b9b2a7a` |
+| Public OpenAPI | `9fc089b11f70bc0f3e70d44e41c1ec4b32c7479b6ec24410d0481d45f5b6401f` |
+
+The retained alpha.45 `PROVENANCE.md` uses these exact records:
+
+```text
+Artifact ID: 12031381227; oripa-storefront-contract-2.0.0-alpha.45.
+Publication: https://github.com/ideal-sol/oripa/actions/runs/38866011951, attempt 1, success.
+Outer ZIP SHA256: 19472639f0fa5afe1aa14663d93587f19f28df8f79e0fa784621d2dffc4054d2.
+```
+
+The strict parser requires exactly one declaration of each type and exact
+Artifact/bundle, publication run/attempt/result and archive hash. Missing,
+duplicate, conflicting or malformed records fail closed. Old alpha.44 formatting
+is not a fallback. Manifest, package bytes, dependency/lockfile pins, OpenAPI and
+Platform runtime/authority checks remain strict. Vendor, lockfile, packages,
+GitHub check authority and Security policy are unchanged by this task.
+
+## Future Build inputs and activation gates
+
+After separate Merge and Build GO, use the canonical Production workflow with:
+
+```text
+source_sha: b8417ea3c209f3fc493a7d835f403ae610d60ee2
+app_name: オリポケ
+site_url: https://ori-poke.com
+asset_public_base_url: https://d2c0gdzoj8l46h.cloudfront.net
+static_asset_base_url: https://d2c0gdzoj8l46h.cloudfront.net/static-assets
+```
+
+Brand inventory is 25: existing23 plus2 preregistration assets. S3/CloudFront403
+for the new2 remains unresolved, not proof of absence and not delivery PASS.
+Resolve it before Activation; do not overwrite existing23 or enable S3 Object GC.
+
+NEW F2-B is already ON and Production Accepted. Preserve its storage generation,
+destination, URL purge and retention; follow the separately approved Platform
+runner image-pin/drain plan for a future API update. F6 and general Scheduler
+stay OFF. Migration target is000087;000088 and later and member rank are excluded.
+No migrations or Source/Contract republication occur in this task.
+
+Preregistration initially remains OFF after Source reflection. Human alone sets
+the deadline and enables受付 in Admin after Production reflection, controls
+Basic/public scope, then performs Browser Acceptance. Never copy OLD Test受付,
+deadline or Basic settings.500pt grants/batches require separate approval and
+Acceptance; neither deployment nor受付ON triggers them automatically.
+
+Local checks, GitHub Required Checks, Preview/Browser Acceptance, Artifact Build
+and Production Activation are separate results. Keep final-head self-review
+fresh before any later merge. Stop at Draft; no Runtime/DB/ENV/AWS/Worker changes.
+
+## Historical — alpha.44 authority (superseded)
+
+The following original record is retained as history, not current authorization.
+Its F2-B OFF, migration85/86 exclusion and unresolved CDN-build statements do not
+override the current alpha.45 authority and operating policy above.
 
 PRODPARITY-SF-20261015 implements Human decision PRODUCTION-OLDTEST-PARITY-20261015.
 Strict Change; Application Runtime Activation: none.
