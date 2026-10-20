@@ -1,13 +1,17 @@
 # Production release authority — alpha.45
 
-SITEPRODAUTH-20261019 / OLDTEST-TO-NEW-PRODUCTION-20261019.
+SF171-PRODAUTH-20261020, following SITEPRODAUTH-20261019.
 Risk R3; Lane Strict Change; Application Runtime Activation: deferred.
-This Human GO permits a Draft PR and CI verification only. Ready, merge,
-auto-merge, Production Artifact Build and Runtime Activation need separate GO.
+Human GO permits the gated Authority Squash Merge and canonical Production
+ARM64 Artifact generation for PR #171. Runtime Activation belongs to the NEW
+Production operator and is not executed by this task. No migration or settings
+changes are included. PR #171 OLD Test Human Browser Acceptance is reused;
+P2 remains phase=health/HOLD, not formal Technical completion, and Human has
+confirmed that this is non-blocking for the existing NEW Production gates.
 
 ## Current exact authority
 
-- Storefront application: `b8417ea3c209f3fc493a7d835f403ae610d60ee2`, PR #167.
+- Storefront application: `0c39f94b963b3890ae4384fc19027268bd6bb93f`, PR #171.
 - Platform runtime: `b5c28015ef94cb80f6702a61b1237cacd91d9863`, PR #574.
 - Platform Production Authority: `8f9f9a8c9181361a6cbc540b54ddc476ad7fc9d1`, PR #591.
 - Published Contract source: `c4efbee32a7846bc94f7375d0d5f71779aa0ac77`.
@@ -43,10 +47,10 @@ GitHub check authority and Security policy are unchanged by this task.
 
 ## Future Build inputs and activation gates
 
-After separate Merge and Build GO, use the canonical Production workflow with:
+After the gated Authority Merge, use the approved canonical Production workflow with:
 
 ```text
-source_sha: b8417ea3c209f3fc493a7d835f403ae610d60ee2
+source_sha: 0c39f94b963b3890ae4384fc19027268bd6bb93f
 app_name: オリポケ
 site_url: https://ori-poke.com
 asset_public_base_url: https://d2c0gdzoj8l46h.cloudfront.net
@@ -71,7 +75,7 @@ Acceptance; neither deployment nor受付ON triggers them automatically.
 
 Local checks, GitHub Required Checks, Preview/Browser Acceptance, Artifact Build
 and Production Activation are separate results. Keep final-head self-review
-fresh before any later merge. Stop at Draft; no Runtime/DB/ENV/AWS/Worker changes.
+fresh before merge. Stop at verified Artifact handoff; no Runtime/DB/ENV/AWS/Worker changes.
 
 ## Historical — alpha.44 authority (superseded)
 

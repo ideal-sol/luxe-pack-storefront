@@ -89,7 +89,7 @@ describe("exact alpha.45 Production provenance", () => {
 
   it("accepts approved source pins, immutable artifact identity and every digest", () => {
     expect(validateProvenance(root)).toMatchObject({
-      source_sha: "b8417ea3c209f3fc493a7d835f403ae610d60ee2",
+      source_sha: "0c39f94b963b3890ae4384fc19027268bd6bb93f",
       contract_version: "2.0.0-alpha.45", contract_artifact_id: "12031381227",
       contract_manifest_sha256: "0fd03ceb42cf316fc01de0c9757ee20be3bc1242b25cd52bc20870c50c2ce3a5",
       client_pin: "2.0.0-alpha.45", testkit_pin: "2.0.0-alpha.45", public_openapi_pin: "2.0.0-alpha.41",

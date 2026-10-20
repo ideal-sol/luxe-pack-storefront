@@ -1,3 +1,10 @@
+## SF171-PRODAUTH-20261020 — PR171 Production Authority and Artifact
+
+- Risk R3; Lane Strict Change; Application Runtime Activation deferred. Human GO authorizes gated Authority Squash Merge and canonical ARM64 Artifact only. Base/runtime fixed to `0c39f94b963b3890ae4384fc19027268bd6bb93f`, PR171; no latest-main substitution.
+- Update only Authority source/PR/explanation, corresponding documentation and exact-source test expectation. Contract alpha.45, Platform runtime/authority, dependency bytes, Workflow and security gates remain unchanged.
+- Reuse PR171 checks and Human OLD Test Browser Acceptance. OLD P2 remains phase=health/HOLD, not Technical completion; Human confirms this is non-blocking for NEW required gates. No OLD redeploy or acceptance rerun.
+- Focused provenance/artifact/security results, final-head checks/review and exact Artifact evidence are recorded in the PR and external handoff. No Runtime, Migration, ENV, DB, Worker, Timer or S3 changes. Authority revert is a reviewed PR; existing Runtime remains untouched.
+
 ## PRG-20261002 — Storefront Minor Shadow Classifier
 
 - Human-authorized Phase 1 only; Issue none, Risk R4, Lane Strict Change, Application Runtime Activation none. Dedicated Worktree and branch `feat/PRG-20261002-phase1-shadow`, base/protected main `474736bef3f5534af9c0d0824965c230e587c5c1`. Existing primary Worktree files, local Runtime configuration and uncommitted work are untouched.
