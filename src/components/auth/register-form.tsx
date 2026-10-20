@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ApiProblemError } from "@oripa/storefront-client";
 import { useRef, useState } from "react";
-import { preRegisterLoginHref } from "@/lib/pre-register";
 import { presentAuthProblem, type AuthProblemPresentation } from "@/lib/platform";
 import { AuthProblem, FieldProblem } from "./auth-problem";
 import { EmailVerificationNotice } from "./verification";
@@ -92,7 +91,9 @@ export function RegisterForm({
       <button className="button button--accent auth-form__submit" disabled={submitting || unavailable} type="submit">
         {submitting ? "登録中…" : preRegistration ? "無料で事前登録する" : "新規登録"}
       </button>
-      <p className="auth-form__alternate">すでにアカウントをお持ちの方は <Link href={preRegistration ? preRegisterLoginHref : "/login"}>ログイン</Link></p>
+      {!preRegistration && (
+        <p className="auth-form__alternate">すでにアカウントをお持ちの方は <Link href="/login">ログイン</Link></p>
+      )}
     </form>
   );
 }
