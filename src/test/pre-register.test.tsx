@@ -63,6 +63,10 @@ describe("pre-registration application", () => {
     const adapter = client(fixtures.sms_pending, { getCurrentSession: vi.fn().mockResolvedValue(response(anonymous)) });
     renderWithClient(<PreRegisterFlow />, adapter);
     const form = await fillRegistration();
+    expect(form).toBeInTheDocument();
+    expect(form.querySelector(".auth-form__alternate")).not.toBeInTheDocument();
+    expect(screen.queryByText("すでにアカウントをお持ちの方は")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "無料で事前登録する" })).toBeEnabled();
     expect(screen.getByText("ご登録は無料です。18歳以上の方のみ登録可能です。")).toBeInTheDocument();
     expect(screen.queryByText(/未成年の方|親権者|法定代理人/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("パスワード")).toHaveAttribute("minlength", "8");

@@ -195,6 +195,8 @@ describe("signup and post-authentication navigation", () => {
       request_id: "fixture", retryable: false, errors: { birth_date: ["18歳以上の生年月日を入力してください。"], full_name: ["氏名を確認してください。"] },
     }));
     render(<SessionProvider client={authClient({ getCurrentSession: vi.fn().mockResolvedValue(response(anonymous)), register })}><RegisterForm /></SessionProvider>);
+    expect(screen.getByText("すでにアカウントをお持ちの方は")).toHaveClass("auth-form__alternate");
+    expect(screen.getByRole("link", { name: "ログイン" })).toHaveAttribute("href", "/login");
     for (const [label, value] of [["氏名", "登録テスト"], ["生年月日", "2008-10-12"], ["メールアドレス", "fixture@example.test"], ["パスワード", "fixture-password"]]) {
       const input = screen.getByLabelText(label!);
       expect(input).toBeRequired();
