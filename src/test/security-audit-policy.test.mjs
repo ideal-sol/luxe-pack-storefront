@@ -60,6 +60,9 @@ afterEach(() => {
 describe("Storefront exact dev-tool security policy", () => {
   it("accepts the exact installed dev chain and reports the vulnerability honestly", () => {
     expect(manifest.dependencies["sanitize-html"]).toBe("2.18.1");
+    expect(manifest.pnpm.overrides.vite).toBe("8.2.4");
+    expect(manifest.devDependencies.vitest).toBe("4.1.10");
+    expect(manifest.devDependencies.vite).toBeUndefined();
     expect(validateEvidence(evidence())).toMatchObject({
       status: "PASS", blocking_threshold: "high", production_findings_all_severities: 0,
       full_current_high_critical_findings: 1, approved_exact_dev_tool_exceptions: 1,
