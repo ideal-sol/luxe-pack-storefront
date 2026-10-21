@@ -59,7 +59,10 @@ afterEach(() => {
 
 describe("Storefront exact dev-tool security policy", () => {
   it("accepts the exact installed dev chain and reports the vulnerability honestly", () => {
-    expect(manifest.dependencies["sanitize-html"]).toBe("2.17.7");
+    expect(manifest.dependencies["sanitize-html"]).toBe("2.18.1");
+    expect(manifest.pnpm.overrides.vite).toBe("8.2.4");
+    expect(manifest.devDependencies.vitest).toBe("4.1.10");
+    expect(manifest.devDependencies.vite).toBeUndefined();
     expect(validateEvidence(evidence())).toMatchObject({
       status: "PASS", blocking_threshold: "high", production_findings_all_severities: 0,
       full_current_high_critical_findings: 1, approved_exact_dev_tool_exceptions: 1,
@@ -105,7 +108,7 @@ describe("Storefront exact dev-tool security policy", () => {
     const runtime = {
       ...otherAdvisory(), id: 1153195, github_advisory_id: "GHSA-g8qq-57p8-ggw5",
       url: "https://github.com/advisories/GHSA-g8qq-57p8-ggw5", module_name: "sanitize-html",
-      findings: [{ version: "2.17.7", paths: [".>sanitize-html"], dev: false, optional: false, bundled: false }],
+      findings: [{ version: "2.18.1", paths: [".>sanitize-html"], dev: false, optional: false, bundled: false }],
     };
     expect(() => validateEvidence(evidence([runtime], [runtime]))).toThrow("Production findings");
     expect(() => validateEvidence(evidence([runtime]))).toThrow("sanitize-html advisory reappeared");

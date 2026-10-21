@@ -159,6 +159,17 @@ describe("public static page", () => {
 });
 
 describe("safe canonical content", () => {
+  it.each([
+    '<div><noscript></div><img src="https://evil.example/tracker"></noscript>',
+    '<svg><a href="#safe"><svg:animate attributeName="href" values="javascript:alert(1)" /></a></svg>',
+    '<meta http-equiv="refresh" content="0;url=javascript:alert(1)">',
+  ])("keeps sanitizer advisory payloads inert: %s", (payload) => {
+    const { container } = render(<SafeContent html={`<p>Safe content</p>${payload}`} />);
+    expect(screen.getByText("Safe content")).toBeInTheDocument();
+    expect(container.querySelector("script, img, svg, meta, noscript")).toBeNull();
+    expect(container.innerHTML).not.toMatch(/javascript:|onerror=|attributeName=/i);
+  });
+
   it("removes scripts, event handlers, unsafe links, and preserves safe structure", () => {
     const { container } = render(<SafeContent html={'<h1>Heading</h1><p onclick="alert(1)">Body</p><script>alert(1)</script><a href="javascript:alert(1)">Unsafe</a><a href="/notices">Safe</a>'} />);
     expect(screen.getByRole("heading", { name: "Heading", level: 2 })).toBeInTheDocument();

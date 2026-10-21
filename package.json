@@ -41,7 +41,7 @@
     "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "sanitize-html": "2.17.7"
+    "sanitize-html": "2.18.1"
   },
   "devDependencies": {
     "@oripa/site-schema": "file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
@@ -63,6 +63,7 @@
   },
   "pnpm": {
     "overrides": {
+      "vite": "8.2.4",
       "@oripa/site-schema@2.0.0-alpha.23": "file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
       "@oripa/storefront-client@2.0.0-alpha.45": "file:vendor/oripa/PREREG-V14-20261016/oripa-storefront-client-2.0.0-alpha.45.tgz",
       "fast-uri@<3.1.7": "3.1.7",
