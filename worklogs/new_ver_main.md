@@ -1,3 +1,16 @@
+## SF175-PRODAUTH-20261021 — Replacement Authority for PR173
+
+- Human authorizes a new Authority PR from exact main/runtime `dcde7c91926d725a69b305e7bd9cc9b48d5d4fe6` (PR175), preserving PR171 ancestry, Contract alpha.45 and Platform bindings. Strict Change / R3 / Application Runtime Activation deferred.
+- Reuse the four prepared PR173 files and prior focused94-test PASS. No wrapper/sync implementation, scope relaxation, force push or application change. The prior PR173 history/evidence is retained; close it only after the replacement PR is established. Final-head Required5/5 and fresh review gate merge; canonical ARM64 Artifact only, no Runtime activation.
+
+## SF171-PRODAUTH-20261020 — PR171 Production Authority and Artifact
+
+- 2026-10-21 Human scope extension: reuse PR173 after security PR175. Fixed application source is now `dcde7c91926d725a69b305e7bd9cc9b48d5d4fe6`, tree `1ad5fe2817ad6cd68b481b8786b191ea447bd63b`. PR171 remains its ancestor; only sanitize-html2.18.1, Vite8.2.4 dependency closure and focused tests were added. Reviewed PR175 head `af0ed6b9095426eb675dda76901bfeb4dba78dcd` has identical tree/content to squash, Required5/5 and fresh review PASS. Focused91tests, canonical audit (production0/unapproved High-Critical0), isolated synthetic Preview PASS. No new security exception or gate change. Synchronize this authority branch non-destructively to that exact main; Contract/Platform pins and activation_authorized=false remain unchanged. Final-head authority checks/review and canonical Artifact evidence follow in PR173. No deployed Runtime changes.
+- Risk R3; Lane Strict Change; Application Runtime Activation deferred. Human GO authorizes gated Authority Squash Merge and canonical ARM64 Artifact only. Base/runtime fixed to `0c39f94b963b3890ae4384fc19027268bd6bb93f`, PR171; no latest-main substitution.
+- Update only Authority source/PR/explanation, corresponding documentation and exact-source test expectation. Contract alpha.45, Platform runtime/authority, dependency bytes, Workflow and security gates remain unchanged.
+- Reuse PR171 checks and Human OLD Test Browser Acceptance. OLD P2 remains phase=health/HOLD, not Technical completion; Human confirms this is non-blocking for NEW required gates. No OLD redeploy or acceptance rerun.
+- Focused provenance/artifact/security results, final-head checks/review and exact Artifact evidence are recorded in the PR and external handoff. No Runtime, Migration, ENV, DB, Worker, Timer or S3 changes. Authority revert is a reviewed PR; existing Runtime remains untouched.
+
 ## PRG-20261002 — Storefront Minor Shadow Classifier
 
 - Human-authorized Phase 1 only; Issue none, Risk R4, Lane Strict Change, Application Runtime Activation none. Dedicated Worktree and branch `feat/PRG-20261002-phase1-shadow`, base/protected main `474736bef3f5534af9c0d0824965c230e587c5c1`. Existing primary Worktree files, local Runtime configuration and uncommitted work are untouched.
