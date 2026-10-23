@@ -100,6 +100,14 @@ local browser fixture checks, final HEAD/Tree, changed paths, CI links and fresh
 machine-readable self-review are recorded in the Draft PR; that final-head
 record is authoritative over this initial attempt.
 
+The first hosted run additionally identified the exact source inventory missing
+the four new files and a new test expecting only two SMS reads despite the
+initial Session read plus two dialog opens. Register those four files in the
+existing inventory and assert all three SMS reads. No classifier rule, assertion
+strength, workflow or Required Check is relaxed. Its Security Gate also found
+production dependency advisories with package/lockfile unchanged; retain that
+separate Security HOLD and record the final audit details in the PR.
+
 Formal alpha.46 integration: **NOT RUN / blocked by publication**. Login-required
 Human Browser Acceptance and deployed Preview Runtime Acceptance: **NOT RUN**.
 Human should verify the existing `/mypage/prizes` flow after formal adoption:

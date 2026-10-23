@@ -130,6 +130,7 @@ describe("prize inventory UI", () => {
     const auth = authClient();
     renderInventory(fulfillment, auth);
     fireEvent.click(await screen.findByRole("checkbox", { name: "発送景品Aを選択" }));
+    expect(auth.getSmsVerificationStatus).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole("button", { name: "発送を依頼" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("あと2,000コイン分");
     expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeDisabled();
@@ -143,7 +144,8 @@ describe("prize inventory UI", () => {
     expect(screen.getByText("選択中の合計：5,000コイン")).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(access.load).toHaveBeenCalledTimes(2);
-    expect(auth.getSmsVerificationStatus).toHaveBeenCalledTimes(2);
+    // One initial Session read plus the existing SMS gate for each of the two opens.
+    expect(auth.getSmsVerificationStatus).toHaveBeenCalledTimes(3);
     expect(fulfillment.createShippingRequest).not.toHaveBeenCalled();
   });
 
