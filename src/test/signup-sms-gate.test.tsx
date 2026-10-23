@@ -215,7 +215,7 @@ describe("signup and post-authentication navigation", () => {
   it.each([false, true])("keeps the normal verify-email page login link (pending user=%s)", async (withUser) => {
     const client = authClient({ getCurrentSession: vi.fn().mockResolvedValue(response(anonymous)) });
     const page = await VerifyEmailPage({ searchParams: Promise.resolve(withUser ? { user_id: PUBLIC_AUTH_FIXTURE.pending_registration.user_id } : {}) });
-    render(<SessionProvider client={client}>{page}</SessionProvider>);
+    await act(async () => { render(<SessionProvider client={client}>{page}</SessionProvider>); });
     expect(screen.getByRole("heading", { name: "認証メールをご確認ください" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "ログイン画面へ" })).toHaveAttribute("href", "/login");
     if (withUser) expect(screen.getByRole("button", { name: "認証メールを再送" })).toBeInTheDocument();
