@@ -80,11 +80,15 @@ describe("pre-registration application", () => {
       full_name: "登録テスト", birth_date: "2000-01-01", email: "fixture@example.test", password: "fixture-password",
     });
     expect(adapter.register).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "認証メールをご確認ください" })).toBeInTheDocument();
+    expect(screen.getByText("ご登録のメールアドレスに確認のメールをお送りしました。本文のボタンから認証を完了すると、続けて電話番号の認証（SMS）に進みます。")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "ログイン画面へ", hidden: true })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "認証メールを再送" }));
     await waitFor(() => expect(adapter.resendEmailVerification).toHaveBeenCalledWith({
       user_id: PUBLIC_AUTH_FIXTURE.pending_registration.user_id, redirect_path: preRegisterSmsRoute,
     }));
-    expect(screen.getByRole("link", { name: "ログイン画面へ" })).toHaveAttribute("href", preRegisterLoginHref);
+    expect(await screen.findByRole("status")).toHaveTextContent("認証メールの再送を受け付けました。");
+    expect(screen.queryByRole("link", { name: "ログイン画面へ", hidden: true })).not.toBeInTheDocument();
   });
 
   it.each(["not_started", "closed"] as const)("does not offer applications when the server reports %s", async (status) => {
@@ -132,8 +136,13 @@ describe("pre-registration application", () => {
     const userId = PUBLIC_AUTH_FIXTURE.pending_registration.user_id;
     const adapter = client(fixtures.sms_pending, { getCurrentSession: vi.fn().mockResolvedValue(response(anonymous)) });
     renderWithClient(<PreRegisterFlow initialPendingUserId={pendingRegistrationId(userId)} />, adapter);
+    expect(screen.getByRole("heading", { name: "メールの認証" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "認証メールをご確認ください" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "ログイン画面へ", hidden: true })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "認証メールを再送" }));
     await waitFor(() => expect(adapter.resendEmailVerification).toHaveBeenCalledWith({ user_id: userId, redirect_path: preRegisterSmsRoute }));
+    expect(await screen.findByRole("status")).toHaveTextContent("認証メールの再送を受け付けました。");
+    expect(screen.queryByRole("link", { name: "ログイン画面へ", hidden: true })).not.toBeInTheDocument();
     expect(adapter.preRegister).not.toHaveBeenCalled();
     for (const value of ["bad", [userId], userId + "&token=secret"]) expect(pendingRegistrationId(value)).toBeNull();
   });
@@ -170,6 +179,20 @@ describe("pre-registration application", () => {
 });
 
 describe("server-authoritative thanks guard and recovery", () => {
+  it.each(["sms", "thanks"] as const)("hides only the notice login link for email_pending on %s", async (screenName) => {
+    const adapter = client(fixtures.email_pending);
+    renderWithClient(<PreRegisterAccount screen={screenName} />, adapter);
+    expect(await screen.findByRole("heading", { name: "認証メールをご確認ください" })).toBeInTheDocument();
+    expect(screen.getByText("メールの認証後、電話番号の認証（SMS）へ進みます。")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "ログイン画面へ", hidden: true })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "認証メールを再送" }));
+    await waitFor(() => expect(adapter.resendEmailVerification).toHaveBeenCalledExactlyOnceWith({
+      user_id: authenticated.user!.id, redirect_path: preRegisterSmsRoute,
+    }));
+    expect(await screen.findByRole("status")).toHaveTextContent("認証メールの再送を受け付けました。");
+    expect(screen.queryByRole("link", { name: "ログイン画面へ", hidden: true })).not.toBeInTheDocument();
+  });
+
   it.each(["pre_registered", "awaiting_activation", "activated"] as const)("renders %s without inventing a grant", async (status) => {
     const adapter = client(fixtures[status]);
     renderWithClient(<PreRegisterAccount screen="thanks" />, adapter);
