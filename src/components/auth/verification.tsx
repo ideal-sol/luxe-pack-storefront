@@ -49,7 +49,7 @@ export function EmailVerificationNotice({
       ) : (
         <p>再送が必要な場合は、登録手続きをもう一度開いてください。</p>
       )}
-      <Link href={redirectPath === preRegisterEmailRedirectPath ? preRegisterLoginHref : "/login"}>ログイン画面へ</Link>
+      {redirectPath !== preRegisterEmailRedirectPath && <Link href="/login">ログイン画面へ</Link>}
     </section>
   );
 }

@@ -8,6 +8,7 @@ import { MemberAccess, MemberRouteAccess } from "@/components/auth/member-access
 import { LoginForm } from "@/components/auth/login-form";
 import { RegisterForm } from "@/components/auth/register-form";
 import { EmailVerificationCompletion } from "@/components/auth/verification";
+import VerifyEmailPage from "@/app/verify-email/page";
 import { PointClientProvider, usePointClient } from "@/components/points/point-client-provider";
 import { requiresSmsVerification, smsVerificationRoute } from "@/lib/routes/navigation";
 import { callGlobalFetch } from "@/lib/platform/browser-client";
@@ -189,6 +190,38 @@ describe("signup SMS member boundary", () => {
 });
 
 describe("signup and post-authentication navigation", () => {
+  it("keeps the normal registration notice login link and existing resend destination", async () => {
+    const client = authClient({
+      getCurrentSession: vi.fn().mockResolvedValue(response(anonymous)),
+      resendEmailVerification: vi.fn().mockResolvedValue(response({ status: "accepted" })),
+    });
+    render(<SessionProvider client={client}><RegisterForm /></SessionProvider>);
+    for (const [label, value] of [["氏名", "登録テスト"], ["生年月日", "2000-01-01"], ["メールアドレス", "fixture@example.test"], ["パスワード", "fixture-password"]]) {
+      fireEvent.change(screen.getByLabelText(label!), { target: { value } });
+    }
+    fireEvent.submit(screen.getByRole("button", { name: "新規登録" }).closest("form")!);
+    expect(await screen.findByRole("heading", { name: "認証メールをご確認ください" })).toBeInTheDocument();
+    expect(client.register).toHaveBeenCalledExactlyOnceWith({ full_name: "登録テスト", birth_date: "2000-01-01", email: "fixture@example.test", password: "fixture-password", redirect_path: "/mypage" });
+    expect(screen.getByRole("link", { name: "ログイン画面へ" })).toHaveAttribute("href", "/login");
+    expect(screen.getByText("メールに記載されたリンクを開くと登録が完了します。")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "認証メールを再送" }));
+    await waitFor(() => expect(client.resendEmailVerification).toHaveBeenCalledExactlyOnceWith({
+      user_id: PUBLIC_AUTH_FIXTURE.pending_registration.user_id, redirect_path: "/",
+    }));
+    expect(await screen.findByRole("status")).toHaveTextContent("認証メールの再送を受け付けました。");
+    expect(screen.getByRole("link", { name: "ログイン画面へ" })).toHaveAttribute("href", "/login");
+  });
+
+  it.each([false, true])("keeps the normal verify-email page login link (pending user=%s)", async (withUser) => {
+    const client = authClient({ getCurrentSession: vi.fn().mockResolvedValue(response(anonymous)) });
+    const page = await VerifyEmailPage({ searchParams: Promise.resolve(withUser ? { user_id: PUBLIC_AUTH_FIXTURE.pending_registration.user_id } : {}) });
+    render(<SessionProvider client={client}>{page}</SessionProvider>);
+    expect(screen.getByRole("heading", { name: "認証メールをご確認ください" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ログイン画面へ" })).toHaveAttribute("href", "/login");
+    if (withUser) expect(screen.getByRole("button", { name: "認証メールを再送" })).toBeInTheDocument();
+    else expect(screen.getByText("再送が必要な場合は、登録手続きをもう一度開いてください。")).toBeInTheDocument();
+  });
+
   it("submits four required fields unchanged and displays Backend age/date validation", async () => {
     const register = vi.fn().mockRejectedValue(new ApiProblemError({
       code: "INVALID_REQUEST", status: 422, title: "Invalid input", type: "https://storefront.test/problems/input",
