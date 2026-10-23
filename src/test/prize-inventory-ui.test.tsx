@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
 import { PUBLIC_AUTH_FIXTURE, PUBLIC_POINT_BALANCE_FIXTURES, PUBLIC_SMS_VERIFICATION_FIXTURES, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
+import { policy, policyAccess } from "./fixtures/shipping-policy";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { PrizeClientProvider } from "@/components/prizes/prize-client-provider";
 import { PrizeInventory } from "@/components/prizes/prize-inventory";
@@ -118,6 +119,47 @@ function WalletBalance() {
 }
 
 describe("prize inventory UI", () => {
+  it("rechecks the latest selection when cancelling and reopening the existing shipping dialog", async () => {
+    const access = policyAccess(policy());
+    const a = prize({ id: "shipping-A", name: "発送景品A", exchange_points: 3000 });
+    const b = prize({ ...PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE, id: "shipping-B", name: "配送専用B", exchange_points: 2000 });
+    const fulfillment = client({ shippingPolicyAccess: access,
+      listPrizes: vi.fn().mockResolvedValue(response({ items: [a, b], next_cursor: null })),
+      listShippingAddresses: vi.fn().mockResolvedValue(response({ items: [{ id: "address", recipient_name_masked: "テスト***", phone_number_masked: "***0000", postal_code_masked: "***0000", updated_at: "2026-08-01T00:00:00Z" }] })),
+    });
+    const auth = authClient();
+    renderInventory(fulfillment, auth);
+    fireEvent.click(await screen.findByRole("checkbox", { name: "発送景品Aを選択" }));
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("あと2,000コイン分");
+    expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "発送景品Aを選択" })).toBeChecked();
+    fireEvent.click(screen.getByRole("checkbox", { name: "配送専用Bを選択" }));
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
+    expect(screen.getByRole("heading", { name: "発送内容を確認" })).toBeInTheDocument();
+    expect(screen.getByText("選択中の合計：5,000コイン")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(access.load).toHaveBeenCalledTimes(2);
+    expect(auth.getSmsVerificationStatus).toHaveBeenCalledTimes(2);
+    expect(fulfillment.createShippingRequest).not.toHaveBeenCalled();
+  });
+
+  it("retains selection and the existing dialog while the official policy Client is unavailable", async () => {
+    const fulfillment = client();
+    renderInventory(fulfillment);
+    fireEvent.click(await screen.findByRole("checkbox", { name: "両方可能な景品を選択" }));
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("発送条件を取得できませんでした");
+    expect(screen.getByRole("heading", { name: "発送内容を確認" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    expect(screen.getByRole("checkbox", { name: "両方可能な景品を選択" })).toBeChecked();
+    expect(fulfillment.createShippingRequest).not.toHaveBeenCalled();
+  });
+
   it.each(["login", "standard"])("completes a %s Gacha prize exchange without SMS or shipping reads after selection clears", async (origin) => {
     const stored = prize({ id: base.id, name: `${origin}ガチャの通常景品`, shipping_only: false });
     const converted: UserPrize = {

@@ -30,6 +30,12 @@ function enqueueCsrf(harness: ReturnType<typeof createPrizeClientTestHarness>) {
 }
 
 describe("MIG-062Z retained prize fulfillment contract", () => {
+  it("does not claim alpha.46 policy capability on the retained official alpha.45 client", () => {
+    const harness = createPrizeClientTestHarness();
+    expect(harness.client.shippingPolicyAccess).toBeUndefined();
+    expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).not.toContain("getShippingPolicy");
+    expect(harness.mock.requests).toHaveLength(0);
+  });
   it("pins the canonical immutable versions and retains existing contracts", () => {
     for (const [packageName, version] of Object.entries({
       "site-schema": "2.0.0-alpha.23",

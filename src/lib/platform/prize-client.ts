@@ -8,6 +8,7 @@ import {
 } from "@oripa/storefront-client";
 import { createBrowserStorefrontPrizeShippingClient } from "@oripa/storefront-client/browser";
 import { callGlobalFetch, type BrowserClientOverrides } from "./browser-client";
+import type { ShippingPolicyAccess } from "./shipping-policy";
 import {
   readPlatformRuntimeConfiguration,
   type PlatformRuntimeConfiguration,
@@ -31,7 +32,10 @@ export type ShippingRequestSummary = Schemas["ShippingRequestSummary"];
 export type PrizeExchangeResponse = Schemas["PrizeExchangeResponse"];
 export type StorefrontFulfillmentProblemCode = FulfillmentProblemCode;
 
-export type PrizeFulfillmentAdapter = BrowserStorefrontPrizeShippingClient;
+export type PrizeFulfillmentAdapter = BrowserStorefrontPrizeShippingClient & {
+  /** Absent on alpha.45: shipping stays blocked until the formal Client is adopted. */
+  readonly shippingPolicyAccess?: ShippingPolicyAccess;
+};
 export type PrizeInventoryAdapter = Pick<PrizeFulfillmentAdapter, "getPrize" | "listPrizes">;
 
 export function createBrowserPrizeInventoryClient(
