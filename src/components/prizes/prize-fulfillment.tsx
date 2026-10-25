@@ -19,6 +19,8 @@ import {
   type UserPrize,
 } from "@/lib/platform";
 import { actionablePrizes, type FulfillmentAction } from "./prize-actions";
+import type { ShippingMinimumSnapshot, ShippingPolicySnapshot } from "@/lib/platform/shipping-policy";
+import { shippingMinimumMessage, shippingRequirement, shippingShortfall, shippingTotal, validShippingMinimum } from "./shipping-minimum";
 
 interface FulfillmentDialogProps {
   readonly action: FulfillmentAction | null;
@@ -33,14 +35,19 @@ type AddressSummary = ShippingAddressCollection["items"][number];
 
 const number = new Intl.NumberFormat("ja-JP");
 
-export function PrizeFulfillmentDialog({
+export function PrizeFulfillmentDialog(props: FulfillmentDialogProps) {
+  if (!props.action) return null;
+  return <FulfillmentDialog key={props.action} {...props} action={props.action} />;
+}
+
+function FulfillmentDialog({
   action,
   client,
   onClose,
   onReconcile,
   onSmsVerificationRequired,
   selectedItems,
-}: FulfillmentDialogProps) {
+}: FulfillmentDialogProps & { readonly action: FulfillmentAction }) {
   const titleId = useId();
   const [addresses, setAddresses] = useState<readonly AddressSummary[] | null>(null);
   const [addressesLoading, setAddressesLoading] = useState(false);
@@ -53,7 +60,17 @@ export function PrizeFulfillmentDialog({
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const pendingExchange = useRef<string | null>(null);
-  const pendingShipping = useRef<string | null>(null);
+  const pendingShipping = useRef<{ key: string; payload: string } | null>(null);
+  const policyAccess = client.shippingPolicyAccess;
+  const [policyAttempt, setPolicyAttempt] = useState(0);
+  const [policyResult, setPolicyResult] = useState<{
+    access: typeof policyAccess;
+    attempt: number;
+    policy: ShippingPolicySnapshot | null;
+  } | null>(null);
+  const [serverMinimum, setServerMinimum] = useState<ShippingMinimumSnapshot | null>(null);
+  const minimumRevision = useRef(0);
+  const policyLifetime = useRef(true);
 
   const handleShippingProblem = useCallback((error: unknown) => {
     const presented = presentFulfillmentProblem(error);
@@ -67,9 +84,44 @@ export function PrizeFulfillmentDialog({
   const actionItems = useMemo(() => action ? actionablePrizes(selectedItems, action) : [], [action, selectedItems]);
   const prizeIds = useMemo(() => actionItems.map((item) => item.id), [actionItems]);
   const exchangeEstimate = useMemo(
-    () => actionItems.reduce((total, item) => total + item.exchange_points, 0),
-    [actionItems],
+    () => action === "point_exchange" ? actionItems.reduce((total, item) => total + item.exchange_points, 0) : 0,
+    [action, actionItems],
   );
+  const selectedTotal = useMemo(() => shippingTotal(selectedItems), [selectedItems]);
+  const currentPolicy = policyResult?.attempt === policyAttempt && policyResult.access === policyAccess ? policyResult : null;
+  const requiredTotal = currentPolicy?.policy ? shippingRequirement(currentPolicy.policy) : null;
+  const shippingAllowed = selectedTotal !== null && selectedTotal > 0n && requiredTotal !== null && selectedTotal >= requiredTotal && !serverMinimum;
+
+  useEffect(() => {
+    if (action !== "shipping") return;
+    const controller = new AbortController();
+    let active = true;
+    policyLifetime.current = true;
+    void Promise.resolve()
+      .then(() => {
+        if (!active || !policyLifetime.current) return null;
+        if (!policyAccess) throw new Error("Shipping policy contract unavailable");
+        return policyAccess.load(controller.signal);
+      })
+      .then((policy) => {
+        if (!active || !policyLifetime.current) return;
+        if (!policy || shippingRequirement(policy) === null || policy.revision < minimumRevision.current) {
+          throw new Error("Invalid shipping policy");
+        }
+        minimumRevision.current = policy.revision;
+        setPolicyResult({ access: policyAccess, attempt: policyAttempt, policy });
+        // A same-revision policy read cannot invalidate the Server's prize total.
+        setServerMinimum((minimum) => minimum?.setting_revision === policy.revision ? minimum : null);
+      })
+      .catch((error: unknown) => {
+        if (!active || !policyLifetime.current) return;
+        handleShippingProblem(error);
+        setPolicyResult({ access: policyAccess, attempt: policyAttempt, policy: null });
+      });
+    return () => { active = false; controller.abort(); };
+  }, [action, policyAccess, policyAttempt, handleShippingProblem]);
+
+  useEffect(() => () => { policyLifetime.current = false; }, []);
 
   async function refreshAddresses(preferredId?: string) {
     const { data } = await client.listShippingAddresses();
@@ -109,6 +161,7 @@ export function PrizeFulfillmentDialog({
   }, [action, client, handleShippingProblem]);
 
   function closeDialog() {
+    policyLifetime.current = false;
     pendingExchange.current = null;
     pendingShipping.current = null;
     submittingRef.current = false;
@@ -120,8 +173,6 @@ export function PrizeFulfillmentDialog({
     setSubmitting(false);
     onClose();
   }
-
-  if (!action) return null;
 
   async function reconcileReads(shipping?: ShippingRequestSummary) {
     const reads: Promise<unknown>[] = [
@@ -158,9 +209,10 @@ export function PrizeFulfillmentDialog({
   }
 
   async function ship() {
-    if (prizeIds.length === 0 || !selectedAddressId || submittingRef.current) return;
-    const key = pendingShipping.current ?? createFulfillmentIdempotencyKey();
-    pendingShipping.current = key;
+    if (!shippingAllowed || prizeIds.length === 0 || !selectedAddressId || submittingRef.current) return;
+    const payload = JSON.stringify([selectedAddressId, prizeIds]);
+    const key = pendingShipping.current?.payload === payload ? pendingShipping.current.key : createFulfillmentIdempotencyKey();
+    pendingShipping.current = { key, payload };
     submittingRef.current = true;
     setSubmitting(true);
     setProblem(null);
@@ -170,6 +222,17 @@ export function PrizeFulfillmentDialog({
       pendingShipping.current = null;
       setSuccess(`発送依頼を受け付けました。受付番号: ${data.id}`);
     } catch (error) {
+      if (!policyLifetime.current) return;
+      const minimum = policyAccess?.minimumRejection(error);
+      if (minimum) {
+        pendingShipping.current = null;
+        if (validShippingMinimum(minimum) && minimum.setting_revision >= minimumRevision.current) {
+          minimumRevision.current = minimum.setting_revision;
+          setServerMinimum(minimum);
+        }
+        setPolicyAttempt((attempt) => attempt + 1);
+        return;
+      }
       const presented = handleShippingProblem(error);
       if (!presented) return;
       setProblem(presented.message);
@@ -317,10 +380,32 @@ export function PrizeFulfillmentDialog({
                 )}
               </div>
             )}
+            {action === "shipping" && (
+              <>
+                {!serverMinimum && <p>選択中の合計：{selectedTotal === null ? "確認できません" : `${selectedTotal.toLocaleString("ja-JP")}コイン`}</p>}
+                {!serverMinimum && requiredTotal !== null && <p>発送に必要な合計：{requiredTotal.toLocaleString("ja-JP")}コイン</p>}
+                {!currentPolicy ? <p role="status">発送条件を読み込み中…</p> : !currentPolicy.policy ? (
+                  <div className="fulfillment-dialog__error" role="alert">
+                    <p>発送条件を取得できませんでした。再読み込みしてから発送してください。</p>
+                    <button className="button button--ghost" disabled={submitting} onClick={() => setPolicyAttempt((attempt) => attempt + 1)} type="button">発送条件を再読み込み</button>
+                  </div>
+                ) : null}
+                {selectedTotal === null && <p className="fulfillment-dialog__error" role="alert">景品の合計を確認できません。最新の景品情報を確認してください。</p>}
+                {serverMinimum ? (
+                  <div className="fulfillment-dialog__error" role="alert">
+                    <p>選択中の合計：{BigInt(serverMinimum.selected_total_points).toLocaleString("ja-JP")}コイン</p>
+                    <p>発送に必要な合計：{BigInt(serverMinimum.effective_required_points).toLocaleString("ja-JP")}コイン</p>
+                    <p>{shippingMinimumMessage(BigInt(serverMinimum.shortfall_points))}</p>
+                  </div>
+                ) : selectedTotal !== null && requiredTotal !== null && !shippingAllowed && (
+                  <p className="fulfillment-dialog__error" role="alert">{shippingMinimumMessage(shippingShortfall(selectedTotal, requiredTotal))}</p>
+                )}
+              </>
+            )}
             {problem && <p className="fulfillment-dialog__error" role="alert">{problem}</p>}
             <div className="dialog-card__actions">
               <button className="button button--ghost" disabled={submitting} onClick={closeDialog} type="button">キャンセル</button>
-              <button className="button button--dark" disabled={submitting || prizeIds.length === 0 || action === "shipping" && !selectedAddressId} onClick={() => void (action === "shipping" ? ship() : exchange())} type="button">
+              <button className="button button--dark" disabled={submitting || prizeIds.length === 0 || action === "shipping" && (!selectedAddressId || !shippingAllowed)} onClick={() => void (action === "shipping" ? ship() : exchange())} type="button">
                 {submitting ? "確認中…" : action === "shipping" ? "発送を依頼する" : "コインに交換する"}
               </button>
             </div>
