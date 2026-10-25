@@ -108,8 +108,10 @@ function FulfillmentDialog({
         if (shippingRequirement(policy) === null || policy.revision < minimumRevision.current) {
           throw new Error("Invalid shipping policy");
         }
+        minimumRevision.current = policy.revision;
         setPolicyResult({ access: policyAccess, attempt: policyAttempt, policy });
-        setServerMinimum(null);
+        // A same-revision policy read cannot invalidate the Server's prize total.
+        setServerMinimum((minimum) => minimum?.setting_revision === policy.revision ? minimum : null);
       })
       .catch((error: unknown) => {
         if (!active || !policyLifetime.current) return;
@@ -222,10 +224,12 @@ function FulfillmentDialog({
     } catch (error) {
       if (!policyLifetime.current) return;
       const minimum = policyAccess?.minimumRejection(error);
-      if (minimum && validShippingMinimum(minimum)) {
+      if (minimum) {
         pendingShipping.current = null;
-        minimumRevision.current = minimum.setting_revision;
-        setServerMinimum(minimum);
+        if (validShippingMinimum(minimum) && minimum.setting_revision >= minimumRevision.current) {
+          minimumRevision.current = minimum.setting_revision;
+          setServerMinimum(minimum);
+        }
         setPolicyAttempt((attempt) => attempt + 1);
         return;
       }

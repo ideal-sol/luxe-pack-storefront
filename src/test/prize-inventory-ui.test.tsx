@@ -88,6 +88,8 @@ const pointOnly = prize({
 
 function client(overrides: Partial<PrizeFulfillmentAdapter> = {}): PrizeFulfillmentAdapter {
   return {
+    shippingPolicyAccess: policyAccess(),
+    getShippingPolicy: vi.fn().mockResolvedValue(response(policy("0"))),
     createShippingAddress: vi.fn(),
     createShippingRequest: vi.fn(),
     deleteShippingAddress: vi.fn(),
@@ -149,8 +151,8 @@ describe("prize inventory UI", () => {
     expect(fulfillment.createShippingRequest).not.toHaveBeenCalled();
   });
 
-  it("retains selection and the existing dialog while the official policy Client is unavailable", async () => {
-    const fulfillment = client();
+  it("retains selection and the existing dialog while the official policy API is unavailable", async () => {
+    const fulfillment = client({ shippingPolicyAccess: { ...policyAccess(), load: vi.fn().mockRejectedValue(new Error("offline")) } });
     renderInventory(fulfillment);
     fireEvent.click(await screen.findByRole("checkbox", { name: "両方可能な景品を選択" }));
     fireEvent.click(screen.getByRole("button", { name: "発送を依頼" }));

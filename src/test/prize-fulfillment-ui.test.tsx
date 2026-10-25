@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ApiProblemError, StorefrontTransportError } from "@oripa/storefront-client";
-import { PUBLIC_SHIPPING_REQUEST_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
+import { PUBLIC_SHIPPING_REQUEST_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE, SHIPPING_MINIMUM_PROBLEM_FIXTURE } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { PrizeFulfillmentDialog } from "@/components/prizes/prize-fulfillment";
 import { deferred, policy, policyAccess } from "./fixtures/shipping-policy";
@@ -47,6 +47,7 @@ function response<T>(data: T) {
 function client(overrides: Partial<PrizeFulfillmentAdapter> = {}): PrizeFulfillmentAdapter {
   return {
     shippingPolicyAccess: policyAccess(),
+    getShippingPolicy: vi.fn().mockResolvedValue(response(policy("0"))),
     createShippingAddress: vi.fn().mockResolvedValue(response(address)),
     createShippingRequest: vi.fn().mockResolvedValue(response(shippingRequest)),
     deleteShippingAddress: vi.fn().mockResolvedValue(response({ deleted: true as const })),
@@ -72,7 +73,7 @@ function client(overrides: Partial<PrizeFulfillmentAdapter> = {}): PrizeFulfillm
     listShippingRequests: vi.fn().mockResolvedValue(response({ items: [shippingRequest], next_cursor: null })),
     updateShippingAddress: vi.fn().mockResolvedValue(response(address)),
     ...overrides,
-  } as PrizeFulfillmentAdapter;
+  };
 }
 
 function fulfillmentProblem(code: string, retryable: boolean) {
@@ -175,9 +176,8 @@ describe("prize fulfillment UI", () => {
     expect(fulfillment.createShippingRequest).not.toHaveBeenCalled();
   });
 
-  it("fails closed without the unpublished policy integration", async () => {
-    const { shippingPolicyAccess, ...fulfillment } = client();
-    expect(shippingPolicyAccess).toBeDefined();
+  it("fails closed when the published policy API is unavailable", async () => {
+    const fulfillment = client({ shippingPolicyAccess: { ...policyAccess(), load: vi.fn().mockRejectedValue(new Error("unavailable")) } });
     renderDialog("shipping", fulfillment);
     expect(await screen.findByRole("alert")).toHaveTextContent("発送条件を取得できませんでした");
     expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeDisabled();
@@ -192,10 +192,10 @@ describe("prize fulfillment UI", () => {
 
   it("presents a validated server minimum rejection, reloads policy and preserves address and selection", async () => {
     const pending = deferred<ShippingPolicySnapshot>();
-    const rejection = { minimum_points: "7000", effective_required_points: "7000", selected_total_points: "5000", shortfall_points: "2000", setting_revision: 2 };
-    const error = fulfillmentProblem("SHIPPING_MINIMUM_POINTS_NOT_MET", false);
+    const rejection = { ...SHIPPING_MINIMUM_PROBLEM_FIXTURE, minimum_points: "7000", effective_required_points: "7000", selected_total_points: "5000" };
+    const error = new ApiProblemError({ ...rejection, detail: "このdetailは画面へ表示してはいけません。" });
     const load = vi.fn().mockResolvedValueOnce(policy()).mockReturnValueOnce(pending.promise);
-    const minimumRejection = vi.fn((caught: unknown) => caught === error ? rejection : null);
+    const minimumRejection = policyAccess().minimumRejection;
     const fulfillment = client({ shippingPolicyAccess: { load, minimumRejection }, createShippingRequest: vi.fn().mockRejectedValue(error),
       listShippingAddresses: vi.fn().mockResolvedValue(response({ items: [addressSummary, { ...addressSummary, id: "second-address" }] })),
     });
@@ -219,10 +219,10 @@ describe("prize fulfillment UI", () => {
   });
 
   it("does not trust a policy older than the server rejection, including after a failed reload", async () => {
-    const error = fulfillmentProblem("SHIPPING_MINIMUM_POINTS_NOT_MET", false);
-    const rejection = { minimum_points: "7000", effective_required_points: "7000", selected_total_points: "5000", shortfall_points: "2000", setting_revision: 2 };
+    const rejection = { ...SHIPPING_MINIMUM_PROBLEM_FIXTURE, minimum_points: "7000", effective_required_points: "7000", selected_total_points: "5000" };
+    const error = new ApiProblemError(rejection);
     const load = vi.fn().mockResolvedValueOnce(policy()).mockResolvedValueOnce(policy()).mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce(policy("7000", 2));
-    const fulfillment = client({ shippingPolicyAccess: { load, minimumRejection: () => rejection }, createShippingRequest: vi.fn().mockRejectedValue(error) });
+    const fulfillment = client({ shippingPolicyAccess: { load, minimumRejection: policyAccess().minimumRejection }, createShippingRequest: vi.fn().mockRejectedValue(error) });
     renderDialog("shipping", fulfillment, [{ ...prize, exchange_points: 5000 }]);
     await waitFor(() => expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
@@ -249,6 +249,55 @@ describe("prize fulfillment UI", () => {
     expect(createShippingRequest).toHaveBeenCalledTimes(2);
     expect(createShippingRequest.mock.calls[0]).toEqual(createShippingRequest.mock.calls[1]);
     expect(fulfillment.shippingPolicyAccess?.load).toHaveBeenCalledOnce();
+  });
+
+  it("uses a new idempotency key when the address payload changes after an uncertain result", async () => {
+    const createShippingRequest = vi.fn().mockRejectedValueOnce(new StorefrontTransportError("NETWORK_ERROR", "unknown outcome")).mockResolvedValueOnce(response(shippingRequest));
+    const fulfillment = client({ createShippingRequest, listShippingAddresses: vi.fn().mockResolvedValue(response({
+      items: [addressSummary, { ...addressSummary, id: "second-address" }],
+    })) });
+    renderDialog("shipping", fulfillment);
+    await waitFor(() => expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
+    await screen.findByText("手続きが完了しました");
+    expect(createShippingRequest).toHaveBeenCalledTimes(2);
+    expect(createShippingRequest.mock.calls[0]?.[0]).toBe(address.id);
+    expect(createShippingRequest.mock.calls[1]?.[0]).toBe("second-address");
+    expect(createShippingRequest.mock.calls[0]?.[2].idempotency_key).not.toBe(createShippingRequest.mock.calls[1]?.[2].idempotency_key);
+  });
+
+  it("rejects policy and minimum errors older than an already accepted revision", async () => {
+    const oldError = new ApiProblemError(SHIPPING_MINIMUM_PROBLEM_FIXTURE);
+    const load = vi.fn().mockResolvedValueOnce(policy("5000", 3)).mockResolvedValueOnce(policy("10000", 2)).mockResolvedValueOnce(policy("5000", 3));
+    const fulfillment = client({ shippingPolicyAccess: { load, minimumRejection: policyAccess().minimumRejection }, createShippingRequest: vi.fn().mockRejectedValue(oldError) });
+    renderDialog("shipping", fulfillment, [{ ...prize, exchange_points: 5000 }]);
+    await waitFor(() => expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("発送条件を取得できませんでした");
+    expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeDisabled();
+    expect(screen.queryByText(/あと2,000コイン分/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "発送条件を再読み込み" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
+    expect(fulfillment.createShippingRequest).toHaveBeenCalledOnce();
+    expect(load).toHaveBeenCalledTimes(3);
+    expect(screen.getByRole("radio")).toBeChecked();
+  });
+
+  it("retains the safe Server shortage when the current prize snapshot overstates the total", async () => {
+    const error = new ApiProblemError(SHIPPING_MINIMUM_PROBLEM_FIXTURE);
+    const load = vi.fn().mockResolvedValueOnce(policy("5000", 1)).mockResolvedValueOnce(policy("10000", 2));
+    const fulfillment = client({ shippingPolicyAccess: { load, minimumRejection: policyAccess().minimumRejection }, createShippingRequest: vi.fn().mockRejectedValue(error) });
+    renderDialog("shipping", fulfillment, [{ ...prize, exchange_points: 12000 }]);
+    await waitFor(() => expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
+    await waitFor(() => expect(load).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole("alert")).toHaveTextContent("選択中の合計：8,000コイン");
+    expect(screen.getByRole("alert")).toHaveTextContent("あと2,000コイン分");
+    expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeDisabled();
+    expect(fulfillment.createShippingRequest).toHaveBeenCalledOnce();
   });
 
   it("ignores an old source response and responses after closing or unmounting", async () => {

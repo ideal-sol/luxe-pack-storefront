@@ -1,3 +1,106 @@
+# SITE-SHIPPINGMIN-20261023 — formal alpha.46 integration handoff
+
+R3 / Strict Change. PR #178 remains **Draft**. Ready, Source Merge, auto-merge,
+Preview Activation and Production Activation are not authorized for this task.
+Application Runtime Activation is deferred; Runtime / OLD Test / Production /
+Platform Source changes: **0**. The historical publication HOLD below is resolved
+by the immutable published alpha.46 artifact, not by promoting a candidate.
+
+## Storefront and Platform authority
+
+Stage A PR #180 was explicitly approved and Squash Merged by Human instruction.
+Reviewed HEAD `78c48077a537eec367cf8501b7f8db5230f7d5d1`, reviewed Tree
+`3d2baf03d1b59aaa52fb3a7de81e3a148ca2934c`.
+Actual Squash Merge `99ed66db95bf6fdcd9a22b60d259bbb33e564a3a`, Merge Tree
+`3d2baf03d1b59aaa52fb3a7de81e3a148ca2934c`; actor
+`ideal-sol-oripa-codex[bot]`. Reviewed/Merge trees equal, content diff 0 and
+protected main matched the actual Merge SHA before starting Stage B.
+Its five Required Checks and fresh canonical machine-readable self-review passed
+(SEV-0 = 0, SEV-1 = 0). Stage B non-destructively merges that main into the
+existing PR #178 branch, preserving the earlier UI and tests. No force push.
+Next.js 16.4.2, React 19.2.8, sharp 0.35.5, scoped zod 4.6.6 and undici 8.12.2
+resolutions remain intact. PR #179 Source, branch, worktree and PR are untouched.
+
+Formal Platform Ledger:
+`3592fcdc8e43467c3dd67d2677ec52b7d328eb77` (26 immutable entries,
+latest_immutable alpha.46, candidate null).
+Published Source `1d2b0d8ff8193d55173f5bf6978a41f3dfebf7ac`.
+[Canonical artifact](https://github.com/ideal-sol/oripa/actions/runs/40162277779/artifacts/12586773046),
+run 40162277779, attempt 1, artifact ID 12586773046.
+
+- Outer ZIP SHA-256: `fb4bc9f64b0810e3efae8aaa85252b8fa86ec8c5fd03fb361459c5a627bca275`.
+- Manifest: `a55f578a94af700e68f0cd0d8eed0e18fb3867ec3be5e0ac0c8639a173cf2b26`.
+- Client: `08bbfe84dd8e57fb69ba4578cbd1d63e711a0a579996821ecbec6bd5a6133a3f`.
+- Testkit: `f4e324b859d1d96d66e78c9c1adf16616f132e4b114b10a2af4e9e5fe5a5de83`.
+- Public OpenAPI: `81ee96478ee3d80539817b54321f9f6d181c2a78a3dae2062527dd81049dcec4`.
+- SHA256SUMS: `0377250f61bb15420fb58e0ab4b572289ded5a69407e48d43195fb4128c23372`.
+
+The official ZIP bytes and all five inner files were verified. Client/Testkit
+package metadata, runtime header version and dependency compatibility are checked
+by artifact verification and Contract tests. New immutable vendor directory:
+`vendor/oripa/SHIPPINGMIN-20261023`. Exact file pins are Client and Testkit
+2.0.0-alpha.46, including the Client override. Public OpenAPI is alpha.42 / 84
+operations; Site Schema remains the same referenced alpha.23 in MIG-063B.
+No older vendor file is overwritten or deleted. The alpha.46 generated availability
+reason enum adds three values; the existing exhaustive label maps reuse the
+current generic eligibility message/button label for these values, with three
+regression cases. This is type compatibility only, with no new eligibility logic
+or layout. Production authority and its
+workflow stay alpha.45; upgraded development Source is deliberately rejected by
+that unchanged authority until a separate future approval. Its regression test
+now asserts that rejection instead of claiming new Source is Production-approved.
+
+## Typed shipping integration and unchanged UI
+
+`ShippingPolicySnapshot` uses generated `ShippingPolicy`; the minimum snapshot
+picks generated `ShippingMinimumPointsProblem` fields. The required
+`ShippingPolicyAccess` is provided by the canonical Browser Client:
+`getShippingPolicy(signal)` and `isShippingMinimumPointsProblemError(error)`.
+Only named safe decimal/revision fields leave the error adapter; detail/title
+are never rendered. No direct fetch, HTTP client/proxy, any or forced cast.
+GET preserves the Session/SMS contract and caller AbortSignal. The endpoint
+no-store policy is verified against the immutable OpenAPI; mock reads do not
+prove deployed response cache headers. Runtime verification remains deferred.
+
+The existing `/mypage/prizes` selection, confirmation dialog, buttons, warning
+CSS and Coin terminology stay intact. No CSS, page, modal or selection-rule
+change. Backend-allowed shipping candidates alone contribute to BigInt totals;
+invalid snapshot/policy values fail closed. The Server effective requirement is
+used without Number conversion; zero-only selections remain blocked.
+
+Policy loading/reload, canceled/obsolete responses, a monotonic accepted/rejected
+revision floor, typed 409 refresh, safe shortage presentation and preserved
+address/selection are verified. No 409 auto-resend. A network-uncertain mutation
+keeps its key for an identical payload; changed address/prize payloads get a new
+key. SMS/CSRF, address edit/delete/reconciliation and Coin exchange retain their
+existing authority and flow. Official Testkit SHIPPING_POLICY_FIXTURES and
+SHIPPING_MINIMUM_PROBLEM_FIXTURE replace provisional contract assumptions.
+
+## Verification evidence and remaining acceptance
+
+Exact final HEAD/Tree, changed paths, test counts, CI run URLs, Security Audit
+counts and fixed-head machine-readable self-review are recorded in the updated
+[PR #178](https://github.com/ideal-sol/luxe-pack-storefront/pull/178) after the
+last commit; they are the final validation authority. Required Checks remain
+policy-gate, quality-gate, security-gate, integration-gate and ci-gate.
+The completion status is SITE_SHIPPINGMIN_ALPHA46_INTEGRATED_DRAFT_READY_MERGE_HOLD
+only when all five checks and fresh review pass at that final HEAD. A failure
+remains SITE_SHIPPINGMIN_ALPHA46_INTEGRATION_HOLD; no gate or exception is relaxed.
+
+UI/Contract mocks are Source evidence. Deployed Preview Runtime Acceptance and
+login-required Human Browser Acceptance are **NOT RUN**, awaiting separate
+Activation approval. Human acceptance should cover shortage/exact/above/zero,
+reopening with added prizes, live setting changes, network retries, SMS/address
+behavior, keyboard alert announcement and mobile overflow. Draft-only Source
+completion does not authorize PR #178 Ready/Merge or Runtime Activation.
+
+## Historical HOLD record — superseded authority and provisional implementation
+
+The original handoff is retained below as history. Its alpha.46-pending and
+Security-HOLD statements describe the earlier saved HEAD, not current authority.
+
+---
+
 # SITE-SHIPPINGMIN-20261023 — shipping minimum handoff
 
 Status: **SITE_SHIPPINGMIN_CONTRACT_HOLD**. R3 / Strict Change. Keep the PR Draft;

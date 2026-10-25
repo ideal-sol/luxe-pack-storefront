@@ -1,21 +1,13 @@
-/** UI port only. Wire to the canonical Client after formal alpha.46 publication. */
-export interface ShippingPolicySnapshot {
-  readonly minimum_points: string;
-  readonly effective_required_points: string;
-  readonly revision: number;
-  readonly zero_total_allowed: false;
-}
+import type { PublicComponents } from "@oripa/storefront-client";
 
-export interface ShippingMinimumSnapshot {
-  readonly minimum_points: string;
-  readonly effective_required_points: string;
-  readonly selected_total_points: string;
-  readonly shortfall_points: string;
-  readonly setting_revision: number;
-}
+type Schemas = PublicComponents["schemas"];
+
+export type ShippingPolicySnapshot = Schemas["ShippingPolicy"];
+export type ShippingMinimumSnapshot = Pick<Schemas["ShippingMinimumPointsProblem"],
+  "minimum_points" | "effective_required_points" | "selected_total_points" | "shortfall_points" | "setting_revision">;
 
 export interface ShippingPolicyAccess {
   readonly load: (signal: AbortSignal) => Promise<ShippingPolicySnapshot>;
-  /** Future adapter must use isShippingMinimumPointsProblemError, never raw detail. */
+  /** Only typed, safe Server fields; never raw detail. */
   readonly minimumRejection: (error: unknown) => ShippingMinimumSnapshot | null;
 }

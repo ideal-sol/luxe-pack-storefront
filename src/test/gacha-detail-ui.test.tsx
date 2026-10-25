@@ -276,6 +276,9 @@ describe("gacha detail UI", () => {
   it.each([
     ["coming_soon", "sale_not_started", "販売開始前", "販売開始前"],
     ["on_sale", "audience_not_eligible", "販売中", "対象外"],
+    ["on_sale", "member_rank_not_eligible", "販売中", "対象外"],
+    ["on_sale", "purchase_count_not_eligible", "販売中", "対象外"],
+    ["on_sale", "purchase_amount_not_eligible", "販売中", "対象外"],
     ["sold_out", "sold_out", "完売", "SOLD OUT"],
     ["ended", "sale_ended", "販売終了", "販売終了"],
   ] as const)("renders the %s Backend sale state and its fixed disabled tray", async (saleState, reason, label, actionLabel) => {

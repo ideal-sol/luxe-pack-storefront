@@ -2,6 +2,7 @@ import {
   FULFILLMENT_MUTATION_RETRY_SEMANTICS,
   createIdempotencyKey,
   isFulfillmentProblemError,
+  isShippingMinimumPointsProblemError,
   type BrowserStorefrontPrizeShippingClient,
   type FulfillmentProblemCode,
   type PublicComponents,
@@ -33,8 +34,7 @@ export type PrizeExchangeResponse = Schemas["PrizeExchangeResponse"];
 export type StorefrontFulfillmentProblemCode = FulfillmentProblemCode;
 
 export type PrizeFulfillmentAdapter = BrowserStorefrontPrizeShippingClient & {
-  /** Absent on alpha.45: shipping stays blocked until the formal Client is adopted. */
-  readonly shippingPolicyAccess?: ShippingPolicyAccess;
+  readonly shippingPolicyAccess: ShippingPolicyAccess;
 };
 export type PrizeInventoryAdapter = Pick<PrizeFulfillmentAdapter, "getPrize" | "listPrizes">;
 
@@ -42,13 +42,26 @@ export function createBrowserPrizeInventoryClient(
   configuration: PlatformRuntimeConfiguration = readPlatformRuntimeConfiguration(),
   overrides: BrowserClientOverrides = {},
 ): PrizeFulfillmentAdapter {
-  return createBrowserStorefrontPrizeShippingClient({
+  const client = createBrowserStorefrontPrizeShippingClient({
     base_url: configuration.baseUrl,
     default_timeout_ms: configuration.defaultTimeoutMs,
     site_version: configuration.siteVersion,
     ...overrides,
     fetch: overrides.fetch ?? callGlobalFetch,
   });
+  return {
+    ...client,
+    shippingPolicyAccess: {
+      load: async (signal) => (await client.getShippingPolicy(signal)).data,
+      minimumRejection: (error) => isShippingMinimumPointsProblemError(error) ? {
+        minimum_points: error.minimum_points,
+        effective_required_points: error.effective_required_points,
+        selected_total_points: error.selected_total_points,
+        shortfall_points: error.shortfall_points,
+        setting_revision: error.setting_revision,
+      } : null,
+    },
+  };
 }
 
 export {
