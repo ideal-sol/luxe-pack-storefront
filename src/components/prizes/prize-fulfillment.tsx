@@ -382,8 +382,8 @@ function FulfillmentDialog({
             )}
             {action === "shipping" && (
               <>
-                <p>選択中の合計：{selectedTotal === null ? "確認できません" : `${selectedTotal.toLocaleString("ja-JP")}コイン`}</p>
-                {requiredTotal !== null && <p>発送に必要な合計：{requiredTotal.toLocaleString("ja-JP")}コイン</p>}
+                {!serverMinimum && <p>選択中の合計：{selectedTotal === null ? "確認できません" : `${selectedTotal.toLocaleString("ja-JP")}コイン`}</p>}
+                {!serverMinimum && requiredTotal !== null && <p>発送に必要な合計：{requiredTotal.toLocaleString("ja-JP")}コイン</p>}
                 {!currentPolicy ? <p role="status">発送条件を読み込み中…</p> : !currentPolicy.policy ? (
                   <div className="fulfillment-dialog__error" role="alert">
                     <p>発送条件を取得できませんでした。再読み込みしてから発送してください。</p>

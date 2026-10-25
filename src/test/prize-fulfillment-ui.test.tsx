@@ -224,6 +224,7 @@ describe("prize fulfillment UI", () => {
     expect(minimumRejection).toHaveBeenCalledWith(error);
     await act(async () => pending.resolve(policy("7000", 2)));
     expect(screen.getByRole("alert")).toHaveTextContent("あと2,000コイン分");
+    expect(screen.queryByText("選択中の合計：12,000コイン")).not.toBeInTheDocument();
     expect(screen.getAllByRole("radio")[1]).toBeChecked();
     expect(fulfillment.listShippingAddresses).toHaveBeenCalledOnce();
     expect(fulfillment.createShippingRequest).toHaveBeenCalledOnce();
