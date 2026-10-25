@@ -104,8 +104,8 @@ function FulfillmentDialog({
         return policyAccess.load(controller.signal);
       })
       .then((policy) => {
-        if (!active || !policyLifetime.current || !policy) return;
-        if (shippingRequirement(policy) === null || policy.revision < minimumRevision.current) {
+        if (!active || !policyLifetime.current) return;
+        if (!policy || shippingRequirement(policy) === null || policy.revision < minimumRevision.current) {
           throw new Error("Invalid shipping policy");
         }
         minimumRevision.current = policy.revision;

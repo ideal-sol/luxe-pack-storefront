@@ -184,6 +184,18 @@ describe("prize fulfillment UI", () => {
     expect(fulfillment.createShippingRequest).not.toHaveBeenCalled();
   });
 
+  it("offers a safe reload for a missing policy response instead of staying in loading", async () => {
+    const load = vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(policy("0"));
+    const fulfillment = client({ shippingPolicyAccess: { ...policyAccess(), load } });
+    renderDialog("shipping", fulfillment);
+    expect(await screen.findByRole("alert")).toHaveTextContent("発送条件を取得できませんでした");
+    expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "発送条件を再読み込み" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
+    expect(load).toHaveBeenCalledTimes(2);
+    expect(fulfillment.createShippingRequest).not.toHaveBeenCalled();
+  });
+
   it.each(["01", "0", "9007199254740992"])("keeps an invalid effective requirement %s blocked", async (effective) => {
     renderDialog("shipping", client({ shippingPolicyAccess: policyAccess({ ...policy(), effective_required_points: effective }) }));
     expect(await screen.findByRole("alert")).toHaveTextContent("発送条件を取得できませんでした");
