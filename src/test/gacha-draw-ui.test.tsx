@@ -125,7 +125,9 @@ describe("Gacha Draw execution UI", () => {
   });
 
   it("creates a new key after changing to a new operation", async () => {
-    const pointProblem = new ApiProblemError(PUBLIC_DRAW_PROBLEM_FIXTURES[0]);
+    const pointFixture = PUBLIC_DRAW_PROBLEM_FIXTURES.find((problem) => problem.code === "INSUFFICIENT_POINTS");
+    if (!pointFixture) throw new Error("Canonical insufficient-points fixture is missing");
+    const pointProblem = new ApiProblemError(pointFixture);
     const createDraw = vi.fn()
       .mockRejectedValueOnce(pointProblem)
       .mockResolvedValueOnce(response(drawResponse));
