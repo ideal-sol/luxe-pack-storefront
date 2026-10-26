@@ -56,7 +56,21 @@ function problem(code: string, status: number, retryAfterSeconds?: number) {
   });
 }
 
+type DataLayerWindow = Window & { dataLayer?: unknown[] };
+
+function registrationEvents() {
+  return ((window as DataLayerWindow).dataLayer ?? []).filter((entry) => (entry as { event?: string }).event === "registration_complete");
+}
+
 describe("SMS phone ownership verification UI", () => {
+  beforeEach(() => {
+    delete (window as DataLayerWindow).dataLayer;
+    window.localStorage.clear();
+    vi.stubEnv("NEXT_PUBLIC_GTM_ID", "GTM-TEST0001");
+  });
+
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); delete (window as DataLayerWindow).dataLayer; });
+
   it.each([
     ["07012345678", "07012345678"],
     ["080-1234-5678", "08012345678"],
@@ -68,7 +82,21 @@ describe("SMS phone ownership verification UI", () => {
     expect(normalizeJapaneseMobilePhone(input)).toBe(expected);
   });
 
-  it("completes initial verification only after provider acceptance", async () => {
+  it.each(["configured", "configured-normal", "unset", "invalid", "storage-getter-denied", "storage-read-denied", "storage-write-denied", "malformed-layer", "frozen-layer", "throwing-layer", "throwing-push"])(
+    "completes initial verification and preregistration callback despite analytics state: %s", async (mode) => {
+    if (mode === "unset") vi.stubEnv("NEXT_PUBLIC_GTM_ID", undefined);
+    if (mode === "invalid") vi.stubEnv("NEXT_PUBLIC_GTM_ID", "invalid");
+    if (mode === "storage-getter-denied") vi.spyOn(window, "localStorage", "get").mockImplementation(() => { throw new Error("storage denied"); });
+    if (mode === "storage-read-denied") vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("read denied"); });
+    if (mode === "storage-write-denied") vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("write denied"); });
+    if (mode === "malformed-layer") Object.defineProperty(window, "dataLayer", { configurable: true, value: {} });
+    if (mode === "frozen-layer") Object.defineProperty(window, "dataLayer", { configurable: true, value: Object.freeze([]) });
+    if (mode === "throwing-layer") Object.defineProperty(window, "dataLayer", { configurable: true, get() { throw new Error("layer denied"); } });
+    if (mode === "throwing-push") {
+      const layer: unknown[] = [];
+      vi.spyOn(layer, "push").mockImplementation(() => { throw new Error("push failed"); });
+      Object.defineProperty(window, "dataLayer", { configurable: true, value: layer });
+    }
     const accepted = {
       ...PUBLIC_SMS_VERIFICATION_FIXTURES.accepted,
       challenge: {
@@ -82,7 +110,10 @@ describe("SMS phone ownership verification UI", () => {
       .mockResolvedValue(response(PUBLIC_SMS_VERIFICATION_FIXTURES.verified));
     const sendSmsVerification = vi.fn().mockResolvedValue(response(PUBLIC_SMS_VERIFICATION_FIXTURES.send_pending, 202));
     const verifySmsCode = vi.fn().mockResolvedValue(response(PUBLIC_SMS_VERIFICATION_FIXTURES.verified));
-    renderSms(authClient({ getSmsVerificationStatus, sendSmsVerification, verifySmsCode }));
+    const onVerified = vi.fn().mockResolvedValue(undefined);
+    render(<SessionProvider client={authClient({ getSmsVerificationStatus, sendSmsVerification, verifySmsCode })}>
+      <SmsVerification pollIntervalMs={10} preRegistration={mode !== "configured-normal"} onVerified={onVerified} />
+    </SessionProvider>);
 
     fireEvent.change(await screen.findByLabelText(/携帯電話番号/), { target: { value: "090-1234-5678" } });
     fireEvent.submit(screen.getByRole("button", { name: "認証コードを送信" }).closest("form")!);
@@ -101,6 +132,14 @@ describe("SMS phone ownership verification UI", () => {
     expect(await screen.findByRole("heading", { name: "SMS認証済み" })).toBeInTheDocument();
     expect(screen.getByText("090-1234-5678")).toBeInTheDocument();
     expect(verifySmsCode).toHaveBeenCalledWith({ challenge_id: accepted.challenge.id, code: "123456" }, {});
+    await waitFor(() => expect(onVerified).toHaveBeenCalled());
+    if (["configured", "configured-normal", "storage-getter-denied", "storage-read-denied", "storage-write-denied"].includes(mode)) {
+      expect(registrationEvents()).toEqual([{ event: "registration_complete" }]);
+    } else if (mode === "unset" || mode === "invalid") {
+      expect((window as DataLayerWindow).dataLayer).toBeUndefined();
+      expect(window.localStorage.length).toBe(0);
+    }
+    delete (window as DataLayerWindow).dataLayer;
   });
 
   it("shows safe delivery failure without claiming the SMS was sent", async () => {
@@ -139,6 +178,7 @@ describe("SMS phone ownership verification UI", () => {
     fireEvent.click(screen.getByRole("button", { name: "SMS認証を完了" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "電話番号を再入力" })).toBeEnabled());
     expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(registrationEvents()).toEqual([]);
 
     fireEvent.click(screen.getByRole("button", { name: "電話番号を再入力" }));
     expect(screen.getByLabelText(/携帯電話番号/)).toHaveValue("090-1234-5678");
@@ -338,6 +378,7 @@ describe("SMS phone ownership verification UI", () => {
     expect(screen.getByRole("heading", { name: "SMS認証済み" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "電話番号を変更する" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /削除/ })).not.toBeInTheDocument();
+    expect(registrationEvents()).toEqual([]);
   });
 
   it("requires Fresh Reauthentication for phone change and refreshes the rotated session", async () => {
@@ -383,6 +424,7 @@ describe("SMS phone ownership verification UI", () => {
     expect(await screen.findByText("080-1234-5678")).toBeInTheDocument();
     expect(screen.getByText("電話番号を変更しました。")).toBeInTheDocument();
     expect(verifySmsCode).toHaveBeenCalledWith({ challenge_id: accepted.challenge.id, code: "654321" }, {});
+    expect(registrationEvents()).toEqual([]);
   });
 
   it("prevents OTP submission until all six digits are present", async () => {

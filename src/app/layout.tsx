@@ -7,6 +7,7 @@ import { ToastProvider } from "@/components/common/toast-provider";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { PublicClientProvider } from "@/components/catalog/public-client-provider";
 import { brandIcons, usesBrandIcons } from "@/lib/brand-icons";
+import { GoogleTagManagerNoScript, GoogleTagManagerScript } from "@/components/analytics/google-tag-manager";
 import "@/styles/font-noto-sans-jp.css";
 import "@/styles/globals.css";
 import "@/styles/theme-oripoke.css";
@@ -31,7 +32,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ja">
+      <head><GoogleTagManagerScript /></head>
       <body>
+        <GoogleTagManagerNoScript />
         <Suspense fallback={null}><AdvertisingCapture /></Suspense>
         <ToastProvider>
           <SessionProvider>
