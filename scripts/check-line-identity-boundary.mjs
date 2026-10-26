@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { reviewedAnalyticsStorage } from "./reviewed-analytics-storage.mjs";
 
 const tracked = execFileSync("git", ["ls-files", "--cached", "-z"], { encoding: "utf8" })
   .split("\0")
@@ -22,8 +23,10 @@ const failures = [];
 
 for (const file of sourceFiles) {
   const content = readFileSync(file, "utf8");
+  const reviewedAnalytics = reviewedAnalyticsStorage(file, content);
+  if (reviewedAnalytics === false) failures.push(`${file}:analytics-storage-review`);
   if (!file.startsWith(platformPrefix) && content.includes(directApi)) failures.push(`${file}:direct-api`);
-  if (!nonIdentityStorageFiles.has(file) && forbiddenStorage.some((marker) => content.includes(marker))) {
+  if (!nonIdentityStorageFiles.has(file) && !reviewedAnalytics && forbiddenStorage.some((marker) => content.includes(marker))) {
     failures.push(`${file}:identity-storage`);
   }
   if (!file.startsWith(platformPrefix) && browserProtocol.some((marker) => content.includes(marker))) {

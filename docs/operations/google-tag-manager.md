@@ -36,11 +36,11 @@ unchanged. No payment-completion or other conversion event is added.
   or an accounting record. The short user-key hash is pseudonymous, not
   anonymization, and can collide. Concurrent tabs are not an atomic exactly-once
   guarantee. Do not advertise complete uniqueness.
-- The existing Auth boundary scanner initially rejected the patch's storage use.
-  Its authentication/session storage ban and existing checks remain in force.
+- The existing Auth and LINE Identity scanners rejected the patch's storage use.
+  Their authentication/session storage bans and existing checks remain in force.
   Only the exact SHA-256-pinned contents of this non-authentication marker helper
   and its two focused tests are recognized as reviewed analytics storage. Any
-  edits require renewed review and digest updates. Mutation tests reject added
+  edits require renewed review and digest updates. Sixteen focused boundary tests reject added
   arbitrary writes, unreviewed paths, direct API and browser-protocol leakage;
   there is no general analytics-directory or authentication-storage exemption.
 

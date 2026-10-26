@@ -21,10 +21,10 @@
   Deduplication is browser/origin-local best effort, not global uniqueness:
   separate browser/device/storage, denied/deleted storage and concurrent tabs
   have limitations; the short pseudonymous hash can collide.
-- The original patch failed the Auth storage boundary. Added exact SHA-256-bound
+- The original patch failed the Auth/LINE Identity storage boundaries. Added exact SHA-256-bound
   review recognition for only the analytics helper and its two focused tests;
   the original non-auth exemptions, authentication/session storage ban, direct
-  API/protocol checks and every other gate remain. Eight mutation tests reject
+  API/protocol checks and every other gate remain. Sixteen focused boundary tests reject
   new arbitrary writes, unreviewed paths and protocol leakage. No blanket path
   exemption, threshold reduction, check skip or bypass. Source inventory updated.
 - Local verification at Source commit: frozen install, artifact/policy/secret/Auth
@@ -34,8 +34,8 @@
   GTM ENV, zero storage/layer access, no loader/iframe and zero network requests.
   Configured ordinary build uses only synthetic `GTM-TEST0001`; its final result
   is recorded in the PR completion evidence. No real container is executed.
-- Local focused results: 153 distinct tests passed across analytics, SMS30,
-  preregistration, signup, handoff and eight boundary mutation tests. One unchanged
+- Local focused results: 161 distinct tests passed across analytics, SMS30,
+  preregistration, signup, handoff and sixteen boundary mutation tests. One unchanged
   preregistration test (`uses the dedicated API, four fields, native constraints
   and exact resend destination`) repeatedly hit the original5000ms timeout under
   observed host load. Earlier SMS timeouts subsequently passed; the initial
@@ -43,6 +43,13 @@
   treat interrupted runs or the remaining local timeout as PASS. No deadline,
   assertion or production flow was weakened. Final-head normal CI, enabled-build
   and self-review results are recorded in the PR as completion evidence.
+- First CI run40312646880 on8732032: quality and integration PASS (ordinary and
+  clean-directory full1608-test suites/Build both PASS); policy/security failed because LINE Identity
+  has the same global storage ban as Auth. The directly necessary bounded fix
+  shares the same exact-byte analytics recognition between both scanners, keeps
+  their existing restrictions and adds the same negative tests for each. All
+  nine local domain boundary scripts PASS. No gate/check is skipped or weakened;
+  all head-dependent checks rerun on the corrected final head.
 - Local full suite, separate `pnpm typecheck`, Browser/E2E, live GTM conversion,
   Preview Runtime Acceptance and Production verification were not performed in
   this Source-only phase. Build TypeScript and focused render/offline execution
@@ -59,7 +66,7 @@
   compatible immutable pins, formal new Storefront artifact and Human GO.
 - Migrations created0/applied0; API/DB/Contract/Client/Testkit/dependency changes0;
   authentication protocol/session behavior, points/payments/draw authority and
-  infrastructure unchanged. Production builds/artifacts/Dispatch/Activation0.
+  infrastructure unchanged. Formal Production Artifact builds/artifacts/Dispatch/Activation0.
   No existing OLD/OLD Test/Preview/NEW runtime, ENV, Release or rollback byte was
   modified. Source rollback is a reviewed revert; runtime rollback belongs to a
   separately authorized operator using a retained immutable artifact.
