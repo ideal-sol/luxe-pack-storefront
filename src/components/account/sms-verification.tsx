@@ -14,6 +14,7 @@ import {
 } from "@/lib/platform";
 import { formatVerifiedPhone, normalizeJapaneseMobilePhone } from "@/lib/presentation/phone";
 import { smsReturnDestination } from "@/lib/sms-return";
+import { reportRegistrationComplete } from "@/lib/analytics/gtm";
 
 type Stage = "phone" | "reauthentication" | "otp" | "verified";
 
@@ -255,8 +256,10 @@ export function SmsVerification({
     submittingRef.current = true;
     setSubmitting(true);
     setProblem(null);
+    const firstVerification = !status?.verified && !changingPhone;
     try {
       const verified = await verifySmsCode({ challenge_id: challenge.id, code });
+      if (firstVerification && verified.verified) reportRegistrationComplete(sessionUserId);
       setStatus(verified);
       setStage("verified");
       setCode("");

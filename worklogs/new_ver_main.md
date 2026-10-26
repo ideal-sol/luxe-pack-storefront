@@ -1,3 +1,80 @@
+## SITE-GTM-20261026 — GTM Source preparation / Draft only
+
+- Issue #185 tracks the durable Production integration / Human decision handoff.
+  R3 / Strict Change / Application Runtime Activation none. Dedicated branch
+  `feat/SITE-GTM-20261026` and isolated worktree; base/protected main
+  `00e10604ee262470a96f4c392d2c3b4f2511e98a`. Occupied worktrees remain untouched.
+  Human permits Source review, minimal corrections, focused tests, Draft PR and
+  self-review only. Ready, Merge, auto-merge, Authority changes, Dispatch, formal
+  Production artifact generation, ENV and all existing Runtime operations are
+  explicitly prohibited. Task policy permits only branch/Draft/review operations.
+- Supplied patch SHA-256
+  `96d3ce66a8f3a1e1adcbd5cdb12b9706c705de3779e5f7055b20b59986cf8912`;
+  `git apply --check` and application to the exact base succeeded. Conditional
+  root GTM Script/noscript and the initial-success SMS analytics hook are retained.
+  Corrected disabled/invalid-ID early return before storage/dataLayer access,
+  contained analytics exceptions, and record the browser marker only after a
+  successful push. Next config explicitly embeds empty unset values so Runtime
+  ENV cannot enable a disabled build. No authentication-flow refactoring.
+- DataLayer gets only `registration_complete`, without user/phone/email/OTP data.
+  Failed OTP, phone changes and existing verified-member display do not emit.
+  Deduplication is browser/origin-local best effort, not global uniqueness:
+  separate browser/device/storage, denied/deleted storage and concurrent tabs
+  have limitations; the short pseudonymous hash can collide.
+- The original patch failed the Auth/LINE Identity storage boundaries. Added exact SHA-256-bound
+  review recognition for only the analytics helper and its two focused tests;
+  the original non-auth exemptions, authentication/session storage ban, direct
+  API/protocol checks and every other gate remain. Sixteen focused boundary tests reject
+  new arbitrary writes, unreviewed paths and protocol leakage. No blanket path
+  exemption, threshold reduction, check skip or bypass. Source inventory updated.
+- Local verification at Source commit: frozen install, artifact/policy/secret/Auth
+  boundary checks and changed-file ESLint PASS. Unset ordinary application Build
+  (Next16.4.2, including TypeScript) PASS; actual compiled SMS helper execution in
+  two browser chunks and prerendered root-layout HTML PASS with poisoned Runtime
+  GTM ENV, zero storage/layer access, no loader/iframe and zero network requests.
+  Configured ordinary build uses only synthetic `GTM-TEST0001`; its final result
+  is recorded in the PR completion evidence. No real container is executed.
+- Local focused results: 161 distinct tests passed across analytics, SMS30,
+  preregistration, signup, handoff and sixteen boundary mutation tests. One unchanged
+  preregistration test (`uses the dedicated API, four fields, native constraints
+  and exact resend destination`) repeatedly hit the original5000ms timeout under
+  observed host load. Earlier SMS timeouts subsequently passed; the initial
+  concurrent run and full lint were interrupted to reduce contention. Do not
+  treat interrupted runs or the remaining local timeout as PASS. No deadline,
+  assertion or production flow was weakened. Final-head normal CI, enabled-build
+  and self-review results are recorded in the PR as completion evidence.
+- First CI run40312646880 on8732032: quality and integration PASS (ordinary and
+  clean-directory full1608-test suites/Build both PASS); policy/security failed because LINE Identity
+  has the same global storage ban as Auth. The directly necessary bounded fix
+  shares the same exact-byte analytics recognition between both scanners, keeps
+  their existing restrictions and adds the same negative tests for each. All
+  nine local domain boundary scripts PASS. No gate/check is skipped or weakened;
+  all head-dependent checks rerun on the corrected final head.
+- Local full suite, separate `pnpm typecheck`, Browser/E2E, live GTM conversion,
+  Preview Runtime Acceptance and Production verification were not performed in
+  this Source-only phase. Build TypeScript and focused render/offline execution
+  are separate evidence, not Browser acceptance. Any later Merge needs separate
+  Human authorization and every applicable acceptance/fresh-review gate.
+- Production workflow remains unchanged; design and Human GTM-console handoff:
+  `docs/operations/google-tag-manager.md`. PR #184 is already merged at the base,
+  with all three exact Next16.4.2 guards retained. A later narrow Workflow PR must
+  set the real ID only at the formal Build step, bind Manifest ID/enabled state
+  to actual compiled/rendered output and verify packaging/exact-ID redownload.
+  Current checked-in Authority still pins alpha.45; application main pins alpha.46.
+  Existing alpha.46 artifacts/tags cannot be overwritten. Pending NEW delivery
+  or a later Storefront-only release requires a new exact Source Authority,
+  compatible immutable pins, formal new Storefront artifact and Human GO.
+- Migrations created0/applied0; API/DB/Contract/Client/Testkit/dependency changes0;
+  authentication protocol/session behavior, points/payments/draw authority and
+  infrastructure unchanged. Formal Production Artifact builds/artifacts/Dispatch/Activation0.
+  No existing OLD/OLD Test/Preview/NEW runtime, ENV, Release or rollback byte was
+  modified. Source rollback is a reviewed revert; runtime rollback belongs to a
+  separately authorized operator using a retained immutable artifact.
+- Draft branch/worktree and tracking Issue remain for Human review. No selected
+  locks, Merge actor or Squash SHA. Local occupied main is not synchronized by
+  this Draft-only task. Final commit/remote equality, check summary, timing and
+  fixed-head machine-readable Source review are recorded on the Draft PR.
+
 ## SF175-PRODAUTH-20261021 — Replacement Authority for PR173
 
 - Human authorizes a new Authority PR from exact main/runtime `dcde7c91926d725a69b305e7bd9cc9b48d5d4fe6` (PR175), preserving PR171 ancestry, Contract alpha.45 and Platform bindings. Strict Change / R3 / Application Runtime Activation deferred.
