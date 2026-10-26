@@ -47,10 +47,10 @@ describe("exact alpha.45 Production provenance", () => {
   it("accepts the retained Human-approved alpha.45 source pins", () => {
     expect(validateProvenance(root).contract_version).toBe("2.0.0-alpha.45");
   });
-  it("accepts the fixed application's real package and lockfile pins", () => {
+  it("rejects alpha.46 development pins under the retained alpha.45 Production authority", () => {
     cpSync("package.json", join(root, "package.json"));
     cpSync("pnpm-lock.yaml", join(root, "pnpm-lock.yaml"));
-    expect(validateProvenance(root).contract_version).toBe("2.0.0-alpha.45");
+    expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
   });
 
   it("rejects alpha.44 dependencies under the new Production authority", () => {
