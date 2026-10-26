@@ -836,3 +836,46 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   Contract limitation; no independent API is added.
 - Final-head Required Checks and fresh fixed-head Source self-review are
   recorded in PR #167. Keep Draft; no Merge, auto-merge or Runtime changes.
+
+
+## ALPHA46-STOREFRONT-PRODUCTION-AUTHORITY — Source Authority Draft (2026-10-26)
+
+- Same Change transport alias: SF-A46-PRODAUTH-20261026 (Canonical App Task ID
+  limit32). Risk R3 / Strict Change; Application Runtime Activation deferred.
+  Human permits implementation, tests, Required Checks, Fresh review and Draft
+  only. No Ready, Merge, auto-merge, Production Artifact Dispatch/Build or Runtime.
+- Base protected main: 2be4169fd847d18d8de0f5bacc1b4a4d7c416b05 includes PR186
+  GTM. It is Build Control ancestry, not the Application Runtime Source.
+  Pin Runtime Source PR179: 7dc355d3174bdf8a4731741eea7aa4a80752b724.
+  Workflow PR184: 00e10604ee262470a96f4c392d2c3b4f2511e98a supplies strict
+  Next16.4.2 guards. Do not substitute either latest main or this Authority
+  Change/merge for the approved Application Runtime Source.
+- Platform Runtime Source PR617: 3592fcdc8e43467c3dd67d2677ec52b7d328eb77.
+  Platform Authority PR619 merged=true: 0372d25ea61a4e6f15485568819f8f1029443b73;
+  reviewed/merge tree: 4a29368479023e6758713205f4a92c0e05ecef45.
+- Reuse immutable alpha46 Artifact12586773046 / publication40162277779,
+  Source1d2b0d8ff8193d55173f5bf6978a41f3dfebf7ac. Existing Manifest/SHA256SUMS,
+  Client/Testkit tarballs and provenance are retained; Site Schema alpha23 and
+  Public OpenAPI alpha42 remain. No Artifact publication or Vendor replacement.
+- Initial preflight HOLD: Human Testkit SHA had52 hex characters. Human corrected
+  it to the formal64-character Manifest/SHA256SUMS/actual tarball digest:
+  f4e324b859d1d96d66e78c9c1adf16616f132e4b114b10a2af4e9e5fe5a5de83.
+  HOLD is resolved by explicit correction; all other supplied authorities remain.
+- Change scope is exactly docs/production-approved-source.json,
+  scripts/production-provenance.mjs, src/test/production-provenance.test.mjs,
+  and this Worklog. Update existing strict alpha45 checks to exact alpha46;
+  retain prior-Contract, bad digest/PR/source, trusted checks, tree equality,
+  moving-main and activation_authorized=false protections. No Gate relaxation.
+- GTM is excluded: Runtime Source predates PR186. Do not set NEXT_PUBLIC_GTM_ID
+  in any later Production Artifact. Current main containing GTM is not promoted.
+  Preserve existing security fixes and feature states; member rank Activation,
+  Migration, ENV, AWS, OLD/NEW Runtime and unrelated Source are excluded.
+- Human reports OLD Test alpha46 and PR179 Technical/Human Acceptance complete;
+  this Task performs no Runtime or Browser verification. Existing Production
+  Artifacts/rollback assets are untouched. Old Next16.3.8 Source cannot be
+  regenerated with the exact16.4.2 Workflow.
+- Focused validation and final-head Required5/Fresh Strict review evidence are
+  recorded in the Draft PR. Reuse final-head formal CI tests/Build; avoid duplicate
+  local full runs. No Production Artifact Dispatch/Build/Upload is performed.
+  Separate Human Source Merge GO, then separately authorized Artifact/Runtime
+  phases remain. Keep Draft branch/worktree for review.
