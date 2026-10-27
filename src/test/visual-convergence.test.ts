@@ -35,6 +35,10 @@ describe("visual and responsive convergence", () => {
     expect(css).toMatch(/\.draw-presentation \{[^}]*background: #000[^}]*inset: 0[^}]*overflow: hidden[^}]*position: fixed[^}]*z-index: 110/);
     expect(css).toMatch(/\.draw-presentation__video \{[^}]*height: 100%[^}]*object-fit: contain[^}]*width: 100%/);
     expect(css).toMatch(/\.draw-presentation__skip \{[^}]*min-height: 44px[^}]*safe-area-inset-right[^}]*safe-area-inset-top[^}]*z-index: 1/);
+    // The theme sets `.button--dark:not(:disabled) { position: relative }` (two classes, loaded later).
+    // The overlay buttons must out-rank it, or Skip falls below the video and is cut off.
+    expect(css).toMatch(/\.draw-presentation > \.button\.draw-presentation__skip \{[^}]*position: absolute/);
+    expect(css).toMatch(/\.draw-presentation > \.button\.draw-presentation__sound \{[^}]*position: absolute/);
     expect(css).toMatch(/\.draw-snapshot-card__image \{[^}]*aspect-ratio: 16 \/ 9[^}]*overflow: hidden/);
     expect(css).toMatch(/body:has\(\.gacha-draw-tray\) \.site-footer \{[^}]*padding-bottom: calc\(370px \+ env\(safe-area-inset-bottom\)\)/);
     expect(css).toMatch(/@media \(min-width: 720px\)[\s\S]*body:has\(\.gacha-draw-tray\) \.site-footer \{[^}]*padding-bottom: 194px/);
