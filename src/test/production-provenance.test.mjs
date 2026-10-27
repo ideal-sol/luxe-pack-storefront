@@ -44,14 +44,16 @@ function mutateManifest(mutation) {
 }
 
 describe("exact alpha.46 Production provenance", () => {
-  it("pins the PR186 GTM Source candidate independently of Workflow/main and pending Human Source GO", () => {
+  it("pins the formally Human-approved PR186 GTM Source independently of Workflow/main without Activation GO", () => {
     expect(approvedSource.source_sha).toBe("2be4169fd847d18d8de0f5bacc1b4a4d7c416b05");
     expect(approvedSource.source_pr).toBe(186);
     expect(approvedSource.activation_authorized).toBe(false);
     expect(approvedSource.source_sha).not.toBe("7dc355d3174bdf8a4731741eea7aa4a80752b724");
     expect(approvedSource.source_sha).not.toBe("9702793ec7fdad4332e634b230dc6661ff176655");
-    expect(approvedSource.authority.startsWith("Draft candidate exact Runtime Source:")).toBe(true);
-    expect(approvedSource.authority).toContain("Formal Human Source GO is NOT ISSUED");
+    expect(approvedSource.authority.startsWith("Human-approved exact Runtime Source:")).toBe(true);
+    expect(approvedSource.authority).toContain("Formal Human Source GO RECEIVED");
+    expect(approvedSource.authority).not.toContain("Formal Human Source GO is NOT ISSUED");
+    expect(approvedSource.authority).not.toContain("Draft candidate exact Runtime Source:");
     expect(approvedSource.authority).not.toContain("PR #186 GTM is excluded");
   });
 
@@ -346,8 +348,8 @@ describe("Production source authority", () => {
     source = git("rev-parse", "HEAD");
     sourceTree = git("rev-parse", "HEAD^{tree}");
     mkdirSync(join(root, "docs"));
-    // Explicit synthetic approval preserves positive authorization coverage without
-    // treating the checked-in Draft candidate as formally Human-approved.
+    // Synthetic approval keeps mocked commit identities separate from the real
+    // Human-approved PR186 Source while retaining positive authorization coverage.
     writeFileSync(join(root, "docs/production-approved-source.json"), JSON.stringify({
       ...approvedSource, source_sha: source,
       authority: "Human-approved exact Runtime Source: synthetic test fixture only",
@@ -384,8 +386,10 @@ describe("Production source authority", () => {
     });
   });
 
-  it("rejects the checked-in Draft candidate wording before any GitHub authority lookup", async () => {
-    mutateJson("docs/production-approved-source.json", (value) => { value.authority = approvedSource.authority; });
+  it("still rejects an unapproved Draft authority before any GitHub authority lookup", async () => {
+    mutateJson("docs/production-approved-source.json", (value) => {
+      value.authority = "Draft candidate exact Runtime Source: synthetic unapproved fixture; Formal Human Source GO is NOT ISSUED";
+    });
     git("add", ".");
     git("commit", "-qm", "unapproved Draft candidate");
     let consulted = false;
