@@ -1,5 +1,39 @@
 # SITE-GTM-20261026 — GTM Source / Production handoff
 
+## GTM-SOURCE-AUTH-20261027 — Authority Draft candidate
+
+The dedicated Authority Draft is based on protected main
+`9702793ec7fdad4332e634b230dc6661ff176655`, the merged PR189 Workflow.
+It proposes `source_pr=186` and Application Runtime Source
+`2be4169fd847d18d8de0f5bacc1b4a4d7c416b05`, tree
+`81a65d46638dbf2c832c6f5b263424096e0328de`. The Workflow merge, latest main
+and a future Authority merge are not substitute application Sources.
+
+Formal Human Source GO has not been issued. `activation_authorized=false` remains.
+The candidate description begins `Draft candidate exact Runtime Source:`; the
+unchanged production authorization guard requires `Human-approved exact Runtime Source:`
+and rejects this Draft wording before any GitHub authority lookup. Later explicit
+Human Source GO must be recorded through a reviewed promotion of that description,
+with fresh final-head checks/review; do not bypass the guard. Ready/Merge and formal
+Build/Dispatch/Stage/Runtime Activation are outside this Draft authorization.
+
+Human reports `OLDTEST_PR186_GTM_DISABLED_FINAL_ACCEPTANCE_PASS` for the exact
+PR186 Source / Next16.4.2 / alpha.46 / GTM OFF. Technical Acceptance is PASS;
+Human Browser Acceptance5/5 PASS covers only the five handoff items. Real SMS
+success/failure, phone-number change, verified redisplay and GTM ON measurement
+remain separate Production Acceptance items. No new Runtime acceptance is run here.
+
+The Draft preserves every alpha.46 Artifact12586773046 / Client / Testkit / OpenAPI
+pin and checksum, Platform Runtime Source `3592fcdc8e43467c3dd67d2677ec52b7d328eb77`
+and Platform Authority `0372d25ea61a4e6f15485568819f8f1029443b73`. No dependency,
+vendor, Workflow, application or Platform change is made. Existing published
+Artifacts and rollback assets remain untouched. Current protected main retains
+the PR179 Authority until a separately approved change is merged.
+
+The sections below are historical Source/Workflow preparation records. PR189 is
+now merged and the five-item OLD Test PASS is reported above; their earlier
+Draft-only permissions and missing-report statements describe those past stages.
+
 ## GTM-PROD-WF-20261027 — Production Workflow preparation
 
 The dedicated Workflow change is prepared against protected main
