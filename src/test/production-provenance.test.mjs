@@ -44,12 +44,17 @@ function mutateManifest(mutation) {
 }
 
 describe("exact alpha.46 Production provenance", () => {
-  it("pins PR179 Runtime Source independently of current main, Workflow authority and GTM", () => {
-    expect(approvedSource.source_sha).toBe("7dc355d3174bdf8a4731741eea7aa4a80752b724");
-    expect(approvedSource.source_pr).toBe(179);
+  it("pins the formally Human-approved PR186 GTM Source independently of Workflow/main without Activation GO", () => {
+    expect(approvedSource.source_sha).toBe("2be4169fd847d18d8de0f5bacc1b4a4d7c416b05");
+    expect(approvedSource.source_pr).toBe(186);
     expect(approvedSource.activation_authorized).toBe(false);
-    expect(approvedSource.source_sha).not.toBe("00e10604ee262470a96f4c392d2c3b4f2511e98a");
-    expect(approvedSource.source_sha).not.toBe("2be4169fd847d18d8de0f5bacc1b4a4d7c416b05");
+    expect(approvedSource.source_sha).not.toBe("7dc355d3174bdf8a4731741eea7aa4a80752b724");
+    expect(approvedSource.source_sha).not.toBe("9702793ec7fdad4332e634b230dc6661ff176655");
+    expect(approvedSource.authority.startsWith("Human-approved exact Runtime Source:")).toBe(true);
+    expect(approvedSource.authority).toContain("Formal Human Source GO RECEIVED");
+    expect(approvedSource.authority).not.toContain("Formal Human Source GO is NOT ISSUED");
+    expect(approvedSource.authority).not.toContain("Draft candidate exact Runtime Source:");
+    expect(approvedSource.authority).not.toContain("PR #186 GTM is excluded");
   });
 
   it("rejects the previous alpha.45 authority directory", () => {
@@ -106,7 +111,7 @@ describe("exact alpha.46 Production provenance", () => {
 
   it("accepts approved source pins, immutable artifact identity and every digest", () => {
     expect(validateProvenance(root)).toMatchObject({
-      source_sha: "7dc355d3174bdf8a4731741eea7aa4a80752b724",
+      source_sha: "2be4169fd847d18d8de0f5bacc1b4a4d7c416b05",
       contract_version: "2.0.0-alpha.46", contract_artifact_id: "12586773046",
       contract_manifest_sha256: "a55f578a94af700e68f0cd0d8eed0e18fb3867ec3be5e0ac0c8639a173cf2b26",
       client_pin: "2.0.0-alpha.46", testkit_pin: "2.0.0-alpha.46", public_openapi_pin: "2.0.0-alpha.42",
@@ -343,7 +348,12 @@ describe("Production source authority", () => {
     source = git("rev-parse", "HEAD");
     sourceTree = git("rev-parse", "HEAD^{tree}");
     mkdirSync(join(root, "docs"));
-    writeFileSync(join(root, "docs/production-approved-source.json"), JSON.stringify({ ...approvedSource, source_sha: source }));
+    // Synthetic approval keeps mocked commit identities separate from the real
+    // Human-approved PR186 Source while retaining positive authorization coverage.
+    writeFileSync(join(root, "docs/production-approved-source.json"), JSON.stringify({
+      ...approvedSource, source_sha: source,
+      authority: "Human-approved exact Runtime Source: synthetic test fixture only",
+    }));
     git("add", ".");
     git("commit", "-qm", "workflow authority");
     workflow = git("rev-parse", "HEAD");
@@ -376,11 +386,26 @@ describe("Production source authority", () => {
     });
   });
 
+  it("still rejects an unapproved Draft authority before any GitHub authority lookup", async () => {
+    mutateJson("docs/production-approved-source.json", (value) => {
+      value.authority = "Draft candidate exact Runtime Source: synthetic unapproved fixture; Formal Human Source GO is NOT ISSUED";
+    });
+    git("add", ".");
+    git("commit", "-qm", "unapproved Draft candidate");
+    let consulted = false;
+    await expect(authorize(root, source, git("rev-parse", "HEAD"), async () => {
+      consulted = true;
+      throw new Error("must not consult GitHub for an unapproved candidate");
+    })).rejects.toThrow("Human-approved source mismatch");
+    expect(consulted).toBe(false);
+  });
+
   it.each(["main", "abc", "A".repeat(40), "0".repeat(40), "f".repeat(40),
     "dcde7c91926d725a69b305e7bd9cc9b48d5d4fe6",
     "00e10604ee262470a96f4c392d2c3b4f2511e98a", "2be4169fd847d18d8de0f5bacc1b4a4d7c416b05",
+    "7dc355d3174bdf8a4731741eea7aa4a80752b724", "9702793ec7fdad4332e634b230dc6661ff176655",
     "7da93eb695f38b7cf804eba59a3642da0b9dc073",
-    "342341a82131a7f80a4e7508172f1e764ec7ad84", "b85afec9aba0e72732366e8e12701cef39a06e06"])("rejects invalid or unapproved source %s", async (sha) => {
+    "342341a82131a7f80a4e7508172f1e764ec7ad84", "b85afec9aba0e72732366e8e12701cef39a06e06"])("rejects invalid or nonmatching fixture source %s", async (sha) => {
     await expect(authorize(root, sha, workflow, get)).rejects.toThrow();
   });
 

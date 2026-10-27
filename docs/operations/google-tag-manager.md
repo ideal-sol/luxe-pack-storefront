@@ -1,5 +1,47 @@
 # SITE-GTM-20261026 — GTM Source / Production handoff
 
+## GTM-SOURCE-AUTH-20261027 — Formal Human Source GO
+
+Human has issued formal Source GO for PR191 to approve Application Runtime Source
+PR186 `2be4169fd847d18d8de0f5bacc1b4a4d7c416b05`, tree
+`81a65d46638dbf2c832c6f5b263424096e0328de`, and authorizes final validation,
+Ready and Canonical Squash Merge. The Authority description now begins
+`Human-approved exact Runtime Source:` and records `Formal Human Source GO RECEIVED`.
+The existing authorization implementation is unchanged. It continues to reject
+unapproved wording, mismatched Source/PR/Tree/checks and an incorrect protected main.
+`activation_authorized=false` remains; Source approval does not grant Activation.
+
+Base / merged PR189 Workflow is `9702793ec7fdad4332e634b230dc6661ff176655`.
+That Workflow SHA, the Authority commit and latest main are not substitute
+Application Sources. Only the exact PR186 Source above is approved for use by a
+future separately authorized formal Production Build. This task does not execute
+Artifact Dispatch/Build, NEW Production Stage/Runtime switch or GTM publishing.
+
+Human reports `OLDTEST_PR186_GTM_DISABLED_FINAL_ACCEPTANCE_PASS` for exact
+Source2be4169 / Next16.4.2 / Contract2.0.0-alpha.46 / GTM OFF. Technical PASS and
+Human Browser5/5 cover only the five formal handoff items. Real SMS success/failure,
+phone-number change, verified redisplay and GTM ON measurement remain subsequent
+Production Acceptance items. No new Runtime acceptance is performed in this task.
+
+All immutable alpha.46 Artifact12586773046 / Client / Testkit / OpenAPI pins and
+checksums, Platform Runtime `3592fcdc8e43467c3dd67d2677ec52b7d328eb77` and Platform
+Authority `0372d25ea61a4e6f15485568819f8f1029443b73` are retained. Workflow,
+application Source, dependencies/vendor, Security and authorization code are unchanged.
+Existing Production Artifacts and rollback assets remain untouched.
+
+Before formal Artifact operations, obtain separate explicit Human Dispatch/Build GO
+bound to exact PR186 Source, the then-approved protected-main Build Control/Authority
+identity and required public Build inputs. Revalidate existing Source/Contract/checks
+without substituting latest main for application Source. After an authorized Build,
+verify actual GTM bytes/Manifest, ARM64, exact toolchain, Artifact ID/digest/hashes,
+Build ID, package and exact-ID re-download. Stage/Activation and remaining Production
+Acceptance retain their separate Human gates. This task stops after Authority Merge.
+
+The sections below are historical Source/Workflow preparation records. PR189 is
+merged and the five-item OLD Test PASS is reported above; earlier Draft-only
+permissions, missing-report statements and PR179 Authority references describe
+those prior stages and do not override this formal Source GO.
+
 ## GTM-PROD-WF-20261027 — Production Workflow preparation
 
 The dedicated Workflow change is prepared against protected main
