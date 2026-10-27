@@ -35,6 +35,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
     const controller = new AbortController();
     lifecycle.current = controller;
     let session: InlineSession | null = null;
+    let correlationChecked = false;
     void Promise.resolve().then(async () => {
       if (controller.signal.aborted) return;
       setState(idle); setValid(false); setMounted(false);
@@ -42,6 +43,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
       if (!gateway || !option) { uncertain.current = false; return; }
       try {
         const attempt = readPaymentAttempt(subject);
+        correlationChecked = true;
         uncertain.current = Boolean(attempt);
         if (attempt) {
           setState({ ...idle, locked: true, message: PAYMENT_UI_PENDING });
@@ -68,7 +70,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
           setMounted(true);
         }
       } catch {
-        if (!controller.signal.aborted) setState({ ...idle, locked: true, error: PAYMENT_UI_UNAVAILABLE });
+        if (!controller.signal.aborted) setState({ ...idle, locked: !correlationChecked || uncertain.current, error: PAYMENT_UI_UNAVAILABLE });
       }
     });
     return () => {

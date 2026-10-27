@@ -148,6 +148,18 @@ it("blocks invalid inline fields, permits validation recheck and disposes on met
   view.unmount();
 });
 
+it("allows another method after inline SDK load failure while keeping purchase disabled for the failed iframe", async () => {
+  const s = setup(); vi.mocked(s.sdk.mountInline).mockRejectedValue(new Error("private SDK detail"));
+  s.mount();
+  expect(await screen.findByRole("alert")).toHaveTextContent("この決済方法は現在ご利用いただけません");
+  expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
+  const alternative = screen.getByRole("radio", { name: options[1].label });
+  expect(alternative).toBeEnabled(); fireEvent.click(alternative);
+  await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
+  expect(s.gateway.startPayment).not.toHaveBeenCalled();
+  expect(screen.queryByText("private SDK detail")).not.toBeInTheDocument();
+});
+
 it("rejects amount skew before iframe submission and returns a safe error", async () => {
   const s = setup();
   vi.mocked(s.gateway.startPayment).mockResolvedValue({ data: fixturePayment("credit_card", { ...inlineAction, amount: product.price.amount + 1 }) });
