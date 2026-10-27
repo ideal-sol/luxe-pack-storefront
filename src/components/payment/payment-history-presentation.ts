@@ -11,11 +11,13 @@ const dateTime = new Intl.DateTimeFormat("ja-JP", {
   year: "numeric",
 });
 
-const paymentMethodLabels: Record<PaymentMethod, string> = {
+const paymentMethodLabels: Record<string, string> = {
   credit_card: "クレジットカード",
   konbini: "コンビニ決済",
   paypay: "PayPay",
   virtual_account: "銀行振込",
+  netridecash: "電子マネー（NetRideCash）",
+  paidy: "あと払い（ペイディ）",
 };
 
 export function formatPaymentAmount(payment: Payment) {
@@ -30,6 +32,6 @@ export function formatPaymentDate(value: string) {
   return dateTime.format(new Date(value));
 }
 
-export function paymentMethodLabel(method: PaymentMethod) {
-  return paymentMethodLabels[method];
+export function paymentMethodLabel(method: PaymentMethod | string, label?: string) {
+  return label || paymentMethodLabels[method] || "お支払い";
 }

@@ -3,9 +3,14 @@ import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const BRAND_FILE_COUNT = 25;
+export const BRAND_FILE_COUNT = 27;
 export const EXISTING_BRAND_VERSION = "sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63";
+export const PRE_REGISTER_BRAND_VERSION = "sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d";
 export const PRE_REGISTER_IMAGE_PATHS = new Set(["sd_orika_touroku.webp", "sd_pokezou_coin.webp"]);
+export const PAYMENT_IMAGE_PATHS = new Map([
+  ["payments/netridecash-logo.png", "e9726a4fcd722a5f2c7cc6c6f6a8da9ff317cd0ba2163b856ce4890a8e518e4e"],
+  ["payments/paidy-logo.png", "2cd8cacd72b05f09ea9329e23dc4775b34d0bf9bab5621fd88ceae181c49f203"],
+]);
 export const manifestPath = "src/lib/brand-assets.manifest.json";
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const types = { ".webp": "image/webp", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon" };
@@ -39,10 +44,17 @@ export function generateBrandManifest(root = "public/brand") {
     const bytes = readFileSync(join(root, relative_path));
     return { relative_path, content_type: contentType(relative_path, bytes), byte_size: bytes.length, sha256: digest(bytes) };
   });
-  const existing = entries.filter((entry) => !PRE_REGISTER_IMAGE_PATHS.has(entry.relative_path));
+  const prior = entries.filter(entry => !PAYMENT_IMAGE_PATHS.has(entry.relative_path));
+  const existing = prior.filter((entry) => !PRE_REGISTER_IMAGE_PATHS.has(entry.relative_path));
   const existingVersion = `sha256-${digest(JSON.stringify(existing))}`;
   if (existing.length !== 23 || existingVersion !== EXISTING_BRAND_VERSION) {
     throw new Error("Existing Brand assets changed; allocate a new immutable asset version");
+  }
+  if (prior.length !== 25 || `sha256-${digest(JSON.stringify(prior))}` !== PRE_REGISTER_BRAND_VERSION) {
+    throw new Error("Existing pre-registration Brand assets changed; allocate a new immutable asset version");
+  }
+  for (const [path, sha] of PAYMENT_IMAGE_PATHS) {
+    if (entries.find(entry => entry.relative_path === path)?.sha256 !== sha) throw new Error(`Supplied Payment logo changed: ${path}`);
   }
   const version = `sha256-${digest(JSON.stringify(entries))}`;
   return {
@@ -50,7 +62,7 @@ export function generateBrandManifest(root = "public/brand") {
     version,
     files: entries.map((entry) => ({
       ...entry,
-      object_key: `static-assets/brand/${PRE_REGISTER_IMAGE_PATHS.has(entry.relative_path) ? version : EXISTING_BRAND_VERSION}/${entry.relative_path}`,
+      object_key: `static-assets/brand/${PAYMENT_IMAGE_PATHS.has(entry.relative_path) ? version : PRE_REGISTER_IMAGE_PATHS.has(entry.relative_path) ? PRE_REGISTER_BRAND_VERSION : EXISTING_BRAND_VERSION}/${entry.relative_path}`,
     })),
   };
 }

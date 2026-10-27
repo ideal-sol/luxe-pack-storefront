@@ -1,13 +1,14 @@
 "use client";
 
-import type { PaymentCard, PaymentMethod } from "@/lib/platform";
+import type { PaymentCard } from "@/lib/platform";
+import { brandAssetUrl } from "@/lib/brand-assets";
+import { ALPHA46_PAYMENT_METHODS, type PaymentMethodOption } from "@/lib/platform/payment-ui-gateway";
 
-const methods: ReadonlyArray<{ readonly label: string; readonly value: PaymentMethod }> = [
-  { label: "クレジットカード", value: "credit_card" },
-  { label: "PayPay", value: "paypay" },
-  { label: "コンビニ決済", value: "konbini" },
-  { label: "銀行振込", value: "virtual_account" },
-];
+const presentation: Record<string, { logo?: string; description?: string }> = {
+  netridecash: { logo: "payments/netridecash-logo.png", description: "決済会社（テックコイン）の画面で NetRideCash の番号を入力します" },
+  // Official branding example 2 permits logo-only. P3 wording remains Human OPEN.
+  paidy: { logo: "payments/paidy-logo.png" },
+};
 
 const transferNotice = "※原則お振込みをしていただきましたら、即時コインの反映されますが、土日祝日や平日の場合でもコイン残高に反映されるまで最大で3日程度かかる場合がございます";
 
@@ -29,38 +30,54 @@ export function PaymentMethodSelector({
   onSavedCardChange,
   selectedCardId,
   selectedMethod,
+  options = ALPHA46_PAYMENT_METHODS,
+  disabled = false,
 }: {
   readonly cardBusy: boolean;
   readonly cardsLoaded: boolean;
   readonly cards: readonly PaymentCard[];
   readonly children?: React.ReactNode;
   readonly onDeleteCard: (cardId: string) => void;
-  readonly onMethodChange: (method: PaymentMethod) => void;
+  readonly onMethodChange: (method: string) => void;
   readonly onNewCard: () => void;
   readonly onRetryCards: () => void;
   readonly onSavedCardChange: (cardId: string) => void;
   readonly selectedCardId: string | "new" | null;
-  readonly selectedMethod: PaymentMethod | null;
+  readonly selectedMethod: string | null;
+  readonly options?: readonly PaymentMethodOption[];
+  readonly disabled?: boolean;
 }) {
   return (
     <fieldset className="payment-methods">
       <legend>お支払方法</legend>
       <div className="payment-methods__list">
-        {methods.map((method) => {
-          const checked = selectedMethod === method.value;
+        {options.map((method) => {
+          const checked = selectedMethod === method.method;
+          const display = presentation[method.method];
+          const reason = !method.available ? method.unavailable_reason === "amount_too_large"
+            ? "この商品はこのお支払い方法ではご購入いただけません" : "現在ご利用いただけません" : null;
           return (
-            <div className={`payment-method-row${checked ? " payment-method-row--selected" : ""}`} key={method.value}>
+            <div className={`payment-method-row${checked ? " payment-method-row--selected" : ""}`} key={method.method}>
               <label className="payment-method-row__label">
                 <input
                   checked={checked}
+                  disabled={disabled || !method.available}
                   name="payment-method"
-                  onChange={() => onMethodChange(method.value)}
+                  onChange={() => { if (!disabled && method.available) onMethodChange(method.method); }}
                   type="radio"
-                  value={method.value}
+                  value={method.method}
                 />
+                {display?.logo ? <span className={`payment-method-row__logo payment-method-row__logo--${method.method}`}>
+                  {/* Unmodified supplied Brand assets; no optimizer re-encoding. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img alt="" src={brandAssetUrl(display.logo)} />
+                </span> : method.method === "credit_card" ? <svg aria-hidden="true" className="payment-method-row__card-icon" fill="none" height="26" viewBox="0 0 36 26" width="36"><rect height="22" rx="3" stroke="currentColor" strokeWidth="2" width="32" x="2" y="2" /><path d="M3 9h30M7 18h8" stroke="currentColor" strokeWidth="2" /></svg> : null}
                 <span>{method.label}</span>
               </label>
-              {checked && method.value === "credit_card" ? (
+              {display?.description ? <p className="payment-method-row__description">{display.description}</p> : null}
+              {reason ? <p className="payment-method-row__reason">{reason}</p> : null}
+              {checked && method.method === "credit_card" && method.flow === "inline_card_form" ? children : null}
+              {checked && method.method === "credit_card" && method.flow === "card_component" && method.saved_cards_enabled ? (
                 <div className="payment-card-options">
                   {!cardsLoaded ? (
                     cardBusy
@@ -105,8 +122,8 @@ export function PaymentMethodSelector({
                   {selectedCardId === "new" ? children : null}
                 </div>
               ) : null}
-              {checked && method.value === "konbini" ? <p className="payment-method-row__notice">{transferNotice}</p> : null}
-              {checked && method.value === "virtual_account" ? (
+              {checked && method.method === "konbini" ? <p className="payment-method-row__notice">{transferNotice}</p> : null}
+              {checked && method.method === "virtual_account" ? (
                 <div className="payment-method-row__notices">
                   <p>{transferNotice}</p>
                   <p>※毎月第2土曜午後9時50分〜翌日曜午前6時は定期メンテナンスのためご利用いただけません</p>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { StorefrontTransportError } from "@oripa/storefront-client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
@@ -17,6 +18,12 @@ import {
   saveCardRegistrationResume,
 } from "@/components/payment/card-registration-resume";
 import { PaymentMethodSelector } from "@/components/payment/payment-method-selector";
+import { PaymentMethodLoader } from "@/components/payment/payment-method-loader";
+import { PaymentProcessingOverlay } from "@/components/payment/payment-processing-overlay";
+import { useProviderPayment } from "@/components/payment/use-provider-payment";
+import { usePaymentReturnEvent } from "@/components/payment/use-payment-return-event";
+import { safePaymentRedirect } from "@/components/payment/provider-payment-actions";
+import { ALPHA46_PAYMENT_METHODS, isLegacyPaymentMethod, isProviderMethod, PAYMENT_UI_UNAVAILABLE, supportedPaymentMethod, type PaymentMethodOption } from "@/lib/platform/payment-ui-gateway";
 import { PaymentReturnAlert } from "@/components/payment/payment-return-alert";
 import { usePaymentClient } from "@/components/payment/payment-client-provider";
 import {
@@ -80,15 +87,30 @@ function PurchaseForm({
   registrationId,
   registrationProcessing,
   onRegistrationStopped,
+  options = ALPHA46_PAYMENT_METHODS,
+  compatibility = true,
+  subject,
 }: {
   readonly product: PointProduct;
   readonly registrationId: string | null;
   readonly registrationProcessing: boolean;
   readonly onRegistrationStopped: () => void;
+  readonly options?: readonly PaymentMethodOption[];
+  readonly compatibility?: boolean;
+  readonly subject: string;
 }) {
-  const { client } = usePaymentClient();
+  const { client, uiGateway, providerSdk } = usePaymentClient();
   const cardFieldsRef = useRef<FincodeCardFieldsHandle>(null);
-  const [method, setMethod] = useState<PaymentMethod | null>(null);
+  const [method, setMethod] = useState<string | null>(() => compatibility ? null : options.find(o => o.available)?.method ?? null);
+  const selectedOption = options.find(o => o.method === method);
+  const providerMethod = isProviderMethod(selectedOption);
+  const cardPolicy = options.find(o => o.method === "credit_card");
+  const savedCardsEnabled = cardPolicy?.flow === "card_component" && cardPolicy.saved_cards_enabled;
+  const { busy: providerBusy, locked: providerLocked, error: providerError, message: providerMessage, attachTarget, valid: inlineValid, mounted: inlineMounted, checkValidity, submit: submitProvider } = useProviderPayment({ gateway: uiGateway, sdk: providerSdk, option: providerMethod ? selectedOption : undefined,
+    productId: product.id, subject, eligible: product.is_available && product.eligible && product.cta.state === "enabled" });
+  const submitStartingRef = useRef(false);
+  const alive = useRef(false);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const [cards, setCards] = useState<readonly PaymentCard[]>([]);
   const [cardLimits, setCardLimits] = useState<PaymentCardCollection["limits"] | null>(null);
   const [cardsLoaded, setCardsLoaded] = useState(false);
@@ -108,8 +130,9 @@ function PurchaseForm({
   }, []);
 
   const refreshCards = useCallback(async () => {
-    if (!client) return;
+    if (!client || !savedCardsEnabled) return;
     const { data } = await client.listCards();
+    if (!alive.current) return;
     setCards(data.data);
     setCardLimits(data.limits);
     setCardsLoaded(true);
@@ -118,7 +141,7 @@ function PurchaseForm({
       if (current && data.data.some((card) => card.id === current && card.can_pay && !card.is_expired)) return current;
       return data.data.find((card) => card.can_pay && !card.is_expired)?.id ?? null;
     });
-  }, [client]);
+  }, [client, savedCardsEnabled]);
 
   const loadCards = useCallback(() => {
     if (!client || cardBusy) return;
@@ -140,11 +163,22 @@ function PurchaseForm({
       .catch((reason) => setError(presentPaymentProblem(reason).message)).finally(() => setCardBusy(false));
   };
 
+  useEffect(() => {
+    if (!client || compatibility || selectedOption?.method !== "credit_card" || selectedOption.flow !== "card_component") return;
+    let active = true;
+    void Promise.resolve().then(async () => {
+      if (!active) return;
+      if (savedCardsEnabled) { await refreshCards(); return; }
+    }).catch(() => { if (active) setError(PAYMENT_UI_UNAVAILABLE); });
+    return () => { active = false; };
+  }, [client, compatibility, refreshCards, savedCardsEnabled, selectedOption]);
+
   const navigateAfterStart = useCallback(async (
     payment: Payment,
     paymentMethod: PaymentMethod,
     requireSavedCard3ds = false,
   ) => {
+    if (!alive.current) return;
     if (requireSavedCard3ds && ["created", "requires_action"].includes(payment.status) &&
         payment.next_action?.type !== "three_d_secure") {
       throw new Error("Canonical saved-card Payment 3DS action is unavailable");
@@ -153,6 +187,7 @@ function PurchaseForm({
       window.location.replace(`/points/purchase/thanks?pid=${encodeURIComponent(payment.id)}`);
       return;
     }
+    if (payment.next_action && !["redirect", "three_d_secure", "fincode_card_component"].includes(payment.next_action.type)) throw new Error(PAYMENT_UI_UNAVAILABLE);
     if (paymentMethod === "konbini" || paymentMethod === "virtual_account") {
       window.location.replace(`/points/purchase/thanks?pid=${encodeURIComponent(payment.id)}`);
       return;
@@ -164,21 +199,27 @@ function PurchaseForm({
         throw new Error("Canonical fincode Card action is unavailable");
       }
       const redirectUrl = await cardFieldsRef.current?.execute(payment.next_action);
+      if (!alive.current) return;
       if (redirectUrl) window.location.assign(redirectUrl);
       else window.location.replace(`/points/purchase/thanks?pid=${encodeURIComponent(payment.id)}`);
       return;
     }
-    if (payment.next_action && "url" in payment.next_action) {
+    if (payment.next_action?.type === "redirect" || payment.next_action?.type === "three_d_secure") {
+      safePaymentRedirect(payment.next_action.url);
       window.location.assign(payment.next_action.url);
       return;
     }
-    window.location.replace(`/points/purchase/thanks?pid=${encodeURIComponent(payment.id)}`);
+    throw new Error(PAYMENT_UI_UNAVAILABLE);
   }, [bootstrap, cardMounted]);
 
   const submitPayment = async () => {
-    if (!client || !method || submitting || cardBusy || submissionLocked) return;
+    if (!selectedOption?.available || !supportedPaymentMethod(selectedOption) || !product.is_available || !product.eligible || product.cta.state !== "enabled") return;
+    if (providerMethod) { await submitProvider(); return; }
+    if (!client || !method || !isLegacyPaymentMethod(method) || submitting || cardBusy || submissionLocked || submitStartingRef.current) return;
+    if (method === "credit_card" && !savedCardsEnabled) return;
     const newCard = method === "credit_card" && selectedCardId === "new";
     if (method === "credit_card" && (!selectedCardId || newCard && !cardMounted)) return;
+    submitStartingRef.current = true;
     const idempotencyKey = createPaymentIdempotencyKey();
     setSubmitting(true);
     setError(null);
@@ -195,15 +236,19 @@ function PurchaseForm({
         : { payment_method: method, point_product_id: product.id };
       const { data: payment } = await client.startPayment(input, { idempotency_key: idempotencyKey });
       paymentCreated = true;
+      if (!alive.current) return;
       await navigateAfterStart(
         payment,
         method,
         method === "credit_card" && selectedCardId !== "new",
       );
     } catch (reason) {
+      if (!alive.current) return;
       setError(presentPaymentProblem(reason, method).message);
       if (paymentCreated || reason instanceof StorefrontTransportError) setSubmissionLocked(true);
       setSubmitting(false);
+    } finally {
+      submitStartingRef.current = false;
     }
   };
 
@@ -221,7 +266,7 @@ function PurchaseForm({
   }, [client, product.id]);
 
   const saveAndBuy = async () => {
-    if (registrationStartingRef.current || !client || submitting || cardBusy || submissionLocked || !cardMounted ||
+    if (!product.is_available || !product.eligible || product.cta.state !== "enabled" || !savedCardsEnabled || !selectedOption?.available || registrationStartingRef.current || !client || submitting || cardBusy || submissionLocked || !cardMounted ||
         (cardLimits?.registration_remaining ?? 0) <= 0) return;
     registrationStartingRef.current = true;
     setConfirmationOpen(false);
@@ -236,6 +281,7 @@ function PurchaseForm({
       const registrationIdempotencyKey = createPaymentIdempotencyKey();
       const paymentIdempotencyKey = createPaymentIdempotencyKey();
       const cardToken = await cardFieldsRef.current?.tokenize();
+      if (!alive.current) return;
       if (!cardToken) throw new Error("Card tokenization did not return a token");
       const { data: registration } = await client.startCardRegistration(
         { card_token: cardToken },
@@ -243,6 +289,7 @@ function PurchaseForm({
       );
       registrationCreated = true;
       registrationPublicId = registration.id;
+      if (!alive.current) return;
       if (registration.status === "requires_action" && registration.next_action?.type === "three_d_secure") {
         saveCardRegistrationResume({
           paymentIdempotencyKey,
@@ -310,7 +357,14 @@ function PurchaseForm({
   }, [product.id, registrationId]);
 
   useEffect(() => {
+    const cardPolicy = options.find(o => o.method === "credit_card");
     if (!client || !registrationId || registrationResumeRef.current === registrationId) return;
+    if (!cardPolicy?.available || cardPolicy.flow !== "card_component" || !cardPolicy.saved_cards_enabled) {
+      const stop = window.setTimeout(() => {
+        setError(PAYMENT_UI_UNAVAILABLE); setSubmissionLocked(true); setSubmitting(false); onRegistrationStopped();
+      }, 0);
+      return () => window.clearTimeout(stop);
+    }
     let active = true;
     const timer = window.setTimeout(() => {
       if (!active || registrationResumeRef.current === registrationId) return;
@@ -406,10 +460,10 @@ function PurchaseForm({
       active = false;
       window.clearTimeout(timer);
     };
-  }, [client, navigateAfterStart, onRegistrationStopped, product.id, refreshCards, registrationId, startSavedCardPayment]);
+  }, [client, navigateAfterStart, onRegistrationStopped, options, product.id, refreshCards, registrationId, startSavedCardPayment]);
 
   const deleteCard = async (cardId: string) => {
-    if (!client || cardBusy || submitting) return;
+    if (!savedCardsEnabled || !client || cardBusy || submitting) return;
     setCardBusy(true);
     setError(null);
     try {
@@ -424,10 +478,12 @@ function PurchaseForm({
 
   const backendUnavailable = !product.is_available || !product.eligible || product.cta.state !== "enabled";
   const selectedSavedCard = selectedCardId && selectedCardId !== "new" ? cards.find((card) => card.id === selectedCardId) : null;
-  const cardUnavailable = method === "credit_card" && (
+  const cardUnavailable = method === "credit_card" && !providerMethod && (
     !selectedCardId || selectedCardId === "new" ? !cardMounted : !selectedSavedCard?.can_pay || selectedSavedCard.is_expired
   );
-  const disabled = !method || backendUnavailable || submitting || cardBusy || cardUnavailable || submissionLocked;
+  const fincodeDisabled = method === "credit_card" && !providerMethod && !savedCardsEnabled;
+  const disabled = !method || !selectedOption?.available || !supportedPaymentMethod(selectedOption) || fincodeDisabled || backendUnavailable || submitting || cardBusy || cardUnavailable || submissionLocked ||
+    providerMethod && (!uiGateway || providerBusy || providerLocked || selectedOption?.flow === "inline_card_form" && (!inlineValid || !inlineMounted));
   const canSaveCard = (cardLimits?.registration_remaining ?? 0) > 0;
 
   if (registrationProcessing) return <CatalogLoading label="処理中…" />;
@@ -437,14 +493,17 @@ function PurchaseForm({
       <h2 className="sr-only" id="payment-method-title">お支払方法</h2>
       <PaymentMethodSelector
         cardBusy={cardBusy || submitting}
+        disabled={submitting || providerBusy || submissionLocked || providerLocked}
+        options={options}
         cardsLoaded={cardsLoaded}
         cards={cards}
         onDeleteCard={(cardId) => { void deleteCard(cardId); }}
         onMethodChange={(next) => {
+          if (submitting || providerBusy || submissionLocked || providerLocked) return;
           setConfirmationOpen(false);
           setMethod(next);
           setError(null);
-          if (next === "credit_card" && !cardsLoaded) loadCards();
+          if (next === "credit_card" && options.find(o => o.method === next)?.saved_cards_enabled && !cardsLoaded) loadCards();
         }}
         onNewCard={openNewCard}
         onRetryCards={loadCards}
@@ -452,19 +511,28 @@ function PurchaseForm({
         selectedCardId={selectedCardId}
         selectedMethod={method}
       >
-        <div className="payment-new-card">
+        {providerMethod ? <div className="payment-inline-card">
+          <p>Visa・Mastercard</p>
+          <div aria-label="決済会社のカード入力欄" ref={attachTarget} />
+          {!inlineMounted ? <p role="status">カード入力欄を準備中です。</p> : null}
+          {inlineMounted && !inlineValid ? <button onClick={() => { void checkValidity(); }} type="button">入力内容を確認する</button> : null}
+          <p>カード情報はオリポケのサーバーを通らず、保存もしません。カード会社による本人認証の画面が表示される場合があります。</p>
+        </div> : <div className="payment-new-card">
           {bootstrap ? <FincodeCardFields bootstrap={bootstrap} onError={onCardUiError} onMountStateChange={onCardMountStateChange} ref={cardFieldsRef} />
             : <div aria-live="polite" className="payment-card-loading" role="status">カード入力欄を準備中です。</div>}
-        </div>
+        </div>}
       </PaymentMethodSelector>
-      {error ? <p className="payment-inline-error" role="alert">{error}</p> : null}
+      {error || providerMethod && providerError ? <p className="payment-inline-error" role="alert">{providerMethod ? providerError ?? error : error}</p> : null}
+      {method && selectedOption && (!supportedPaymentMethod(selectedOption) || fincodeDisabled) ? <p role="alert">{PAYMENT_UI_UNAVAILABLE}</p> : null}
+      {providerMethod && providerMessage && !providerBusy ? <p role="status">{providerMessage} <Link href="/mypage/purchases">購入履歴</Link></p> : null}
       {submissionLocked ? <p className="payment-submission-locked">決済状況を確認できるまで、新しい決済は開始できません。</p> : null}
       <button className="button button--dark payment-purchase-button" disabled={disabled} onClick={() => {
-        if (method === "credit_card" && selectedCardId === "new") setConfirmationOpen(true);
+        if (!providerMethod && savedCardsEnabled && method === "credit_card" && selectedCardId === "new") setConfirmationOpen(true);
         else void submitPayment();
       }} type="button">
-        {submitting ? "処理中…" : "購入する"}
+        {submitting || providerBusy ? "処理中…" : "購入する"}
       </button>
+      {providerMethod && providerBusy && providerMessage ? <PaymentProcessingOverlay message={providerMessage} /> : null}
       {confirmationOpen ? (
         <CardSaveConfirmation
           busy={submitting}
@@ -484,11 +552,13 @@ function ProductDetail({
   pid,
   product,
   registrationId,
+  subject,
 }: {
   readonly authenticated: boolean;
   readonly pid: string | null;
   readonly product: PointProduct;
   readonly registrationId: string | null;
+  readonly subject: string;
 }) {
   const { client } = usePaymentClient();
   // Return context signals work in progress, never canonical registration success.
@@ -501,7 +571,9 @@ function ProductDetail({
       {!registrationProcessing ? <header className="point-purchase-detail__header"><p>COIN PURCHASE DETAIL</p><h1>{presentCoinTerminology(product.title)}</h1></header> : null}
       {client ? <PaymentReturnAlert client={client} pid={pid} productId={product.id} /> : null}
       {!registrationProcessing ? <PurchaseSummary product={product} /> : null}
-      {authenticated ? <PurchaseForm product={product} registrationId={registrationId} registrationProcessing={registrationProcessing} onRegistrationStopped={onRegistrationStopped} /> : <LoginRequiredState />}
+      {authenticated ? <PaymentMethodLoader productId={product.id} subject={subject}>{(options, compatibility) =>
+        <PurchaseForm compatibility={compatibility} options={options} product={product} registrationId={registrationId} registrationProcessing={registrationProcessing} onRegistrationStopped={onRegistrationStopped} subject={subject} />
+      }</PaymentMethodLoader> : <LoginRequiredState />}
       {!registrationProcessing ? <section aria-labelledby="point-purchase-conditions-title" className="point-purchase-detail__conditions">
         <header><p>PRODUCT INFORMATION</p><h2 id="point-purchase-conditions-title">商品情報</h2></header>
         <dl>
@@ -519,6 +591,7 @@ export function PointPurchaseDetail(props: {
   readonly productId: string;
   readonly registrationId?: string | null;
 }) {
+  usePaymentReturnEvent(props.pid ?? null);
   const { state, smsAccess } = useSession();
   const { client } = usePaymentClient();
   return <>
@@ -595,5 +668,5 @@ function PointPurchaseDetailContent({
   if (displayState.status === "error") return <CatalogMessage action={() => { setState({ status: "loading" }); setRequestKey((value) => value + 1); }} description={displayState.problem.message} eyebrow="ERROR" title="コイン商品を取得できませんでした" tone="error" />;
   const product = displayState.collection.data.find((candidate) => candidate.id === productId);
   if (!product) return <CatalogMessage description="指定されたコイン商品は公開されていないか、見つかりません。" eyebrow="NOT FOUND" title="コイン商品が見つかりません" />;
-  return <ProductDetail authenticated={session.status === "authenticated"} pid={pid} product={product} registrationId={registrationId} />;
+  return <ProductDetail authenticated={session.status === "authenticated"} key={`${sessionKey}:${product.id}`} pid={pid} product={product} registrationId={registrationId} subject={sessionKey ?? "anonymous"} />;
 }

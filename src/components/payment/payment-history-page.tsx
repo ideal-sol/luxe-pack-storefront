@@ -52,7 +52,7 @@ function PaymentHistoryRow({ payment }: { readonly payment: Payment }) {
     <li>
       <Link className="payment-history-row" href={paymentHistoryDetailRoute(payment.id)}>
         <time dateTime={payment.created_at}>{formatPaymentDate(payment.created_at)}</time>
-        <span className="payment-history-row__method">{paymentMethodLabel(payment.method)}</span>
+        <span className="payment-history-row__method">{paymentMethodLabel(payment.method, payment.method_label)}</span>
         <data value={payment.grant.paid_points}>{formatPaymentCoins(payment.grant.paid_points)}</data>
         <data className="payment-history-row__amount" value={payment.amount.amount}>{formatPaymentAmount(payment)}</data>
       </Link>

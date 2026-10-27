@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d",
+  "version": "sha256-e14476bb46508a7f82edab331cda7fb1b3071bda8dc63b4be693466d7ab92d12",
   "files": [
     {
       "relative_path": "fukumaru_hashiru.webp",
@@ -113,6 +113,20 @@
       "byte_size": 48554,
       "sha256": "cd5eefaee126757cf89339eb6a524059d8e425c5e19ba0260569bf3622278b02",
       "object_key": "static-assets/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/orika_sd.webp"
+    },
+    {
+      "relative_path": "payments/netridecash-logo.png",
+      "content_type": "image/png",
+      "byte_size": 28584,
+      "sha256": "e9726a4fcd722a5f2c7cc6c6f6a8da9ff317cd0ba2163b856ce4890a8e518e4e",
+      "object_key": "static-assets/brand/sha256-e14476bb46508a7f82edab331cda7fb1b3071bda8dc63b4be693466d7ab92d12/payments/netridecash-logo.png"
+    },
+    {
+      "relative_path": "payments/paidy-logo.png",
+      "content_type": "image/png",
+      "byte_size": 169507,
+      "sha256": "2cd8cacd72b05f09ea9329e23dc4775b34d0bf9bab5621fd88ceae181c49f203",
+      "object_key": "static-assets/brand/sha256-e14476bb46508a7f82edab331cda7fb1b3071bda8dc63b4be693466d7ab92d12/payments/paidy-logo.png"
     },
     {
       "relative_path": "pokezou_sd.webp",

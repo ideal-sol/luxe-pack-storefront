@@ -879,3 +879,30 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   local full runs. No Production Artifact Dispatch/Build/Upload is performed.
   Separate Human Source Merge GO, then separately authorized Artifact/Runtime
   phases remain. Keep Draft branch/worktree for review.
+# SF-PAYUI-20261027 — Payment UI Source Draft (2026-10-27)
+
+- Issue #190 / R3 / Strict Change / Activation deferred. Dedicated branch
+  feat/SF-PAYUI-20261027 and isolated worktree start at protected main
+  ab52ea83c5a812be0c215b958e64cd01a84720ea. Other checkouts are untouched.
+- Verified full input specification/design/logo SHA values. Platform PAY1 merge
+  and PAY2/PAY4/PAY3 Draft heads are read-only references. No Platform changes.
+- Implement API-ordered payment methods, provisional injected PaymentUiGateway,
+  three provider UI flows, allowlisted events, opaque uncertain-attempt recovery,
+  safe returns/polling/method labels and unmodified logo pipeline additions.
+  Preserve fincode cards/3DS/registration, SMS/eligibility, GTM, approved Production
+  Source, Workflow, dependencies/lockfile and formal alpha.46 artifacts.
+- Add Mock SDK/UI/action tests and real boundary negative mutations. Keep all
+  Required Checks, assertions and timeouts. Initial wallet-fixture failure was
+  corrected; early concurrent local tests hit host-load timeouts. Final executed
+  local results and Required5 are recorded separately in the Draft PR.
+- Handoff: docs/implementation/STOREFRONT_PAYMENTS_HANDOFF_2026-10-27.md.
+  New-provider canonical networking and accepted UnivaPay Browser driver remain
+  unconnected; fixture charge/result normalization is not real SDK acceptance.
+  Legal/brand wording, provider approval and CDN/version approval remain OPEN.
+- No migrations created/applied, Backend financial/schema/auth changes, real
+  Provider/card/Browser tests, formal Production artifact or Runtime activation.
+  Canonical App transport policy grants only Issue/Draft/push/body/check reads;
+  final-head machine-readable review retains HOLD, never a merge recommendation.
+- Keep Draft, branch and worktree. No Ready/merge/auto-merge or cleanup that would
+  remove the reviewable Source. Target status after checks/review:
+  STOREFRONT_PAYMENTS_SOURCE_DRAFT_READY_PLATFORM_CLIENT_INTEGRATION_PENDING_PRODUCTION_MERGE_HOLD.

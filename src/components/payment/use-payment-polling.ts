@@ -66,7 +66,7 @@ export function usePaymentPolling(client: PaymentClientAdapter | null, pid: stri
         latest = payment;
         publish({ payment, status: "ready" });
         if (terminalStatuses.has(payment.status)) return;
-        if (payment.method !== "credit_card" && payment.method !== "paypay") return;
+        if (payment.method === "konbini" || payment.method === "virtual_account") return;
         schedule(POLLING_INTERVAL_MS);
       } catch (error) {
         if (!active) return;

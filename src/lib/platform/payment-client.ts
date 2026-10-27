@@ -10,10 +10,11 @@ import type {
 } from "@oripa/storefront-client";
 import { createBrowserPlatformTransport, type BrowserClientOverrides } from "./browser-client";
 import type { PlatformRuntimeConfiguration } from "./runtime-configuration";
+import type { PaymentUiGateway } from "./payment-ui-gateway";
 
 type Schemas = PublicComponents["schemas"];
 
-export type Payment = Schemas["Payment"];
+export type Payment = Schemas["Payment"] & { readonly method_label?: string };
 export type PaymentCollection = Schemas["PaymentCollection"];
 export type PaymentCard = Schemas["PaymentCard"];
 export type PaymentCardCollection = Schemas["PaymentCardCollection"];
@@ -42,10 +43,15 @@ type PaymentPurchaseClientAdapter = Pick<
   | "startPayment"
 >;
 
-export type PaymentClientAdapter = PaymentPurchaseClientAdapter & Partial<Pick<BrowserStorefrontPaymentClient, "listPayments">>;
+export type PaymentClientAdapter = PaymentPurchaseClientAdapter & Partial<Pick<BrowserStorefrontPaymentClient, "listPayments">> & {
+  listPaymentMethods?: PaymentUiGateway["listPaymentMethods"];
+};
 
 export function createPaymentClientAdapter(transport: StorefrontTransport): PaymentClientAdapter {
   const client = createCsrfManagedStorefrontPaymentClient(transport);
+  // alpha.46-only compatibility. A later Client adoption must explicitly wire
+  // the full PaymentUiGateway; never silently fall back when listing exists.
+  if ("listPaymentMethods" in client) throw new Error("Payment UI Client integration is required");
   return {
     cancelCardRegistration: client.cancelCardRegistration,
     deleteCard: client.deleteCard,

@@ -4,6 +4,7 @@ import { SessionProvider } from "@/components/auth/session-provider";
 import { PaymentClientProvider } from "@/components/payment/payment-client-provider";
 import { PaymentHistoryPage } from "@/components/payment/payment-history-page";
 import type { AuthClientAdapter, Payment, PaymentClientAdapter } from "@/lib/platform";
+import type { UiPayment } from "@/lib/platform/payment-ui-gateway";
 
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 const auth = {
@@ -28,7 +29,7 @@ function payment(id: string, method: Payment["method"] = "credit_card", status: 
   };
 }
 
-function collection(data: readonly Payment[], nextCursor: string | null = null) {
+function collection(data: readonly (Payment | UiPayment)[], nextCursor: string | null = null) {
   return { data, pagination: { has_more: nextCursor !== null, limit: 10, next_cursor: nextCursor } };
 }
 
@@ -43,6 +44,17 @@ function renderHistory(listPayments: PaymentClientAdapter["listPayments"]) {
 }
 
 describe("SITE-041 Payment History list", () => {
+  it("retains hidden-method history and prioritizes the Backend method_label in Source-only fixtures", async () => {
+    const items: UiPayment[] = [
+      { ...payment("pay_paidy"), method: "paidy", method_label: "API あと払い（ペイディ）" },
+      { ...payment("pay_cash"), method: "netridecash" },
+    ];
+    const listPayments = vi.fn().mockResolvedValue({ data: collection(items), metadata });
+    renderHistory(listPayments);
+    expect(await screen.findByText("API あと払い（ペイディ）")).toBeInTheDocument();
+    expect(screen.getByText("電子マネー（NetRideCash）")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /決済を再開/ })).not.toBeInTheDocument();
+  });
   it("defaults to succeeded, shows paid Points only, maps methods, and has no column headers", async () => {
     const items = [
       payment("pay_credit", "credit_card"),

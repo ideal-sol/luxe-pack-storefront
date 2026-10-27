@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState } from "react";
+import type { PaymentUiGateway } from "@/lib/platform/payment-ui-gateway";
+import { browserPaymentProviderSdk, type PaymentProviderSdk } from "./provider-payment-sdk";
 import {
   createBrowserPaymentClient,
   PlatformConfigurationError,
@@ -9,6 +11,8 @@ import {
 
 interface PaymentClientContextValue {
   readonly client: PaymentClientAdapter | null;
+  readonly uiGateway: PaymentUiGateway | null;
+  readonly providerSdk: PaymentProviderSdk;
 }
 
 const PaymentClientContext = createContext<PaymentClientContextValue | null>(null);
@@ -21,9 +25,13 @@ function resolveClient(injected: PaymentClientAdapter | null | undefined) {
 export function PaymentClientProvider({
   children,
   client: injectedClient,
+  uiGateway = null,
+  providerSdk = browserPaymentProviderSdk,
 }: {
   readonly children: React.ReactNode;
   readonly client?: PaymentClientAdapter | null;
+  readonly uiGateway?: PaymentUiGateway | null;
+  readonly providerSdk?: PaymentProviderSdk;
 }) {
   const [client] = useState<PaymentClientAdapter | null>(() => {
     try {
@@ -33,7 +41,7 @@ export function PaymentClientProvider({
       throw error;
     }
   });
-  const value = useMemo(() => ({ client }), [client]);
+  const value = useMemo(() => ({ client, uiGateway, providerSdk }), [client, uiGateway, providerSdk]);
   return <PaymentClientContext.Provider value={value}>{children}</PaymentClientContext.Provider>;
 }
 

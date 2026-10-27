@@ -940,3 +940,21 @@ body:has(.gacha-draw-tray) .site-footer { padding-bottom: calc(370px + env(safe-
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
   .loading-state__spinner { animation-duration: 2s; }
 }
+/* SF-PAYUI: API-ordered payment rows and provider-owned inline fields. */
+.payment-method-row__label { flex-wrap: wrap; }
+.payment-method-row__label input { flex-shrink: 0; }
+.payment-method-row__label:has(input:disabled) { cursor: not-allowed; }
+.payment-method-row__logo { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 100px; background: #fff; }
+.payment-method-row__logo img { display: block; width: 100%; height: auto; object-fit: contain; }
+.payment-method-row__logo--paidy { width: 114px; }
+.payment-method-row__card-icon { font-size: 32px; line-height: 1; }
+.payment-method-row__description, .payment-method-row__reason { margin: 10px 0 0 32px; font-size: 12px; line-height: 1.8; }
+.payment-method-row__reason { color: #a12e2a; }
+.payment-inline-card { margin: 14px 0 0 32px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.payment-inline-card iframe { max-width: 100%; border: 0; }
+.payment-inline-card > p { font-size: 12px; line-height: 1.8; }
+.payment-processing-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 18px; padding: 20px; background: rgb(242 251 250 / 94%); color: #173a3c; text-align: center; }
+.payment-processing-overlay__spinner { width: 44px; height: 44px; border: 4px solid #d9ecea; border-top-color: #00beb1; border-radius: 50%; animation: payment-processing-spin 1s linear infinite; }
+@keyframes payment-processing-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .payment-processing-overlay__spinner { animation: none; } }
+@media (max-width: 420px) { .payment-inline-card { margin-left: 0; padding: 10px; } }

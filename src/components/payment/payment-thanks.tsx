@@ -10,6 +10,9 @@ import { usePointClient } from "@/components/points/point-client-provider";
 import { presentPaymentProblem, type Payment } from "@/lib/platform";
 import { usePaymentClient } from "./payment-client-provider";
 import { usePaymentPolling } from "./use-payment-polling";
+import { paymentMethodLabel } from "./payment-history-presentation";
+import { usePaymentReturnEvent } from "./use-payment-return-event";
+import { finishPaymentAttempt, readPaymentAttempt } from "./payment-attempt";
 
 function formatAmount(payment: Payment) {
   return new Intl.NumberFormat("ja-JP", {
@@ -37,12 +40,13 @@ function ErrorScreen() {
   );
 }
 
-function SuccessScreen() {
+function SuccessScreen({ payment }: { payment: Payment }) {
   return (
     <section className="payment-result payment-result--success">
       <div aria-hidden="true" className="payment-result__mark">✓</div>
       <h1>購入完了しました</h1>
       <p>コイン購入して頂き、ありがとうございます。</p>
+      <p>{paymentMethodLabel(payment.method, payment.method_label)}</p>
       <Link className="button button--dark" href="/mypage/purchases">購入履歴</Link>
     </section>
   );
@@ -118,12 +122,22 @@ function UnpaidGuide({ payment }: { readonly payment: Payment }) {
 }
 
 export function PaymentThanks({ pid }: { readonly pid: string | null }) {
+  usePaymentReturnEvent(pid);
   const { state: session } = useSession();
   const { client } = usePaymentClient();
   const { refreshWallet } = usePointClient();
   const refreshedPaymentId = useRef<string | null>(null);
   const authenticatedClient = session.status === "authenticated" ? client : null;
   const polling = usePaymentPolling(authenticatedClient, pid);
+
+  useEffect(() => {
+    const subject = session.status === "authenticated" ? session.session.user?.id : null;
+    if (!subject || polling.status !== "ready" || !["succeeded", "failed", "canceled", "expired"].includes(polling.payment.status)) return;
+    try {
+      const attempt = readPaymentAttempt(subject);
+      if (attempt?.paymentId === polling.payment.id) finishPaymentAttempt(subject, attempt.idempotencyKey);
+    } catch { /* A broken correlation never permits another charge. */ }
+  }, [polling, session]);
 
   useEffect(() => {
     if (polling.status !== "ready" || polling.payment.status !== "succeeded") return;
@@ -148,8 +162,8 @@ export function PaymentThanks({ pid }: { readonly pid: string | null }) {
   }
 
   const payment = polling.payment;
-  if (payment.status === "succeeded") return <SuccessScreen />;
+  if (payment.status === "succeeded") return <SuccessScreen payment={payment} />;
   if (["failed", "canceled", "expired"].includes(payment.status)) return <TerminalFailure payment={payment} />;
   if (payment.method === "konbini" || payment.method === "virtual_account") return <UnpaidGuide payment={payment} />;
-  return <CatalogLoading label="決済処理中" />;
+  return <CatalogLoading label="お支払いを確認しています" />;
 }
