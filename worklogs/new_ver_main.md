@@ -906,3 +906,8 @@ prohibited. This section supersedes the initial phase's local-only restriction.
 - Keep Draft, branch and worktree. No Ready/merge/auto-merge or cleanup that would
   remove the reviewable Source. Target status after checks/review:
   STOREFRONT_PAYMENTS_SOURCE_DRAFT_READY_PLATFORM_CLIENT_INTEGRATION_PENDING_PRODUCTION_MERGE_HOLD.
+- First formal CI: Policy/Quality/Security PASS, 1,704 tests PASS; 16 failures
+  came from a missing Payment helper in the existing analytics guard fixture.
+  Copy that fixture dependency without changing GTM behavior or assertions.
+  Also allow switching methods after a non-financial inline SDK load failure;
+  unknown monetary results remain locked. Updated-head checks supersede that run.

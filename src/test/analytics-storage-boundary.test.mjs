@@ -13,6 +13,7 @@ function check(checker, files) {
   try {
     writeFileSync(join(root, "checker.mjs"), checker);
     writeFileSync(join(root, "reviewed-analytics-storage.mjs"), reviewedStorage);
+    writeFileSync(join(root, "reviewed-payment-storage.mjs"), readFileSync("scripts/reviewed-payment-storage.mjs", "utf8"));
     for (const [path, source] of Object.entries(files)) {
       mkdirSync(dirname(join(root, path)), { recursive: true });
       writeFileSync(join(root, path), source);
