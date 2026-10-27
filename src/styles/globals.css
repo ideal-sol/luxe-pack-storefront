@@ -433,6 +433,9 @@ body:has(.draw-presentation) { overflow: hidden; }
 .draw-presentation { background: #000; display: grid; inset: 0; overflow: hidden; place-items: center; position: fixed; z-index: 110; }
 .draw-presentation__video { display: block; height: 100%; min-height: 0; min-width: 0; object-fit: contain; width: 100%; }
 .draw-presentation__skip { border: 1px solid var(--white); min-height: 44px; min-width: 88px; position: absolute; right: max(16px, env(safe-area-inset-right)); top: max(16px, env(safe-area-inset-top)); z-index: 1; }
+.draw-presentation__sound { border: 1px solid var(--white); bottom: max(24px, env(safe-area-inset-bottom)); min-height: 44px; min-width: 120px; position: absolute; right: max(16px, env(safe-area-inset-right)); z-index: 1; }
+.draw-presentation__tap { align-items: center; background: rgba(0, 0, 0, .45); border: 0; color: var(--white); cursor: pointer; display: flex; flex-direction: column; font-size: 16px; font-weight: 800; gap: 14px; inset: 0; justify-content: center; position: absolute; }
+.draw-presentation__tap-icon { align-items: center; border: 2px solid var(--white); border-radius: 50%; display: flex; font-size: 28px; height: 72px; justify-content: center; padding-left: 6px; width: 72px; }
 .draw-snapshot-card__image { aspect-ratio: 16 / 9; background: var(--paper-strong); overflow: hidden; }
 .draw-snapshot-card__image .catalog-asset { height: 100%; }
 .draw-snapshot-card__image .catalog-asset img { object-fit: contain; }
