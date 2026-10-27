@@ -1,5 +1,71 @@
 # SITE-GTM-20261026 — GTM Source / Production handoff
 
+## GTM-PROD-WF-20261027 — Production Workflow preparation
+
+The dedicated Workflow change is prepared against protected main
+`ab52ea83c5a812be0c215b958e64cd01a84720ea`. It sets
+`NEXT_PUBLIC_GTM_ID=GTM-5DQRPNN2` only on `Build exact production application`.
+Validation tests, ordinary CI, Preview and OLD Test receive no real GTM build input.
+Implementation, tests and a Draft PR are authorized; Ready, Merge, auto-merge,
+formal Artifact Dispatch and Runtime Activation remain unauthorized.
+
+Application Runtime Source candidate: PR #186 merge
+`2be4169fd847d18d8de0f5bacc1b4a4d7c416b05`, tree
+`81a65d46638dbf2c832c6f5b263424096e0328de`.
+The reported OLD Test reflection uses this Source / Next16.4.2 / alpha.46 / GTM OFF.
+Reflection completion is not Human Browser Acceptance. A formal PASS report tied
+to that Source, Build ID and affected registration/SMS/preregistration flows must
+be confirmed separately before Production approval.
+
+Current `docs/production-approved-source.json` instead pins PR #179
+`7dc355d3174bdf8a4731741eea7aa4a80752b724`, without GTM. That Authority file is
+unchanged. Existing exact Source authorization runs first; the new reviewed-source
+check then rejects PR179 before any GTM Build. Workflow preparation never promotes
+PR186 or latest main to Production Source Authority automatically.
+
+`scripts/verify-gtm-build.mjs` validates the reviewed PR186 composition before
+building. It observes actual prerendered root-layout HTML, runs the loader against
+an inert document, verifies its generated URL and the noscript iframe, and executes
+the compiled client SMS predicate/verification/event fragment with synthetic data.
+Initial success, failure, unverified result, verified redisplay, phone change,
+duplicate suppression, event-only payload and disabled storage/dataLayer isolation
+are checked. It also executes the compiled server GTM gate with poisoned Runtime
+ENV. This offline fragment verification is not full Browser Acceptance.
+
+The verifier deliberately accepts only the reviewed Source bytes and known compiler
+shape. A future analytics, layout, SMS or Next config change requires renewed review
+and focused validation; missing functions or unknown compiled shapes fail closed.
+The global error document bypasses the app layout and is checked as GTM disabled.
+
+The Build observation `.next/gtm-build-observation.json` records `gtm_id`,
+`gtm_enabled`, Build ID and hashes of inspected compiled/rendered files. It is
+included in the existing regular-file checksums. Artifact Manifest fields
+`gtm_id`, `gtm_enabled` and `gtm_observation_sha256` derive from this observation.
+The same behavior and byte observations are recomputed before tar creation, after
+package extraction and after exact Artifact-ID/digest-checked download. Manifest,
+Build ID, observation digest and file hashes must agree at every stage. Explicit
+disabled verification requires `disabled`, a null ID and false enabled state;
+missing/invalid expected IDs and mismatched metadata are rejected.
+
+Local validation uses only `GTM-TEST0001` and unset builds, with no container
+requests. Tar/extract/independent-copy tests verify transport integrity; an actual
+GitHub Artifact-ID re-download and native ARM64 production smoke remain checks of
+the later separately authorized formal Workflow run. No formal Artifact is created
+or dispatched by this Draft task.
+
+For a later Authority PR, obtain exact Source approval and formal OLD Test Human
+Acceptance first, retain immutable alpha.46 Artifact12586773046 / Client / Testkit,
+and retain Platform Runtime Source `3592fcdc8e43467c3dd67d2677ec52b7d328eb77`.
+Keep all current checksums, Required Checks, Security, Node22.22.3, pnpm10.12.1,
+the three exact Next16.4.2 guards, ARM64, Artifact ID/digest/hash and Build ID
+checks. Updating the Authority must explicitly supersede its current GTM exclusion;
+neither this Workflow SHA nor a later main SHA is the application Runtime Source.
+Formal Build/Dispatch and NEW Production Activation require separate Human GO.
+
+The remainder of this document is the historical PR186 Source handoff. Its
+PR175/alpha.45 Authority description was current at that change's base; the
+PR179/alpha.46 Authority described above is current for this Workflow task.
+
 R3 / Strict Change. Application Runtime Activation: none.
 This change stops at a dedicated Draft PR, focused validation and fixed-head
 self-review. Merge, Artifact Dispatch, Production Authority changes, ENV changes

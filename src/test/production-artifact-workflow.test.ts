@@ -184,7 +184,7 @@ describe("production artifact application name authority", () => {
       .toBeLessThan(workflow.indexOf("- name: Build exact production application"));
     const build = workflow.match(/- name: Build exact production application([\s\S]*?)(?=      - name:)/)?.[1];
     expect(build).toContain("pnpm build");
-    expect(build).not.toContain("env:");
+    expect(build).toContain("NEXT_PUBLIC_GTM_ID: GTM-5DQRPNN2");
     expect(workflow).toContain('echo "- NEXT_PUBLIC_APP_NAME: $NEXT_PUBLIC_APP_NAME"');
   });
 
@@ -231,8 +231,12 @@ describe("production artifact application name authority", () => {
           public_openapi_sha256: "37cdeb7a214d42f0f69458d578a81c5c7869132e2a6cbd02ca8d150f1abf6faa",
         };
         writeFileSync(join(root, "contract-provenance.json"), JSON.stringify(provenance));
+        mkdirSync(join(root, ".next"));
+        writeFileSync(join(root, ".next/gtm-build-observation.json"), JSON.stringify({
+          gtm_id: "GTM-5DQRPNN2", gtm_enabled: true, build_id: env.BUILD_ID,
+        }));
         const result = spawnSync(process.execPath, ["--input-type=module"], {
-          input: manifestScript, encoding: "utf8", env,
+          cwd: root, input: manifestScript, encoding: "utf8", env,
         });
         expect(result.stderr).toBe("");
         expect(result.status).toBe(0);
@@ -242,6 +246,7 @@ describe("production artifact application name authority", () => {
           app_name: appName, site_url: "https://example.com", architecture: "linux/arm64",
           source_sha: env.SOURCE_SHA, git_tree: env.GIT_TREE, workflow_sha: env.WORKFLOW_SHA,
           build_id: env.BUILD_ID, build_utc: env.BUILD_UTC, file_manifest_sha256: env.FILE_MANIFEST_SHA,
+          gtm_id: "GTM-5DQRPNN2", gtm_enabled: true,
           platform_api_base: apiBase,
           asset_public_base_url: env.NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL,
           static_asset_base_url: env.NEXT_PUBLIC_STATIC_ASSET_BASE_URL,
@@ -250,14 +255,14 @@ describe("production artifact application name authority", () => {
           ...provenance, source_sha: "342341a82131a7f80a4e7508172f1e764ec7ad84",
         }));
         const mismatch = spawnSync(process.execPath, ["--input-type=module"], {
-          input: manifestScript, encoding: "utf8", env,
+          cwd: root, input: manifestScript, encoding: "utf8", env,
         });
         expect(mismatch.status).not.toBe(0);
         expect(mismatch.stderr).toContain("Contract provenance source mismatch");
         writeFileSync(join(root, "contract-provenance.json"), JSON.stringify(provenance));
         delete env.NEXT_PUBLIC_APP_NAME;
         expect(spawnSync(process.execPath, ["--input-type=module"], {
-          input: manifestScript, encoding: "utf8", env,
+          cwd: root, input: manifestScript, encoding: "utf8", env,
         }).status).not.toBe(0);
       } finally {
         rmSync(root, { recursive: true, force: true });
