@@ -1080,4 +1080,3 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   low-power autoplay denial, actual audio, upper-right Skip/lower-right sound
   layout, safe-area and all playback states after separate Human authorization.
   Keep branch/worktree and Draft for review. Rollback is a reviewed Source revert.
-
