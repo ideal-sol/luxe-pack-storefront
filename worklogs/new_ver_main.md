@@ -960,3 +960,12 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   Keep Draft branch/worktree and Issue190 for continuation. Revert Source through
   reviewed PR if necessary; retain all immutable artifacts. Exact Head/Tree,
   checks, timing and fresh review are attached to the existing PR.
+- Validation correction: first official CI run40634698538 passed policy/security
+  and 1729/1732 tests. Quality found one newly added MockJsonResponse missing its
+  explicit undefined body; integration found three unconfigured-Client assertions
+  still expecting the removed fallback form. Corrected the typed fixture and
+  asserted no payment form/radios/submit plus the safe unavailable message.
+  No assertion, Required Check or runtime boundary was weakened. The initial
+  local focused run was54 PASS/49 FAIL under host load and is not reported PASS;
+  local Build compiled, then failed on the same typed fixture. Final-head CI
+  results supersede neither these local failures nor the SDK/Browser HOLD.

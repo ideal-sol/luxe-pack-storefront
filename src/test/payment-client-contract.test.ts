@@ -107,7 +107,7 @@ describe("alpha.47 canonical Payment browser client", () => {
     for (const path of ["univapay-charges", "paidy-authorizations"]) {
       harness.mock.enqueueJson({ method: "POST", url: `${origin}/payments/${payment.id}/${path}` }, { body: payment });
     }
-    harness.mock.enqueueJson({ method: "POST", url: `${origin}/payments/${payment.id}/client-events` }, { status: 204 });
+    harness.mock.enqueueJson({ method: "POST", url: `${origin}/payments/${payment.id}/client-events` }, { body: undefined, status: 204 });
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/payments/${payment.id}` }, { body: payment });
     await gateway.reportUnivapayCharge(payment.id, { charge_id: "0198a001-0000-7000-8000-000000000099" });
     await gateway.confirmPaidyAuthorization(payment.id, { paidy_payment_id: "pay_synthetic_payment" }, { idempotency_key: "synthetic-confirm-key" });
