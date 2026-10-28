@@ -83,6 +83,8 @@ function setup(methods: PaymentMethodOption[] = options) {
   return { legacy, gateway, sdk, session, validity: (v: boolean) => act(() => validity(v)), callback: (v: unknown) => act(() => callback(v)), mount: () => render(tree()) };
 }
 async function buy() {
+  // Flush provider lifecycle/correlation initialization before asserting readiness.
+  await act(async () => undefined);
   await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: "購入する" }));
 }

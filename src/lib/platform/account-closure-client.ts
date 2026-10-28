@@ -21,7 +21,7 @@ function closureError(reason: unknown): ClosureUiError {
     const kinds = { INVALID_PASSWORD: "password", INVALID_EMAIL_CODE: "email_code", ACCOUNT_CLOSURE_STALE: "stale",
       ACCOUNT_CLOSURE_BLOCKED: "blocked", ACCOUNT_CLOSURE_VERIFICATION_REQUIRED: "verification",
       EMAIL_VERIFICATION_REQUIRED: "verification", SMS_VERIFICATION_REQUIRED: "verification" } as const;
-    if (reason.code in kinds) return new ClosureUiError(kinds[reason.code as keyof typeof kinds]);
+    if (Object.hasOwn(kinds, reason.code)) return new ClosureUiError(kinds[reason.code as keyof typeof kinds]);
     if (reason.status === 429 && Number.isFinite(reason.retry_after_seconds) && reason.retry_after_seconds! >= 0) {
       return new ClosureUiError("retry", Date.now() + reason.retry_after_seconds! * 1000);
     }

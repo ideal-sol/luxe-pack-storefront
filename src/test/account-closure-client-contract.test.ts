@@ -63,6 +63,7 @@ it.each([
   ["ACCOUNT_CLOSURE_STALE", 409, "stale"], ["ACCOUNT_CLOSURE_BLOCKED", 409, "blocked"],
   ["ACCOUNT_CLOSURE_VERIFICATION_REQUIRED", 403, "verification"], ["SESSION_EXPIRED", 401, "session"],
   ["AUTHENTICATION_REQUIRED", 401, "session"], ["UNKNOWN", 403, "retry"], ["RATE_LIMITED", 429, "retry"],
+  ["toString", 403, "retry"], ["constructor", 403, "retry"],
 ] as const)("maps formal %s safely without leaking problem details", async (code, status, kind) => {
   const h = harness(); h.initialize();
   h.mock.enqueueProblem({ method: "POST", url: origin + "/me/account-closure" }, problem(code, status, { detail: "private detail" }));
