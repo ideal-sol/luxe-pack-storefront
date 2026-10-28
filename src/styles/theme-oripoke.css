@@ -515,10 +515,20 @@ body {
 
 /* ---------- マイページ ---------- */
 .mypage-summary { background: linear-gradient(135deg, var(--teal), var(--teal-dd)); border: 0; }
-.mypage-summary__mark { border-color: var(--gold-lt); color: var(--gold-lt); }
+/* サイトロゴのマーク（旧 Oripa-Z の「OZ」の菱形から変更） */
+.mypage-summary__mark { background: var(--white); border: 0; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, .14); padding: 8px; rotate: none; width: 44px; }
+.mypage-summary__mark-image { display: block; height: 100%; width: 100%; }
 .mypage-summary__heading p { color: var(--gold-lt); }
 .mypage-summary dt { color: rgba(255, 255, 255, .78); }
 .mypage-summary dl { border-top-color: rgba(255, 255, 255, .25); }
+/* 会員ID（ワンクリックでコピー） */
+.mypage-summary dl .mypage-summary__member-id { align-items: flex-start; }
+.mypage-summary__member-id dt { flex: 0 0 auto; padding-top: 6px; }
+.mypage-summary__member-id dd { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; min-width: 0; }
+.mypage-summary__member-id code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .7rem; font-weight: 700; letter-spacing: .02em; overflow-wrap: anywhere; text-align: right; user-select: all; }
+.mypage-summary__copy { background: var(--white); border: 0; border-radius: 999px; color: var(--teal-dd); cursor: pointer; flex: 0 0 auto; font-size: .7rem; font-weight: 900; min-height: 30px; padding: 4px 14px; }
+.mypage-summary__copy:hover { filter: brightness(.95); }
+.mypage-summary__copy:focus-visible { outline: 2px solid var(--gold-lt); outline-offset: 2px; }
 .mypage-shortcuts a, .mypage-menu nav { border: 2px solid var(--line); box-shadow: none; }
 .mypage-shortcuts a:hover { border-color: var(--teal); }
 .mypage-shortcuts small, .mypage-chevron { color: var(--teal-dd); }
@@ -1872,3 +1882,71 @@ html[data-motion="ready"] .gacha-card[data-reveal="in"]:hover { transition-delay
 .pre-register-shell__header { display: flex; justify-content: center; padding: 20px 16px; }
 .pre-register-shell__header img { height: auto; max-width: 100%; width: 200px; }
 .pre-register-shell .site-main { padding-bottom: 24px; }
+
+/* ---------- はじめての方へ（デザイン 10_はじめての方へ.html、2026-10-28） ---------- */
+.beginners { display: grid; gap: 18px; margin: 8px auto 56px; max-width: 1180px; }
+.beginners-panel { background: var(--white); border: 1px solid #d9ecea; border-radius: 14px; padding: 22px 20px; }
+.beginners-panel h2 { color: var(--ink); font-size: 17px; font-weight: 900; line-height: 1.5; margin: 0 0 4px; padding-left: 12px; position: relative; }
+.beginners-panel h2::before { background: linear-gradient(180deg, var(--teal), var(--teal-dd)); border-radius: 3px; content: ""; inset: 3px auto 3px 0; position: absolute; width: 4px; }
+.beginners-panel__lead { color: #6b8688; font-size: 12.5px; line-height: 1.8; margin: 0 0 14px; }
+.beginners-panel__note { color: #6b8688; font-size: 12.5px; line-height: 1.8; margin: 12px 0 0; }
+.beginners-panel__note a { color: var(--teal-dd); font-weight: 700; }
+.beginners-panel__action { margin: 18px 0 0; }
+.beginners-steps, .beginners-cards { display: grid; gap: 12px; list-style: none; margin: 0; padding: 0; }
+.beginners-steps li, .beginners-cards li { border: 1px solid #d9ecea; border-radius: 10px; display: grid; font-size: 12.5px; gap: 4px; line-height: 1.8; padding: 12px 14px; }
+.beginners-steps b, .beginners-cards b { color: var(--ink); font-weight: 900; }
+.beginners-table { border-top: 1px solid #d9ecea; display: grid; font-size: 13px; margin: 0; }
+.beginners-table div { border-bottom: 1px solid #eaf4f3; display: grid; }
+.beginners-table dt { background: var(--pale); color: var(--ink); font-weight: 700; padding: 9px 10px; }
+.beginners-table dd { line-height: 1.8; margin: 0; padding: 9px 10px; }
+.beginners-table b { font-weight: 900; }
+@media (min-width: 720px) {
+  .beginners-panel { padding: 22px 24px; }
+  .beginners-steps { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .beginners-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .beginners-table div { grid-template-columns: 190px minmax(0, 1fr); }
+  .beginners-table dt { border-bottom: 0; }
+}
+
+/* ---------- マイページの退会の導線・退会の案内（デザイン 04_マイページ.html、退会ページ_デザインサンプル.html） ---------- */
+.mypage-closure { background: var(--white); border: 2px solid #f3d6d2; border-radius: var(--radius-card); overflow: hidden; }
+.mypage-closure__link { align-items: center; border-bottom: 1px solid #f6e3e0; display: flex; justify-content: space-between; min-height: 64px; padding: 12px 18px; }
+.mypage-closure__link > span:first-child { display: grid; gap: 4px; }
+.mypage-closure__link strong { color: #9a2a22; font-size: .78rem; }
+.mypage-closure__link small { color: var(--muted); font-size: .62rem; }
+.mypage-closure__link:hover strong { text-decoration: underline; }
+.mypage-closure__notes { background: #fff8f6; color: #6f3128; display: grid; font-size: .68rem; gap: 6px; line-height: 1.7; padding: 12px 18px 14px; }
+.mypage-closure__notes p { margin: 0; }
+.account-closure { display: grid; gap: 18px; margin: 0 auto 60px; max-width: 560px; }
+.account-closure h2 { color: var(--ink); font-size: 1rem; font-weight: 900; margin: 0; }
+.account-closure__loss { background: var(--white); border: 1px solid #f3c2bd; border-radius: var(--radius-card); box-shadow: 0 10px 28px rgba(214, 69, 61, .08); display: grid; gap: 16px; padding: 24px 20px; }
+.account-closure__loss h2 { align-items: center; color: #9a2a22; display: flex; gap: 10px; }
+.account-closure__alert { align-items: center; background: var(--danger, #d6453d); border-radius: 50%; color: #fff; display: inline-flex; flex: 0 0 auto; font-size: .8rem; height: 24px; justify-content: center; width: 24px; }
+.account-closure__losses { display: grid; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.account-closure__losses li { background: #fff7f5; border-radius: 12px; color: #9a2a22; font-size: .82rem; font-weight: 800; padding: 12px 16px; }
+.account-closure__ship-cta { border-top: 1px dashed #f0d0cb; display: grid; gap: 10px; padding-top: 16px; }
+.account-closure__ship-cta p { font-size: .8rem; font-weight: 700; line-height: 1.7; margin: 0; }
+.account-closure__ship-button { justify-self: start; min-height: 44px; }
+.account-closure__notes { color: var(--muted); display: grid; font-size: .76rem; gap: 6px; line-height: 1.7; margin: 0; padding-left: 1.2em; }
+.account-closure__contact { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-card); display: grid; gap: 14px; padding: 24px 20px; }
+.account-closure__contact p { font-size: .8rem; line-height: 1.8; margin: 0; }
+.account-closure__submit { background: var(--danger, #d6453d); border: 0; box-shadow: 0 3px 0 #a8322b; color: #fff; width: 100%; }
+.account-closure__submit:hover { filter: brightness(1.05); }
+.account-closure__cancel { align-items: center; color: var(--muted); display: inline-flex; font-size: .78rem; font-weight: 750; justify-self: center; min-height: 44px; text-decoration: underline; }
+@media (min-width: 720px) { .account-closure__loss, .account-closure__contact { padding: 32px; } }
+
+/* B-6: コイン購入のレート常時表示 */
+.account-closure__form { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-card); display: grid; gap: 22px; padding: 24px 20px; }
+.account-closure__counts { display: grid; gap: 8px; margin: 0; }
+.account-closure__counts > div { align-items: center; background: #fff7f5; border-radius: 12px; color: #9a2a22; display: flex; flex-wrap: wrap; font-size: .85rem; gap: 8px; justify-content: space-between; padding: 12px 16px; }
+.account-closure__counts dd { font-size: 1.2rem; font-weight: 900; margin: 0; }
+.account-closure__consent { align-items: start; display: flex; font-size: .85rem; gap: 12px; line-height: 1.8; }
+.account-closure__consent input { flex: 0 0 auto; height: 22px; margin-top: 4px; width: 22px; }
+.account-closure__blocked { background: #fff8dc; border: 1px solid #e4c46c; border-radius: var(--radius-card); line-height: 1.8; padding: 24px 20px; }
+.account-closure__form [role="alert"] { background: #fff3f0; border: 1px solid #f3c2bd; border-radius: 12px; padding: 16px; }
+.account-closure button:disabled { cursor: not-allowed; opacity: .55; }
+@media (min-width: 720px) { .account-closure__form { padding: 32px; } }
+.point-rate-notice { background: #fff8dc; border: 2px solid var(--yellow, #ffca37); border-radius: 14px; display: grid; gap: 6px; padding: 14px 16px; }
+.point-rate-notice h2 { font-size: 1rem; line-height: 1.5; margin: 0; }
+.point-rate-notice h2 strong { color: var(--teal-dd, #0b6b66); font-size: 1.2em; margin: 0 .15em; }
+.point-rate-notice p { font-size: .82rem; line-height: 1.7; margin: 0; }

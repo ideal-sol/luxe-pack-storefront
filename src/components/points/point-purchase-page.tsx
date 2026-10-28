@@ -195,6 +195,16 @@ export function PointProductRegion({ products }: { readonly products: readonly P
   );
 }
 
+/** コインの定価の常時表示（B-6）。商品一覧より前に、ログイン状態・取得状態にかかわらず出す。 */
+export function PointRateNotice() {
+  return (
+    <section aria-labelledby="point-rate-title" className="point-rate-notice">
+      <h2 id="point-rate-title">コインの定価は<strong>1コイン＝1円</strong>です。</h2>
+      <p>割引販売を行う場合は、お支払金額に対してボーナスコインを付与いたします。お支払金額と付与されるコイン数は、各商品に表示しています。</p>
+    </section>
+  );
+}
+
 export function PointPurchasePage() {
   const { state: session, smsAccess } = useSession();
   const { client, wallet } = usePointClient();
@@ -266,6 +276,7 @@ export function PointPurchasePage() {
   return (
     <div className="point-purchase">
       <PointBalanceSummary wallet={wallet} />
+      <PointRateNotice />
       {offer && <FirstBuyHero offer={offer} />}
       <section aria-labelledby="point-category-title" className="point-category-section">
         <header><p>PRODUCT CATEGORY</p><h2 id="point-category-title">商品カテゴリー</h2></header>

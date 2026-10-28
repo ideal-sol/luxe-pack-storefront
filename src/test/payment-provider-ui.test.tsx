@@ -11,6 +11,14 @@ import type { PaymentMethodOption, PaymentUiGateway, UiPayment } from "@/lib/pla
 import type { InlineSession, PaymentProviderSdk } from "@/components/payment/provider-payment-sdk";
 import { readPaymentAttempt } from "@/components/payment/payment-attempt";
 
+// Retain dormant provider regressions independently of purchase visibility.
+// Selection-policy acceptance below explicitly uses the real production policy.
+const policyScope = vi.hoisted(() => ({ providerRegression: true, requested: "" }));
+vi.mock("@/components/payment/new-purchase-methods", async importOriginal => {
+  const original = await importOriginal<typeof import("@/components/payment/new-purchase-methods")>();
+  return { newPurchaseMethods: (items: readonly PaymentMethodOption[]) => policyScope.providerRegression ? items : original.newPurchaseMethods(items) };
+});
+
 vi.mock("@/components/payment/fincode-card-fields", () => ({
   FincodeCardFields: forwardRef(function Fields({ onMountStateChange }: { onMountStateChange: (v: boolean) => void }, ref) {
     useImperativeHandle(ref, () => ({ execute: vi.fn(), tokenize: vi.fn() }));
@@ -75,15 +83,19 @@ function setup(methods: PaymentMethodOption[] = options) {
   return { legacy, gateway, sdk, session, validity: (v: boolean) => act(() => validity(v)), callback: (v: unknown) => act(() => callback(v)), mount: () => render(tree()) };
 }
 async function buy() {
+  // Flush provider lifecycle/correlation initialization before asserting readiness.
+  await act(async () => undefined);
   await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: "購入する" }));
 }
 beforeEach(() => {
+  policyScope.providerRegression = true;
+  policyScope.requested = "";
   vi.clearAllMocks();
   window.sessionStorage.clear();
   const browser = window;
   vi.stubGlobal("window", new Proxy(browser, { get(target, key) {
-    if (key === "location") return { assign: navigation.assign, replace: navigation.replace, href: "https://shop.example.test/", origin: "https://shop.example.test", pathname: "/", search: "" };
+    if (key === "location") return { assign: navigation.assign, replace: navigation.replace, href: "https://shop.example.test/" + policyScope.requested, origin: "https://shop.example.test", pathname: "/", search: policyScope.requested };
     return Reflect.get(target, key);
   } }));
 });
@@ -276,6 +288,40 @@ it("does not request saved cards or offer registration when API saved_cards_enab
   expect(s.legacy.getPaymentCardUiBootstrap).not.toHaveBeenCalled();
   expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
   expect(screen.queryByText(/カードを追加する|登録カード|カードを保存/)).not.toBeInTheDocument();
+});
+
+it.each(["paidy", "netridecash"])("hides both providers and ignores URL selection of %s for new purchases", async method => {
+  policyScope.providerRegression = false;
+  policyScope.requested = "?payment_method=" + method;
+  const s = setup(); s.mount();
+  expect(await screen.findByRole("radio", { name: "クレジットカード" })).toBeInTheDocument();
+  expect(screen.queryByRole("radio", { name: options[1].label })).not.toBeInTheDocument();
+  expect(screen.queryByRole("radio", { name: options[2].label })).not.toBeInTheDocument();
+  expect(screen.queryByText(/NetRideCash|ペイディ/)).not.toBeInTheDocument();
+  await buy();
+  await waitFor(() => expect(s.gateway.startPayment).toHaveBeenCalledOnce());
+  expect(s.gateway.startPayment).toHaveBeenCalledWith({ payment_method: "credit_card", point_product_id: product.id }, expect.anything());
+  expect(s.sdk.openPaidy).not.toHaveBeenCalled();
+});
+it.each(["paidy", "netridecash"])("has no purchase action when only hidden providers are available (%s URL)", async method => {
+  policyScope.providerRegression = false;
+  policyScope.requested = "?payment_method=" + method;
+  const s = setup(options.slice(1)); s.mount();
+  expect(await screen.findByText("現在ご利用いただけるお支払い方法はありません。")).toBeInTheDocument();
+  expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "購入する" })).not.toBeInTheDocument();
+  expect(s.gateway.startPayment).not.toHaveBeenCalled();
+  expect(s.legacy.startPayment).not.toHaveBeenCalled();
+});
+it("cannot fall back to a hidden provider when the visible method is unavailable", async () => {
+  policyScope.providerRegression = false;
+  const s = setup([{ ...options[0], available: false, unavailable_reason: "provider_unavailable" }, ...options.slice(1)]);
+  s.mount();
+  const card = await screen.findByRole("radio", { name: "クレジットカード" });
+  expect(card).toBeDisabled();
+  expect(screen.getAllByRole("radio")).toHaveLength(1);
+  expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
+  expect(s.gateway.startPayment).not.toHaveBeenCalled();
 });
 
 it("ignores a stale method response after both product and session change", async () => {

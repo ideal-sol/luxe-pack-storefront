@@ -54,7 +54,7 @@ const reasonLabels: Readonly<Record<UserPrizeActionUnavailableReason, string>> =
   payment_hold: "お支払い状況の確認中です。",
   status_not_actionable: "現在の状態では選択できません。",
   storage_expired: "保管期限を過ぎています。",
-  shipping_only: "配送のみ・ポイント交換不可",
+  shipping_only: "配送のみ・コイン交換不可",
 };
 
 function formatDateTime(value: string) {
@@ -106,7 +106,7 @@ function PrizeCard({
         <div className="inventory-card__badges">
           <span>{statusLabels[prize.status]}</span>
           {presentation?.rank && <span>{presentation.rank.name}</span>}
-          {prize.shipping_only === true && <span>配送のみ・ポイント交換不可</span>}
+          {prize.shipping_only === true && <span>配送のみ・コイン交換不可</span>}
         </div>
         <h2>{name}</h2>
         <dl>

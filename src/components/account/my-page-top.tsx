@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
+import { brandAssetUrl } from "@/lib/brand-assets";
 import { SmsVerificationRequiredDialog } from "@/components/account/sms-verification-required-dialog";
 import { ConfirmationDialog } from "@/components/common/confirmation-dialog";
 import { LoadingState } from "@/components/common/loading-state";
@@ -11,6 +12,7 @@ import { ErrorState, LoginRequiredState } from "@/components/common/state-panel"
 import { useToast } from "@/components/common/toast-provider";
 import { presentAuthProblem, presentSmsProblem } from "@/lib/platform";
 import {
+  accountClosureRoute,
   createMyPageSupportNavigation,
   myPageAccountNavigation,
   myPageShortcutNavigation,
@@ -28,6 +30,14 @@ export function MyPageTop({
   const router = useRouter();
   const { getSmsVerificationStatus, logout, state } = useSession();
   const { showToast } = useToast();
+  const copyMemberId = async (memberId: string) => {
+    try {
+      await navigator.clipboard.writeText(memberId);
+      showToast("会員ID", "会員IDをコピーしました。");
+    } catch {
+      showToast("コピーできませんでした", "お手数ですが、会員IDを長押し（または選択）してコピーしてください。");
+    }
+  };
   const [loggingOut, setLoggingOut] = useState(false);
   const [addressGateOpen, setAddressGateOpen] = useState(false);
   const [checkingAddress, setCheckingAddress] = useState(false);
@@ -95,7 +105,10 @@ export function MyPageTop({
     <div className="mypage-dashboard">
       <section aria-labelledby="member-summary-heading" className="mypage-summary">
         <div className="mypage-summary__heading">
-          <span aria-hidden="true" className="mypage-summary__mark">OZ</span>
+          <span aria-hidden="true" className="mypage-summary__mark">
+            {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
+            <img alt="" className="mypage-summary__mark-image" height={100} src={brandAssetUrl("mark.svg")} width={100} />
+          </span>
           <div>
             <p>MEMBER ACCOUNT</p>
             <h2 id="member-summary-heading">会員メニュー</h2>
@@ -104,6 +117,20 @@ export function MyPageTop({
         <dl>
           <div><dt>メール認証</dt><dd>{user.email_verified ? "確認済み" : "未確認"}</dd></div>
           <div><dt>アカウント状態</dt><dd>{user.state === "active" ? "利用中" : "制限あり"}</dd></div>
+          <div className="mypage-summary__member-id">
+            <dt>会員ID</dt>
+            <dd>
+              <code>{user.id}</code>
+              <button
+                aria-label="会員IDをコピー"
+                className="mypage-summary__copy"
+                onClick={() => void copyMemberId(user.id)}
+                type="button"
+              >
+                コピー
+              </button>
+            </dd>
+          </div>
         </dl>
       </section>
 
@@ -116,7 +143,19 @@ export function MyPageTop({
         ))}
       </nav>
 
-      <MenuSection items={myPageAccountNavigation} label="アカウント" onNavigate={navigateFromAccount} />
+      <MenuSection items={myPageAccountNavigation} label="アカウント" onNavigate={navigateFromAccount}>
+        {/* 退会の導線（デザイン 04_マイページ.html の「アカウント」欄。決済代行会社の指摘により明示する） */}
+        <div className="mypage-closure">
+          <Link className="mypage-closure__link" href={accountClosureRoute}>
+            <span><strong>退会（アカウントの削除）</strong><small>退会手続きへ</small></span>
+            <span aria-hidden="true" className="mypage-chevron">›</span>
+          </Link>
+          <div className="mypage-closure__notes">
+            <p>退会に費用はかかりません。退会手続きの画面で内容をご確認ください。</p>
+            <p>退会されますと、保有しているコインと、受け取り前のカードはすべて失われます。受け取りたいカードがある場合は、発送のご依頼を済ませてから退会してください。</p>
+          </div>
+        </div>
+      </MenuSection>
       <MenuSection items={createMyPageSupportNavigation(contactHref)} label="お知らせ・サポート" />
 
       <button className="mypage-logout" disabled={loggingOut} onClick={handleLogout} type="button">
@@ -137,10 +176,12 @@ export function MyPageTop({
 }
 
 function MenuSection({
+  children,
   items,
   label,
   onNavigate,
 }: {
+  readonly children?: React.ReactNode;
   readonly items: readonly { readonly description: string; readonly href: string; readonly label: string }[];
   readonly label: string;
   readonly onNavigate?: (event: React.MouseEvent<HTMLAnchorElement>, href: string) => void;
@@ -163,6 +204,7 @@ function MenuSection({
           )
         ))}
       </nav>
+      {children}
     </section>
   );
 }

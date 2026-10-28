@@ -78,8 +78,8 @@ describe("gacha detail UI", () => {
       ...detail, prizes: [normal, delivery],
     } })) }));
     const normalCard = await screen.findByLabelText(normal.name);
-    expect(normalCard).not.toHaveTextContent("配送のみ・ポイント交換不可");
-    expect(screen.getByLabelText(delivery.name)).toHaveTextContent("配送のみ・ポイント交換不可");
+    expect(normalCard).not.toHaveTextContent("配送のみ・コイン交換不可");
+    expect(screen.getByLabelText(delivery.name)).toHaveTextContent("配送のみ・コイン交換不可");
   });
 
   it("renders canonical detail fields, Rank lineup presentation, and presentation state", async () => {
@@ -101,6 +101,14 @@ describe("gacha detail UI", () => {
     expect(screen.getAllByText("販売中")).toHaveLength(2);
     expect(screen.getByText("対象: 初回ユーザー")).toBeInTheDocument();
     expect(getGachaPresentation).toHaveBeenCalledWith(detail.id);
+  });
+
+  it("opens the notices and terms section from the start", async () => {
+    renderDetail(publicClient({ getGachaPresentation: presentationResponse(presentation) }));
+    await screen.findByRole("heading", { level: 1, name: detail.title });
+    const notices = screen.getByText("注意事項・ご利用条件").closest("details");
+    expect(notices).toHaveAttribute("open");
+    expect(notices).toHaveTextContent(detail.notices!);
   });
 
   it("renders exactly the Platform-returned Prize-associated Rank set without synthesizing empty Ranks", async () => {

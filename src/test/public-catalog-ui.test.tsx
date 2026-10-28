@@ -266,6 +266,11 @@ describe("public catalog UI", () => {
       expect(screen.queryByText(text)).not.toBeInTheDocument();
     }
     expect(screen.queryByRole("link", { name: /もっと見る|すべて見る/ })).not.toBeInTheDocument();
+    // デザイン 2026-10-28：カルーセルの見出しは「PICKUP」、この節だけ透かしなし。
+    const pickup = screen.getByRole("heading", { level: 2, name: "PICKUP" });
+    expect(pickup.closest(".home-section-heading")?.querySelector(".home-section-heading__watermark")).toBeNull();
+    expect(screen.getByText("最新のお知らせやおすすめ情報をご紹介します。左右にスライドしてチェックしてください。")).toBeInTheDocument();
+    expect(screen.queryByText("注目の企画")).not.toBeInTheDocument();
     expect(screen.getByText(PUBLIC_CONTENT_FIXTURE.notice.title)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /一覧を見る/ })).toHaveAttribute("href", "/notices");
     expect(screen.getByRole("link", { name: new RegExp(PUBLIC_CONTENT_FIXTURE.notice.title) }))

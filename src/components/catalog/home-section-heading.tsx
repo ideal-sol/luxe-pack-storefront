@@ -13,11 +13,12 @@ export function HomeSectionHeading({
   readonly id: string;
   readonly lead?: string;
   readonly title: string;
-  readonly watermark: string;
+  /** 背景の薄い英字。省略すると透かしを出さない（PICKUP の節など）。 */
+  readonly watermark?: string;
 }) {
   return (
     <div className="home-section-heading">
-      <span aria-hidden="true" className="home-section-heading__watermark">{watermark}</span>
+      {watermark ? <span aria-hidden="true" className="home-section-heading__watermark">{watermark}</span> : null}
       <h2 id={id}>
         {title}
         <span aria-hidden="true" className="home-section-heading__wing home-section-heading__wing--left" />

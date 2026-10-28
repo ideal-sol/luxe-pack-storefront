@@ -165,7 +165,8 @@ export function PublicHome() {
     <>
       <section className="home-banners" aria-label="メインビジュアル">
         <PageContainer className="home-content">
-          <HomeSectionHeading id="home-pickup-heading" lead="注目の企画をご紹介します。左右に送ってもご覧いただけます。" title="注目の企画" watermark="PICK UP" />
+          {/* デザイン 2026-10-28：見出しを「PICKUP」に。この節だけ透かし（背景の英字）を出さない */}
+          <HomeSectionHeading id="home-pickup-heading" lead="最新のお知らせやおすすめ情報をご紹介します。左右にスライドしてチェックしてください。" title="PICKUP" />
           {bannerState.status === "loading" && <CatalogLoading label="バナーを読み込み中" />}
           {bannerState.status === "error" && (
             <CatalogMessage action={retryBanners} description={bannerState.problem.message} eyebrow="ERROR" title="バナーを取得できませんでした" tone="error" />

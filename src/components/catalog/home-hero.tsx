@@ -1,6 +1,6 @@
 import { brandAssetUrl } from "@/lib/brand-assets";
 import Link from "next/link";
-import { informationNavigation } from "@/lib/routes/navigation";
+import { beginnersRoute } from "@/lib/routes/navigation";
 import { HomeHeroCards } from "./home-hero-cards";
 import { HomeLiveBand, homeLiveBandEnabled, type HomeLiveBandProps } from "./home-live-band";
 
@@ -77,7 +77,7 @@ export function HomeHero() {
           </p>
           <div className="home-hero__actions">
             <Link className="home-hero__cta home-hero__cta--primary" href="/gachas">ガチャ一覧を見る</Link>
-            <Link className="home-hero__cta home-hero__cta--secondary" href={informationNavigation[0].href}>はじめての方へ</Link>
+            <Link className="home-hero__cta home-hero__cta--secondary" href={beginnersRoute}>はじめての方へ</Link>
           </div>
         </div>
         <div className="home-hero__character home-hero__character--right" aria-hidden="true">

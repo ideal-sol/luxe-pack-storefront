@@ -97,7 +97,7 @@ export function SessionProvider({
   readonly children: React.ReactNode;
   readonly client?: AuthClientAdapter | null;
 }) {
-  const [client] = useState<AuthClientAdapter | null>(() => {
+  const [client, setClient] = useState<AuthClientAdapter | null>(() => {
     try {
       return resolveClient(injectedClient);
     } catch (error) {
@@ -156,12 +156,18 @@ export function SessionProvider({
       if ((event as CustomEvent<unknown>).detail === "SMS_VERIFICATION_REQUIRED") {
         setSmsRead({ sequence, access: "unverified" });
       } else {
+        if ((event as CustomEvent<unknown>).detail === "ACCOUNT_CLOSED") {
+          // Discard the old browser transport's cached CSRF initialization.
+          setSmsRead(null);
+          smsRequest.current = null;
+          setClient(resolveClient(injectedClient));
+        }
         setState({ status: "session-expired" });
       }
     };
     window.addEventListener(SESSION_ACCESS_REJECTED, rejected);
     return () => window.removeEventListener(SESSION_ACCESS_REJECTED, rejected);
-  }, []);
+  }, [injectedClient]);
 
   const refreshSession = useCallback(async () => {
     if (!client) {

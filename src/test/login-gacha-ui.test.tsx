@@ -84,6 +84,7 @@ describe("login Gacha detail/session", () => {
     expect(api.getLoginGacha).toHaveBeenCalledWith(id);
     expect(screen.getByText("説明")).toBeInTheDocument();
     expect(screen.getByText("注意事項")).toBeInTheDocument();
+    expect(screen.getByText("注意事項・ご利用条件").closest("details")).toHaveAttribute("open");
     expect(screen.queryByText(/排出率|確率/)).not.toBeInTheDocument();
   });
   it("discards User A detail and ignores its late request after switching to User B", async () => {
