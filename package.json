@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@fincode/js": "1.1.0",
-    "@oripa/storefront-client": "file:vendor/oripa/PAY234-ALPHA47-20261028/oripa-storefront-client-2.0.0-alpha.47.tgz",
+    "@oripa/storefront-client": "file:vendor/oripa/CLOSURE-ALPHA48-20261028/oripa-storefront-client-2.0.0-alpha.48.tgz",
     "next": "16.4.2",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@oripa/site-schema": "file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
-    "@oripa/storefront-testkit": "file:vendor/oripa/PAY234-ALPHA47-20261028/oripa-storefront-testkit-2.0.0-alpha.47.tgz",
+    "@oripa/storefront-testkit": "file:vendor/oripa/CLOSURE-ALPHA48-20261028/oripa-storefront-testkit-2.0.0-alpha.48.tgz",
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "7.0.0",
@@ -65,7 +65,7 @@
     "overrides": {
       "vite": "8.2.4",
       "@oripa/site-schema@2.0.0-alpha.23": "file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
-      "@oripa/storefront-client@2.0.0-alpha.47": "file:vendor/oripa/PAY234-ALPHA47-20261028/oripa-storefront-client-2.0.0-alpha.47.tgz",
+      "@oripa/storefront-client@2.0.0-alpha.48": "file:vendor/oripa/CLOSURE-ALPHA48-20261028/oripa-storefront-client-2.0.0-alpha.48.tgz",
       "fast-uri@<3.1.7": "3.1.7",
       "undici@>=8.0.0 <8.12.2": "8.12.2",
       "nanoid@<3.3.18": "3.3.18",

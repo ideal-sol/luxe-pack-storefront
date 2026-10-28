@@ -184,7 +184,7 @@ document.querySelector('#authorize').onclick=()=>reply('authorized');document.qu
       assert.equal(await page.getByRole('heading',{name:'購入完了しました'}).count(),0);
      }
      const starts=mutations.filter(x=>x.path==='/payments');assert.equal(starts.length,1);
-     const input=JSON.parse(starts[0].body);assert.equal(input.point_product_id,product.id);assert.equal(starts[0].headers['x-oripa-client-version'],'2.0.0-alpha.47');assert.ok(starts[0].headers['idempotency-key']);assert.ok(starts[0].headers['x-xsrf-token']);
+     const input=JSON.parse(starts[0].body);assert.equal(input.point_product_id,product.id);assert.equal(starts[0].headers['x-oripa-client-version'],'2.0.0-alpha.48');assert.ok(starts[0].headers['idempotency-key']);assert.ok(starts[0].headers['x-xsrf-token']);
     }
    }
    assert.deepEqual(errors,[]);

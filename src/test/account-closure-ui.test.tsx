@@ -1,9 +1,12 @@
+import { PUBLIC_ACCOUNT_CLOSURE_FIXTURES, PUBLIC_AUTH_FIXTURE } from "@oripa/storefront-testkit";
+import { createMockFetch } from "@oripa/storefront-testkit/mock";
+import { createBrowserAccountClosureClient } from "@/lib/platform/account-closure-client";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AccountClosureGuide, AccountClosureScreen, AccountClosureFlow, ClosureUiError, type ClosureActions, type ClosurePreview } from "@/components/account/account-closure-guide";
 import { accountClosureRoute, publicRoutes, requiresSmsVerification } from "@/lib/routes/navigation";
 import { SESSION_ACCESS_REJECTED } from "@/lib/platform/browser-client";
 
-const mocks = vi.hoisted(() => ({ state: { status: "authenticated" }, replace: vi.fn(), showToast: vi.fn() }));
+const mocks = vi.hoisted(() => ({ state: { status: "authenticated", session: { user: { id: "member-a" } } } as { status: string; session?: { user: { id: string } } }, replace: vi.fn(), showToast: vi.fn() }));
 vi.mock("@/components/auth/session-provider", () => ({ useSession: () => ({ state: mocks.state }) }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: mocks.replace }) }));
 vi.mock("@/components/common/toast-provider", () => ({ useToast: () => ({ showToast: mocks.showToast }) }));
@@ -17,9 +20,9 @@ async function fill(value = "fixture-password") {
   fireEvent.click(screen.getByRole("checkbox"));
   fireEvent.change(screen.getByLabelText(/確認のため再入力|登録メールアドレスへ送信/), { target: { value } });
 }
-beforeEach(() => { vi.clearAllMocks(); mocks.state = { status: "authenticated" }; });
-it("keeps the production route fail-closed until the formal contract exists", () => {
-  render(<AccountClosureGuide />);
+beforeEach(() => { vi.clearAllMocks(); mocks.state = { status: "authenticated", session: { user: { id: "member-a" } } }; });
+it("keeps the production route fail-closed when configuration is unavailable", () => {
+  render(<AccountClosureGuide client={null} />);
   expect(screen.getByText("情報を表示できませんでした")).toBeInTheDocument();
   expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   expect(requiresSmsVerification(accountClosureRoute)).toBe(false);
@@ -125,4 +128,69 @@ it("invalidates the local session and emits one completion toast before navigati
   expect(mocks.showToast).toHaveBeenCalledExactlyOnceWith("退会が完了しました", "ご利用ありがとうございました。");
   expect(reject).toHaveBeenCalledOnce();
   window.removeEventListener(SESSION_ACCESS_REJECTED, reject);
+});
+
+const origin = "https://storefront.test/platform";
+function canonical() {
+  const mock = createMockFetch();
+  const client = createBrowserAccountClosureClient({ baseUrl: origin, defaultTimeoutMs: 1000, siteVersion: "0.1.0" }, { cookie_reader: () => "a".repeat(64), fetch: mock.fetch });
+  return { mock, client };
+}
+
+it("connects the actual route to the canonical preview and successful password mutation", async () => {
+  const h = canonical();
+  h.mock.enqueueJson({ method: "GET", url: origin + "/me/account-closure" }, { body: PUBLIC_ACCOUNT_CLOSURE_FIXTURES.password });
+  h.mock.enqueueJson({ method: "GET", url: origin + "/auth/session" }, { body: PUBLIC_AUTH_FIXTURE.authenticated_session });
+  h.mock.enqueueJson({ method: "POST", url: origin + "/me/account-closure" }, { body: { data: { closed_at: "2026-10-28T00:00:00Z" } } });
+  render(<AccountClosureGuide client={h.client} />); await fill();
+  fireEvent.click(screen.getByRole("button", { name: "退会する" }));
+  await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/"));
+  expect(mocks.showToast).toHaveBeenCalledExactlyOnceWith("退会が完了しました", "ご利用ありがとうございました。");
+  expect(JSON.parse(h.mock.requests[2]!.body!)).toMatchObject({ expected_point_balance: 12500, expected_unclaimed_prize_count: 3, password: "fixture-password" });
+  expect(h.mock.requests[2]!.headers["idempotency-key"]).toBeTruthy();
+  h.mock.assertExhausted();
+});
+it("refreshes the canonical preview after a real typed STALE conflict", async () => {
+  const h = canonical();
+  h.mock.enqueueJson({ method: "GET", url: origin + "/me/account-closure" }, { body: PUBLIC_ACCOUNT_CLOSURE_FIXTURES.password });
+  h.mock.enqueueJson({ method: "GET", url: origin + "/auth/session" }, { body: PUBLIC_AUTH_FIXTURE.authenticated_session });
+  h.mock.enqueueProblem({ method: "POST", url: origin + "/me/account-closure" }, { code: "ACCOUNT_CLOSURE_STALE", status: 409, type: "https://storefront.test/problems/closure", title: "Changed", request_id: "fixture", retryable: false });
+  h.mock.enqueueJson({ method: "GET", url: origin + "/me/account-closure" }, { body: { data: { ...PUBLIC_ACCOUNT_CLOSURE_FIXTURES.password.data, point_balance: 42 } } });
+  render(<AccountClosureGuide client={h.client} />); await fill();
+  fireEvent.click(screen.getByRole("button", { name: "退会する" }));
+  expect(await screen.findByText("42 pt")).toBeInTheDocument();
+  expect(screen.getByRole("checkbox")).not.toBeChecked();
+  expect(mocks.showToast).not.toHaveBeenCalled();
+  h.mock.assertExhausted();
+});
+it("drops preview, OTP, consent and an old in-flight completion on a different member login", async () => {
+  const a = setup({ verificationMethod: "email_code" }); let finish!: () => void;
+  vi.mocked(a.confirm).mockReturnValue(new Promise(resolve => { finish = resolve; }));
+  const view = render(<AccountClosureGuide client={a} />); await fill("123456");
+  fireEvent.click(screen.getByRole("button", { name: "退会する" }));
+  mocks.state = { status: "authenticated", session: { user: { id: "member-b" } } };
+  const b = setup({ pointBalance: 7 });
+  view.rerender(<AccountClosureGuide client={b} />);
+  expect(await screen.findByText("7 pt")).toBeInTheDocument();
+  expect(screen.getByRole("checkbox")).not.toBeChecked();
+  expect(screen.getByLabelText(/確認のため再入力/)).toHaveValue("");
+  expect(screen.queryByRole("button", { name: "再送信" })).not.toBeInTheDocument();
+  await act(async () => finish());
+  expect(mocks.showToast).not.toHaveBeenCalled(); expect(mocks.replace).not.toHaveBeenCalled();
+});
+it.each(["session", "verification", "blocked"] as const)("handles %s during submission without completion", async kind => {
+  const a = setup(); vi.mocked(a.confirm).mockRejectedValue(new ClosureUiError(kind));
+  if (kind === "blocked") vi.mocked(a.load).mockResolvedValueOnce(preview).mockResolvedValue({ ...preview, canClose: false });
+  render(<AccountClosureGuide client={a} />); await fill();
+  fireEvent.click(screen.getByRole("button", { name: "退会する" }));
+  expect(await screen.findByText(kind === "session" ? "ログインしてください" : kind === "verification" ? "メールアドレスと電話番号の認証をご確認ください。" : "現在、退会のお手続きができません")).toBeInTheDocument();
+  expect(mocks.showToast).not.toHaveBeenCalled(); expect(mocks.replace).not.toHaveBeenCalled();
+});
+it("disables submission after a rate-limit response until the server retry time", async () => {
+  const a = setup(); vi.mocked(a.confirm).mockRejectedValue(new ClosureUiError("retry", Date.now() + 30000));
+  render(<AccountClosureScreen actions={a} />); await fill();
+  fireEvent.click(screen.getByRole("button", { name: "退会する" })); await screen.findByRole("alert");
+  fireEvent.change(screen.getByLabelText(/確認のため再入力/), { target: { value: "fixture-password" } });
+  expect(screen.getByRole("button", { name: "退会する" })).toBeDisabled();
+  expect(a.confirm).toHaveBeenCalledOnce();
 });

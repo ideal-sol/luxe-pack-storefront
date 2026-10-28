@@ -1,47 +1,45 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
 import { ErrorState, LoginRequiredState } from "@/components/common/state-panel";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/common/toast-provider";
 import { SESSION_ACCESS_REJECTED } from "@/lib/platform/browser-client";
 
-/** UI view model only. No unpublished SDK/transport. Connect only after formal Client adoption. */
-export interface ClosurePreview {
-  pointBalance: number; unclaimedPrizeCount: number; shippingInProgressCount: number;
-  canClose: boolean; verificationMethod: "password" | "email_code"; maskedEmail: string;
-}
-export interface ClosureActions {
-  load(): Promise<ClosurePreview>;
-  sendCode(): Promise<{ resendAvailableAt: number; expiresInMinutes: number }>;
-  confirm(input: { confirmed: true; expectedPointBalance: number; expectedUnclaimedPrizeCount: number; password?: string; emailCode?: string; operationKey: string }): Promise<void>;
-  complete(): void;
-}
-export class ClosureUiError extends Error {
-  constructor(readonly kind: "stale" | "password" | "email_code" | "session" | "verification" | "blocked" | "retry", readonly retryAt?: number) { super(kind); }
-}
-export function AccountClosureGuide() {
+import { createBrowserAccountClosureClient, ClosureUiError, type ClosureActions, type ClosurePreview } from "@/lib/platform/account-closure-client";
+export { ClosureUiError, type ClosureActions, type ClosurePreview } from "@/lib/platform/account-closure-client";
+
+export function AccountClosureGuide({ client }: { readonly client?: Omit<ClosureActions, "complete"> | null }) {
   const { state } = useSession();
   if (state.status === "loading") return <p role="status">読み込み中です。</p>;
   if (state.status === "unauthenticated" || state.status === "session-expired") return <LoginRequiredState />;
-  // alpha.47 has no closure operations. Never display fixture data in the product.
-  return <ErrorState />;
+  if (state.status !== "authenticated") return <ErrorState />;
+  return <ConnectedClosure key={state.session.user!.id} client={client} />;
+}
+function ConnectedClosure({ client: injected }: { readonly client?: Omit<ClosureActions, "complete"> | null | undefined }) {
+  // This component is discarded on logout/session refresh and keyed by member identity.
+  const [client] = useState(() => {
+    if (injected !== undefined) return injected;
+    try { return createBrowserAccountClosureClient(); } catch { return null; }
+  });
+  return client ? <AccountClosureFlow actions={client} /> : <ErrorState />;
 }
 
-/** Future canonical adapter entry. The server invalidates cookies on successful closure. */
+/** The canonical server invalidates cookies; discard local session/CSRF ownership on completion. */
 export function AccountClosureFlow({ actions }: { readonly actions: Omit<ClosureActions, "complete"> }) {
   const router = useRouter();
   const { showToast } = useToast();
   const completed = useRef(false);
-  return <AccountClosureScreen actions={{ ...actions, complete() {
+  const flow = useMemo(() => ({ ...actions, complete() {
     if (completed.current) return;
     completed.current = true;
     window.dispatchEvent(new CustomEvent(SESSION_ACCESS_REJECTED, { detail: "SESSION_EXPIRED" }));
     showToast("退会が完了しました", "ご利用ありがとうございました。");
     router.replace("/");
-  } }} />;
+  } }), [actions, router, showToast]);
+  return <AccountClosureScreen actions={flow} />;
 }
 
 export function AccountClosureScreen({ actions }: { readonly actions: ClosureActions }) {
@@ -52,7 +50,7 @@ export function AccountClosureScreen({ actions }: { readonly actions: ClosureAct
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ClosureUiError["kind"] | null>(null);
-  const [sent, setSent] = useState<{ resendAvailableAt: number; expiresInMinutes: number } | null>(null);
+  const [sent, setSent] = useState<{ resendAvailableAt: number; expiresInMinutes: number; maskedEmail?: string } | null>(null);
   const [now, setNow] = useState(0);
   const [retryAt, setRetryAt] = useState(0);
   const operationKey = useRef<string | null>(null);
@@ -103,7 +101,12 @@ export function AccountClosureScreen({ actions }: { readonly actions: ClosureAct
       if (kind === "stale" || kind === "blocked") {
         setConfirmed(false); setPreview(null);
         try { const value = await actions.load(); if (alive.current) { setPreview(value); operationKey.current = null; } }
-        catch { if (alive.current) setLoadFailed(true); }
+        catch (reason) {
+          if (alive.current) {
+            if (reason instanceof ClosureUiError && ["session", "verification"].includes(reason.kind)) setError(reason.kind);
+            else setLoadFailed(true);
+          }
+        }
       }
       locked.current = false; setBusy(false);
     }
@@ -131,7 +134,7 @@ export function AccountClosureScreen({ actions }: { readonly actions: ClosureAct
         <span className="password-field__control"><input id="closure-credential" type={password && !showPassword ? "password" : "text"} autoComplete={password ? "current-password" : "one-time-code"} inputMode={password ? undefined : "numeric"} maxLength={password ? 128 : 6} pattern={password ? undefined : "[0-9]{6}"} required disabled={busy} value={credential} onChange={event => setCredential(event.target.value)} aria-invalid={Boolean(fieldError)} aria-describedby={fieldError ? "closure-field-error" : undefined} />
         {password ? <button type="button" className="password-field__toggle" disabled={busy} onClick={() => setShowPassword(value => !value)}>{showPassword ? "隠す" : "表示"}</button> : <button type="button" onClick={() => void sendCode()} disabled={busy || now < Math.max(sent?.resendAvailableAt ?? 0, retryAt)}>{sent ? "再送信" : "コードを送信"}</button>}</span>
         {fieldError ? <p className="form-field__error" id="closure-field-error">{fieldError}</p> : null}
-        {sent ? <p role="status">{preview.maskedEmail} に認証コードを送信しました。有効期限は{sent.expiresInMinutes}分です。届かない場合は迷惑メールフォルダもご確認ください。</p> : null}
+        {sent ? <p role="status">{sent.maskedEmail ?? preview.maskedEmail} に認証コードを送信しました。有効期限は{sent.expiresInMinutes}分です。届かない場合は迷惑メールフォルダもご確認ください。</p> : null}
       </div>
       <button type="submit" className="button account-closure__submit" disabled={busy || !confirmed || (password ? !credential : !/^\d{6}$/.test(credential)) || now < retryAt}>{busy ? "処理中…" : "退会する"}</button>
     </form>}
