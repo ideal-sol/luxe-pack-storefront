@@ -23,8 +23,11 @@ unapproved and must each follow the applicable Human decision.
 
 NEW Production Rank first initialization remains OFF/unperformed. Feature
 enablement is a separate read-only observation; preserve existing flags and all
-rank, point and bonus data. NEW operator readback of feature flags/activated_at
-is pending and unconfirmed; this Draft makes no direct NEW connection.
+rank, point and bonus data. Human-shared NEW operator READ ONLY readback confirms
+feature `enabled=false`, `activated_at=null`, first Activation unperformed,
+14 Rank tables each0 rows, migration ledger98 with099/100/101 pending. GTM ON
+and FINCODE enabled=true/config unchanged are preserved. This is attributed to
+the NEW operator report; this Draft makes no direct NEW connection.
 No first Activation, initialization or Backfill is
 authorized. OLD Test Rank ON must never be a Production prerequisite.
 Migration099/100/101 planning and Production read-only Rank observations belong
