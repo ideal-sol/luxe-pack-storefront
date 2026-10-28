@@ -975,3 +975,50 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   then retain the same disabled/click/no-Payment/no-Registration assertions.
   No timeouts or assertions changed. Head-dependent gates run on the corrected
   Head; no manual rerun or bypass was requested.
+
+## 2026-10-28 — SF-PAYUI-192 SDK lifecycle and Source acceptance continuation
+
+- Human: reuse PR192/branch/worktree from `fc8222d7485ad542a98c09748a974286cfb669b2`,
+  resolve SDK01/02 and task-owned Browser Acceptance, then canonical Source
+  Squash Merge only with Required5 PASS and fresh SEV0/1=0. Risk R3; Lane Strict
+  Change; Activation deferred. Issue190 remains the real-provider handoff.
+- UnivaPay now uses public create/open/update/submit on the exact owned returned
+  frame. Official submit performs validation; readiness is not fabricated
+  positive validity. One-shot submit, bounded async work and canonical
+  GET/Webhook handling retain unknown results and opaque attempt correlation.
+  No private SDK API, direct card read or guessed charge ID is used.
+- Both SDKs use one document lifetime. Method changes, links, unmount, session
+  loss and history leave by full navigation; restored bfcache documents reload.
+  No provider DOM is deleted. Paidy duplicates are suppressed at the SDK and
+  payment boundaries. Logout revokes callbacks before its canonical request and
+  defers document replacement until the request settles, preserving logout.
+- Official script bytes were re-read unchanged: UnivaPay
+  `bd8468535148bfa270d955e16e4c4b12d1e139eb6e376a6146847832eceae117`, Paidy
+  `5d15d443240494ff621dd09e36a7678b20f5f9a594c7623410cce5dbfb40ceb0`.
+  The handoff cites official integration docs and distinguishes SDK lifecycle
+  evidence from real merchant/card/3DS/Webhook acceptance (NOT RUN).
+- Local SDK/document tests18/18 and fincode SDK tests12/12 PASS. Artifact,
+  Auth/LINE, Payment and secret boundaries PASS; focused changed-file lint PASS.
+  Initial parallel test startup executed0 tests and failed. Initial UI regression
+  was21/101 PASS: old location mocks lacked href; add that browser property only,
+  preserving every assertion. Its reviewed storage-fixture SHA was updated after
+  verifying storage behavior is unchanged. Four corrected targeted UI tests then
+  timed out under shared-host load and are recorded FAIL, not relabeled PASS.
+  Full formal CI and final Source Browser outcomes are recorded on the exact PR
+  head. No timeout/Required Check/assertion was weakened or bypassed.
+- Task-owned clean optimized Next webpack build replaces the previous dev/
+  Turbopack path. First build compiled but found an existing `/points` page
+  optional default argument incompatible with generated Next PageProps. Remove
+  only that redundant parameter default (React still passes props; route output
+  unchanged), then rebuild using the same isolated cache. No Next config,
+  Production workflow or type-check bypass is introduced.
+- The reproducible Browser harness intercepts all APIs/provider frames, loads
+  downloaded official SDKs and uses synthetic data only. It targets loopback
+  Next start, verifies document teardown/callback ownership, methods, provider
+  dispatch and saved-fincode 3DS. Its final report and Build/source comparison
+  belong to the exact-head PR evidence; no real transaction acceptance is implied.
+- Package/lock, every vendor, GTM, supplied logos/Brand manifest, Production
+  Source Authority and all workflows remain intact. Platform read-only. No
+  persistent ENV, DB, Worker, OLD Test/shared Preview/NEW Production activation,
+  CDN upload or Production Artifact Dispatch. Migrations0/0. Retain Draft until
+  all gates pass; final status, timing, review and any Squash SHA are in PR192.

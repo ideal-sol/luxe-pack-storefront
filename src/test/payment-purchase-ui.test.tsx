@@ -197,6 +197,7 @@ describe("SITE-040 / SITE-048 / SITE-049 Payment purchase UI", () => {
           assign: navigation.assign,
           replace: navigation.replace,
           get pathname() { return browserWindow.location.pathname; },
+          get href() { return browserWindow.location.href; },
           get search() { return browserWindow.location.search; },
           get origin() { return browserWindow.location.origin; },
         };

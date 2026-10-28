@@ -7,9 +7,11 @@ Merge only after every applicable acceptance gate. It supersedes the previous
 alpha.46 adoption freeze and Draft-only authorization. It does not waive SDK
 acceptance, authorize a Production Authority change or permit Runtime rollout.
 
-Current disposition: `SF_PAYUI_ALPHA47_INTEGRATION_OR_MERGE_HOLD`. Keep Draft.
-The final immutable Head/Tree, CI results and fresh HOLD self-review are attached
-to [PR #192](https://github.com/ideal-sol/luxe-pack-storefront/pull/192).
+Continuation: SF-PAYUI-192 authorizes resolution of the two SDK findings,
+task-owned Source Browser Acceptance and conditional canonical Source Merge.
+The immutable Head/Tree, current disposition, CI and fresh self-review are
+attached to [PR #192](https://github.com/ideal-sol/luxe-pack-storefront/pull/192).
+Shared Preview and OLD Test activation remain outside this authorization.
 
 ## Formal artifact authority
 
@@ -63,45 +65,58 @@ endpoint once with a separate idempotency key; the browser does not Retrieve or
 Capture. Callback/advisory/return results never grant balance or display a
 financial success independently of canonical GET/Webhook.
 
-## Blocking SDK and acceptance findings
+## SDK lifetime and authority
 
-1. **UnivaPay safe normal Browser Driver is NOT complete.** The existing
-   `mountInline` guard remains fail-closed. Do not merge or replace it with a
-   guessed validity/result decoder. The official
-   [JavaScript integration guide](https://docs.univapay.com/docs/guide/implement/iframe/js/)
-   and live `https://widget.univapay.com/client/checkout.js` were read. Downloaded
-   Script SHA-256:
-   `bd8468535148bfa270d955e16e4c4b12d1e139eb6e376a6146847832eceae117`.
-   A Chromium fixture executed the downloaded Script with synthetic inputs and
-   blocked external Provider requests. Its public create/update/submit/validate
-   exports exist. In the inspected Connector implementation, `validate()` sends
-   `validate-form`, but its message handler has no `FORM_VALIDATED` case; the
-   short isolated validation probe remains pending, not positively valid.
-   Checkout has no public close/dispose method. Calling its observed internal
-   close with a nested owned container throws DOM `NotFoundError`, because it
-   removes that container from document.body. This is a synthetic compatibility
-   finding, not a real merchant/payment test. A supported positive validation
-   and complete owned-frame/listener/3DS disposal contract, or a separately
-   verified safe implementation, is needed before enabling the normal Driver.
-   U8/U10/U12 and raw charge-ID normalization remain unverified. Never infer a
-   charge ID or successful payment from a raw Promise/event.
-2. **Paidy lifecycle acceptance remains incomplete.** The downloaded normal
-   Checkout Script uses `configure({api_key, closed})` and `launch(payload)`.
-   Source suppresses callbacks after abort/disposal and handles duplicate,
-   rejected/closed/unknown results, but complete real overlay and SDK listener
-   removal on logout/SPA navigation has not been established. A synthetic
-   callback test does not prove real overlay disposal or focus behavior.
-3. **Affected Source Browser/Preview Runtime Acceptance is incomplete.** An
-   isolated loopback Next dev process was attempted with synthetic intercepted
-   API/SDK fixtures. Initial route compilation exceeded its 180-second browser
-   navigation deadline; no payment-screen Browser PASS is claimed. That
-   task-owned process was stopped. No shared Preview deployment was attempted.
-   Complete the accepted canonical Browser/Preview gate before Ready/Merge.
+SF-PAYUI-SDK-01 uses the public `create`, instance `open(undefined, target)`,
+`update(ownedIframe, serverUpdate, { forceUpdate: true })` and `submit(ownedIframe)`.
+Only the iframe returned by that instance and contained by its target is used.
+No card fields, raw provider resources or private connector APIs are read.
+The [official inline guide](https://docs.univapay.com/docs/guide/implement/iframe/js/)
+performs validation inside `submit()`. The browser driver uses that supported
+flow; readiness is distinct from validity. It does not call the unresponsive
+`validate()` or claim that an empty validation-error notification proves validity.
+The injected validation adapter remains available for contract fixtures.
 
-The real SDK probe cannot be substituted for a complete payment-screen runtime
-acceptance. Required CI PASS and Mock tests likewise cannot waive these gates.
-Fresh self-review must retain HOLD while these findings remain. No MERGE
-recommendation or success status is authorized by partial Source integration.
+UnivaPay Script SHA-256 (re-read, unchanged):
+`bd8468535148bfa270d955e16e4c4b12d1e139eb6e376a6146847832eceae117`.
+Mount/update are bounded to 15 seconds; submit allows 300 seconds for provider
+3DS. Submission is one-shot. A resolved, rejected or timed-out raw Promise is
+unknown; correlation remains locked and the page checks canonical Payment
+status. There is no raw charge-ID decoder or client financial-success decision.
+Provider validation and 3DS stay inside the provider's own UI. The
+[official callback guide](https://docs.univapay.com/docs/guide/implement/widget/install/)
+also distinguishes 3DS completion from payment success.
+
+SF-PAYUI-SDK-02 retains the normal
+[Paidy Checkout contract](https://paidy.com/docs/en/paidycheckout.html):
+`configure({ api_key, closed })` and `launch(serverPayload)`. Script v3.1.5 SHA-256:
+`5d15d443240494ff621dd09e36a7678b20f5f9a594c7623410cce5dbfb40ceb0`.
+The adapter accepts only the first callback while its original lifetime is
+active. Authorized `pay_` IDs go through canonical server confirmation once;
+duplicate, canceled and later callbacks cannot act as another member.
+
+Neither SDK has a documented disposer. The approved alternative is **document
+termination**, shared by these two SDKs only. Once either is loaded, method
+switches and site links perform full-page navigation; the optional
+`payment_method` query selects only an available API-listed method and carries
+no payment or member data. Unmount, session loss and history navigation retire
+the document. A restored back/forward-cache document is reloaded before reuse.
+There is at most one provider SDK lifetime per document. No Provider-owned DOM
+is deleted and no private `close`, connector, listener registry or frame object
+is used. Full-page replacement ends the SDK's global callbacks, hidden overlay,
+input frames and 3DS frames together.
+
+Logout revokes callbacks **before** the existing canonical logout request and
+defers page termination until that request settles (including failure). Unmount
+during logout cannot abort the request by prematurely unloading the page.
+Other authentication behavior and all fincode paths retain their existing flow.
+
+The earlier internal-close/validation probe remains historical evidence of why
+private disposal and guessed positive validity were rejected. It is not used by
+the browser driver. Source Browser evidence must cover these document boundaries
+using the downloaded SDKs with synthetic API/provider frames. This is not real
+merchant or payment acceptance. Final acceptance and exact-head gates are in
+the PR; retain Draft HOLD unless all required conditions pass.
 
 ## Validation and later activation handoff
 

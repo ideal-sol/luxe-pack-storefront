@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 const reviewed = new Map([
   ["src/components/payment/payment-attempt.ts", "5b447477003dc7d4e0188cb6d1ce09f64171ea429639b46910ec234f632fbaea"],
   ["src/test/payment-provider-actions.test.ts", "7c3618cab4e2561d008048da8dac626f3061aa1702021eac8acabd03c96f0b76"],
-  ["src/test/payment-provider-ui.test.tsx", "02d7e4ef7530011f689cf6221bcc20ccd70c849aeb0c48bfabaf258a4cd17d5a"],
+  ["src/test/payment-provider-ui.test.tsx", "92211fda30564dd033e01ddb3e9b41562379ba010e5e2ae706a5678a9aae760f"],
 ]);
 
 export function reviewedPaymentStorage(file, content) {

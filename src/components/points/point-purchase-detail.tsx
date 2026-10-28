@@ -21,6 +21,7 @@ import { PaymentMethodSelector } from "@/components/payment/payment-method-selec
 import { PaymentMethodLoader } from "@/components/payment/payment-method-loader";
 import { PaymentProcessingOverlay } from "@/components/payment/payment-processing-overlay";
 import { useProviderPayment } from "@/components/payment/use-provider-payment";
+import { leaveProviderDocument } from "@/components/payment/provider-document";
 import { usePaymentReturnEvent } from "@/components/payment/use-payment-return-event";
 import { safePaymentRedirect } from "@/components/payment/provider-payment-actions";
 import { isLegacyPaymentMethod, isProviderMethod, PAYMENT_UI_UNAVAILABLE, supportedPaymentMethod, type PaymentMethodOption } from "@/lib/platform/payment-ui-gateway";
@@ -100,7 +101,8 @@ function PurchaseForm({
   const { client, uiGateway, providerSdk } = usePaymentClient();
   const cardFieldsRef = useRef<FincodeCardFieldsHandle>(null);
   const [method, setMethod] = useState<string | null>(() => {
-    const first = options.find(o => o.available && supportedPaymentMethod(o));
+    const requested = typeof window === "undefined" ? null : new URL(window.location.href).searchParams.get("payment_method");
+    const first = options.find(o => o.method === requested && o.available && supportedPaymentMethod(o)) ?? options.find(o => o.available && supportedPaymentMethod(o));
     // Preserve the explicit fincode selection before reading saved cards.
     return first?.flow === "card_component" ? null : first?.method ?? null;
   });
@@ -108,7 +110,7 @@ function PurchaseForm({
   const providerMethod = isProviderMethod(selectedOption);
   const cardPolicy = options.find(o => o.method === "credit_card");
   const savedCardsEnabled = cardPolicy?.flow === "card_component" && cardPolicy.saved_cards_enabled;
-  const { busy: providerBusy, locked: providerLocked, error: providerError, message: providerMessage, attachTarget, valid: inlineValid, mounted: inlineMounted, checkValidity, submit: submitProvider } = useProviderPayment({ gateway: uiGateway, sdk: providerSdk, option: providerMethod ? selectedOption : undefined,
+  const { busy: providerBusy, locked: providerLocked, error: providerError, message: providerMessage, attachTarget, valid: inlineValid, mounted: inlineMounted, providerValidates, checkValidity, submit: submitProvider } = useProviderPayment({ gateway: uiGateway, sdk: providerSdk, option: providerMethod ? selectedOption : undefined,
     productId: product.id, subject, eligible: product.is_available && product.eligible && product.cta.state === "enabled" });
   const submitStartingRef = useRef(false);
   const alive = useRef(false);
@@ -475,7 +477,7 @@ function PurchaseForm({
   );
   const fincodeDisabled = method === "credit_card" && !providerMethod && !savedCardsEnabled;
   const disabled = !method || !selectedOption?.available || !supportedPaymentMethod(selectedOption) || fincodeDisabled || backendUnavailable || submitting || cardBusy || cardUnavailable || submissionLocked ||
-    providerMethod && (!uiGateway || providerBusy || providerLocked || selectedOption?.flow === "inline_card_form" && (!inlineValid || !inlineMounted));
+    providerMethod && (!uiGateway || providerBusy || providerLocked || selectedOption?.flow === "inline_card_form" && ((!inlineValid && !providerValidates) || !inlineMounted));
   const canSaveCard = (cardLimits?.registration_remaining ?? 0) > 0;
 
   if (registrationProcessing) return <CatalogLoading label="処理中…" />;
@@ -492,6 +494,9 @@ function PurchaseForm({
         onDeleteCard={(cardId) => { void deleteCard(cardId); }}
         onMethodChange={(next) => {
           if (submitting || providerBusy || submissionLocked || providerLocked) return;
+          const destination = new URL(window.location.href);
+          destination.searchParams.set("payment_method", next);
+          if (leaveProviderDocument(destination.href)) return;
           setConfirmationOpen(false);
           setMethod(next);
           setError(null);
@@ -507,7 +512,7 @@ function PurchaseForm({
           <p>Visa・Mastercard</p>
           <div aria-label="決済会社のカード入力欄" ref={attachTarget} />
           {!inlineMounted ? <p role="status">カード入力欄を準備中です。</p> : null}
-          {inlineMounted && !inlineValid ? <button onClick={() => { void checkValidity(); }} type="button">入力内容を確認する</button> : null}
+          {inlineMounted && !inlineValid && !providerValidates ? <button onClick={() => { void checkValidity(); }} type="button">入力内容を確認する</button> : null}
           <p>カード情報はオリポケのサーバーを通らず、保存もしません。カード会社による本人認証の画面が表示される場合があります。</p>
         </div> : <div className="payment-new-card">
           {bootstrap ? <FincodeCardFields bootstrap={bootstrap} onError={onCardUiError} onMountStateChange={onCardMountStateChange} ref={cardFieldsRef} />

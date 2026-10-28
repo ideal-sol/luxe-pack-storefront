@@ -23,6 +23,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
   const [state, setState] = useState<FlowState>(idle);
   const [valid, setValid] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [providerValidates, setProviderValidates] = useState(false);
   const target = useRef<HTMLDivElement>(null);
   const inline = useRef<InlineSession | null>(null);
   const running = useRef(false);
@@ -38,7 +39,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
     let correlationChecked = false;
     void Promise.resolve().then(async () => {
       if (controller.signal.aborted) return;
-      setState(idle); setValid(false); setMounted(false);
+      setState(idle); setValid(false); setMounted(false); setProviderValidates(false);
       running.current = false;
       if (!gateway || !option) { uncertain.current = false; return; }
       try {
@@ -67,6 +68,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
           }, controller.signal);
           if (controller.signal.aborted) { session.dispose(); return; }
           inline.current = session;
+          setProviderValidates(session.validationMode === "provider_submit");
           setMounted(true);
         }
       } catch {
@@ -94,7 +96,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
     const controller = lifecycle.current;
     if (!gateway || !controller || controller.signal.aborted || !option?.available || !supportedPaymentMethod(option) ||
         !eligible || running.current || uncertain.current || state.locked ||
-        option.flow === "inline_card_form" && (!inline.current || !mounted || !valid)) return;
+        option.flow === "inline_card_form" && (!inline.current || !mounted || !valid && !providerValidates)) return;
     const method = option.method;
     if (method !== "credit_card" && method !== "paidy" && method !== "netridecash") return;
     running.current = true;
@@ -104,8 +106,10 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
     let sdkSubmitted = false;
     let createdPayment: UiPayment | null = null;
     let callbackClaimed = false;
+    let checkoutReleased = false;
     const active = () => !controller.signal.aborted;
     const release = (error: string | null) => {
+      checkoutReleased = true;
       checkout.current?.dispose(); checkout.current = null;
       try { finishPaymentAttempt(subject, key); } catch {
         uncertain.current = true;
@@ -191,7 +195,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
               void gateway.getPayment(payment.id).catch(() => undefined).finally(() => { if (active()) thanks(payment); });
             }
           }, controller.signal);
-          if (!active() || callbackClaimed) instance.dispose();
+          if (!active() || checkoutReleased) instance.dispose();
           else {
             checkout.current = instance;
             // Provider overlay owns focus and input; site overlay is removed.
@@ -214,5 +218,5 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
       }
     }
   };
-  return { ...state, attachTarget, valid, mounted, checkValidity, submit };
+  return { ...state, attachTarget, valid, mounted, providerValidates, checkValidity, submit };
 }

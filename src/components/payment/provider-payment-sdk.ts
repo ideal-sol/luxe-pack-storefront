@@ -1,9 +1,11 @@
 import type { PaidyCheckoutAction, UnivapayInlineAction, UnivapayInlineForm } from "@/lib/platform/payment-ui-gateway";
 import { PAYMENT_UI_UNAVAILABLE } from "@/lib/platform/payment-ui-gateway";
 import { PAIDY_SCRIPT, UNIVAPAY_SCRIPT, validateInlineForm } from "./provider-payment-actions";
+import { boundedProviderOperation, ownProviderDocument } from "./provider-document";
 
 export type InlineResult = { result: "unknown" } | { result: "failed" } | { result: "reported"; charge_id: string };
 export interface InlineSession {
+  readonly validationMode?: "provider_submit";
   update(update: UnivapayInlineAction["update"], options: { forceUpdate: true }): Promise<void>;
   submit(): Promise<InlineResult>;
   validate(): Promise<boolean>;
@@ -40,10 +42,9 @@ export function loadPaymentScript(url: string): Promise<void> {
   return pending;
 }
 
-/** The iframe's ownership/cleanup and normalized result are explicit dependencies.
- * U12 raw Promise/event decoding is intentionally not guessed here. A verified
- * Browser driver remains a blocking acceptance requirement; see the
- * 2026-10-28 integration handoff for the downloaded SDK lifecycle findings.
+/** The injectable adapter retains explicit ownership and normalized results for
+ * contract fixtures. The browser implementation below deliberately does not
+ * normalize U12 raw Promise/event data into a financial outcome or charge ID.
  */
 export interface UnivapayInlineDriver {
   create(options: UnivapayInlineForm["options"]): {
@@ -79,25 +80,67 @@ interface PaidyGlobal {
   configure(config: { api_key: string; closed: (response: unknown) => void }): { launch(payload: PaidyCheckoutAction["payload"]): void };
 }
 
+interface UnivapayGlobal {
+  create(options: UnivapayInlineForm["options"]): { open(overrides: undefined, target: HTMLElement): Promise<HTMLIFrameElement | undefined> };
+  update(iframe: HTMLIFrameElement, update: UnivapayInlineAction["update"], options: { forceUpdate: true }): Promise<unknown>;
+  submit(iframe: HTMLIFrameElement): Promise<unknown>;
+}
+
 export const browserPaymentProviderSdk: PaymentProviderSdk = {
-  // HOLD: the inspected SDK does not expose safe nested-frame disposal or a
-  // handled positive validation response. Do not infer validity or charge IDs.
-  // Formal Client wiring alone cannot authorize enabling this driver.
-  mountInline: async () => { throw new Error(PAYMENT_UI_UNAVAILABLE); },
+  mountInline: async (form, target, _validity, signal) => {
+    validateInlineForm(form);
+    const lifetime = ownProviderDocument(signal);
+    await boundedProviderOperation(loadPaymentScript(form.script_url), signal);
+    lifetime.assertActive();
+    const sdk = (window as unknown as { UnivapayCheckout?: UnivapayGlobal }).UnivapayCheckout;
+    if (!sdk || typeof sdk.create !== "function" || typeof sdk.update !== "function" || typeof sdk.submit !== "function") throw new Error(PAYMENT_UI_UNAVAILABLE);
+    const instance = sdk.create(form.options);
+    const iframe = await boundedProviderOperation(instance.open(undefined, target), signal);
+    lifetime.assertActive();
+    if (!(iframe instanceof HTMLIFrameElement) || !target.contains(iframe)) throw new Error(PAYMENT_UI_UNAVAILABLE);
+    iframe.title = "UnivaPay カード入力";
+    // Public close notification is advisory only. No private connector.close,
+    // cross-origin frame access, global iframe query or raw result decoder.
+    window.addEventListener("univapay:closed", lifetime.dispose, { once: true });
+    let submitted = false;
+    return {
+      validationMode: "provider_submit",
+      // Official inline integration validates within submit(). validate() is
+      // not required and an empty validation-error event is NOT positive proof.
+      validate: async () => false,
+      update: async (update, options) => {
+        lifetime.assertActive();
+        if (submitted || !target.contains(iframe)) throw new Error(PAYMENT_UI_UNAVAILABLE);
+        await boundedProviderOperation(sdk.update(iframe, update, options), signal);
+        lifetime.assertActive();
+      },
+      submit: async () => {
+        lifetime.assertActive();
+        if (submitted || !target.contains(iframe)) throw new Error(PAYMENT_UI_UNAVAILABLE);
+        submitted = true;
+        // Give the provider's own 3DS UI time to complete. Both resolution and
+        // rejection are non-authoritative; only canonical GET/Webhook settles.
+        try { await boundedProviderOperation(sdk.submit(iframe), signal, 300_000); }
+        catch { /* Unknown outcome stays correlated and cannot be resubmitted. */ }
+        lifetime.assertActive();
+        return { result: "unknown" };
+      },
+      dispose: lifetime.dispose,
+    };
+  },
   openPaidy: async (action, callback, signal) => {
     if (action.script_url !== PAIDY_SCRIPT) throw new Error(PAYMENT_UI_UNAVAILABLE);
-    await loadPaymentScript(action.script_url);
-    signal.throwIfAborted();
+    const lifetime = ownProviderDocument(signal);
+    await boundedProviderOperation(loadPaymentScript(action.script_url), signal);
+    lifetime.assertActive();
     const sdk = (window as unknown as { Paidy?: PaidyGlobal }).Paidy;
     if (!sdk || typeof sdk.configure !== "function") throw new Error(PAYMENT_UI_UNAVAILABLE);
-    let active = true;
-    const stop = () => { active = false; };
-    signal.addEventListener("abort", stop, { once: true });
+    let claimed = false;
     // Normal payment uses `closed`; token-only on_close is a different contract.
     const handler = sdk.configure({ api_key: action.public_key, closed: (response) => {
-      if (active && !signal.aborted) callback(response);
+      if (lifetime.active() && !claimed) { claimed = true; callback(response); }
     } });
     handler.launch(action.payload);
-    return { dispose: () => { stop(); signal.removeEventListener("abort", stop); } };
+    return { dispose: lifetime.dispose };
   },
 };

@@ -83,7 +83,7 @@ beforeEach(() => {
   window.sessionStorage.clear();
   const browser = window;
   vi.stubGlobal("window", new Proxy(browser, { get(target, key) {
-    if (key === "location") return { assign: navigation.assign, replace: navigation.replace, origin: "https://shop.example.test", pathname: "/", search: "" };
+    if (key === "location") return { assign: navigation.assign, replace: navigation.replace, href: "https://shop.example.test/", origin: "https://shop.example.test", pathname: "/", search: "" };
     return Reflect.get(target, key);
   } }));
 });
