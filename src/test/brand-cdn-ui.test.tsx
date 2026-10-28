@@ -24,7 +24,7 @@ it("renders versioned Logo, Mark, login bonus and character references in HTML",
   expect(view.container.querySelector(".wordmark__logo")).toHaveAttribute("src", brandAssetUrl("logo.webp"));
   expect(view.container.querySelector(".wordmark__mark")).toHaveAttribute("src", brandAssetUrl("mark.svg"));
   const sources = Array.from(view.container.querySelectorAll("img"), (img) => img.getAttribute("src"));
-  for (const file of ["login-bonus/logbo-adokaku.webp", "login-bonus/logbo-mainichi.webp", "login-bonus/logbo-shokai.webp", "pokezou_sd.webp", "orika_sd.webp", "fukumaru_hashiru.webp", "sd_orika_egao.webp", "sd_pokezou_makasero.webp", "sd_fukumaru_osuwari.webp", "sd_orika_wink.webp"]) expect(sources).toContain(brandAssetUrl(file));
+  for (const file of ["login-bonus/logbo-adokaku.webp", "login-bonus/logbo-mainichi.webp", "login-bonus/logbo-shokai.webp", "pokezou_sd.webp", "orika_sd.webp", "fukumaru_hashiru.webp", "sd_orika_egao.webp", "sd_orika_touroku.webp", "sd_pokezou_coin.webp", "sd_fukumaru_osuwari.webp", "sd_orika_wink.webp"]) expect(sources).toContain(brandAssetUrl(file));
   expect(sources.every((src) => src?.startsWith("https://cdn.example.test/static-assets/brand/sha256-"))).toBe(true);
 });
 it("exports CloudFront favicon and Apple icon metadata from the root layout", async () => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { newPurchaseMethods } from "./new-purchase-methods";
 import { useEffect, useState } from "react";
 import { type PaymentMethodOption, type PaymentUiGateway } from "@/lib/platform/payment-ui-gateway";
 import { usePaymentClient } from "./payment-client-provider";
@@ -21,7 +22,7 @@ export function PaymentMethodLoader({ productId, subject, children }: {
       if (!Array.isArray(options) || options.some(o => !o || typeof o.method !== "string" || !o.method ||
           typeof o.label !== "string" || typeof o.available !== "boolean" || typeof o.saved_cards_enabled !== "boolean" || typeof o.flow !== "string") ||
           new Set(options.map(o => o.method)).size !== options.length) throw new Error("Payment method contract unavailable");
-      if (active) setResult({ productId, subject, list, options });
+      if (active) setResult({ productId, subject, list, options: newPurchaseMethods(options) });
     }).catch(() => { if (active) setResult({ productId, subject, list, options: null }); });
     return () => { active = false; };
   }, [list, productId, retry, subject]);

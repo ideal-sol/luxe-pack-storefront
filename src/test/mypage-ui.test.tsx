@@ -89,15 +89,32 @@ describe("my page top", () => {
       else process.env.APP_CONTACT = original;
     }
   });
+  it("copies the member ID with one click and reports the result", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+    renderMyPage(client());
+    fireEvent.click(await screen.findByRole("button", { name: "会員IDをコピー" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(authenticated.user!.id));
+    expect(await screen.findByText("会員IDをコピーしました。")).toBeInTheDocument();
+  });
+  it("tells the member how to copy manually when the clipboard is unavailable", async () => {
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: vi.fn().mockRejectedValue(new Error("denied")) } });
+    renderMyPage(client());
+    fireEvent.click(await screen.findByRole("button", { name: "会員IDをコピー" }));
+    expect(await screen.findByText(/会員IDを長押し/)).toBeInTheDocument();
+  });
   it("renders only the canonical Session summary for an authenticated member", async () => {
     renderMyPage(client());
     expect(await screen.findByRole("heading", { name: "会員メニュー" })).toBeInTheDocument();
-    expect(document.querySelector(".mypage-summary__mark")).toHaveTextContent("OZ");
+    const mark = document.querySelector(".mypage-summary__mark");
+    expect(mark).not.toHaveTextContent("OZ");
+    expect(mark?.querySelector("img")).toHaveAttribute("src", expect.stringContaining("mark.svg"));
     expect(screen.getByText("メール認証")).toBeInTheDocument();
     expect(screen.getByText("確認済み")).toBeInTheDocument();
     expect(screen.getByText("アカウント状態")).toBeInTheDocument();
     expect(screen.getByText("利用中")).toBeInTheDocument();
-    expect(screen.queryByText(authenticated.user!.id)).not.toBeInTheDocument();
+    expect(screen.getByText("会員ID")).toBeInTheDocument();
+    expect(screen.getByText(authenticated.user!.id)).toBeInTheDocument();
     expect(screen.queryByText(/\d+pt/i)).not.toBeInTheDocument();
     expect(screen.queryByText("--")).not.toBeInTheDocument();
   });
@@ -181,8 +198,10 @@ describe("my page top", () => {
     expect(links[3]).toHaveTextContent("パスワード変更");
     expect(account).not.toHaveTextContent("LINE連携");
     expect(screen.getAllByRole("link")).toHaveLength(
-      myPageShortcutNavigation.length + myPageAccountNavigation.length + createMyPageSupportNavigation(contactHref).length,
+      myPageShortcutNavigation.length + myPageAccountNavigation.length + 1 + createMyPageSupportNavigation(contactHref).length,
     );
+    expect(screen.getByRole("link", { name: /退会（アカウントの削除）/ })).toHaveAttribute("href", "/mypage/account-closure");
+    expect(screen.getByText(/保有しているコインと、受け取り前のカードはすべて失われます/)).toBeInTheDocument();
   });
 
   it("retains the LINE direct-route navigation contract outside the My Page menu", () => {

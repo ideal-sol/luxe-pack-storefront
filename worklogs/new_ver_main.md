@@ -1,3 +1,12 @@
+## SITE-CLOSURE-DESIGN-PAYHIDE-20261028 — integrated Source Draft (2026-10-28)
+
+- Issue #195; Strict Change / R3 / Application Runtime Activation deferred. Human stop: Draft only, no Ready/Merge/auto-merge, publication or OLD Test/NEW Production activation. Dedicated branch/worktree retained. Base and PR194 squash 5d7e1d25d264f6b619e4ddaec70f07c2c524b7d4. Unrelated dirty checkouts preserved.
+- Supplied v1.4, HTML and design ZIP hashes matched. Applied four individual patches once/in order without conflicts, preserving PR194 draw/audio/Skip implementation. Brand/member ID, initial conditions, PICKUP/flow, beginners, account entry, fixed coin rate and contact return link integrated; underage and expiry wording corrected against authority.
+- New-purchase policy excludes paidy/netridecash before rendering/selection; URL fallback and hidden-only/unavailable states covered. Provider/SDK/history/status/return Source unchanged. Original dormant-provider tests retained separately from actual-policy acceptance.
+- Closure UI and mock actions cover preview/password/OTP, resend, consent, stable operation key, duplicates, errors/STALE, unmount, session invalidation and single completion toast. Production route remains fail-closed: live PR631 Draft/unmerged at 7046094e5d7b4adbe11890ee6b7519db6c19103e; live immutable ledger alpha47/candidate null. No fake SDK, direct API fetch or unpublished artifact. Formal adapter and actual closure acceptance pending under Issue195.
+- Frozen install and artifact validation PASS. Focused tests, lint/type/build, boundaries/security and CI results are recorded against the final PR head in self-review; initial all-suite command was interrupted after contention/timeouts and a focused fork run failed worker startup. No weakened assertions/CI. Browser/visual/real Provider/mail/deployed acceptance NOT RUN. Implementation handoff: docs/implementation/STOREFRONT_CLOSURE_DESIGN_PAYHIDE_20261028.md.
+- Migrations created/applied0; Platform/API/DB/point/draw/infra/Runtime mutations0. Existing Client/Testkit pins and immutable vendor files unchanged. Branch/worktree retained for Human review; no main synchronization, merge actor or squash SHA. Rollback via reviewed Source revert. Final timing, CI/build counts, head/tree/checks and PR state are in fixed-head review evidence.
+
 ## SITE-GTM-20261026 — GTM Source preparation / Draft only
 
 - Issue #185 tracks the durable Production integration / Human decision handoff.

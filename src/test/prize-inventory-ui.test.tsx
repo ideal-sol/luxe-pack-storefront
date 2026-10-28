@@ -261,7 +261,7 @@ describe("prize inventory UI", () => {
       exchangePrizes: vi.fn().mockResolvedValue(response({ exchanged_count: 2, exchange_point_total: 600 })),
     });
     renderInventory(fulfillment);
-    expect(await screen.findByText("配送のみ・ポイント交換不可")).toBeInTheDocument();
+    expect(await screen.findByText("配送のみ・コイン交換不可")).toBeInTheDocument();
     const cCheckbox = screen.getByRole("checkbox", { name: "配送専用Cを選択" });
     expect(c.allowed_actions?.selection.allowed).toBe(true);
     fireEvent.click(cCheckbox);
@@ -296,7 +296,7 @@ describe("prize inventory UI", () => {
     });
     renderInventory(client({ listPrizes: vi.fn().mockResolvedValue(response({ items: [expired], next_cursor: null })) }));
     expect(await screen.findByRole("checkbox")).toBeDisabled();
-    expect(screen.getByText("配送のみ・ポイント交換不可")).toBeInTheDocument();
+    expect(screen.getByText("配送のみ・コイン交換不可")).toBeInTheDocument();
     expect(screen.getByText("保管期限を過ぎています。")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "配送対象を全選択" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "コイン交換対象を全選択" })).toBeDisabled();

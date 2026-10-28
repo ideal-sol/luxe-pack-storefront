@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { LoadingState } from "@/components/common/loading-state";
 import { ContactClientProvider } from "@/components/contact/contact-client-provider";
@@ -14,6 +15,8 @@ export default function ContactPage() {
         eyebrow="CONTACT"
         title="お問い合わせ"
       />
+      {/* B-2: マイページ等から開いたときに、トップへ戻れるようにする */}
+      <Link className="account-security-page__back contact-page__home-link" href="/">← {process.env.NEXT_PUBLIC_APP_NAME?.trim() || "オリポケ"}のトップへ戻る</Link>
       <Suspense fallback={<LoadingState />}>
         <ContactAccessBoundary>
           <ContactClientProvider>

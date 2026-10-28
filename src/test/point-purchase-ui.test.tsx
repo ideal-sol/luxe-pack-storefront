@@ -195,6 +195,14 @@ describe("SITE-030 Coin Product read regression", () => {
     );
   });
 
+  it("B-6: 商品一覧より前に、コインの定価（1コイン＝1円）とボーナスの説明を常時表示する", async () => {
+    await renderPoints(pointClient({ balance: PUBLIC_POINT_BALANCE_FIXTURES.zero, products: PUBLIC_POINT_PRODUCT_FIXTURES.anonymous_empty }));
+    const notice = screen.getByRole("region", { name: "コインの定価は1コイン＝1円です。" });
+    expect(notice).toHaveTextContent("割引販売を行う場合は、お支払金額に対してボーナスコインを付与いたします。お支払金額と付与されるコイン数は、各商品に表示しています。");
+    const products = screen.getByRole("region", { name: "コイン商品" });
+    expect(notice.compareDocumentPosition(products) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("renders zero balance and a canonical empty product collection", async () => {
     await renderPoints(pointClient({ balance: PUBLIC_POINT_BALANCE_FIXTURES.zero, products: PUBLIC_POINT_PRODUCT_FIXTURES.anonymous_empty }));
     await waitFor(() => expect(screen.getByLabelText("現在のコイン残高")).toHaveTextContent("0"));

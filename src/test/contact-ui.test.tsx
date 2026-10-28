@@ -76,6 +76,7 @@ describe("Contact page and form", () => {
   it("renders /contact only for an authenticated Session", async () => {
     render(<SessionProvider client={authClient(PUBLIC_AUTH_FIXTURE.authenticated_session)}><ContactPage /></SessionProvider>);
     expect(screen.getByRole("heading", { name: "お問い合わせ", level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /のトップへ戻る$/ })).toHaveAttribute("href", "/");
     expect(await screen.findByText("お名前・メールアドレス・電話番号は必須です。入力内容を変更しても会員登録情報は変更されません。")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "お問い合わせを送信" })).toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();

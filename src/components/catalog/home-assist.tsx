@@ -3,7 +3,7 @@
 import { brandAssetUrl } from "@/lib/brand-assets";
 import Link from "next/link";
 import { useState } from "react";
-import { informationNavigation } from "@/lib/routes/navigation";
+import { beginnersRoute } from "@/lib/routes/navigation";
 
 /**
  * トップ右下に出るオリカの案内吹き出し（デザインの「オリカの吹き出し」）。
@@ -17,7 +17,7 @@ export function HomeAssist() {
   return (
     <aside aria-label="ご案内" className="home-assist">
       <p className="home-assist__bubble">
-        迷ったら、まずは<Link href={informationNavigation[0].href}>はじめての方へ</Link>をご覧ください。
+        迷ったら、まずは<Link href={beginnersRoute}>はじめての方へ</Link>をご覧ください。
       </p>
       {/* eslint-disable-next-line @next/next/no-img-element -- 固定のブランド素材は静的配信のみで最適化不要 */}
       <img alt="" aria-hidden="true" className="home-assist__character" height={208} src={brandAssetUrl("sd_orika_egao.webp")} width={153} />

@@ -31,9 +31,11 @@ export const mobileNavigation = [
 ] as const satisfies readonly NavigationItem[];
 
 export const smsVerificationRoute = "/mypage/sms-verification";
+/** 退会（アカウントの削除）。退会機能 仕様書 v1.4。SMS 認証の有無にかかわらず開ける。 */
+export const accountClosureRoute = "/mypage/account-closure";
 
 export function requiresSmsVerification(pathname: string): boolean {
-  if ([smsVerificationRoute, "/mypage/email", "/mypage/password", "/mypage/line", "/points/purchase/thanks"].includes(pathname)) return false;
+  if ([smsVerificationRoute, accountClosureRoute, "/mypage/email", "/mypage/password", "/mypage/line", "/points/purchase/thanks"].includes(pathname)) return false;
   return pathname === "/mypage" || pathname.startsWith("/mypage/") ||
     pathname.startsWith("/draws/") || pathname.startsWith("/login-gachas/") ||
     pathname.startsWith("/points/purchase/");
@@ -80,6 +82,9 @@ export function paymentHistoryDetailRoute(paymentId: string) {
 export function staticPageRoute(slug: string) {
   return `/pages/${encodeURIComponent(slug)}`;
 }
+
+/** はじめての方へ（ご利用方法とお約束の案内。デザイン 10_はじめての方へ.html）。 */
+export const beginnersRoute = "/beginners";
 
 export const informationNavigation = [
   { href: "/pages/guide", label: "ご利用ガイド" },
@@ -133,6 +138,7 @@ export const publicRoutes = [
   "/notices/[noticeId]",
   "/pages/[slug]",
   "/contact",
+  "/beginners",
   "/mypage",
   "/mypage/purchases",
   "/mypage/purchases/[paymentId]",
@@ -144,4 +150,5 @@ export const publicRoutes = [
   "/mypage/password",
   "/mypage/sms-verification",
   "/mypage/line",
+  "/mypage/account-closure",
 ] as const;

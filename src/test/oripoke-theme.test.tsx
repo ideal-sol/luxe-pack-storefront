@@ -60,7 +60,7 @@ describe("HomeHero", () => {
     const view = render(<HomeHero />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("最高の一枚を、あなたに！");
     expect(screen.getByRole("link", { name: "ガチャ一覧を見る" })).toHaveAttribute("href", "/gachas");
-    expect(screen.getByRole("link", { name: "はじめての方へ" })).toHaveAttribute("href", "/pages/guide");
+    expect(screen.getByRole("link", { name: "はじめての方へ" })).toHaveAttribute("href", "/beginners");
     view.container.querySelectorAll("img").forEach((image) => expect(image).toHaveAttribute("alt", ""));
   });
 
@@ -175,7 +175,7 @@ describe("オリポケ animations", () => {
 
   it("shows the guide assistant until the visitor closes it", () => {
     render(<HomeAssist />);
-    expect(screen.getByRole("link", { name: "はじめての方へ" })).toHaveAttribute("href", "/pages/guide");
+    expect(screen.getByRole("link", { name: "はじめての方へ" })).toHaveAttribute("href", "/beginners");
     fireEvent.click(screen.getByRole("button", { name: "ご案内を閉じる" }));
     expect(screen.queryByRole("complementary", { name: "ご案内" })).not.toBeInTheDocument();
   });
@@ -191,16 +191,17 @@ describe("オリポケ animations", () => {
 });
 
 describe("HomeGuide", () => {
-  it("shows the fixed coin purchase, payment, flow and assurance sections from the design", () => {
-    render(<HomeGuide />);
-    for (const name of ["コインの購入", "ご利用の流れ", "安心してご利用いただくために"]) {
+  it("shows the flow and assurance sections and no longer the coin purchase section (design 2026-10-28)", () => {
+    const view = render(<HomeGuide />);
+    for (const name of ["ご利用の流れ", "安心してご利用いただくために"]) {
       expect(screen.getByRole("heading", { level: 2, name })).toBeInTheDocument();
     }
-    const buyLinks = screen.getAllByRole("link", { name: "コイン購入画面へ" });
-    expect(buyLinks).toHaveLength(3);
-    buyLinks.forEach((link) => expect(link).toHaveAttribute("href", "/points"));
-    expect(screen.getByRole("heading", { level: 3, name: "購入前の確認事項" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 2, name: "コインの購入" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "コイン購入画面へ" })).not.toBeInTheDocument();
     expect(screen.getAllByText(/^STEP \d$/)).toHaveLength(4);
+    const stepImages = Array.from(view.container.querySelectorAll(".home-guide__flow img")).map((image) => image.getAttribute("src"));
+    expect(stepImages[0]).toContain("sd_orika_touroku.webp");
+    expect(stepImages[1]).toContain("sd_pokezou_coin.webp");
   });
 
   it("keeps site-wide Coin terminology in the fixed copy", () => {
