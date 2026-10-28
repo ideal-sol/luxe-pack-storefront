@@ -8,8 +8,9 @@ import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 const root=fileURLToPath(new URL('../..', import.meta.url));
-const origin=process.env.PAYMENT_BROWSER_ORIGIN ?? 'http://127.0.0.1:3287';
+const origin=process.env.PAYMENT_BROWSER_ORIGIN ?? 'https://127.0.0.1:3447';
 assert.equal(new URL(origin).hostname, '127.0.0.1', 'Use only a task-owned loopback Next start');
+assert.equal(new URL(origin).protocol, 'https:', 'Use an isolated TLS proxy for the canonical __Host- CSRF cookie');
 const report=process.env.PAYMENT_BROWSER_REPORT ?? '/tmp/SF-PAY192-browser-results.json';
 const univa=fs.readFileSync(process.env.PAYMENT_BROWSER_UNIVAPAY_SCRIPT);
 const paidy=fs.readFileSync(process.env.PAYMENT_BROWSER_PAIDY_SCRIPT);
@@ -33,8 +34,8 @@ else send('submitted',{token:'synthetic-token',charge:'unverified-raw-charge',st
 }});
 send('handshake',{connectorId:'synthetic-handshake',paired:false});
 </script>`;
-const paidyHtml=`<!doctype html><title>Synthetic Paidy checkout</title><button id="authorize">Fixture authorize</button><button id="reject">Fixture reject</button><button id="close">Fixture close</button>
-<script>let id;addEventListener('message',e=>{if(e.origin!=='${origin}'||e.data.event!=='paidy_checkout:init')return; id=e.data._id;window.payload=JSON.parse(e.data.payload);document.querySelector('#authorize').focus();});
+const paidyHtml=`<!doctype html><title>Synthetic Paidy checkout</title><label>Fixture checkout input <input id="checkout-input"></label><button id="authorize">Fixture authorize</button><button id="reject">Fixture reject</button><button id="close">Fixture close</button>
+<script>let id;window.fixtureMessages=[];addEventListener('message',e=>{window.fixtureMessages.push({origin:e.origin,event:e.data?.event});if(e.origin!=='${origin}'||e.data.event!=='paidy_checkout:init')return; id=e.data._id;window.payload=JSON.parse(e.data.payload);document.querySelector('#authorize').focus();});
 window.reply=(status)=>{const message={_id:id,event:'paidy_checkout:close',payload:{status,id:'pay_synthetic_payment'}};parent.postMessage(message,'${origin}');parent.postMessage(message,'${origin}');};
 document.querySelector('#authorize').onclick=()=>reply('authorized');document.querySelector('#reject').onclick=()=>reply('rejected');document.querySelector('#close').onclick=()=>reply('closed');</script>`;
 (async()=>{
@@ -45,10 +46,10 @@ document.querySelector('#authorize').onclick=()=>reply('authorized');document.qu
  const scenarios=process.env.PAYMENT_BROWSER_SCENARIOS?.split(',')||['methods','univa_unknown','univa_invalid','univa_3ds_unmount','univa_script_error','paidy_authorized','paidy_rejected','paidy_logout','paidy_navigation','paidy_unmount','paidy_history','netridecash','fincode_saved_3ds','methods_error'];
  try {
   for(const scenario of scenarios) {
-   const context=await browser.newContext(); const page=await context.newPage();page.setDefaultTimeout(30000);page.setDefaultNavigationTimeout(60000);
-   await context.addCookies([{name:'XSRF-TOKEN',value:'e'.repeat(64),url:origin}]);
-   const mutations=[]; const errors=[];let techcoin=null,authenticated=true,member='original',documents=0,finishLogout;
-   page.on('pageerror',e=>errors.push(e.message));
+   const context=await browser.newContext({ignoreHTTPSErrors:true}); const page=await context.newPage();page.setDefaultTimeout(30000);page.setDefaultNavigationTimeout(60000);
+   await context.addCookies([{name:'__Host-oripa_user_xsrf',value:'e'.repeat(64),url:origin,secure:true,sameSite:'Lax'}]);
+   const mutations=[]; const errors=[];const apiPaths=[];let techcoin=null,authenticated=true,member='original',documents=0,finishLogout;
+   page.on('pageerror',e=>errors.push(e.stack));
    page.on('framenavigated',frame=>{if(frame===page.mainFrame())documents++;});
    await page.addInitScript(()=>{window.__documentIdentity=crypto.randomUUID();});
    const id='0198a001-0000-7000-8000-000000000098';
@@ -65,12 +66,14 @@ document.querySelector('#authorize').onclick=()=>reply('authorized');document.qu
     const req=route.request(),url=new URL(req.url());
     if(url.origin===origin&&url.pathname.startsWith('/api/v2/')) {
      const path=url.pathname.slice('/api/v2'.length);let body;
+     apiPaths.push(path);
      if(req.method()!=='GET')mutations.push({path,method:req.method(),body:req.postData(),headers:req.headers()});
      if(path==='/auth/session')body=authenticated?{...f.PUBLIC_AUTH_FIXTURE.authenticated_session,user:{...f.PUBLIC_AUTH_FIXTURE.authenticated_session.user,id:member==='original'?f.PUBLIC_AUTH_FIXTURE.authenticated_session.user.id:'synthetic-member-2'}}:{authenticated:false,user:null};
      else if(path==='/auth/logout'){await new Promise(r=>{finishLogout=r;});authenticated=false;return route.fulfill({status:204});}
      else if(path==='/me/sms-verification')body={verified:true,phone:null,phone_masked:null,verified_at:null,challenge:null};
      else if(path==='/point-products')body={...f.PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible,data:[product]};
      else if(path==='/me/wallet')body=f.PUBLIC_POINT_BALANCE_FIXTURES.positive;
+     else if(path==='/content/footer-pages')body={items:[]};
      else if(path==='/payment-methods'){
       if(scenario==='methods_error')return route.fulfill({status:503,contentType:'application/problem+json',body:JSON.stringify({type:'about:blank',title:'Unavailable',status:503,code:'SERVICE_UNAVAILABLE'})});
       body={data:options};
@@ -98,7 +101,9 @@ document.querySelector('#authorize').onclick=()=>reply('authorized');document.qu
     await page.getByRole('button',{name:'再読み込み'}).waitFor();
     assert.equal(await page.getByRole('radio').count(),0);
    }else{
-    await page.getByRole('radio',{name:'電子マネー（NetRideCash）',exact:true}).waitFor();
+    await page.getByRole('radio',{name:'電子マネー（NetRideCash）',exact:true}).waitFor().catch(async error=>{
+     console.error(JSON.stringify({scenario,body:await page.locator('body').innerText(),apiPaths,errors}));throw error;
+    });
     assert.equal(await page.getByRole('radio',{name:'PayPay',exact:true}).isDisabled(),true);
     const initial=await page.evaluate(()=>window.__documentIdentity);
     if(scenario==='methods'){
@@ -123,14 +128,22 @@ document.querySelector('#authorize').onclick=()=>reply('authorized');document.qu
      if(scenario.startsWith('paidy')){
       const overlay=page.frameLocator('iframe[src^="https://checkout-v2.paidy.com"]');
       await overlay.getByRole('button',{name:'Fixture authorize'}).waitFor();
+      await overlay.locator('body').evaluate(() => new Promise((resolve, reject) => {
+       const deadline=Date.now()+30000;
+       const check=()=>{if(window.payload)resolve();else if(Date.now()>=deadline)reject(new Error('Paidy fixture did not receive public launch payload: '+JSON.stringify(window.fixtureMessages)));else setTimeout(check,50);};check();
+      }));
+      // Verify actual user input/focus, not synthetic cross-origin autofocus.
+      await overlay.getByLabel('Fixture checkout input').fill('synthetic');
+      assert.equal(await overlay.locator('body').evaluate(()=>document.activeElement.id),'checkout-input');
+      assert.equal(await page.locator('.payment-processing-overlay').count(),0);
       if(scenario==='paidy_authorized'){
-       assert.equal(await overlay.locator('body').evaluate(()=>document.activeElement.textContent),'Fixture authorize');
        await overlay.getByRole('button',{name:'Fixture authorize'}).click();
        await page.waitForURL('**/points/purchase/thanks?pid=*');
        assert.equal(mutations.filter(x=>x.path.endsWith('/paidy-authorizations')).length,1);
       }else if(scenario==='paidy_rejected'){
        await overlay.getByRole('button',{name:'Fixture reject'}).click();
        await page.waitForFunction(old=>window.__documentIdentity!==old,initial);
+       await page.getByRole('alert').filter({hasText:'あと払い（ペイディ）をご利用いただけませんでした'}).waitFor();
       }else if(scenario==='paidy_logout'){
        await Promise.all([page.waitForRequest(r=>r.url().endsWith('/auth/logout')),page.getByRole('button',{name:'ログアウト',exact:true}).first().evaluate(button=>button.click())]);
        await overlay.locator('body').evaluate(()=>window.reply('authorized'));
@@ -168,6 +181,7 @@ document.querySelector('#authorize').onclick=()=>reply('authorized');document.qu
      }else{
       await page.waitForURL('**/points/purchase/thanks?pid=*');
       assert.equal(mutations.filter(x=>x.path.includes('/univapay')).length,0);
+      assert.equal(await page.getByRole('heading',{name:'購入完了しました'}).count(),0);
      }
      const starts=mutations.filter(x=>x.path==='/payments');assert.equal(starts.length,1);
      const input=JSON.parse(starts[0].body);assert.equal(input.point_product_id,product.id);assert.equal(starts[0].headers['x-oripa-client-version'],'2.0.0-alpha.47');assert.ok(starts[0].headers['idempotency-key']);assert.ok(starts[0].headers['x-xsrf-token']);

@@ -1022,3 +1022,31 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   persistent ENV, DB, Worker, OLD Test/shared Preview/NEW Production activation,
   CDN upload or Production Artifact Dispatch. Migrations0/0. Retain Draft until
   all gates pass; final status, timing, review and any Squash SHA are in PR192.
+- First continuation CI40641189719: policy/quality/security PASS,1739/1741 tests
+  PASS. Only the two source-inventory assertions (also used by Shadow) failed:
+  the new provider-document module and its test were not registered. Refresh
+  the exact inventory from tracked Source; both focused assertions now PASS.
+  No classifier rule, assertion or Workflow changed.
+- Preserve Paidy's existing rejection message when its completed SDK document
+  is replaced, using a finite presentation-only notice. It is never financial
+  authority and is cleared before another submission/method change. Browser
+  acceptance now explicitly checks that message after real SDK callback teardown.
+- The corrected isolated webpack build/typecheck/static generation succeeded.
+  Browser setup then exposed a footer fixture using data instead of items and
+  a fixture cookie with the wrong name/context; correct only the harness and use
+  task-owned loopback TLS. Canonical Secure __Host- cookie readability PASS.
+  No shared HTTPS service, ENV file or production cookie rule changed. Affected
+  runtime-source updates are rebuilt before final Browser Acceptance. Exact
+  final build/browser/CI evidence and full pass/fail history remain in PR192.
+- Final task-owned HTTPS Next start Browser Acceptance14/14 PASS: methods;
+  UnivaPay unknown/invalid/3DS unmount/script failure; Paidy authorization
+  duplicate/rejection/logout/navigation/session unmount/history; Techcoin POST;
+  saved-fincode3DS; listing failure. Official downloaded SDK bytes unchanged;
+  synthetic API/provider frames only. Browser fixture autofocus was not a valid
+  input-ownership assertion; verify actual iframe input/focus and the absence
+  of the site overlay instead, while retaining launch/callback assertions.
+  Real Provider/card/3DS/Webhook/Return remain NOT RUN. Final build
+  `BtSMTBJ2GTKiONmSvYUXV` compile/typecheck/static generation PASS and application
+  Source byte-equality is recorded in the exact-head PR evidence. Application
+  builds3 (first failed, next2 passed), manual CI reruns0, shared/runtime
+  activations0, Human wait0. Final CI/review/Merge disposition stays in PR192.

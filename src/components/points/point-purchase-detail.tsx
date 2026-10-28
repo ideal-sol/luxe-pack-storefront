@@ -20,7 +20,7 @@ import {
 import { PaymentMethodSelector } from "@/components/payment/payment-method-selector";
 import { PaymentMethodLoader } from "@/components/payment/payment-method-loader";
 import { PaymentProcessingOverlay } from "@/components/payment/payment-processing-overlay";
-import { useProviderPayment } from "@/components/payment/use-provider-payment";
+import { PAIDY_REJECTED_MESSAGE, useProviderPayment } from "@/components/payment/use-provider-payment";
 import { leaveProviderDocument } from "@/components/payment/provider-document";
 import { usePaymentReturnEvent } from "@/components/payment/use-payment-return-event";
 import { safePaymentRedirect } from "@/components/payment/provider-payment-actions";
@@ -125,7 +125,8 @@ function PurchaseForm({
   const [cardBusy, setCardBusy] = useState(false);
   const [submitting, setSubmitting] = useState(Boolean(registrationId));
   const [submissionLocked, setSubmissionLocked] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => typeof window !== "undefined" && method === "paidy" &&
+    new URL(window.location.href).searchParams.get("payment_notice") === "paidy_rejected" ? PAIDY_REJECTED_MESSAGE : null);
   const registrationStartingRef = useRef(false);
   const registrationResumeRef = useRef<string | null>(null);
   const onCardMountStateChange = useCallback((mounted: boolean) => setCardMounted(mounted), []);
@@ -208,7 +209,13 @@ function PurchaseForm({
 
   const submitPayment = async () => {
     if (!selectedOption?.available || !supportedPaymentMethod(selectedOption) || !product.is_available || !product.eligible || product.cta.state !== "enabled") return;
-    if (providerMethod) { await submitProvider(); return; }
+    if (providerMethod) {
+      setError(null);
+      const destination = new URL(window.location.href);
+      destination.searchParams.delete("payment_notice");
+      window.history.replaceState(window.history.state, "", destination.pathname + destination.search + destination.hash);
+      await submitProvider(); return;
+    }
     if (!client || !method || !isLegacyPaymentMethod(method) || submitting || cardBusy || submissionLocked || submitStartingRef.current) return;
     if (method === "credit_card" && !savedCardsEnabled) return;
     const newCard = method === "credit_card" && selectedCardId === "new";
@@ -496,6 +503,7 @@ function PurchaseForm({
           if (submitting || providerBusy || submissionLocked || providerLocked) return;
           const destination = new URL(window.location.href);
           destination.searchParams.set("payment_method", next);
+          destination.searchParams.delete("payment_notice");
           if (leaveProviderDocument(destination.href)) return;
           setConfirmationOpen(false);
           setMethod(next);

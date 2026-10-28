@@ -1,7 +1,7 @@
 import type { PaidyCheckoutAction, UnivapayInlineAction, UnivapayInlineForm } from "@/lib/platform/payment-ui-gateway";
 import { PAYMENT_UI_UNAVAILABLE } from "@/lib/platform/payment-ui-gateway";
 import { PAIDY_SCRIPT, UNIVAPAY_SCRIPT, validateInlineForm } from "./provider-payment-actions";
-import { boundedProviderOperation, ownProviderDocument } from "./provider-document";
+import { boundedProviderOperation, leaveProviderDocument, ownProviderDocument } from "./provider-document";
 
 export type InlineResult = { result: "unknown" } | { result: "failed" } | { result: "reported"; charge_id: string };
 export interface InlineSession {
@@ -13,7 +13,7 @@ export interface InlineSession {
 }
 export interface PaymentProviderSdk {
   mountInline(form: UnivapayInlineForm, target: HTMLElement, validity: (valid: boolean) => void, signal: AbortSignal): Promise<InlineSession>;
-  openPaidy(action: PaidyCheckoutAction, callback: (response: unknown) => void, signal: AbortSignal): Promise<{ dispose(): void }>;
+  openPaidy(action: PaidyCheckoutAction, callback: (response: unknown) => void, signal: AbortSignal): Promise<{ dispose(returnUrl?: string): void }>;
 }
 
 const scripts = new Map<string, Promise<void>>();
@@ -141,6 +141,6 @@ export const browserPaymentProviderSdk: PaymentProviderSdk = {
       if (lifetime.active() && !claimed) { claimed = true; callback(response); }
     } });
     handler.launch(action.payload);
-    return { dispose: lifetime.dispose };
+    return { dispose: (returnUrl?: string) => { leaveProviderDocument(returnUrl); } };
   },
 };

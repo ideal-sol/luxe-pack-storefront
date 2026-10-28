@@ -14,7 +14,7 @@ import type { InlineSession, PaymentProviderSdk } from "./provider-payment-sdk";
 type FlowState = { busy: boolean; locked: boolean; error: string | null; message: string | null };
 const idle: FlowState = { busy: false, locked: false, error: null, message: null };
 const failedCard = "カードがご利用いただけませんでした。カード情報をご確認いただくか、別のお支払い方法をお選びください";
-const rejectedPaidy = "あと払い（ペイディ）をご利用いただけませんでした。別のお支払い方法をお選びください";
+export const PAIDY_REJECTED_MESSAGE = "あと払い（ペイディ）をご利用いただけませんでした。別のお支払い方法をお選びください";
 
 export function useProviderPayment({ gateway, sdk, option, productId, subject, eligible }: {
   gateway: PaymentUiGateway | null; sdk: PaymentProviderSdk; option: PaymentMethodOption | undefined;
@@ -29,7 +29,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
   const running = useRef(false);
   const uncertain = useRef(false);
   const lifecycle = useRef<AbortController | null>(null);
-  const checkout = useRef<{ dispose(): void } | null>(null);
+  const checkout = useRef<{ dispose(returnUrl?: string): void } | null>(null);
   const attachTarget = useCallback((node: HTMLDivElement | null) => { target.current = node; }, []);
 
   useEffect(() => {
@@ -107,10 +107,16 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
     let createdPayment: UiPayment | null = null;
     let callbackClaimed = false;
     let checkoutReleased = false;
+    let checkoutReturn: string | undefined;
     const active = () => !controller.signal.aborted;
     const release = (error: string | null) => {
       checkoutReleased = true;
-      checkout.current?.dispose(); checkout.current = null;
+      if (method === "paidy" && error === PAIDY_REJECTED_MESSAGE) {
+        const destination = new URL(window.location.href);
+        destination.searchParams.set("payment_notice", "paidy_rejected");
+        checkoutReturn = destination.href;
+      }
+      checkout.current?.dispose(checkoutReturn); checkout.current = null;
       try { finishPaymentAttempt(subject, key); } catch {
         uncertain.current = true;
         if (active()) setState({ ...idle, locked: true, message: PAYMENT_UI_PENDING });
@@ -181,7 +187,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
             const status = typeof r.status === "string" ? r.status.toLowerCase() : "unknown";
             if (status === "closed" || status === "rejected") {
               void recordUiEvent(gateway, payment.id, { type: "paidy_checkout_result", detail: { result: status } });
-              release(status === "rejected" ? rejectedPaidy : null);
+              release(status === "rejected" ? PAIDY_REJECTED_MESSAGE : null);
               return;
             }
             pending();
@@ -195,7 +201,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
               void gateway.getPayment(payment.id).catch(() => undefined).finally(() => { if (active()) thanks(payment); });
             }
           }, controller.signal);
-          if (!active() || checkoutReleased) instance.dispose();
+          if (!active() || checkoutReleased) instance.dispose(checkoutReturn);
           else {
             checkout.current = instance;
             // Provider overlay owns focus and input; site overlay is removed.

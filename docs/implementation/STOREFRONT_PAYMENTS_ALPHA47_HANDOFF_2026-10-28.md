@@ -99,7 +99,11 @@ Neither SDK has a documented disposer. The approved alternative is **document
 termination**, shared by these two SDKs only. Once either is loaded, method
 switches and site links perform full-page navigation; the optional
 `payment_method` query selects only an available API-listed method and carries
-no payment or member data. Unmount, session loss and history navigation retire
+no payment or member data. The finite `payment_notice=paidy_rejected` display
+hint preserves the existing decline message across document replacement. It
+does not represent a Payment status, authorize a mutation or grant points, and
+is cleared before a subsequent submission or method change.
+Unmount, session loss and history navigation retire
 the document. A restored back/forward-cache document is reloaded before reuse.
 There is at most one provider SDK lifetime per document. No Provider-owned DOM
 is deleted and no private `close`, connector, listener registry or frame object
@@ -118,7 +122,34 @@ using the downloaded SDKs with synthetic API/provider frames. This is not real
 merchant or payment acceptance. Final acceptance and exact-head gates are in
 the PR; retain Draft HOLD unless all required conditions pass.
 
+The Browser harness is `scripts/acceptance/payment-provider-browser.mjs`. Run it
+against a task-owned optimized Next build/start behind loopback TLS, with the
+exact downloaded SDK files and local Playwright/Chromium paths supplied through
+`PAYMENT_BROWSER_*`. TLS allows the formal `__Host-oripa_user_xsrf` cookie with
+Secure/path=/; the harness verifies the canonical mutation header and idempotency
+key. It mocks footer/session/SMS/product/payment APIs and provider frames; it
+never weakens production cookie settings or sends a real provider request.
+No raw SDK reject is classified as a definitive failed payment: invalid-input
+or transport outcomes without a verified normalized contract stay pending until
+canonical terminal status, including across reload. This conservative retry
+behavior must be exercised during U12/OLD Test acceptance.
+
 ## Validation and later activation handoff
+
+The SF-PAYUI-192 continuation completed **14/14 Source Browser scenarios** on
+the task-owned optimized Next start: method switching; UnivaPay unknown and
+invalid results, 3DS unmount and script error; Paidy public launch/input/focus,
+duplicate authorization, rejection notice, logout, navigation, session/unmount
+and history; Techcoin native POST; saved-fincode 3DS; method-list error.
+Build ID `BtSMTBJ2GTKiONmSvYUXV` passed webpack compilation, TypeScript and static
+generation. Every application source/package/config file was byte-compared
+against the isolated build before final-head evidence. Exact counts/digests and
+the scenario results are attached to the canonical PR review. History Browser
+coverage dispatches popstate; bfcache restoration is covered by focused tests.
+Logout/navigation under the provider overlay invokes the actual site handlers;
+the harness separately verifies real iframe input/focus and no site overlay.
+This task-owned path is the Human-authorized Source Browser/Preview acceptance;
+shared Preview and real-provider acceptance were not performed.
 
 The PR records actual local commands separately from formal CI, including any
 host-load cancellation or timeout. Formal artifact digest/header checks and
@@ -135,7 +166,7 @@ The candidate has 27 Brand assets and Source manifest version
 The current Production workflow intentionally rejects the 27-asset version.
 Later authorized Production preparation must approve a narrow compatible guard,
 upload and verify Brand CDN objects, and establish a compatible exact Runtime
-Source/contract/manifest authority. This Draft does not make a formal Production
+Source/contract/manifest authority. This Source change does not make a formal Production
 artifact buildable or authorize Dispatch.
 
 For OLD Test integration after Source acceptance: use only the formally
@@ -149,5 +180,6 @@ No ENV file, DB, Worker, OLD Test, shared Preview, NEW Production, CDN object,
 Production Source Authority, Production artifact Dispatch or deployment changed.
 Migrations created/applied: 0/0. Rollback is a reviewed Source revert restoring
 coherent alpha.46 package/lock pins and prior wiring; retain immutable vendors.
-The existing Draft branch/worktree and tracking Issue stay available for the
-remaining implementation and acceptance work.
+Issue #190 stays open for the separately authorized runtime/provider acceptance.
+The final PR records whether Source gates allowed merge and task-branch cleanup;
+an unresolved Source gate requires the existing Draft branch/worktree to remain.
