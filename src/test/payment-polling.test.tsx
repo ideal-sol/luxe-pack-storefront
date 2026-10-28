@@ -127,6 +127,17 @@ describe("SITE-040 Payment polling", () => {
     }
   });
 
+  it.each(["netridecash", "paidy"])("polls Source-only %s fixture until Backend confirms or 30 seconds elapse", async method => {
+    // Provisional UI fixture; not a claim that alpha.46 declares this method.
+    const getPayment = vi.fn().mockResolvedValue({ data: { ...payment("processing"), method }, metadata });
+    render(<Harness adapter={client(getPayment)} />);
+    await flush();
+    await act(async () => { await vi.advanceTimersByTimeAsync(2_000); });
+    expect(getPayment).toHaveBeenCalledTimes(2);
+    await act(async () => { await vi.advanceTimersByTimeAsync(28_000); });
+    expect(screen.getByText("processing")).toHaveAttribute("data-state", "delayed");
+  });
+
   it("cancels scheduled work on unmount", async () => {
     const getPayment = vi.fn().mockResolvedValue({ data: payment("processing"), metadata });
     const view = render(<Harness adapter={client(getPayment)} />);

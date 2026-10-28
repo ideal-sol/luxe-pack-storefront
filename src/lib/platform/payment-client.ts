@@ -10,6 +10,7 @@ import type {
 } from "@oripa/storefront-client";
 import { createBrowserPlatformTransport, type BrowserClientOverrides } from "./browser-client";
 import type { PlatformRuntimeConfiguration } from "./runtime-configuration";
+import type { PaymentUiGateway } from "./payment-ui-gateway";
 
 type Schemas = PublicComponents["schemas"];
 
@@ -42,11 +43,25 @@ type PaymentPurchaseClientAdapter = Pick<
   | "startPayment"
 >;
 
-export type PaymentClientAdapter = PaymentPurchaseClientAdapter & Partial<Pick<BrowserStorefrontPaymentClient, "listPayments">>;
+export type PaymentClientAdapter = PaymentPurchaseClientAdapter & Partial<Pick<BrowserStorefrontPaymentClient, "listPayments">> & {
+  listPaymentMethods?: PaymentUiGateway["listPaymentMethods"];
+  uiGateway?: PaymentUiGateway;
+};
 
 export function createPaymentClientAdapter(transport: StorefrontTransport): PaymentClientAdapter {
   const client = createCsrfManagedStorefrontPaymentClient(transport);
+  // All I/O, CSRF acquisition and mutation retry policy remain in the formal Client.
+  const uiGateway: PaymentUiGateway = {
+    listPaymentMethods: client.listPaymentMethods,
+    startPayment: client.startPayment,
+    getPayment: client.getPayment,
+    reportUnivapayCharge: client.reportUnivapayCharge,
+    confirmPaidyAuthorization: client.confirmPaidyAuthorization,
+    recordPaymentClientEvent: client.recordPaymentClientEvent,
+  };
   return {
+    uiGateway,
+    listPaymentMethods: client.listPaymentMethods,
     cancelCardRegistration: client.cancelCardRegistration,
     deleteCard: client.deleteCard,
     getCardRegistration: client.getCardRegistration,

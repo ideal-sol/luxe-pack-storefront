@@ -62,7 +62,9 @@ describe("SITE-040 Coin Purchase Detail", () => {
       productId: fixture.data[1].id,
     });
     expect(await screen.findByText("この初回ユーザー商品は現在購入できません。")).toHaveAttribute("data-eligible", "false");
-    expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "購入する" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("お支払い方法を取得できませんでした。");
     expect(screen.getByRole("region", { name: "購入内容" })).toHaveTextContent("￥1,000");
   });
 
@@ -89,7 +91,9 @@ describe("SITE-040 Coin Purchase Detail", () => {
     expect(client.listPointProducts).toHaveBeenCalledOnce();
     expect(Object.keys(client).filter((key) => /payment|purchase|session|provider|grant|redirect/i.test(key))).toHaveLength(0);
     expect(view.container).not.toHaveTextContent(/ポイント|決済へ進む|購入手続きは準備中です/);
-    expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "購入する" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("お支払い方法を取得できませんでした。");
   });
 
   it("adds only an active Limited Bonus amount to the canonical total", async () => {

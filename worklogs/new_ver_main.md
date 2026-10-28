@@ -879,3 +879,174 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   local full runs. No Production Artifact Dispatch/Build/Upload is performed.
   Separate Human Source Merge GO, then separately authorized Artifact/Runtime
   phases remain. Keep Draft branch/worktree for review.
+# SF-PAYUI-20261027 — Payment UI Source Draft (2026-10-27)
+
+- Issue #190 / R3 / Strict Change / Activation deferred. Dedicated branch
+  feat/SF-PAYUI-20261027 and isolated worktree start at protected main
+  ab52ea83c5a812be0c215b958e64cd01a84720ea. Other checkouts are untouched.
+- Verified full input specification/design/logo SHA values. Platform PAY1 merge
+  and PAY2/PAY4/PAY3 Draft heads are read-only references. No Platform changes.
+- Implement API-ordered payment methods, provisional injected PaymentUiGateway,
+  three provider UI flows, allowlisted events, opaque uncertain-attempt recovery,
+  safe returns/polling/method labels and unmodified logo pipeline additions.
+  Preserve fincode cards/3DS/registration, SMS/eligibility, GTM, approved Production
+  Source, Workflow, dependencies/lockfile and formal alpha.46 artifacts.
+- Add Mock SDK/UI/action tests and real boundary negative mutations. Keep all
+  Required Checks, assertions and timeouts. Initial wallet-fixture failure was
+  corrected; early concurrent local tests hit host-load timeouts. Final executed
+  local results and Required5 are recorded separately in the Draft PR.
+- Handoff: docs/implementation/STOREFRONT_PAYMENTS_HANDOFF_2026-10-27.md.
+  New-provider canonical networking and accepted UnivaPay Browser driver remain
+  unconnected; fixture charge/result normalization is not real SDK acceptance.
+  Legal/brand wording, provider approval and CDN/version approval remain OPEN.
+- No migrations created/applied, Backend financial/schema/auth changes, real
+  Provider/card/Browser tests, formal Production artifact or Runtime activation.
+  Canonical App transport policy grants only Issue/Draft/push/body/check reads;
+  final-head machine-readable review retains HOLD, never a merge recommendation.
+- Keep Draft, branch and worktree. No Ready/merge/auto-merge or cleanup that would
+  remove the reviewable Source. Target status after checks/review:
+  STOREFRONT_PAYMENTS_SOURCE_DRAFT_READY_PLATFORM_CLIENT_INTEGRATION_PENDING_PRODUCTION_MERGE_HOLD.
+- First formal CI: Policy/Quality/Security PASS, 1,704 tests PASS; 16 failures
+  came from a missing Payment helper in the existing analytics guard fixture.
+  Copy that fixture dependency without changing GTM behavior or assertions.
+  Also allow switching methods after a non-financial inline SDK load failure;
+  unknown monetary results remain locked. Updated-head checks supersede that run.
+# SF-PAYUI-ALPHA47-INTEGRATE-20261028 — formal Client connection / Draft HOLD
+
+- Issue #190 / existing PR #192 / branch `feat/SF-PAYUI-20261027`; dedicated
+  existing isolation worktree reused. R3 / Strict Change / Activation `deferred`.
+  Latest Human authorization replaces the prior alpha.46 freeze and permits
+  canonical Source Squash Merge only after all mandatory acceptance conditions.
+  Normal merged protected main `635a891e920ad2b21b7111423c973dc38c889971`; preserved
+  its GTM Workflow/Source Authority and all prior immutable vendor bytes.
+- Formal integrated alpha.47 received by Artifact ID12788389958; publication
+  run40624953499 attempt1, Source `c15eea6887c9fd16f3096cfb27ed78b599262c7e`,
+  Ledger PR627 Squash `cc66862883624e8257e6abf83bf1f9b46fb7cce5`. Independently
+  verified live protected Platform main/Ledger, 27 entries/candidate null,
+  outer ZIP and all five formal file digests. Platform READ-ONLY. Exact formal
+  Client/Testkit47 pins and override adopted; Schema23 retained; Public43/90ops.
+  No locally packed candidate or Production Artifact was used or issued.
+- Connected list/start/get/event/report/authorization through the existing
+  CSRF-managed canonical Client; production context defaults to its Gateway.
+  Removed fixed four-method fallback; generated UI types and server listing
+  control order/labels/availability/flow/card policy/limits, with unknown methods
+  unavailable. Kept explicit fincode card selection, registration, saved-card
+  3DS, SMS, 24h, GTM and payment correlation boundaries. Updated Mock/header
+  assertions to formal47; retained exact alpha.46 Production provenance fixtures
+  and added candidate47 rejection under unchanged authority.
+- Downloaded and inspected official UnivaPay and Paidy Scripts/docs. Chromium
+  synthetic fixture executed the real UnivaPay Script: public operations exist,
+  validate-form request remains pending in the short probe and the inspected
+  message handler has no FORM_VALIDATED case; public close/dispose absent;
+  observed internal nested-container close throws NotFoundError. Safe normal
+  Driver not established; fail-closed stub retained. Paidy real overlay/listener
+  teardown on logout/navigation also remains unverified. No charge-ID/success
+  decoding invented, no UI Capture retry added.
+- Local artifact validation, frozen install and initial typecheck executed PASS.
+  Initial full local Vitest run was cancelled under shared-host overload after
+  prolonged execution; it is NOT PASS. Focused tests and final formal CI results
+  are recorded separately on the immutable PR Head. Task-owned Source Browser
+  attempt timed out before initial route compilation completed (180s navigation
+  deadline); payment-screen Browser acceptance is NOT PASS. Stopped its isolated
+  dev process and removed only its generated AGENTS/next-env changes.
+- Latest Handoff: `docs/implementation/STOREFRONT_PAYMENTS_ALPHA47_HANDOFF_2026-10-28.md`.
+  The existing 27 Brand assets/version remain unchanged; current Production
+  workflow still rejects that version. No Production Authority/Workflow change,
+  CDN upload, ENV file, DB, Worker, OLD Test, shared Preview, NEW Production,
+  artifact Dispatch, Ready, merge or auto-merge. Migrations created/applied0/0.
+- Required disposition while mandatory Driver/lifecycle/Browser gates remain:
+  `SF_PAYUI_ALPHA47_INTEGRATION_OR_MERGE_HOLD`. Fresh final-head review must retain
+  HOLD and report blockers; never fabricate SEV0/1=0 or a MERGE recommendation.
+  Keep Draft branch/worktree and Issue190 for continuation. Revert Source through
+  reviewed PR if necessary; retain all immutable artifacts. Exact Head/Tree,
+  checks, timing and fresh review are attached to the existing PR.
+- Validation correction: first official CI run40634698538 passed policy/security
+  and 1729/1732 tests. Quality found one newly added MockJsonResponse missing its
+  explicit undefined body; integration found three unconfigured-Client assertions
+  still expecting the removed fallback form. Corrected the typed fixture and
+  asserted no payment form/radios/submit plus the safe unavailable message.
+  No assertion, Required Check or runtime boundary was weakened. The initial
+  local focused run was54 PASS/49 FAIL under host load and is not reported PASS;
+  local Build compiled, then failed on the same typed fixture. Final-head CI
+  results supersede neither these local failures nor the SDK/Browser HOLD.
+- Second official run40635274799 passed quality/policy/security and1731/1732
+  tests. One first-user denial test read the submit control before the new
+  asynchronous method listing had completed. Wait for the control to render,
+  then retain the same disabled/click/no-Payment/no-Registration assertions.
+  No timeouts or assertions changed. Head-dependent gates run on the corrected
+  Head; no manual rerun or bypass was requested.
+
+## 2026-10-28 — SF-PAYUI-192 SDK lifecycle and Source acceptance continuation
+
+- Human: reuse PR192/branch/worktree from `fc8222d7485ad542a98c09748a974286cfb669b2`,
+  resolve SDK01/02 and task-owned Browser Acceptance, then canonical Source
+  Squash Merge only with Required5 PASS and fresh SEV0/1=0. Risk R3; Lane Strict
+  Change; Activation deferred. Issue190 remains the real-provider handoff.
+- UnivaPay now uses public create/open/update/submit on the exact owned returned
+  frame. Official submit performs validation; readiness is not fabricated
+  positive validity. One-shot submit, bounded async work and canonical
+  GET/Webhook handling retain unknown results and opaque attempt correlation.
+  No private SDK API, direct card read or guessed charge ID is used.
+- Both SDKs use one document lifetime. Method changes, links, unmount, session
+  loss and history leave by full navigation; restored bfcache documents reload.
+  No provider DOM is deleted. Paidy duplicates are suppressed at the SDK and
+  payment boundaries. Logout revokes callbacks before its canonical request and
+  defers document replacement until the request settles, preserving logout.
+- Official script bytes were re-read unchanged: UnivaPay
+  `bd8468535148bfa270d955e16e4c4b12d1e139eb6e376a6146847832eceae117`, Paidy
+  `5d15d443240494ff621dd09e36a7678b20f5f9a594c7623410cce5dbfb40ceb0`.
+  The handoff cites official integration docs and distinguishes SDK lifecycle
+  evidence from real merchant/card/3DS/Webhook acceptance (NOT RUN).
+- Local SDK/document tests18/18 and fincode SDK tests12/12 PASS. Artifact,
+  Auth/LINE, Payment and secret boundaries PASS; focused changed-file lint PASS.
+  Initial parallel test startup executed0 tests and failed. Initial UI regression
+  was21/101 PASS: old location mocks lacked href; add that browser property only,
+  preserving every assertion. Its reviewed storage-fixture SHA was updated after
+  verifying storage behavior is unchanged. Four corrected targeted UI tests then
+  timed out under shared-host load and are recorded FAIL, not relabeled PASS.
+  Full formal CI and final Source Browser outcomes are recorded on the exact PR
+  head. No timeout/Required Check/assertion was weakened or bypassed.
+- Task-owned clean optimized Next webpack build replaces the previous dev/
+  Turbopack path. First build compiled but found an existing `/points` page
+  optional default argument incompatible with generated Next PageProps. Remove
+  only that redundant parameter default (React still passes props; route output
+  unchanged), then rebuild using the same isolated cache. No Next config,
+  Production workflow or type-check bypass is introduced.
+- The reproducible Browser harness intercepts all APIs/provider frames, loads
+  downloaded official SDKs and uses synthetic data only. It targets loopback
+  Next start, verifies document teardown/callback ownership, methods, provider
+  dispatch and saved-fincode 3DS. Its final report and Build/source comparison
+  belong to the exact-head PR evidence; no real transaction acceptance is implied.
+- Package/lock, every vendor, GTM, supplied logos/Brand manifest, Production
+  Source Authority and all workflows remain intact. Platform read-only. No
+  persistent ENV, DB, Worker, OLD Test/shared Preview/NEW Production activation,
+  CDN upload or Production Artifact Dispatch. Migrations0/0. Retain Draft until
+  all gates pass; final status, timing, review and any Squash SHA are in PR192.
+- First continuation CI40641189719: policy/quality/security PASS,1739/1741 tests
+  PASS. Only the two source-inventory assertions (also used by Shadow) failed:
+  the new provider-document module and its test were not registered. Refresh
+  the exact inventory from tracked Source; both focused assertions now PASS.
+  No classifier rule, assertion or Workflow changed.
+- Preserve Paidy's existing rejection message when its completed SDK document
+  is replaced, using a finite presentation-only notice. It is never financial
+  authority and is cleared before another submission/method change. Browser
+  acceptance now explicitly checks that message after real SDK callback teardown.
+- The corrected isolated webpack build/typecheck/static generation succeeded.
+  Browser setup then exposed a footer fixture using data instead of items and
+  a fixture cookie with the wrong name/context; correct only the harness and use
+  task-owned loopback TLS. Canonical Secure __Host- cookie readability PASS.
+  No shared HTTPS service, ENV file or production cookie rule changed. Affected
+  runtime-source updates are rebuilt before final Browser Acceptance. Exact
+  final build/browser/CI evidence and full pass/fail history remain in PR192.
+- Final task-owned HTTPS Next start Browser Acceptance14/14 PASS: methods;
+  UnivaPay unknown/invalid/3DS unmount/script failure; Paidy authorization
+  duplicate/rejection/logout/navigation/session unmount/history; Techcoin POST;
+  saved-fincode3DS; listing failure. Official downloaded SDK bytes unchanged;
+  synthetic API/provider frames only. Browser fixture autofocus was not a valid
+  input-ownership assertion; verify actual iframe input/focus and the absence
+  of the site overlay instead, while retaining launch/callback assertions.
+  Real Provider/card/3DS/Webhook/Return remain NOT RUN. Final build
+  `BtSMTBJ2GTKiONmSvYUXV` compile/typecheck/static generation PASS and application
+  Source byte-equality is recorded in the exact-head PR evidence. Application
+  builds3 (first failed, next2 passed), manual CI reruns0, shared/runtime
+  activations0, Human wait0. Final CI/review/Merge disposition stays in PR192.

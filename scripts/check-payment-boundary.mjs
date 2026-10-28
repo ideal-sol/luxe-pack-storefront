@@ -32,6 +32,7 @@ for (const forbidden of ["createCardRegistrationIntent", "completeCardRegistrati
 
 const applicationFiles = [
   ...filesUnder("src/components/payment"),
+  "src/lib/platform/payment-ui-gateway.ts",
   "src/components/points/point-purchase-detail.tsx",
   "src/app/page.tsx",
   "src/app/points/purchase/[productId]/page.tsx",
@@ -55,10 +56,19 @@ for (const file of applicationFiles) {
       throw new Error(`Payment UI crosses the Platform boundary (${forbidden}): ${file}`);
     }
   }
-  if (source.includes("sessionStorage") && !file.endsWith("card-registration-resume.ts")) {
+  if (source.includes("sessionStorage") && !["card-registration-resume.ts", "payment-attempt.ts"].some(name => file.endsWith(name))) {
     throw new Error(`Payment UI persists state outside the opaque Return correlation boundary: ${file}`);
   }
   if (/\bfetch\s*\(/.test(source)) throw new Error(`Payment UI performs raw fetch: ${file}`);
+  if (/\baxios\b|\btransport\.request\s*\(/.test(source)) throw new Error(`Payment UI performs noncanonical networking: ${file}`);
+}
+
+const attempt = readFileSync("src/components/payment/payment-attempt.ts", "utf8");
+for (const required of ["idempotencyKey", "paymentId", "productId", "readPaymentAttempt", "beginPaymentAttempt", "finishPaymentAttempt"]) {
+  if (!attempt.includes(required)) throw new Error(`Payment attempt correlation is incomplete: ${required}`);
+}
+for (const forbidden of ["email", "phone", "payload", "charge_id", "card_token", "appId", "public_key"]) {
+  if (attempt.includes(forbidden)) throw new Error(`Payment attempt persists sensitive data: ${forbidden}`);
 }
 
 const registrationResume = readFileSync("src/components/payment/card-registration-resume.ts", "utf8");

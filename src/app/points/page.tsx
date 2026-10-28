@@ -17,6 +17,6 @@ async function PointsLayoutPreview({ searchParams }: PointsPageProps) {
   const query = await searchParams;
   return <PointsContent state={readFirstBuyLayoutState(query?.first_buy, true)} />;
 }
-export default function PointsPage(props: PointsPageProps = {}) {
+export default function PointsPage(props: PointsPageProps) {
   return process.env.STOREFRONT_FIRST_BUY_LAYOUT_PREVIEW === "1" ? <PointsLayoutPreview {...props} /> : <PointsContent />;
 }

@@ -5,6 +5,7 @@ import { SessionProvider } from "@/components/auth/session-provider";
 import { PaymentClientProvider } from "@/components/payment/payment-client-provider";
 import { PaymentHistoryDetail } from "@/components/payment/payment-history-detail";
 import type { AuthClientAdapter, Payment, PaymentClientAdapter } from "@/lib/platform";
+import type { UiPayment } from "@/lib/platform/payment-ui-gateway";
 
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 const auth = {
@@ -30,7 +31,7 @@ function payment(overrides: Partial<Payment> = {}): Payment {
   };
 }
 
-function renderDetail(result: Payment | Error) {
+function renderDetail(result: Payment | UiPayment | Error) {
   const adapter = {
     getPayment: result instanceof Error ? vi.fn().mockRejectedValue(result) : vi.fn().mockResolvedValue({ data: result, metadata }),
     resumeUnpaidPayment: vi.fn().mockResolvedValue({
@@ -47,6 +48,12 @@ function renderDetail(result: Payment | Error) {
 }
 
 describe("SITE-041 Payment History detail", () => {
+  it.each(["netridecash", "paidy"])("shows Source-only %s history without an unpaid-resume action", async method => {
+    const adapter = renderDetail({ ...payment({ status: "processing", succeeded_at: null }), method, method_label: "API 決済手段" });
+    expect(await screen.findByText("API 決済手段")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "振込案内ページ" })).not.toBeInTheDocument();
+    expect(adapter.resumeUnpaidPayment).not.toHaveBeenCalled();
+  });
   it("renders the persisted Grant snapshot and never recalculates total Points", async () => {
     renderDetail(payment());
     expect(await screen.findByRole("heading", { name: "購入内容" })).toBeInTheDocument();

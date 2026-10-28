@@ -167,20 +167,20 @@ describe("SITE-040 / SITE-047 Payment status UI", () => {
   ] as const)("does not offer unpaid resume for invalid method %s in %s", async (method, status) => {
     const adapter = client(payment(status, method));
     renderThanks(adapter);
-    await screen.findByText("決済処理中");
+    await screen.findByText("お支払いを確認しています");
     expect(screen.queryByRole("button", { name: /案内ページへ/ })).not.toBeInTheDocument();
     expect(adapter.resumeUnpaidPayment).not.toHaveBeenCalled();
   });
 
   it.each([
     ["failed", "決済が失敗しました。"],
-    ["succeeded", "決済が失敗しました。"],
-    ["created", "決済が失敗しました。"],
-    ["requires_action", "決済が失敗しました。"],
-    ["processing", "決済が失敗しました。"],
+    ["succeeded", "お支払いが完了しました。"],
+    ["created", "お支払いを確認しています。購入履歴から確認してください。"],
+    ["requires_action", "お支払いを確認しています。購入履歴から確認してください。"],
+    ["processing", "お支払いを確認しています。購入履歴から確認してください。"],
     ["canceled", "決済をキャンセルしました。"],
     ["expired", "決済の有効期限が切れました。"],
-  ] as const)("keeps purchase return status %s on the failure screen", async (status, copy) => {
+  ] as const)("presents canonical purchase return status %s without inferring from the return URL", async (status, copy) => {
     const adapter = returnClient(payment(status));
     render(<PaymentReturnAlert client={adapter} pid="payment-public-reference" productId="product-public-reference" />);
     expect(await screen.findByRole("alert")).toHaveTextContent(copy);
@@ -189,13 +189,13 @@ describe("SITE-040 / SITE-047 Payment status UI", () => {
     expectNoReturnMutation(adapter);
   });
 
-  it("keeps the canonical failure screen when a pending Card Return remounts after terminal failure", async () => {
+  it("shows pending Return first, then the canonical terminal failure after remount", async () => {
     const adapter = returnClient(payment("requires_action"));
     vi.mocked(adapter.getPayment)
       .mockResolvedValueOnce({ data: payment("requires_action"), metadata })
       .mockResolvedValueOnce({ data: payment("failed"), metadata });
     const first = render(<PaymentReturnAlert client={adapter} pid="payment-public-reference" productId="product-public-reference" />);
-    expect(await screen.findByRole("alert")).toHaveTextContent("決済が失敗しました。");
+    expect(await screen.findByRole("alert")).toHaveTextContent("お支払いを確認しています。購入履歴から確認してください。");
     first.unmount();
     render(<PaymentReturnAlert client={adapter} pid="payment-public-reference" productId="product-public-reference" />);
     expect(await screen.findByRole("alert")).toHaveTextContent("決済が失敗しました。");

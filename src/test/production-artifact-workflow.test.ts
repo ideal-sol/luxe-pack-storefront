@@ -314,12 +314,13 @@ describe("production CDN build authority", () => {
     });
     expect(result.stderr).toBe("");
     expect(result.status).toBe(0);
-    expect(brandAssetVersion).toBe("sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d");
+    expect(brandAssetVersion).toBe("sha256-e14476bb46508a7f82edab331cda7fb1b3071bda8dc63b4be693466d7ab92d12");
+    expect(workflow).not.toContain(brandAssetVersion);
     for (const file of ["logo.webp", "icons/favicon.ico", "pokezou_sd.webp"]) {
       expect(brandAssetUrl(file, staticBase)).toBe(`${staticBase}/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/${file}`);
     }
     for (const file of ["sd_orika_touroku.webp", "sd_pokezou_coin.webp"]) {
-      expect(brandAssetUrl(file, staticBase)).toBe(`${staticBase}/brand/${brandAssetVersion}/${file}`);
+      expect(brandAssetUrl(file, staticBase)).toBe(`${staticBase}/brand/sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d/${file}`);
     }
   });
 
@@ -358,12 +359,18 @@ describe("production CDN build authority", () => {
     }
   });
 
-  it.each(["valid", "valid-legacy", "unknown-version", "missing-client", "missing-server", "moved-existing", "wrong-new-prefix", "duplicate-path"])("checks compiled CDN literals in both bundle surfaces: %s", (mode) => {
+  it.each(["valid", "valid-legacy", "source-draft", "unknown-version", "missing-client", "missing-server", "moved-existing", "wrong-new-prefix", "duplicate-path"])("checks compiled CDN literals in both bundle surfaces: %s", (mode) => {
     expect(bundleValidation).toBeTruthy();
     const root = mkdtempSync(join(tmpdir(), "storefront-cdn-bundle-"));
     try {
       mkdirSync(join(root, "src/lib"), { recursive: true });
       const manifest = JSON.parse(readFileSync("src/lib/brand-assets.manifest.json", "utf8"));
+      // Preserve acceptance of the actual prior 25-entry authority while proving
+      // the unchanged Production guard rejects this Source-only 27-entry Draft.
+      if (mode !== "source-draft") {
+        manifest.version = "sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d";
+        manifest.files = manifest.files.filter((file: { relative_path: string }) => !file.relative_path.startsWith("payments/"));
+      }
       if (mode === "valid-legacy") {
         manifest.version = "sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63";
         manifest.files = manifest.files.filter((file: { relative_path: string }) => !["sd_orika_touroku.webp", "sd_pokezou_coin.webp"].includes(file.relative_path));

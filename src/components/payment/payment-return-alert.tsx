@@ -34,7 +34,9 @@ export function PaymentReturnAlert({
           ? "決済をキャンセルしました。"
           : payment.status === "expired"
             ? "決済の有効期限が切れました。"
-            : "決済が失敗しました。";
+            : payment.status === "failed" ? "決済が失敗しました。"
+              : payment.status === "succeeded" ? "お支払いが完了しました。"
+                : "お支払いを確認しています。購入履歴から確認してください。";
         setState({ message, pid });
       })
       .catch(() => {

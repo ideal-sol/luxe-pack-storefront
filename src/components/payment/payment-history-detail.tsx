@@ -96,7 +96,7 @@ export function PaymentHistoryDetail({ paymentId }: { readonly paymentId: string
         <h2 id="payment-detail-method-heading">お支払い方法</h2>
         <dl className="payment-history-detail__method">
           <div><dt>購入日時</dt><dd><time dateTime={payment.created_at}>{formatPaymentDate(payment.created_at)}</time></dd></div>
-          <div><dt>決済種別</dt><dd>{paymentMethodLabel(payment.method)}</dd></div>
+          <div><dt>決済種別</dt><dd>{paymentMethodLabel(payment.method, payment.method_label)}</dd></div>
         </dl>
       </section>
 

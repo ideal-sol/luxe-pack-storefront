@@ -47,7 +47,7 @@ describe("alpha.43 browser Contact contract", () => {
     expect(JSON.parse(harness.mock.requests[1]!.body ?? "null")).toEqual(PUBLIC_CONTACT_FIXTURE.input);
     expect(harness.mock.requests[1]!.headers["idempotency-key"]).toBe(options.idempotency_key);
     expect(harness.mock.requests[1]!.headers["x-xsrf-token"]).toBe(browserToken);
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.46", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.47", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 

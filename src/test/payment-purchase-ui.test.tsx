@@ -134,6 +134,12 @@ function paymentClient(
   },
 ): PaymentClientAdapter {
   return {
+    listPaymentMethods: vi.fn().mockResolvedValue({ data: { data: [
+      { method: "credit_card", label: "クレジットカード", flow: "card_component", saved_cards_enabled: true, available: true, unavailable_reason: null },
+      { method: "paypay", label: "PayPay", flow: "redirect", saved_cards_enabled: false, available: true, unavailable_reason: null },
+      { method: "konbini", label: "コンビニ決済", flow: "redirect", saved_cards_enabled: false, available: true, unavailable_reason: null },
+      { method: "virtual_account", label: "銀行振込", flow: "redirect", saved_cards_enabled: false, available: true, unavailable_reason: null },
+    ] }, metadata }),
     cancelCardRegistration: vi.fn(),
     deleteCard: vi.fn().mockResolvedValue({ data: undefined, metadata: { ...metadata, status: 204 } }),
     getCardRegistration: vi.fn().mockResolvedValue({ data: PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.completed, metadata }),
@@ -191,6 +197,7 @@ describe("SITE-040 / SITE-048 / SITE-049 Payment purchase UI", () => {
           assign: navigation.assign,
           replace: navigation.replace,
           get pathname() { return browserWindow.location.pathname; },
+          get href() { return browserWindow.location.href; },
           get search() { return browserWindow.location.search; },
           get origin() { return browserWindow.location.origin; },
         };
@@ -237,7 +244,7 @@ describe("SITE-040 / SITE-048 / SITE-049 Payment purchase UI", () => {
       first_user_offer: { ...fixture.first_user_offer, state },
     });
     expect(await screen.findByText("この初回ユーザー商品は現在購入できません。")).toBeInTheDocument();
-    const button = screen.getByRole("button", { name: "購入する" });
+    const button = await screen.findByRole("button", { name: "購入する" });
     expect(button).toBeDisabled();
     fireEvent.click(button);
     expect(client.startPayment).not.toHaveBeenCalled();

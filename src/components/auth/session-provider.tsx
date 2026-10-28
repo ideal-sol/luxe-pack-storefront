@@ -1,5 +1,7 @@
 "use client";
 
+import { deferProviderDocumentForLogout } from "@/components/payment/provider-document";
+
 import {
   createContext,
   useCallback,
@@ -259,6 +261,7 @@ export function SessionProvider({
       await refreshSession();
     },
     async logout() {
+      const finishProviderDocument = deferProviderDocumentForLogout();
       refreshSequence.current += 1;
       setState({ status: "loading" });
       try {
@@ -266,6 +269,8 @@ export function SessionProvider({
       } catch (error) {
         setState({ status: "error" });
         throw error;
+      } finally {
+        finishProviderDocument();
       }
       refreshSequence.current += 1;
       setState({

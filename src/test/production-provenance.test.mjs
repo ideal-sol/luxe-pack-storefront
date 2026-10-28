@@ -67,6 +67,11 @@ describe("exact alpha.46 Production provenance", () => {
   it("accepts the retained Human-approved alpha.46 source pins", () => {
     expect(validateProvenance(root).contract_version).toBe("2.0.0-alpha.46");
   });
+  it("rejects the candidate alpha.47 Source under unchanged alpha.46 Production authority", () => {
+    cpSync("package.json", join(root, "package.json"));
+    cpSync("pnpm-lock.yaml", join(root, "pnpm-lock.yaml"));
+    expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
+  });
   it("rejects predecessor alpha.45 source pins under alpha.46 authority", () => {
     mutateJson("package.json", (value) => {
       value.dependencies["@oripa/storefront-client"] = "file:vendor/oripa/PREREG-V14-20261016/oripa-storefront-client-2.0.0-alpha.45.tgz";
