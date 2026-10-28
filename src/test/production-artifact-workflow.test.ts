@@ -315,7 +315,7 @@ describe("production CDN build authority", () => {
     expect(result.stderr).toBe("");
     expect(result.status).toBe(0);
     expect(brandAssetVersion).toBe("sha256-e14476bb46508a7f82edab331cda7fb1b3071bda8dc63b4be693466d7ab92d12");
-    expect(workflow).not.toContain(brandAssetVersion);
+    expect(workflow).toContain(brandAssetVersion);
     for (const file of ["logo.webp", "icons/favicon.ico", "pokezou_sd.webp"]) {
       expect(brandAssetUrl(file, staticBase)).toBe(`${staticBase}/brand/sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63/${file}`);
     }
@@ -359,15 +359,14 @@ describe("production CDN build authority", () => {
     }
   });
 
-  it.each(["valid", "valid-legacy", "source-draft", "unknown-version", "missing-client", "missing-server", "moved-existing", "wrong-new-prefix", "duplicate-path"])("checks compiled CDN literals in both bundle surfaces: %s", (mode) => {
+  it.each(["valid", "valid-legacy", "candidate27", "tampered-candidate27", "unknown-version", "missing-client", "missing-server", "moved-existing", "wrong-new-prefix", "duplicate-path"])("checks compiled CDN literals in both bundle surfaces: %s", (mode) => {
     expect(bundleValidation).toBeTruthy();
     const root = mkdtempSync(join(tmpdir(), "storefront-cdn-bundle-"));
     try {
       mkdirSync(join(root, "src/lib"), { recursive: true });
       const manifest = JSON.parse(readFileSync("src/lib/brand-assets.manifest.json", "utf8"));
-      // Preserve acceptance of the actual prior 25-entry authority while proving
-      // the unchanged Production guard rejects this Source-only 27-entry Draft.
-      if (mode !== "source-draft") {
+      // Retain23/25 rollback authority and admit only the exact27 candidate bytes.
+      if (!["candidate27", "tampered-candidate27"].includes(mode)) {
         manifest.version = "sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d";
         manifest.files = manifest.files.filter((file: { relative_path: string }) => !file.relative_path.startsWith("payments/"));
       }
@@ -379,7 +378,9 @@ describe("production CDN build authority", () => {
       if (mode === "moved-existing") manifest.files[0].object_key = `static-assets/brand/${manifest.version}/${manifest.files[0].relative_path}`;
       if (mode === "wrong-new-prefix") manifest.files.find((file: { relative_path: string }) => file.relative_path === "sd_orika_touroku.webp").object_key = "static-assets/brand/wrong/sd_orika_touroku.webp";
       if (mode === "duplicate-path") manifest.files[1] = manifest.files[0];
-      writeFileSync(join(root, "src/lib/brand-assets.manifest.json"), JSON.stringify(manifest));
+      if (mode === "tampered-candidate27") manifest.files[0].sha256 = "0".repeat(64);
+      writeFileSync(join(root, "src/lib/brand-assets.manifest.json"), mode === "candidate27"
+        ? readFileSync("src/lib/brand-assets.manifest.json") : JSON.stringify(manifest));
       for (const [surface, omitted] of [["static", "missing-client"], ["server", "missing-server"]]) {
         mkdirSync(join(root, `.next/${surface}`), { recursive: true });
         writeFileSync(join(root, `.next/${surface}/bundle.js`), mode === omitted ? '"/brand/logo.webp"' : `${JSON.stringify(dynamicBase)};${JSON.stringify(staticBase)};`);
@@ -387,7 +388,7 @@ describe("production CDN build authority", () => {
       const result = spawnSync(process.execPath, ["--input-type=module"], {
         cwd: root, input: bundleValidation, env: cdnEnvironment(dynamicBase, staticBase), encoding: "utf8",
       });
-      expect(result.status === 0).toBe(mode === "valid" || mode === "valid-legacy");
+      expect(result.status === 0).toBe(["valid", "valid-legacy", "candidate27"].includes(mode));
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

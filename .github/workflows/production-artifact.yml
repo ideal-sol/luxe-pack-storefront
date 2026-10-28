@@ -198,22 +198,32 @@ jobs:
         run: |
           node --input-type=module <<'NODE'
           import { readFileSync, readdirSync } from "node:fs";
+          import { createHash } from "node:crypto";
           import { join } from "node:path";
-          const brand = JSON.parse(readFileSync("src/lib/brand-assets.manifest.json", "utf8"));
+          const brandBytes = readFileSync("src/lib/brand-assets.manifest.json");
+          const brand = JSON.parse(brandBytes);
           const existingVersion = "sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63";
+          const preregVersion = "sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d";
+          const candidateVersion = "sha256-e14476bb46508a7f82edab331cda7fb1b3071bda8dc63b4be693466d7ab92d12";
           const addedPaths = new Set(["sd_orika_touroku.webp", "sd_pokezou_coin.webp"]);
+          const paymentPaths = new Set(["payments/netridecash-logo.png", "payments/paidy-logo.png"]);
           const approvedCounts = new Map([
             [existingVersion, 23],
-            ["sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d", 25],
+            [preregVersion, 25],
+            [candidateVersion, 27],
           ]);
           const expectedCount = approvedCounts.get(brand.version);
           if (!expectedCount || brand.files.length !== expectedCount ||
               new Set(brand.files.map(file => file.relative_path)).size !== expectedCount ||
-              brand.files.filter(file => addedPaths.has(file.relative_path)).length !== (expectedCount === 25 ? 2 : 0)) {
+              brand.files.filter(file => addedPaths.has(file.relative_path)).length !== (expectedCount >= 25 ? 2 : 0) ||
+              brand.files.filter(file => paymentPaths.has(file.relative_path)).length !== (expectedCount === 27 ? 2 : 0) ||
+              (expectedCount === 27 && createHash("sha256").update(brandBytes).digest("hex") !==
+                "2e563e6ef9e1a5f46ed5c8ac8593f383869858ed7ab56100f8d945992b3d76fe")) {
             throw new Error("Approved Brand manifest mismatch");
           }
           for (const file of brand.files) {
-            const version = addedPaths.has(file.relative_path) ? brand.version : existingVersion;
+            const version = paymentPaths.has(file.relative_path) ? candidateVersion
+              : addedPaths.has(file.relative_path) ? preregVersion : existingVersion;
             if (file.object_key !== `static-assets/brand/${version}/${file.relative_path}`) {
               throw new Error("Approved per-file Brand key mismatch");
             }

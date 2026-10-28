@@ -1,4 +1,68 @@
-# Production release authority — alpha.45
+# Production Source Authority — alpha.48 (Human Source GO received)
+
+SF-A48-PRODAUTH-20261028 / Issue #197. Risk R3; Lane Strict Change;
+Application Runtime Activation: deferred. Human Source GO authorizes PR #198
+formal Source Authority promotion, validation, Ready and Canonical Squash Merge.
+
+The approved Storefront Application Runtime Source is
+`cc398cc4d943f4a426fa9540cc6258edf9bc5208` (PR #196, PR #194 ancestor),
+Tree `3171e03344299c9ad84c1c1e4adc1f766e5f00a3`. Platform Application Runtime
+Source and Contract publication source are both
+`6e945df343d3d42ffa844b3b369ca0c171a6bbbe` (PR #631), but are separate identities.
+Platform Production Authority PR #635 is formally merged at
+`1086d776cb2ca20f20883b3e8fa5578510bdce67`; this exact SHA is pinned in
+metadata and Provenance validation, independently of the Runtime Source.
+Contract Client/Testkit alpha.48, Public OpenAPI alpha.44, formal Artifact
+`12819254428`, publication run `40697440380`, Manifest SHA256
+`9affb95def4858a748a5343614dcdf4d8e0ca20705d5d227cc48e976f01df60f`,
+and Outer Archive SHA256
+`0d2606a8a5b4e282f183bae0484b3b9bc2212b74a91c176a41f59ee6cffba897`
+remain immutable. Existing vendor bytes, dependency pins and lockfile match;
+no Contract republication or rebuild is performed.
+
+The formal `Human-approved exact Runtime Source:` prefix is used with unchanged
+Canonical authorize, exact Source/PR/reviewed Tree/current protected main/checks.
+`activation_authorized=false`. Incorrect, superseded, malformed and unresolved
+Platform Authority SHAs fail closed. OLD Test alpha.48 Technical PASS and Browser
+completion are Human-reported; individual Browser operations/items/timestamps
+were not provided and are not independently verified here. No evidence is invented.
+Artifact Dispatch/Build, Stage, Runtime, Migration, DB/AWS, ENV and production
+Payment/Rank/GTM setting changes remain unapproved and require separate Human GO.
+
+Historical Draft preparation used the rejected Draft prefix and unresolved
+`PENDING_HUMAN_SOURCE_GO` placeholder. This formal promotion supersedes those
+current-state expectations; historical Draft Worklog entries remain intact.
+
+NEW Production Rank first initialization remains OFF/unperformed. Feature
+enablement is a separate read-only observation; preserve existing flags and all
+rank, point and bonus data. Human-shared NEW operator READ ONLY readback confirms
+feature `enabled=false`, `activated_at=null`, first Activation unperformed,
+14 Rank tables each0 rows, migration ledger98 with099/100/101 pending. GTM ON
+and FINCODE enabled=true/config unchanged are preserved. This is attributed to
+the NEW operator report; this Authority task makes no direct NEW connection.
+No first Activation, initialization or Backfill is
+authorized. OLD Test Rank ON must never be a Production prerequisite.
+Migration099/100/101 planning and Production read-only Rank observations belong
+to the independent Platform preparation; this Site change performs no DB work.
+
+GTM-5DQRPNN2 remains enabled at formal Build time. All five reviewed GTM Source
+file digests are unchanged from PR #186, so no Source verifier change is needed.
+Actual compiled loader/noscript/SMS event verification, Build ID, artifact ID,
+digest, package and exact-ID re-download checks remain intact. Next.js16.4.2,
+ARM64, Required Checks, Security and rollback assets are unchanged.
+The CDN Build-output guard admits the candidate's exact27-entry Brand Manifest
+bytes (`2e563e6ef9e1a5f46ed5c8ac8593f383869858ed7ab56100f8d945992b3d76fe`),
+including two payment logos, while retaining23/25-entry rollback authorities.
+Existing23 object prefixes and preregistration25 prefixes stay fixed. Unknown,
+tampered or malformed manifests still fail closed. This is Source conformity
+preparation; CDN object delivery/readiness remains a separate pre-Build gate.
+No actual Production Artifact, GTM-ON compiled-byte observation, CDN delivery PASS or Browser verification is claimed by this Authority merge. Preserve F2-B Timer, Agency/Redis and existing FINCODE configuration; Migration101-dependent Mail Workers belong to a separate Runtime scope.
+
+## Historical alpha.45 and alpha.44 records
+
+The following records describe historical approvals; current Source approval is above and Runtime permission remains separate.
+
+# Production release authority — alpha.45 (historical)
 
 SF171-PRODAUTH-20261020, following SITEPRODAUTH-20261019.
 Risk R3; Lane Strict Change; Application Runtime Activation: deferred.

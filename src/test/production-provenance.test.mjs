@@ -10,14 +10,14 @@ let root;
 let authority;
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), "alpha46-production-provenance-"));
+  root = mkdtempSync(join(tmpdir(), "alpha48-production-provenance-"));
   authority = structuredClone(approvedSource);
-  for (const file of ["vendor/oripa/SHIPPINGMIN-20261023"]) {
+  for (const file of ["vendor/oripa/CLOSURE-ALPHA48-20261028"]) {
     mkdirSync(dirname(join(root, file)), { recursive: true });
     cpSync(file, join(root, file), { recursive: true });
   }
-  const client = "file:vendor/oripa/SHIPPINGMIN-20261023/oripa-storefront-client-2.0.0-alpha.46.tgz";
-  const testkit = "file:vendor/oripa/SHIPPINGMIN-20261023/oripa-storefront-testkit-2.0.0-alpha.46.tgz";
+  const client = "file:vendor/oripa/CLOSURE-ALPHA48-20261028/oripa-storefront-client-2.0.0-alpha.48.tgz";
+  const testkit = "file:vendor/oripa/CLOSURE-ALPHA48-20261028/oripa-storefront-testkit-2.0.0-alpha.48.tgz";
   writeFileSync(join(root, "package.json"), JSON.stringify({
     dependencies: { "@oripa/storefront-client": client },
     devDependencies: { "@oripa/storefront-testkit": testkit },
@@ -43,10 +43,10 @@ function mutateManifest(mutation) {
   authority.manifest_sha256 = createHash("sha256").update(readFileSync(join(root, authority.manifest_path))).digest("hex");
 }
 
-describe("exact alpha.46 Production provenance", () => {
-  it("pins the formally Human-approved PR186 GTM Source independently of Workflow/main without Activation GO", () => {
-    expect(approvedSource.source_sha).toBe("2be4169fd847d18d8de0f5bacc1b4a4d7c416b05");
-    expect(approvedSource.source_pr).toBe(186);
+describe("exact alpha.48 Production provenance", () => {
+  it("pins the Human-approved PR196 alpha.48 Runtime Source independently of Workflow/main without Activation GO", () => {
+    expect(approvedSource.source_sha).toBe("cc398cc4d943f4a426fa9540cc6258edf9bc5208");
+    expect(approvedSource.source_pr).toBe(196);
     expect(approvedSource.activation_authorized).toBe(false);
     expect(approvedSource.source_sha).not.toBe("7dc355d3174bdf8a4731741eea7aa4a80752b724");
     expect(approvedSource.source_sha).not.toBe("9702793ec7fdad4332e634b230dc6661ff176655");
@@ -54,6 +54,7 @@ describe("exact alpha.46 Production provenance", () => {
     expect(approvedSource.authority).toContain("Formal Human Source GO RECEIVED");
     expect(approvedSource.authority).not.toContain("Formal Human Source GO is NOT ISSUED");
     expect(approvedSource.authority).not.toContain("Draft candidate exact Runtime Source:");
+    expect(approvedSource.platform_authority_merge_sha).toBe("1086d776cb2ca20f20883b3e8fa5578510bdce67");
     expect(approvedSource.authority).not.toContain("PR #186 GTM is excluded");
   });
 
@@ -64,15 +65,17 @@ describe("exact alpha.46 Production provenance", () => {
   });
 
 
-  it("accepts the retained Human-approved alpha.46 source pins", () => {
-    expect(validateProvenance(root).contract_version).toBe("2.0.0-alpha.46");
+  it("accepts formally approved alpha.48 pins without granting Activation GO", () => {
+    expect(validateProvenance(root).contract_version).toBe("2.0.0-alpha.48");
   });
-  it("rejects the alpha.48 Source under unchanged alpha.46 Production authority", () => {
-    cpSync("package.json", join(root, "package.json"));
-    cpSync("pnpm-lock.yaml", join(root, "pnpm-lock.yaml"));
+  it("rejects superseded alpha.46 source pins under approved alpha.48 authority", () => {
+    mutateJson("package.json", (value) => {
+      value.dependencies["@oripa/storefront-client"] = "file:vendor/oripa/SHIPPINGMIN-20261023/oripa-storefront-client-2.0.0-alpha.46.tgz";
+      value.devDependencies["@oripa/storefront-testkit"] = "file:vendor/oripa/SHIPPINGMIN-20261023/oripa-storefront-testkit-2.0.0-alpha.46.tgz";
+    });
     expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
   });
-  it("rejects predecessor alpha.45 source pins under alpha.46 authority", () => {
+  it("rejects predecessor alpha.45 source pins under alpha.48 authority", () => {
     mutateJson("package.json", (value) => {
       value.dependencies["@oripa/storefront-client"] = "file:vendor/oripa/PREREG-V14-20261016/oripa-storefront-client-2.0.0-alpha.45.tgz";
       value.devDependencies["@oripa/storefront-testkit"] = "file:vendor/oripa/PREREG-V14-20261016/oripa-storefront-testkit-2.0.0-alpha.45.tgz";
@@ -116,28 +119,28 @@ describe("exact alpha.46 Production provenance", () => {
 
   it("accepts approved source pins, immutable artifact identity and every digest", () => {
     expect(validateProvenance(root)).toMatchObject({
-      source_sha: "2be4169fd847d18d8de0f5bacc1b4a4d7c416b05",
-      contract_version: "2.0.0-alpha.46", contract_artifact_id: "12586773046",
-      contract_manifest_sha256: "a55f578a94af700e68f0cd0d8eed0e18fb3867ec3be5e0ac0c8639a173cf2b26",
-      client_pin: "2.0.0-alpha.46", testkit_pin: "2.0.0-alpha.46", public_openapi_pin: "2.0.0-alpha.42",
-      platform_runtime_source_sha: "3592fcdc8e43467c3dd67d2677ec52b7d328eb77",
-      platform_authority_merge_sha: "0372d25ea61a4e6f15485568819f8f1029443b73",
-      contract_archive_sha256: "fb4bc9f64b0810e3efae8aaa85252b8fa86ec8c5fd03fb361459c5a627bca275",
-      platform_source_sha: "1d2b0d8ff8193d55173f5bf6978a41f3dfebf7ac",
-      client_sha256: "08bbfe84dd8e57fb69ba4578cbd1d63e711a0a579996821ecbec6bd5a6133a3f",
-      testkit_sha256: "f4e324b859d1d96d66e78c9c1adf16616f132e4b114b10a2af4e9e5fe5a5de83",
-      public_openapi_sha256: "81ee96478ee3d80539817b54321f9f6d181c2a78a3dae2062527dd81049dcec4",
+      source_sha: "cc398cc4d943f4a426fa9540cc6258edf9bc5208",
+      contract_version: "2.0.0-alpha.48", contract_artifact_id: "12819254428",
+      contract_manifest_sha256: "9affb95def4858a748a5343614dcdf4d8e0ca20705d5d227cc48e976f01df60f",
+      client_pin: "2.0.0-alpha.48", testkit_pin: "2.0.0-alpha.48", public_openapi_pin: "2.0.0-alpha.44",
+      platform_runtime_source_sha: "6e945df343d3d42ffa844b3b369ca0c171a6bbbe",
+      platform_authority_merge_sha: "1086d776cb2ca20f20883b3e8fa5578510bdce67",
+      contract_archive_sha256: "0d2606a8a5b4e282f183bae0484b3b9bc2212b74a91c176a41f59ee6cffba897",
+      platform_source_sha: "6e945df343d3d42ffa844b3b369ca0c171a6bbbe",
+      client_sha256: "a3748e6ba084baf78a67c9927cf160d5c555eaed906597d13457c75de1cb251a",
+      testkit_sha256: "37b23c6378c79c7553ca52da58f389ecf8e5ca01d78483a97141e716920a2ceb",
+      public_openapi_sha256: "4b6ecc4f85aefac18614075d61e3d54e70736457f1a1348cb9d9963e09dfed76",
     });
   });
 
-  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40", "2.0.0-alpha.41", "2.0.0-alpha.42", "2.0.0-alpha.43", "2.0.0-alpha.44", "2.0.0-alpha.45"])("rejects %s source pins", (version) => {
+  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40", "2.0.0-alpha.41", "2.0.0-alpha.42", "2.0.0-alpha.43", "2.0.0-alpha.44", "2.0.0-alpha.45", "2.0.0-alpha.46", "2.0.0-alpha.47"])("rejects %s source pins", (version) => {
     mutateJson("package.json", (value) => {
-      value.dependencies["@oripa/storefront-client"] = `file:vendor/oripa/SHIPPINGMIN-20261023/oripa-storefront-client-${version}.tgz`;
+      value.dependencies["@oripa/storefront-client"] = `file:vendor/oripa/CLOSURE-ALPHA48-20261028/oripa-storefront-client-${version}.tgz`;
     });
     expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
   });
 
-  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40", "2.0.0-alpha.41", "2.0.0-alpha.42", "2.0.0-alpha.43", "2.0.0-alpha.44", "2.0.0-alpha.45"])("rejects %s manifest contract", (version) => {
+  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40", "2.0.0-alpha.41", "2.0.0-alpha.42", "2.0.0-alpha.43", "2.0.0-alpha.44", "2.0.0-alpha.45", "2.0.0-alpha.46", "2.0.0-alpha.47"])("rejects %s manifest contract", (version) => {
     mutateManifest((manifest) => { manifest.bundle.version = version; });
     expect(() => validateProvenance(root, authority)).toThrow("source and manifest contract mismatch");
   });
@@ -150,6 +153,10 @@ describe("exact alpha.46 Production provenance", () => {
   it.each([
     ["platform_runtime_source_sha", "b5c28015ef94cb80f6702a61b1237cacd91d9863"],
     ["platform_authority_merge_sha", "8f9f9a8c9181361a6cbc540b54ddc476ad7fc9d1"],
+    ["platform_authority_merge_sha", "PENDING_HUMAN_SOURCE_GO"],
+    ["platform_authority_merge_sha", "0372d25ea61a4e6f15485568819f8f1029443b73"],
+    ["platform_authority_merge_sha", "6e945df343d3d42ffa844b3b369ca0c171a6bbbe"],
+    ["platform_authority_merge_sha", "1086d776"],
     ["platform_runtime_source_sha", "538a208c025fcc5a7d6f9914d3c428b9ef702dbe"],
     ["platform_authority_merge_sha", "6deba7e8fe4b85ae43b66b7437b46db94ad7c814"],
     ["platform_runtime_source_sha", "cba63981e443992d7b4f9ebcd0ee219dce38c0f9"],
@@ -161,7 +168,7 @@ describe("exact alpha.46 Production provenance", () => {
   });
 
   it("keeps artifact source separate from runtime source", () => {
-    authority.platform_source_sha = authority.platform_runtime_source_sha;
+    authority.platform_source_sha = "0".repeat(40);
     expect(() => validateProvenance(root, authority)).toThrow("Platform source mismatch");
   });
 
@@ -173,9 +180,9 @@ describe("exact alpha.46 Production provenance", () => {
   it.each(["missing", "duplicate", "wrong"])("rejects %s canonical workflow provenance", (kind) => {
     const path = join(root, dirname(authority.manifest_path), "PROVENANCE.md");
     const content = readFileSync(path, "utf8");
-    const line = "Publication: https://github.com/ideal-sol/oripa/actions/runs/40162277779, attempt 1, success.";
+    const line = "Publication: https://github.com/ideal-sol/oripa/actions/runs/40697440380, attempt1, all3 jobs success.";
     writeFileSync(path, kind === "missing" ? content.replace(line, "")
-      : kind === "duplicate" ? `${content}\n${line}\n` : content.replace("40162277779", "38247721027"));
+      : kind === "duplicate" ? `${content}\n${line}\n` : content.replace("40697440380", "38247721027"));
     expect(() => validateProvenance(root)).toThrow("Canonical workflow mismatch");
   });
 
@@ -188,10 +195,10 @@ describe("exact alpha.46 Production provenance", () => {
   });
 
   it.each([
-    ["Artifact ID: 12586773046; oripa-storefront-contract-2.0.0-alpha.46.", "alpha.46", "alpha.45", "Artifact ID mismatch"],
-    ["Publication: https://github.com/ideal-sol/oripa/actions/runs/40162277779, attempt 1, success.", "attempt 1", "attempt 2", "Canonical workflow mismatch"],
-    ["Publication: https://github.com/ideal-sol/oripa/actions/runs/40162277779, attempt 1, success.", "success", "failure", "Canonical workflow mismatch"],
-    ["Publication: https://github.com/ideal-sol/oripa/actions/runs/40162277779, attempt 1, success.", "ideal-sol/oripa", "other/repository", "Canonical workflow mismatch"],
+    ["Artifact ID12819254428, oripa-storefront-contract-2.0.0-alpha.48.", "alpha.48", "alpha.47", "Artifact ID mismatch"],
+    ["Publication: https://github.com/ideal-sol/oripa/actions/runs/40697440380, attempt1, all3 jobs success.", "attempt1", "attempt2", "Canonical workflow mismatch"],
+    ["Publication: https://github.com/ideal-sol/oripa/actions/runs/40697440380, attempt1, all3 jobs success.", "success", "failure", "Canonical workflow mismatch"],
+    ["Publication: https://github.com/ideal-sol/oripa/actions/runs/40697440380, attempt1, all3 jobs success.", "ideal-sol/oripa", "other/repository", "Canonical workflow mismatch"],
   ])("rejects malformed provenance %s (%s)", (line, before, after, error) => {
     const path = join(root, dirname(authority.manifest_path), "PROVENANCE.md");
     writeFileSync(path, readFileSync(path, "utf8").replace(line, line.replace(before, after)));
@@ -229,7 +236,7 @@ describe("exact alpha.46 Production provenance", () => {
 
   it("rejects a stale Artifact ID in source provenance", () => {
     const path = join(root, dirname(authority.manifest_path), "PROVENANCE.md");
-    writeFileSync(path, readFileSync(path, "utf8").replace("12586773046", "10786577344"));
+    writeFileSync(path, readFileSync(path, "utf8").replace("12819254428", "10786577344"));
     expect(() => validateProvenance(root)).toThrow("Artifact ID mismatch");
   });
 
@@ -290,7 +297,7 @@ describe("exact alpha.46 Production provenance", () => {
     expect(() => validateProvenance(root, authority)).toThrow("Client/Testkit mismatch");
   });
 
-  it.each(["oripa-storefront-client-2.0.0-alpha.46.tgz", "oripa-storefront-testkit-2.0.0-alpha.46.tgz", "public.openapi.json"])(
+  it.each(["oripa-storefront-client-2.0.0-alpha.48.tgz", "oripa-storefront-testkit-2.0.0-alpha.48.tgz", "public.openapi.json"])(
     "rejects changed artifact bytes: %s", (file) => {
       writeFileSync(join(root, dirname(authority.manifest_path), file), "tampered");
       expect(() => validateProvenance(root)).toThrow(/digest mismatch/);
@@ -304,7 +311,7 @@ describe("exact alpha.46 Production provenance", () => {
 
   it("rejects a mismatched lockfile pin", () => {
     const path = join(root, "pnpm-lock.yaml");
-    writeFileSync(path, readFileSync(path, "utf8").replaceAll("alpha.46", "alpha.41"));
+    writeFileSync(path, readFileSync(path, "utf8").replaceAll("alpha.48", "alpha.41"));
     expect(() => validateProvenance(root)).toThrow("lockfile pin mismatch");
   });
 
@@ -353,11 +360,9 @@ describe("Production source authority", () => {
     source = git("rev-parse", "HEAD");
     sourceTree = git("rev-parse", "HEAD^{tree}");
     mkdirSync(join(root, "docs"));
-    // Synthetic approval keeps mocked commit identities separate from the real
-    // Human-approved PR186 Source while retaining positive authorization coverage.
+    // Test the actual formal approval text with a synthetic local Source SHA.
     writeFileSync(join(root, "docs/production-approved-source.json"), JSON.stringify({
       ...approvedSource, source_sha: source,
-      authority: "Human-approved exact Runtime Source: synthetic test fixture only",
     }));
     git("add", ".");
     git("commit", "-qm", "workflow authority");
@@ -407,7 +412,7 @@ describe("Production source authority", () => {
 
   it.each(["main", "abc", "A".repeat(40), "0".repeat(40), "f".repeat(40),
     "dcde7c91926d725a69b305e7bd9cc9b48d5d4fe6",
-    "00e10604ee262470a96f4c392d2c3b4f2511e98a", "2be4169fd847d18d8de0f5bacc1b4a4d7c416b05",
+    "00e10604ee262470a96f4c392d2c3b4f2511e98a", "cc398cc4d943f4a426fa9540cc6258edf9bc5208",
     "7dc355d3174bdf8a4731741eea7aa4a80752b724", "9702793ec7fdad4332e634b230dc6661ff176655",
     "7da93eb695f38b7cf804eba59a3642da0b9dc073",
     "342341a82131a7f80a4e7508172f1e764ec7ad84", "b85afec9aba0e72732366e8e12701cef39a06e06"])("rejects invalid or nonmatching fixture source %s", async (sha) => {
