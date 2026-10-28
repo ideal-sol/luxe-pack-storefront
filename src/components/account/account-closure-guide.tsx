@@ -54,7 +54,7 @@ export function AccountClosureScreen({ actions }: { readonly actions: ClosureAct
   const [error, setError] = useState<ClosureUiError["kind"] | null>(null);
   const [sent, setSent] = useState<{ resendAvailableAt: number; expiresInMinutes: number } | null>(null);
   const [now, setNow] = useState(0);
-  const retryAt = useRef(0);
+  const [retryAt, setRetryAt] = useState(0);
   const operationKey = useRef<string | null>(null);
   const locked = useRef(false);
   const alive = useRef(false);
@@ -75,18 +75,18 @@ export function AccountClosureScreen({ actions }: { readonly actions: ClosureAct
   }, [sent, error]);
 
   async function sendCode() {
-    if (locked.current || Date.now() < Math.max(sent?.resendAvailableAt ?? 0, retryAt.current)) return;
+    if (locked.current || Date.now() < Math.max(sent?.resendAvailableAt ?? 0, retryAt)) return;
     locked.current = true; setBusy(true); setError(null);
     try {
       const value = await actions.sendCode();
       if (alive.current) { setSent(value); setNow(Date.now()); }
     } catch (reason) {
-      if (alive.current) { setError(reason instanceof ClosureUiError ? reason.kind : "retry"); retryAt.current = reason instanceof ClosureUiError ? reason.retryAt ?? 0 : 0; }
+      if (alive.current) { setError(reason instanceof ClosureUiError ? reason.kind : "retry"); setRetryAt(reason instanceof ClosureUiError ? reason.retryAt ?? 0 : 0); }
     } finally { locked.current = false; if (alive.current) setBusy(false); }
   }
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!preview?.canClose || !confirmed || !credential || locked.current || Date.now() < retryAt.current ||
+    if (!preview?.canClose || !confirmed || !credential || locked.current || Date.now() < retryAt ||
         preview.verificationMethod === "email_code" && !/^\d{6}$/.test(credential)) return;
     locked.current = true; setBusy(true); setError(null);
     operationKey.current ??= crypto.randomUUID();
@@ -99,7 +99,7 @@ export function AccountClosureScreen({ actions }: { readonly actions: ClosureAct
       if (!alive.current) return;
       const kind = reason instanceof ClosureUiError ? reason.kind : "retry";
       setError(kind); setCredential("");
-      retryAt.current = reason instanceof ClosureUiError ? reason.retryAt ?? 0 : 0;
+      setRetryAt(reason instanceof ClosureUiError ? reason.retryAt ?? 0 : 0);
       if (kind === "stale" || kind === "blocked") {
         setConfirmed(false); setPreview(null);
         try { const value = await actions.load(); if (alive.current) { setPreview(value); operationKey.current = null; } }
@@ -129,11 +129,11 @@ export function AccountClosureScreen({ actions }: { readonly actions: ClosureAct
       <div className="form-field"><label htmlFor="closure-credential">{password ? "パスワード（確認のため再入力）" : "認証コード（登録メールアドレスへ送信）"}</label>
         {!password ? <p>「コードを送信」を押すと、登録メールアドレス（{preview.maskedEmail}）に6桁の認証コードをお送りします。</p> : null}
         <span className="password-field__control"><input id="closure-credential" type={password && !showPassword ? "password" : "text"} autoComplete={password ? "current-password" : "one-time-code"} inputMode={password ? undefined : "numeric"} maxLength={password ? 128 : 6} pattern={password ? undefined : "[0-9]{6}"} required disabled={busy} value={credential} onChange={event => setCredential(event.target.value)} aria-invalid={Boolean(fieldError)} aria-describedby={fieldError ? "closure-field-error" : undefined} />
-        {password ? <button type="button" className="password-field__toggle" disabled={busy} onClick={() => setShowPassword(value => !value)}>{showPassword ? "隠す" : "表示"}</button> : <button type="button" onClick={() => void sendCode()} disabled={busy || now < Math.max(sent?.resendAvailableAt ?? 0, retryAt.current)}>{sent ? "再送信" : "コードを送信"}</button>}</span>
+        {password ? <button type="button" className="password-field__toggle" disabled={busy} onClick={() => setShowPassword(value => !value)}>{showPassword ? "隠す" : "表示"}</button> : <button type="button" onClick={() => void sendCode()} disabled={busy || now < Math.max(sent?.resendAvailableAt ?? 0, retryAt)}>{sent ? "再送信" : "コードを送信"}</button>}</span>
         {fieldError ? <p className="form-field__error" id="closure-field-error">{fieldError}</p> : null}
         {sent ? <p role="status">{preview.maskedEmail} に認証コードを送信しました。有効期限は{sent.expiresInMinutes}分です。届かない場合は迷惑メールフォルダもご確認ください。</p> : null}
       </div>
-      <button type="submit" className="button account-closure__submit" disabled={busy || !confirmed || (password ? !credential : !/^\d{6}$/.test(credential)) || now < retryAt.current}>{busy ? "処理中…" : "退会する"}</button>
+      <button type="submit" className="button account-closure__submit" disabled={busy || !confirmed || (password ? !credential : !/^\d{6}$/.test(credential)) || now < retryAt}>{busy ? "処理中…" : "退会する"}</button>
     </form>}
     <Link className="account-closure__cancel" href="/mypage">退会せずにマイページへ戻る</Link>
   </section>;
