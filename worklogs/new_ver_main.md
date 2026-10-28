@@ -969,3 +969,9 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   local focused run was54 PASS/49 FAIL under host load and is not reported PASS;
   local Build compiled, then failed on the same typed fixture. Final-head CI
   results supersede neither these local failures nor the SDK/Browser HOLD.
+- Second official run40635274799 passed quality/policy/security and1731/1732
+  tests. One first-user denial test read the submit control before the new
+  asynchronous method listing had completed. Wait for the control to render,
+  then retain the same disabled/click/no-Payment/no-Registration assertions.
+  No timeouts or assertions changed. Head-dependent gates run on the corrected
+  Head; no manual rerun or bypass was requested.

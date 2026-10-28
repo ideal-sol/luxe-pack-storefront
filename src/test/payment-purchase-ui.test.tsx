@@ -243,7 +243,7 @@ describe("SITE-040 / SITE-048 / SITE-049 Payment purchase UI", () => {
       first_user_offer: { ...fixture.first_user_offer, state },
     });
     expect(await screen.findByText("この初回ユーザー商品は現在購入できません。")).toBeInTheDocument();
-    const button = screen.getByRole("button", { name: "購入する" });
+    const button = await screen.findByRole("button", { name: "購入する" });
     expect(button).toBeDisabled();
     fireEvent.click(button);
     expect(client.startPayment).not.toHaveBeenCalled();
