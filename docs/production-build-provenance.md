@@ -1,4 +1,47 @@
-# Production release authority — alpha.45
+# Production Source Authority Draft — alpha.48
+
+SF-A48-PRODAUTH-20261028 / Issue #197. Risk R3; Lane Strict Change;
+Application Runtime Activation: deferred. Preparation, tests and Draft PR only.
+
+The candidate Runtime Source is `cc398cc4d943f4a426fa9540cc6258edf9bc5208`
+(PR #196). Platform candidate Runtime Source and Contract publication source
+are both `6e945df343d3d42ffa844b3b369ca0c171a6bbbe` (PR #631), but remain
+separate authorities. Contract Client/Testkit alpha.48, Public OpenAPI alpha.44,
+formal Artifact `12819254428`, publication run `40697440380`, and every digest
+are pinned in `production-approved-source.json`. Existing vendor bytes,
+dependency pins and lockfile already match; no republication or rebuild occurs.
+
+The `Draft candidate exact Runtime Source:` prefix is deliberately rejected by
+unchanged Canonical `authorize`. `activation_authorized=false`. Platform
+Authority merge SHA is `PENDING_HUMAN_SOURCE_GO`, an explicit unresolved Draft
+value rather than a fabricated merge SHA. Before promotion, obtain formal OLD
+Test Acceptance and Human Source GO, record the separately approved Platform
+Authority merge SHA in metadata and its exact validation, then refresh all
+head-dependent checks and Strict self-review. This Draft cannot authorize Build.
+Ready, Merge, formal Artifact Dispatch/Build, Stage and Runtime switch remain
+unapproved and must each follow the applicable Human decision.
+
+NEW Production Rank first initialization remains OFF/unperformed. Feature
+enablement is a separate read-only observation; preserve existing flags and all
+rank, point and bonus data. NEW operator readback of feature flags/activated_at
+is pending and unconfirmed; this Draft makes no direct NEW connection.
+No first Activation, initialization or Backfill is
+authorized. OLD Test Rank ON must never be a Production prerequisite.
+Migration099/100/101 planning and Production read-only Rank observations belong
+to the independent Platform preparation; this Site change performs no DB work.
+
+GTM-5DQRPNN2 remains enabled at formal Build time. All five reviewed GTM Source
+file digests are unchanged from PR #186, so no Source verifier change is needed.
+Actual compiled loader/noscript/SMS event verification, Build ID, artifact ID,
+digest, package and exact-ID re-download checks remain intact. Next.js16.4.2,
+ARM64, Required Checks, Security, workflows and rollback assets are unchanged.
+No actual Production artifact or browser verification is claimed by this Draft.
+
+## Historical alpha.45 and alpha.44 records
+
+The following records describe earlier approvals and do not authorize this Draft.
+
+# Production release authority — alpha.45 (historical)
 
 SF171-PRODAUTH-20261020, following SITEPRODAUTH-20261019.
 Risk R3; Lane Strict Change; Application Runtime Activation: deferred.
