@@ -1050,3 +1050,33 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   Source byte-equality is recorded in the exact-head PR evidence. Application
   builds3 (first failed, next2 passed), manual CI reruns0, shared/runtime
   activations0, Human wait0. Final CI/review/Merge disposition stays in PR192.
+## 2026-10-28 — SITE-DRAW-AUTOPLAY-SKIP-20261028
+
+- Human scope: apply the supplied two-message mBox, validate, obtain formal CI
+  and fresh fixed-head self-review, and stop at one Draft PR. Issue193 tracks
+  later device acceptance. Risk R3; Lane Strict Change; Activation deferred.
+- Live protected main and merged PR192 verified at
+  `364a23813a0ada7d38930778057536147ff70641`. Dedicated task branch/worktree;
+  other checkouts and their existing changes remain untouched.
+- Input SHA256 `680d82c02c38db414fd821786cc49f95e390d67ac5fbbea641a810a596a7ce6a`
+  verified. Both patches applied in order using git am --3way without conflicts.
+  Four authorized Source/test paths only, plus this mandatory record.
+- Sound autoplay NotAllowedError retries muted and offers unmute; a second
+  policy denial offers manual playback. Other initial play rejection semantics,
+  Ended/Error/Skip results and Backend response ordering are retained. Skip and
+  sound controls outrank the theme position rule and preserve safe-area offsets.
+- Exact-head local validation, CI runs, review, final Head/Tree and timing are
+  recorded in the Draft PR. Required local scope: diff, Artifact, Policy, Draw
+  and secret guards; changed-file lint; typecheck; focused Draw/visual tests;
+  pnpm build with Node22.22.3/pnpm10.12.1. Official CI supplies the full suite,
+  clean-directory build, dependency audit and Required5 plus Shadow evidence.
+  Test results are reported only after execution; failures remain disclosed.
+- alpha.47 Client/Testkit, lockfile, vendors, GTM, fincode, Brand Manifest,
+  Production Source Authority, workflows, API/DB/Auth and accounting authority
+  are unchanged. Migrations created/applied0/0. Runtime activation0.
+- No Ready, merge, auto-merge, shared Preview/OLD Test/Production activation,
+  Production Artifact generation/dispatch, ENV, DB or Worker operations.
+- Browser/device acceptance NOT RUN: hand off real iPhone Chrome/Safari,
+  low-power autoplay denial, actual audio, upper-right Skip/lower-right sound
+  layout, safe-area and all playback states after separate Human authorization.
+  Keep branch/worktree and Draft for review. Rollback is a reviewed Source revert.

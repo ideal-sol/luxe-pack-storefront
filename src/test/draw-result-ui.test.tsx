@@ -369,6 +369,66 @@ describe("canonical Draw presentation and full results", () => {
     expectFullResults(data);
   });
 
+  it("falls back to muted autoplay with an unmute button when autoplay with sound is refused", async () => {
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    play.mockRejectedValueOnce(new DOMException("Autoplay with sound refused", "NotAllowedError")).mockResolvedValue();
+    const data = fullResult(10);
+    renderResult(drawClient({ getDrawRequest: vi.fn().mockResolvedValue(response(data)) }));
+    const video = await screen.findByLabelText<HTMLVideoElement>("代表演出動画");
+    const unmute = await screen.findByRole("button", { name: "音を出す" });
+    expect(play).toHaveBeenCalledTimes(2);
+    expect(video.muted).toBe(true);
+    expect(screen.queryByRole("button", { name: "タップして演出を再生" })).not.toBeInTheDocument();
+    fireEvent.click(unmute);
+    expect(video.muted).toBe(false);
+    expect(play).toHaveBeenCalledTimes(3);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "音を出す" })).not.toBeInTheDocument());
+    expect(document.querySelectorAll(".draw-snapshot-card, .draw-result")).toHaveLength(0);
+    fireEvent.ended(video);
+    expectFullResults(data);
+  });
+
+  it("asks for a tap when even muted autoplay is refused, then plays with sound", async () => {
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    play.mockRejectedValueOnce(new DOMException("Autoplay with sound refused", "NotAllowedError"))
+      .mockRejectedValueOnce(new DOMException("Muted autoplay refused", "NotAllowedError"))
+      .mockResolvedValue();
+    const data = fullResult(10);
+    renderResult(drawClient({ getDrawRequest: vi.fn().mockResolvedValue(response(data)) }));
+    const video = await screen.findByLabelText<HTMLVideoElement>("代表演出動画");
+    const tap = await screen.findByRole("button", { name: "タップして演出を再生" });
+    expect(screen.getByRole("button", { name: "スキップ" })).toBeInTheDocument();
+    fireEvent.click(tap);
+    expect(video.muted).toBe(false);
+    expect(play).toHaveBeenCalledTimes(3);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "タップして演出を再生" })).not.toBeInTheDocument());
+    expect(document.querySelectorAll(".draw-snapshot-card, .draw-result")).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
+    expectFullResults(data);
+  });
+
+  it.each(["AbortError", "NotSupportedError"])("does not mute or offer playback buttons after a %s rejection", async (name) => {
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    play.mockRejectedValue(new DOMException("Playback request rejected", name));
+    renderResult(drawClient({ getDrawRequest: vi.fn().mockResolvedValue(response(fullResult(10))) }));
+    const video = await screen.findByLabelText<HTMLVideoElement>("代表演出動画");
+    await act(async () => {});
+    expect(play).toHaveBeenCalledTimes(1);
+    expect(video.muted).toBe(false);
+    expect(screen.queryByRole("button", { name: "音を出す" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "タップして演出を再生" })).not.toBeInTheDocument();
+  });
+
+  it("plays with sound and shows no fallback buttons when autoplay with sound is allowed", async () => {
+    renderResult(drawClient({ getDrawRequest: vi.fn().mockResolvedValue(response(fullResult(10))) }));
+    const video = await screen.findByLabelText<HTMLVideoElement>("代表演出動画");
+    await waitFor(() => expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1));
+    await act(async () => {});
+    expect(video.muted).toBe(false);
+    expect(screen.queryByRole("button", { name: "音を出す" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "タップして演出を再生" })).not.toBeInTheDocument();
+  });
+
   it("does not finish on mount, successful play, readiness, buffering, or progress events", async () => {
     const data = fullResult(10);
     renderResult(drawClient({ getDrawRequest: vi.fn().mockResolvedValue(response(data)) }));

@@ -57,19 +57,63 @@ function usablePresentation(presentation: DrawResponse["presentation"]): present
   return video?.media_type === "video" && resolveAssetUrl(video.path) !== null;
 }
 
+type PlaybackState = "starting" | "playing-with-sound" | "playing-muted" | "needs-tap";
+
+function isAutoplayBlocked(error: unknown) {
+  return error instanceof DOMException && error.name === "NotAllowedError";
+}
+
 function RepresentativeVideo({ presentation, onFinished }: {
   readonly presentation: DrawPresentation;
   readonly onFinished: () => void;
 }) {
   const video = presentation.video_snapshot;
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [playback, setPlayback] = useState<PlaybackState>("starting");
   const finish = onFinished;
 
   useEffect(() => {
-    // A rejected playback request (including autoplay policy) is not a media
-    // error. Keep the presentation and Skip available; only onError ends it.
-    void videoRef.current?.play().catch(() => {});
+    let cancelled = false;
+    const element = videoRef.current;
+    if (!element) return;
+    setPlayback("starting");
+    element.muted = false;
+
+    // Browsers may refuse autoplay with sound (Chrome, including Chrome on iOS).
+    // A refused request is not a media error: fall back to muted autoplay with an
+    // "unmute" button, and if even muted autoplay is refused (for example iOS Low
+    // Power Mode), ask for a tap. Skip stays available; only onError ends it.
+    const start = async () => {
+      try {
+        await element.play();
+        if (!cancelled) setPlayback("playing-with-sound");
+        return;
+      } catch (error) {
+        if (cancelled || !isAutoplayBlocked(error)) return;
+      }
+      element.muted = true;
+      try {
+        await element.play();
+        if (!cancelled) setPlayback("playing-muted");
+      } catch (error) {
+        if (!cancelled && isAutoplayBlocked(error)) setPlayback("needs-tap");
+      }
+    };
+    void start();
+    return () => { cancelled = true; };
   }, [video.path]);
+
+  // Called from a click, so the browser treats it as user-initiated playback.
+  const playWithSound = () => {
+    const element = videoRef.current;
+    if (!element) return;
+    element.muted = false;
+    setPlayback("playing-with-sound");
+    void element.play().catch(() => {
+      element.muted = true;
+      setPlayback("needs-tap");
+    });
+  };
 
   return (
     <section aria-label="抽選演出" className="draw-presentation">
@@ -86,6 +130,15 @@ function RepresentativeVideo({ presentation, onFinished }: {
         src={resolveAssetUrl(video.path) ?? undefined}
       />
       <button className="button button--dark draw-presentation__skip" onClick={finish} type="button">スキップ</button>
+      {playback === "playing-muted" && (
+        <button className="button button--dark draw-presentation__sound" onClick={playWithSound} type="button">音を出す</button>
+      )}
+      {playback === "needs-tap" && (
+        <button className="draw-presentation__tap" onClick={playWithSound} type="button">
+          <span className="draw-presentation__tap-icon" aria-hidden="true">▶</span>
+          <span>タップして演出を再生</span>
+        </button>
+      )}
     </section>
   );
 }
