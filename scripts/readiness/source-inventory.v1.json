@@ -223,6 +223,7 @@
   "src/test/gacha-detail-ui.test.tsx",
   "src/test/gacha-draw-ui.test.tsx",
   "src/test/gacha-prize-rate-ui.test.tsx",
+  "src/test/gtm-build-verification.test.mjs",
   "src/test/layout.test.tsx",
   "src/test/line-account-link-ui.test.tsx",
   "src/test/line-friend-state-contract.test.ts",

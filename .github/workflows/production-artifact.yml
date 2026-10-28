@@ -87,6 +87,7 @@ jobs:
       - name: Validate approved Contract provenance
         run: |
           node "$GITHUB_WORKSPACE/build-authority/scripts/production-provenance.mjs" validate . "$RUNNER_TEMP/contract-provenance.json"
+          node "$GITHUB_WORKSPACE/build-authority/scripts/verify-gtm-build.mjs" source .
 
       - name: Validate production site URL
         shell: bash
@@ -180,12 +181,17 @@ jobs:
 
       - name: Build exact production application
         shell: bash
+        env:
+          NEXT_PUBLIC_GTM_ID: GTM-5DQRPNN2
         run: |
           set -euo pipefail
           test "$NEXT_PUBLIC_PLATFORM_API_BASE_URL" = "/api/v2"
           pnpm build
           test -s .next/BUILD_ID
           test -s .next/required-server-files.json
+
+      - name: Verify actual GTM build bytes offline
+        run: node "$GITHUB_WORKSPACE/build-authority/scripts/verify-gtm-build.mjs" observe . GTM-5DQRPNN2
 
       - name: Verify CDN build output
         shell: bash
@@ -318,6 +324,12 @@ jobs:
 
           const provenance = JSON.parse(readFileSync(join(process.env.RUNNER_TEMP, "contract-provenance.json"), "utf8"));
           if (provenance.source_sha !== process.env.SOURCE_SHA) throw new Error("Contract provenance source mismatch");
+          const gtmBytes = readFileSync(".next/gtm-build-observation.json");
+          const gtm = JSON.parse(gtmBytes);
+          const { createHash } = await import("node:crypto");
+          if (gtm.gtm_id !== "GTM-5DQRPNN2" || gtm.gtm_enabled !== true || gtm.build_id !== process.env.BUILD_ID) {
+            throw new Error("GTM build observation mismatch");
+          }
           const manifest = {
             ...provenance,
             schema_version: "1.0",
@@ -331,6 +343,9 @@ jobs:
             file_manifest_scope: "regular payload files excluding artifact-manifest.json and FILE_SHA256SUMS",
             file_manifest_sha256: process.env.FILE_MANIFEST_SHA,
             git_tree: process.env.GIT_TREE,
+            gtm_id: gtm.gtm_id,
+            gtm_enabled: gtm.gtm_enabled,
+            gtm_observation_sha256: createHash("sha256").update(gtmBytes).digest("hex"),
             next_version: process.env.NEXT_VERSION_ACTUAL,
             node_version: process.env.NODE_VERSION,
             platform_api_base: process.env.NEXT_PUBLIC_PLATFORM_API_BASE_URL,
@@ -349,6 +364,7 @@ jobs:
           );
           NODE
 
+          node "$GITHUB_WORKSPACE/build-authority/scripts/verify-gtm-build.mjs" verify "$release_root" GTM-5DQRPNN2
           test "$(node -p "require(process.env.RUNNER_TEMP + '/storefront-release/artifact-manifest.json').asset_public_base_url")" = "$NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL"
           test "$(node -p "require(process.env.RUNNER_TEMP + '/storefront-release/artifact-manifest.json').static_asset_base_url")" = "$NEXT_PUBLIC_STATIC_ASSET_BASE_URL"
 
@@ -415,6 +431,8 @@ jobs:
 
           cd "$verify_root"
           sha256sum --check FILE_SHA256SUMS
+          cmp artifact-manifest.json "$publication_root/artifact-manifest.json"
+          node "$GITHUB_WORKSPACE/build-authority/scripts/verify-gtm-build.mjs" verify . GTM-5DQRPNN2
           test "$(node -p "require('./artifact-manifest.json').source_sha")" = "$SOURCE_SHA"
           test "$(node -p "require('./artifact-manifest.json').app_name")" = "$NEXT_PUBLIC_APP_NAME"
           test "$(node -p "require('./artifact-manifest.json').site_url")" = "$NEXT_PUBLIC_SITE_URL"
@@ -508,6 +526,7 @@ jobs:
 
           cd "$extracted_root"
           sha256sum --check FILE_SHA256SUMS
+          node "$GITHUB_WORKSPACE/build-authority/scripts/verify-gtm-build.mjs" verify . GTM-5DQRPNN2
           test "$(sha256sum FILE_SHA256SUMS | cut -d' ' -f1)" = "$EXPECTED_FILE_MANIFEST_SHA"
           test "$(tr -d '\n' < .next/BUILD_ID)" = "$EXPECTED_BUILD_ID"
           test "$(node -p "require('./artifact-manifest.json').source_sha")" = "$SOURCE_SHA"
@@ -606,5 +625,6 @@ jobs:
             echo "- Dynamic asset base: $NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL"
             echo "- Static asset base: $NEXT_PUBLIC_STATIC_ASSET_BASE_URL"
             echo "- Brand CDN URLs: verified with runtime CDN ENV unset"
+            echo "- GTM: GTM-5DQRPNN2 enabled; compiled loader, noscript, SMS event and Runtime ENV independence verified offline at Build/package/exact-ID re-download"
             echo "- Runtime smoke: \`HTTP 200 /\`, \`HTTP 200 /points\`"
           } | tee -a "$GITHUB_STEP_SUMMARY"
