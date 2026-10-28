@@ -911,3 +911,52 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   Copy that fixture dependency without changing GTM behavior or assertions.
   Also allow switching methods after a non-financial inline SDK load failure;
   unknown monetary results remain locked. Updated-head checks supersede that run.
+# SF-PAYUI-ALPHA47-INTEGRATE-20261028 — formal Client connection / Draft HOLD
+
+- Issue #190 / existing PR #192 / branch `feat/SF-PAYUI-20261027`; dedicated
+  existing isolation worktree reused. R3 / Strict Change / Activation `deferred`.
+  Latest Human authorization replaces the prior alpha.46 freeze and permits
+  canonical Source Squash Merge only after all mandatory acceptance conditions.
+  Normal merged protected main `635a891e920ad2b21b7111423c973dc38c889971`; preserved
+  its GTM Workflow/Source Authority and all prior immutable vendor bytes.
+- Formal integrated alpha.47 received by Artifact ID12788389958; publication
+  run40624953499 attempt1, Source `c15eea6887c9fd16f3096cfb27ed78b599262c7e`,
+  Ledger PR627 Squash `cc66862883624e8257e6abf83bf1f9b46fb7cce5`. Independently
+  verified live protected Platform main/Ledger, 27 entries/candidate null,
+  outer ZIP and all five formal file digests. Platform READ-ONLY. Exact formal
+  Client/Testkit47 pins and override adopted; Schema23 retained; Public43/90ops.
+  No locally packed candidate or Production Artifact was used or issued.
+- Connected list/start/get/event/report/authorization through the existing
+  CSRF-managed canonical Client; production context defaults to its Gateway.
+  Removed fixed four-method fallback; generated UI types and server listing
+  control order/labels/availability/flow/card policy/limits, with unknown methods
+  unavailable. Kept explicit fincode card selection, registration, saved-card
+  3DS, SMS, 24h, GTM and payment correlation boundaries. Updated Mock/header
+  assertions to formal47; retained exact alpha.46 Production provenance fixtures
+  and added candidate47 rejection under unchanged authority.
+- Downloaded and inspected official UnivaPay and Paidy Scripts/docs. Chromium
+  synthetic fixture executed the real UnivaPay Script: public operations exist,
+  validate-form request remains pending in the short probe and the inspected
+  message handler has no FORM_VALIDATED case; public close/dispose absent;
+  observed internal nested-container close throws NotFoundError. Safe normal
+  Driver not established; fail-closed stub retained. Paidy real overlay/listener
+  teardown on logout/navigation also remains unverified. No charge-ID/success
+  decoding invented, no UI Capture retry added.
+- Local artifact validation, frozen install and initial typecheck executed PASS.
+  Initial full local Vitest run was cancelled under shared-host overload after
+  prolonged execution; it is NOT PASS. Focused tests and final formal CI results
+  are recorded separately on the immutable PR Head. Task-owned Source Browser
+  attempt timed out before initial route compilation completed (180s navigation
+  deadline); payment-screen Browser acceptance is NOT PASS. Stopped its isolated
+  dev process and removed only its generated AGENTS/next-env changes.
+- Latest Handoff: `docs/implementation/STOREFRONT_PAYMENTS_ALPHA47_HANDOFF_2026-10-28.md`.
+  The existing 27 Brand assets/version remain unchanged; current Production
+  workflow still rejects that version. No Production Authority/Workflow change,
+  CDN upload, ENV file, DB, Worker, OLD Test, shared Preview, NEW Production,
+  artifact Dispatch, Ready, merge or auto-merge. Migrations created/applied0/0.
+- Required disposition while mandatory Driver/lifecycle/Browser gates remain:
+  `SF_PAYUI_ALPHA47_INTEGRATION_OR_MERGE_HOLD`. Fresh final-head review must retain
+  HOLD and report blockers; never fabricate SEV0/1=0 or a MERGE recommendation.
+  Keep Draft branch/worktree and Issue190 for continuation. Revert Source through
+  reviewed PR if necessary; retain all immutable artifacts. Exact Head/Tree,
+  checks, timing and fresh review are attached to the existing PR.

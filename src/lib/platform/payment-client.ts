@@ -14,7 +14,7 @@ import type { PaymentUiGateway } from "./payment-ui-gateway";
 
 type Schemas = PublicComponents["schemas"];
 
-export type Payment = Schemas["Payment"] & { readonly method_label?: string };
+export type Payment = Schemas["Payment"];
 export type PaymentCollection = Schemas["PaymentCollection"];
 export type PaymentCard = Schemas["PaymentCard"];
 export type PaymentCardCollection = Schemas["PaymentCardCollection"];
@@ -45,14 +45,23 @@ type PaymentPurchaseClientAdapter = Pick<
 
 export type PaymentClientAdapter = PaymentPurchaseClientAdapter & Partial<Pick<BrowserStorefrontPaymentClient, "listPayments">> & {
   listPaymentMethods?: PaymentUiGateway["listPaymentMethods"];
+  uiGateway?: PaymentUiGateway;
 };
 
 export function createPaymentClientAdapter(transport: StorefrontTransport): PaymentClientAdapter {
   const client = createCsrfManagedStorefrontPaymentClient(transport);
-  // alpha.46-only compatibility. A later Client adoption must explicitly wire
-  // the full PaymentUiGateway; never silently fall back when listing exists.
-  if ("listPaymentMethods" in client) throw new Error("Payment UI Client integration is required");
+  // All I/O, CSRF acquisition and mutation retry policy remain in the formal Client.
+  const uiGateway: PaymentUiGateway = {
+    listPaymentMethods: client.listPaymentMethods,
+    startPayment: client.startPayment,
+    getPayment: client.getPayment,
+    reportUnivapayCharge: client.reportUnivapayCharge,
+    confirmPaidyAuthorization: client.confirmPaidyAuthorization,
+    recordPaymentClientEvent: client.recordPaymentClientEvent,
+  };
   return {
+    uiGateway,
+    listPaymentMethods: client.listPaymentMethods,
     cancelCardRegistration: client.cancelCardRegistration,
     deleteCard: client.deleteCard,
     getCardRegistration: client.getCardRegistration,

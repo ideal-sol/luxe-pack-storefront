@@ -2,7 +2,7 @@
 
 import type { PaymentCard } from "@/lib/platform";
 import { brandAssetUrl } from "@/lib/brand-assets";
-import { ALPHA46_PAYMENT_METHODS, type PaymentMethodOption } from "@/lib/platform/payment-ui-gateway";
+import { supportedPaymentMethod, type PaymentMethodOption } from "@/lib/platform/payment-ui-gateway";
 
 const presentation: Record<string, { logo?: string; description?: string }> = {
   netridecash: { logo: "payments/netridecash-logo.png", description: "決済会社（テックコイン）の画面で NetRideCash の番号を入力します" },
@@ -30,7 +30,7 @@ export function PaymentMethodSelector({
   onSavedCardChange,
   selectedCardId,
   selectedMethod,
-  options = ALPHA46_PAYMENT_METHODS,
+  options,
   disabled = false,
 }: {
   readonly cardBusy: boolean;
@@ -44,7 +44,7 @@ export function PaymentMethodSelector({
   readonly onSavedCardChange: (cardId: string) => void;
   readonly selectedCardId: string | "new" | null;
   readonly selectedMethod: string | null;
-  readonly options?: readonly PaymentMethodOption[];
+  readonly options: readonly PaymentMethodOption[];
   readonly disabled?: boolean;
 }) {
   return (
@@ -54,14 +54,14 @@ export function PaymentMethodSelector({
         {options.map((method) => {
           const checked = selectedMethod === method.method;
           const display = presentation[method.method];
-          const reason = !method.available ? method.unavailable_reason === "amount_too_large"
+          const reason = !method.available || !supportedPaymentMethod(method) ? method.unavailable_reason === "amount_too_large"
             ? "この商品はこのお支払い方法ではご購入いただけません" : "現在ご利用いただけません" : null;
           return (
             <div className={`payment-method-row${checked ? " payment-method-row--selected" : ""}`} key={method.method}>
               <label className="payment-method-row__label">
                 <input
                   checked={checked}
-                  disabled={disabled || !method.available}
+                  disabled={disabled || !method.available || !supportedPaymentMethod(method)}
                   name="payment-method"
                   onChange={() => { if (!disabled && method.available) onMethodChange(method.method); }}
                   type="radio"

@@ -16,13 +16,13 @@ describe("MIG-063B canonical Point contract", () => {
   it("pins the canonical immutable versions and retains generated Point operations", () => {
     for (const [packageName, version] of Object.entries({
       "site-schema": "2.0.0-alpha.23",
-      "storefront-client": "2.0.0-alpha.46",
-      "storefront-testkit": "2.0.0-alpha.46",
+      "storefront-client": "2.0.0-alpha.47",
+      "storefront-testkit": "2.0.0-alpha.47",
     })) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
       expect(packageJson.version).toBe(version);
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("81ee96478ee3d80539817b54321f9f6d181c2a78a3dae2062527dd81049dcec4");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("0a8c6ee14b1be629c251b76d78e33b48f2fcf320941415aa23c81d4923db440d");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getWallet",
       "listPointLedgerEntries",
@@ -45,7 +45,7 @@ describe("MIG-063B canonical Point contract", () => {
     const harness = createPointClientTestHarness();
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/wallet` }, { body: balance, status: 200 });
     await expect(harness.client.getWallet()).resolves.toMatchObject({ data: balance });
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.46", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.47", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 

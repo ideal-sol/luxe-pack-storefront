@@ -23,7 +23,7 @@ import { PaymentProcessingOverlay } from "@/components/payment/payment-processin
 import { useProviderPayment } from "@/components/payment/use-provider-payment";
 import { usePaymentReturnEvent } from "@/components/payment/use-payment-return-event";
 import { safePaymentRedirect } from "@/components/payment/provider-payment-actions";
-import { ALPHA46_PAYMENT_METHODS, isLegacyPaymentMethod, isProviderMethod, PAYMENT_UI_UNAVAILABLE, supportedPaymentMethod, type PaymentMethodOption } from "@/lib/platform/payment-ui-gateway";
+import { isLegacyPaymentMethod, isProviderMethod, PAYMENT_UI_UNAVAILABLE, supportedPaymentMethod, type PaymentMethodOption } from "@/lib/platform/payment-ui-gateway";
 import { PaymentReturnAlert } from "@/components/payment/payment-return-alert";
 import { usePaymentClient } from "@/components/payment/payment-client-provider";
 import {
@@ -87,21 +87,23 @@ function PurchaseForm({
   registrationId,
   registrationProcessing,
   onRegistrationStopped,
-  options = ALPHA46_PAYMENT_METHODS,
-  compatibility = true,
+  options,
   subject,
 }: {
   readonly product: PointProduct;
   readonly registrationId: string | null;
   readonly registrationProcessing: boolean;
   readonly onRegistrationStopped: () => void;
-  readonly options?: readonly PaymentMethodOption[];
-  readonly compatibility?: boolean;
+  readonly options: readonly PaymentMethodOption[];
   readonly subject: string;
 }) {
   const { client, uiGateway, providerSdk } = usePaymentClient();
   const cardFieldsRef = useRef<FincodeCardFieldsHandle>(null);
-  const [method, setMethod] = useState<string | null>(() => compatibility ? null : options.find(o => o.available)?.method ?? null);
+  const [method, setMethod] = useState<string | null>(() => {
+    const first = options.find(o => o.available && supportedPaymentMethod(o));
+    // Preserve the explicit fincode selection before reading saved cards.
+    return first?.flow === "card_component" ? null : first?.method ?? null;
+  });
   const selectedOption = options.find(o => o.method === method);
   const providerMethod = isProviderMethod(selectedOption);
   const cardPolicy = options.find(o => o.method === "credit_card");
@@ -162,16 +164,6 @@ function PurchaseForm({
     void client.getPaymentCardUiBootstrap().then(({ data }) => setBootstrap(data))
       .catch((reason) => setError(presentPaymentProblem(reason).message)).finally(() => setCardBusy(false));
   };
-
-  useEffect(() => {
-    if (!client || compatibility || selectedOption?.method !== "credit_card" || selectedOption.flow !== "card_component") return;
-    let active = true;
-    void Promise.resolve().then(async () => {
-      if (!active) return;
-      if (savedCardsEnabled) { await refreshCards(); return; }
-    }).catch(() => { if (active) setError(PAYMENT_UI_UNAVAILABLE); });
-    return () => { active = false; };
-  }, [client, compatibility, refreshCards, savedCardsEnabled, selectedOption]);
 
   const navigateAfterStart = useCallback(async (
     payment: Payment,
@@ -571,8 +563,8 @@ function ProductDetail({
       {!registrationProcessing ? <header className="point-purchase-detail__header"><p>COIN PURCHASE DETAIL</p><h1>{presentCoinTerminology(product.title)}</h1></header> : null}
       {client ? <PaymentReturnAlert client={client} pid={pid} productId={product.id} /> : null}
       {!registrationProcessing ? <PurchaseSummary product={product} /> : null}
-      {authenticated ? <PaymentMethodLoader productId={product.id} subject={subject}>{(options, compatibility) =>
-        <PurchaseForm compatibility={compatibility} options={options} product={product} registrationId={registrationId} registrationProcessing={registrationProcessing} onRegistrationStopped={onRegistrationStopped} subject={subject} />
+      {authenticated ? <PaymentMethodLoader productId={product.id} subject={subject}>{(options) =>
+        <PurchaseForm options={options} product={product} registrationId={registrationId} registrationProcessing={registrationProcessing} onRegistrationStopped={onRegistrationStopped} subject={subject} />
       }</PaymentMethodLoader> : <LoginRequiredState />}
       {!registrationProcessing ? <section aria-labelledby="point-purchase-conditions-title" className="point-purchase-detail__conditions">
         <header><p>PRODUCT INFORMATION</p><h2 id="point-purchase-conditions-title">商品情報</h2></header>

@@ -1,63 +1,20 @@
+import type { PublicComponents } from "@oripa/storefront-client";
 import type { Payment, PaymentMethod } from "./payment-client";
 
-/** Source-only contract intersection, checked against PAY2/PAY3/PAY4 Draft heads.
- * Not an alpha.47 artifact. Only the future canonical Client may implement I/O.
+/** UI projections of the formal integrated alpha.47 contract.
+ * The canonical CSRF-managed Client is the only implementation of I/O.
  */
-export interface UnivapayInlineForm {
-  provider: "univapay";
-  script_url: "https://widget.univapay.com/client/checkout.js";
-  options: {
-    appId: string; checkout: "payment"; amount: number; currency: "jpy";
-    tokenType: "one_time"; capture: true; inline: true; locale: "ja";
-    email: string; showCvv: true;
-  };
-}
-
-export interface PaymentMethodOption {
+type Schemas = PublicComponents["schemas"];
+export type UnivapayInlineForm = Schemas["PaymentUnivapayInlineForm"];
+export type UnivapayInlineAction = Schemas["PaymentUnivapayInlineAction"];
+export type FormPostAction = Schemas["PaymentFormPostAction"];
+export type PaidyCheckoutAction = Schemas["PaymentPaidyCheckoutAction"];
+// Retain unknown method/flow strings at the UI boundary so unsupported future
+// responses can be rendered unavailable without starting a payment.
+export type PaymentMethodOption = Omit<Schemas["PaymentMethodOption"], "method" | "flow"> & {
   method: string;
-  label: string;
-  available: boolean;
-  unavailable_reason: null | "provider_unavailable" | "amount_too_large";
-  saved_cards_enabled: boolean;
   flow: string;
-  inline_form?: UnivapayInlineForm | null;
-}
-
-export interface UnivapayInlineAction {
-  type: "univapay_inline";
-  amount: number;
-  update: {
-    metadata: { "oripa-payment-id": string; "oripa-member": string };
-    email: string;
-    phoneNumber?: { countryCode: "+81"; localNumber: string };
-  };
-  success_url: string;
-}
-
-export interface FormPostAction {
-  type: "form_post";
-  url: string;
-  fields: { name: string; value: string }[];
-}
-
-export interface PaidyCheckoutAction {
-  type: "paidy_checkout";
-  script_url: "https://apps.paidy.com/";
-  public_key: string;
-  payload: {
-    amount: number; currency: "JPY"; store_name: string; description: "コイン購入";
-    buyer: { email: string; phone: string; name1?: string };
-    buyer_data: {
-      user_id: string; age: number; ltv: number; order_count: number;
-      last_order_amount?: number; last_order_at?: number;
-      order_count_last3months: number; order_amount_last3months: number; number_of_points: number;
-    };
-    order: {
-      order_ref: string; shipping: 0; tax: 0;
-      items: { id: string; title: string; quantity: 1; unit_price: number }[];
-    };
-  };
-}
+};
 
 export type UiPayment = Omit<Payment, "method" | "next_action"> & {
   method: string;
@@ -66,13 +23,7 @@ export type UiPayment = Omit<Payment, "method" | "next_action"> & {
   next_action: unknown;
 };
 
-export interface PaymentClientEvent {
-  type: "redirect_started" | "inline_submitted" | "inline_result" | "paidy_checkout_opened" | "paidy_checkout_result" | "returned";
-  detail?: {
-    result?: "success" | "error" | "authorized" | "rejected" | "closed" | "complete" | "cancel" | "failure";
-    charge_id?: string;
-  };
-}
+export type PaymentClientEvent = Schemas["PaymentClientEvent"];
 
 type Response<T> = Promise<{ data: T }>;
 type MutationOptions = { idempotency_key: string; signal?: AbortSignal; timeout_ms?: number };
@@ -89,7 +40,7 @@ export interface PaymentUiGateway {
 export const PAYMENT_UI_UNAVAILABLE = "この決済方法は現在ご利用いただけません";
 export const PAYMENT_UI_PENDING = "お支払いを確認しています。購入履歴から確認してください。";
 
-export function isLegacyPaymentMethod(value: string): value is PaymentMethod {
+export function isLegacyPaymentMethod(value: string): value is Extract<PaymentMethod, "credit_card" | "paypay" | "konbini" | "virtual_account"> {
   return ["credit_card", "paypay", "konbini", "virtual_account"].includes(value);
 }
 
@@ -102,14 +53,6 @@ export function supportedPaymentMethod(option: PaymentMethodOption) {
     : option.method === "paidy" ? option.flow === "paidy_checkout"
       : ["netridecash", "paypay", "konbini", "virtual_account"].includes(option.method) && option.flow === "redirect";
 }
-
-/** Deliberately only for the pinned alpha.46 Client lacking listPaymentMethods. */
-export const ALPHA46_PAYMENT_METHODS: readonly PaymentMethodOption[] = [
-  { method: "credit_card", label: "クレジットカード", flow: "card_component", saved_cards_enabled: true, available: true, unavailable_reason: null },
-  { method: "paypay", label: "PayPay", flow: "redirect", saved_cards_enabled: false, available: true, unavailable_reason: null },
-  { method: "konbini", label: "コンビニ決済", flow: "redirect", saved_cards_enabled: false, available: true, unavailable_reason: null },
-  { method: "virtual_account", label: "銀行振込", flow: "redirect", saved_cards_enabled: false, available: true, unavailable_reason: null },
-];
 
 export async function recordUiEvent(gateway: PaymentUiGateway, id: string, event: PaymentClientEvent) {
   const controller = new AbortController();

@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ALPHA46_PAYMENT_METHODS, type PaymentMethodOption, type PaymentUiGateway } from "@/lib/platform/payment-ui-gateway";
+import { type PaymentMethodOption, type PaymentUiGateway } from "@/lib/platform/payment-ui-gateway";
 import { usePaymentClient } from "./payment-client-provider";
 
 type Result = { productId: string; subject: string; list: PaymentUiGateway["listPaymentMethods"]; options: PaymentMethodOption[] | null };
 export function PaymentMethodLoader({ productId, subject, children }: {
   productId: string; subject: string;
-  children(options: readonly PaymentMethodOption[], compatibility: boolean): React.ReactNode;
+  children(options: readonly PaymentMethodOption[]): React.ReactNode;
 }) {
   const { client, uiGateway } = usePaymentClient();
   const list = uiGateway?.listPaymentMethods ?? client?.listPaymentMethods;
@@ -25,9 +25,9 @@ export function PaymentMethodLoader({ productId, subject, children }: {
     }).catch(() => { if (active) setResult({ productId, subject, list, options: null }); });
     return () => { active = false; };
   }, [list, productId, retry, subject]);
-  if (!list) return children(ALPHA46_PAYMENT_METHODS, true);
+  if (!list) return <p role="alert">お支払い方法を取得できませんでした。</p>;
   if (!result || result.productId !== productId || result.subject !== subject || result.list !== list) return <p role="status">お支払い方法を読み込み中です。</p>;
   if (!result.options) return <div role="alert"><p>お支払い方法を取得できませんでした。</p><button onClick={() => { setResult(null); setRetry(n => n + 1); }} type="button">再読み込み</button></div>;
   if (!result.options.length) return <p role="status">現在ご利用いただけるお支払い方法はありません。</p>;
-  return children(result.options, false);
+  return children(result.options);
 }

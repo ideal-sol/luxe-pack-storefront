@@ -42,7 +42,8 @@ export function loadPaymentScript(url: string): Promise<void> {
 
 /** The iframe's ownership/cleanup and normalized result are explicit dependencies.
  * U12 raw Promise/event decoding is intentionally not guessed here. A verified
- * Browser driver is a separate integration acceptance requirement.
+ * Browser driver remains a blocking acceptance requirement; see the
+ * 2026-10-28 integration handoff for the downloaded SDK lifecycle findings.
  */
 export interface UnivapayInlineDriver {
   create(options: UnivapayInlineForm["options"]): {
@@ -79,8 +80,9 @@ interface PaidyGlobal {
 }
 
 export const browserPaymentProviderSdk: PaymentProviderSdk = {
-  // No actual new-provider Runtime operation is enabled in this Source Draft.
-  // Inject a provider-accepted driver together with the formal integrated Client.
+  // HOLD: the inspected SDK does not expose safe nested-frame disposal or a
+  // handled positive validation response. Do not infer validity or charge IDs.
+  // Formal Client wiring alone cannot authorize enabling this driver.
   mountInline: async () => { throw new Error(PAYMENT_UI_UNAVAILABLE); },
   openPaidy: async (action, callback, signal) => {
     if (action.script_url !== PAIDY_SCRIPT) throw new Error(PAYMENT_UI_UNAVAILABLE);

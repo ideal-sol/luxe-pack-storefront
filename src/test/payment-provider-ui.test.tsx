@@ -99,11 +99,28 @@ it("renders API order/labels, unavailable reasons and unknown methods without re
   const radios = await screen.findAllByRole("radio");
   expect(radios.map(r => r.getAttribute("value"))).toEqual(["paidy", "netridecash", "future"]);
   expect(radios[0]).toBeDisabled(); expect(radios[1]).toBeDisabled();
-  expect(screen.getByText("現在ご利用いただけません")).toBeInTheDocument();
+  expect(radios[2]).toBeDisabled();
+  expect(screen.getAllByText("現在ご利用いただけません")).toHaveLength(2);
   expect(screen.getByText("この商品はこのお支払い方法ではご購入いただけません")).toBeInTheDocument();
   expect(screen.queryByText("PayPay")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
   expect(s.legacy.listCards).not.toHaveBeenCalled(); expect(s.gateway.startPayment).not.toHaveBeenCalled();
+});
+
+it("uses the Client Gateway by default without requiring a production injection", async () => {
+  const s = setup([options[2]]);
+  s.legacy.uiGateway = s.gateway;
+  render(<PaymentClientProvider client={s.legacy}><PaymentMethodLoader productId={product.id} subject={subject}>{methods => <p>{methods[0]?.label}</p>}</PaymentMethodLoader></PaymentClientProvider>);
+  expect(await screen.findByText(options[2].label)).toBeInTheDocument();
+  expect(s.gateway.listPaymentMethods).toHaveBeenCalledWith(product.id);
+});
+
+it("does not invent methods when the canonical Client is unavailable", () => {
+  const children = vi.fn();
+  render(<PaymentClientProvider client={null}><PaymentMethodLoader productId={product.id} subject={subject}>{children}</PaymentMethodLoader></PaymentClientProvider>);
+  expect(screen.getByRole("alert")).toHaveTextContent("お支払い方法を取得できませんでした。");
+  expect(children).not.toHaveBeenCalled();
+  expect(screen.queryByRole("radio")).not.toBeInTheDocument();
 });
 
 it.each(["empty", "failure"])("keeps API %s fail-closed and allows explicit reload", async mode => {

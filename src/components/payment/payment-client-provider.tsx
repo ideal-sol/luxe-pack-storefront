@@ -25,7 +25,7 @@ function resolveClient(injected: PaymentClientAdapter | null | undefined) {
 export function PaymentClientProvider({
   children,
   client: injectedClient,
-  uiGateway = null,
+  uiGateway: injectedGateway,
   providerSdk = browserPaymentProviderSdk,
 }: {
   readonly children: React.ReactNode;
@@ -41,6 +41,7 @@ export function PaymentClientProvider({
       throw error;
     }
   });
+  const uiGateway = injectedGateway === undefined ? client?.uiGateway ?? null : injectedGateway;
   const value = useMemo(() => ({ client, uiGateway, providerSdk }), [client, uiGateway, providerSdk]);
   return <PaymentClientContext.Provider value={value}>{children}</PaymentClientContext.Provider>;
 }

@@ -1,3 +1,11 @@
+# Continuation notice — 2026-10-28
+
+The latest Human instruction supersedes the alpha.46 freeze and Draft-only
+authorization below. Formal integrated alpha.47 was received and connected in
+the same PR #192. Current acceptance findings and disposition are in
+[the alpha.47 handoff](STOREFRONT_PAYMENTS_ALPHA47_HANDOFF_2026-10-28.md).
+This document remains the historical 2026-10-27 Source Draft record.
+
 # SF-PAYUI-20261027 — Storefront payment UI Source handoff
 
 Risk R3 / Lane Strict Change / Application Runtime Activation `deferred`.

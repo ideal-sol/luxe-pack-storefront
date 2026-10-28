@@ -11,7 +11,7 @@ it("uses alpha.46 preRegister with canonical CSRF and no invented request flags 
   harness.mock.enqueueJson({ method: "POST", url: origin + "/auth/pre-register" }, { body: PUBLIC_AUTH_FIXTURE.pending_registration, status: 202 });
   await expect(harness.client.preRegister(input)).resolves.toMatchObject({ data: PUBLIC_AUTH_FIXTURE.pending_registration });
   expect(JSON.parse(harness.mock.requests[1]!.body!)).toEqual(input);
-  assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.46", site_version: "0.1.0" });
+  assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.47", site_version: "0.1.0" });
   harness.mock.assertExhausted();
 });
 

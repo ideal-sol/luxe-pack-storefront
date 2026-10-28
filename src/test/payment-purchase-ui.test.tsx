@@ -134,6 +134,12 @@ function paymentClient(
   },
 ): PaymentClientAdapter {
   return {
+    listPaymentMethods: vi.fn().mockResolvedValue({ data: { data: [
+      { method: "credit_card", label: "クレジットカード", flow: "card_component", saved_cards_enabled: true, available: true, unavailable_reason: null },
+      { method: "paypay", label: "PayPay", flow: "redirect", saved_cards_enabled: false, available: true, unavailable_reason: null },
+      { method: "konbini", label: "コンビニ決済", flow: "redirect", saved_cards_enabled: false, available: true, unavailable_reason: null },
+      { method: "virtual_account", label: "銀行振込", flow: "redirect", saved_cards_enabled: false, available: true, unavailable_reason: null },
+    ] }, metadata }),
     cancelCardRegistration: vi.fn(),
     deleteCard: vi.fn().mockResolvedValue({ data: undefined, metadata: { ...metadata, status: 204 } }),
     getCardRegistration: vi.fn().mockResolvedValue({ data: PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES.completed, metadata }),

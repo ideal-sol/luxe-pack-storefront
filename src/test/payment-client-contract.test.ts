@@ -6,6 +6,7 @@ import {
   PUBLIC_PAYMENT_CARD_CAPACITY_FIXTURES,
   PUBLIC_PAYMENT_CARD_REGISTRATION_FIXTURES,
   PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES,
+  PAYMENT_FOUNDATION_FIXTURES,
 } from "@oripa/storefront-testkit";
 import { ApiProblemError } from "@oripa/storefront-client";
 import { createPaymentClientTestHarness } from "@/lib/platform/testing";
@@ -46,18 +47,19 @@ function enqueueCsrf(harness: ReturnType<typeof createPaymentClientTestHarness>)
   );
 }
 
-describe("alpha.46 canonical Payment browser client", () => {
-  it("pins alpha.46 and retains Payment across the 84-operation Public OpenAPI", () => {
+describe("alpha.47 canonical Payment browser client", () => {
+  it("pins alpha.47 and retains Payment across the 90-operation Public OpenAPI", () => {
     for (const name of ["storefront-client", "storefront-testkit"]) {
-      expect(JSON.parse(readFileSync(`node_modules/@oripa/${name}/package.json`, "utf8")).version).toBe("2.0.0-alpha.46");
+      expect(JSON.parse(readFileSync(`node_modules/@oripa/${name}/package.json`, "utf8")).version).toBe("2.0.0-alpha.47");
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("81ee96478ee3d80539817b54321f9f6d181c2a78a3dae2062527dd81049dcec4");
-    expect(PUBLIC_CONTRACT_FIXTURE.operation_count).toBe(84);
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("0a8c6ee14b1be629c251b76d78e33b48f2fcf320941415aa23c81d4923db440d");
+    expect(PUBLIC_CONTRACT_FIXTURE.operation_count).toBe(90);
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getPaymentCardUiBootstrap", "createPayment", "getPayment", "resumeUnpaidPayment",
       "listMyPayments", "listPaymentCards", "startPaymentCardRegistration",
       "getPaymentCardRegistration", "reconcilePaymentCardRegistration",
       "cancelPaymentCardRegistration", "deletePaymentCard",
+      "listPaymentMethods", "reportUnivapayCharge", "confirmPaidyAuthorization", "recordPaymentClientEvent",
     ]));
   });
 
@@ -73,6 +75,52 @@ describe("alpha.46 canonical Payment browser client", () => {
     harness.mock.assertExhausted();
   });
 
+  it("wires the formal Gateway listing with server order, labels, limits and no fixed fallback", async () => {
+    const harness = createPaymentClientTestHarness();
+    const gateway = harness.client.uiGateway!;
+    const collection = PAYMENT_FOUNDATION_FIXTURES.methods;
+    expect(gateway).toBeDefined();
+    expect(harness.client.listPaymentMethods).toBe(gateway.listPaymentMethods);
+    harness.mock.enqueueJson({ method: "GET", url: `${origin}/payment-methods?point_product_id=opaque%2Fproduct` }, { body: collection });
+    await expect(gateway.listPaymentMethods("opaque/product")).resolves.toMatchObject({ data: collection });
+    expect(harness.mock.requests).toHaveLength(1);
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.47", site_version: "0.1.0" });
+    harness.mock.assertExhausted();
+  });
+
+  it.each(["credit_card", "netridecash", "paidy"] as const)("starts %s through the CSRF-managed Gateway using only the canonical input", async method => {
+    const harness = createPaymentClientTestHarness(csrf);
+    enqueueCsrf(harness);
+    harness.mock.enqueueJson({ method: "POST", url: `${origin}/payments` }, { body: { ...payment, method }, status: 201 });
+    const input = { point_product_id: payment.point_product_id!, payment_method: method };
+    await harness.client.uiGateway!.startPayment(input, { idempotency_key: "synthetic-start-key" });
+    expect(harness.mock.requests[1]?.body).toBe(JSON.stringify(input));
+    expect(harness.mock.requests[1]?.headers["x-xsrf-token"]).toBe(csrf);
+    expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBe("synthetic-start-key");
+    harness.mock.assertExhausted();
+  });
+
+  it("routes report, authorization, advisory event and GET through the formal Client without automatic mutation retries", async () => {
+    const harness = createPaymentClientTestHarness(csrf);
+    const gateway = harness.client.uiGateway!;
+    enqueueCsrf(harness);
+    for (const path of ["univapay-charges", "paidy-authorizations"]) {
+      harness.mock.enqueueJson({ method: "POST", url: `${origin}/payments/${payment.id}/${path}` }, { body: payment });
+    }
+    harness.mock.enqueueJson({ method: "POST", url: `${origin}/payments/${payment.id}/client-events` }, { status: 204 });
+    harness.mock.enqueueJson({ method: "GET", url: `${origin}/payments/${payment.id}` }, { body: payment });
+    await gateway.reportUnivapayCharge(payment.id, { charge_id: "0198a001-0000-7000-8000-000000000099" });
+    await gateway.confirmPaidyAuthorization(payment.id, { paidy_payment_id: "pay_synthetic_payment" }, { idempotency_key: "synthetic-confirm-key" });
+    await gateway.recordPaymentClientEvent(payment.id, { type: "returned" }, {});
+    await gateway.getPayment(payment.id);
+    const requests = harness.mock.requests;
+    expect(requests).toHaveLength(5);
+    expect(requests.slice(1, 4).map(request => request.headers["x-xsrf-token"])).toEqual([csrf, csrf, csrf]);
+    expect(requests.slice(1, 4).map(request => request.headers["idempotency-key"])).toEqual([undefined, "synthetic-confirm-key", undefined]);
+    expect(requests[4]?.method).toBe("GET");
+    harness.mock.assertExhausted();
+  });
+
   it("reads bootstrap, Payment, and authoritative registration capacity without mutation", async () => {
     const harness = createPaymentClientTestHarness();
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/payment-card-ui-bootstrap` }, { body: PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES.sandbox });
@@ -84,7 +132,7 @@ describe("alpha.46 canonical Payment browser client", () => {
       data: { limits: { next_capacity_at: expect.any(String), registration_remaining: 0 } },
     });
     expect(harness.mock.requests.map((request) => request.method)).toEqual(["GET", "GET", "GET"]);
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.46", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.47", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -125,7 +173,7 @@ describe("alpha.46 canonical Payment browser client", () => {
     expect(harness.mock.requests[4]?.body).toBe("{}");
     expect(harness.mock.requests.slice(1).map((request) => request.headers["x-xsrf-token"]))
       .toEqual([csrf, undefined, csrf, csrf]);
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.46", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.47", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -165,7 +213,7 @@ describe("alpha.46 canonical Payment browser client", () => {
     expect(harness.mock.requests[1]?.headers["content-type"]).toBe("application/json");
     expect(harness.mock.requests[1]?.headers["x-xsrf-token"]).toBe(csrf);
     expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBeUndefined();
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.46", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.47", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
