@@ -34,7 +34,13 @@ GTM-5DQRPNN2 remains enabled at formal Build time. All five reviewed GTM Source
 file digests are unchanged from PR #186, so no Source verifier change is needed.
 Actual compiled loader/noscript/SMS event verification, Build ID, artifact ID,
 digest, package and exact-ID re-download checks remain intact. Next.js16.4.2,
-ARM64, Required Checks, Security, workflows and rollback assets are unchanged.
+ARM64, Required Checks, Security and rollback assets are unchanged.
+The CDN Build-output guard admits the candidate's exact27-entry Brand Manifest
+bytes (`2e563e6ef9e1a5f46ed5c8ac8593f383869858ed7ab56100f8d945992b3d76fe`),
+including two payment logos, while retaining23/25-entry rollback authorities.
+Existing23 object prefixes and preregistration25 prefixes stay fixed. Unknown,
+tampered or malformed manifests still fail closed. This is Source conformity
+preparation; CDN object delivery/readiness remains a separate pre-Build gate.
 No actual Production artifact or browser verification is claimed by this Draft.
 
 ## Historical alpha.45 and alpha.44 records
