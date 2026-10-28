@@ -198,6 +198,7 @@
   "src/styles/pre-register.css",
   "src/styles/theme-oripoke.css",
   "src/test/account-closure-client-contract.test.ts",
+  "src/test/account-closure-session.test.tsx",
   "src/test/account-closure-ui.test.tsx",
   "src/test/account-security-proxy.test.ts",
   "src/test/account-security-ui.test.tsx",

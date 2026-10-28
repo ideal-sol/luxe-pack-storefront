@@ -127,6 +127,7 @@ it("invalidates the local session and emits one completion toast before navigati
   await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith("/"));
   expect(mocks.showToast).toHaveBeenCalledExactlyOnceWith("退会が完了しました", "ご利用ありがとうございました。");
   expect(reject).toHaveBeenCalledOnce();
+  expect((reject.mock.calls[0]![0] as CustomEvent).detail).toBe("ACCOUNT_CLOSED");
   window.removeEventListener(SESSION_ACCESS_REJECTED, reject);
 });
 

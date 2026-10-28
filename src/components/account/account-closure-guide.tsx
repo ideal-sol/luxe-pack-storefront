@@ -35,7 +35,7 @@ export function AccountClosureFlow({ actions }: { readonly actions: Omit<Closure
   const flow = useMemo(() => ({ ...actions, complete() {
     if (completed.current) return;
     completed.current = true;
-    window.dispatchEvent(new CustomEvent(SESSION_ACCESS_REJECTED, { detail: "SESSION_EXPIRED" }));
+    window.dispatchEvent(new CustomEvent(SESSION_ACCESS_REJECTED, { detail: "ACCOUNT_CLOSED" }));
     showToast("退会が完了しました", "ご利用ありがとうございました。");
     router.replace("/");
   } }), [actions, router, showToast]);
