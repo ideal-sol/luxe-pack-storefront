@@ -43,6 +43,11 @@ describe("production artifact canonical audit toolchain", () => {
     expect(workflow).toContain('test "$(pnpm --version)" = "$PNPM_VERSION"');
     expect(workflow).toContain('export NEXT_VERSION_ACTUAL="$next_version"');
     expect(workflow).toContain("next_version: process.env.NEXT_VERSION_ACTUAL");
+    expect(workflow).toContain(`NEXT_PUBLIC_PLATFORM_API_BASE_URL: ${apiBase}`);
+    const build = workflow.split("- name: Build exact production application")[1]?.split("      - name:")[0];
+    expect(build).toContain(`test "$NEXT_PUBLIC_PLATFORM_API_BASE_URL" = "${apiBase}"`);
+    expect(build).toContain("NEXT_PUBLIC_GTM_ID: GTM-5DQRPNN2");
+    expect(build).not.toContain("unset NEXT_PUBLIC_PLATFORM_API_BASE_URL");
   });
 
   it.each([
@@ -76,6 +81,7 @@ describe("production artifact canonical audit toolchain", () => {
         GITHUB_WORKSPACE: "/synthetic-workspace", AUDIT_EXIT: auditExit, RESTORE_VERSION: restoreVersion,
         NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL: "https://d2c0gdzoj8l46h.cloudfront.net",
         NEXT_PUBLIC_STATIC_ASSET_BASE_URL: "https://d2c0gdzoj8l46h.cloudfront.net/static-assets",
+        NEXT_PUBLIC_PLATFORM_API_BASE_URL: apiBase,
       },
       input: `
         active_version=10.12.1
@@ -87,6 +93,11 @@ describe("production artifact canonical audit toolchain", () => {
           if [ "$1" = exec ] || [ "$1" = test ]; then
             test -z "\${NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL+x}" || return 96
             test -z "\${NEXT_PUBLIC_STATIC_ASSET_BASE_URL+x}" || return 97
+          fi
+          if [ "$1" = test ]; then
+            test -z "\${NEXT_PUBLIC_PLATFORM_API_BASE_URL+x}" || return 98
+          else
+            test "$NEXT_PUBLIC_PLATFORM_API_BASE_URL" = "${apiBase}" || return 99
           fi
           if [ "$1" = "--version" ]; then printf '%s\\n' "$active_version";
           else printf 'command:%s version:%s\\n' "$1" "$active_version"; fi
@@ -104,6 +115,7 @@ describe("production artifact canonical audit toolchain", () => {
         ${sourceValidation}
         test "$NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL" = https://d2c0gdzoj8l46h.cloudfront.net
         test "$NEXT_PUBLIC_STATIC_ASSET_BASE_URL" = https://d2c0gdzoj8l46h.cloudfront.net/static-assets
+        test "$NEXT_PUBLIC_PLATFORM_API_BASE_URL" = "${apiBase}"
       `,
     });
     expect(result.stdout).toContain("audit:11.25.0 isolated");
