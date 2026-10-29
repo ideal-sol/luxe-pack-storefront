@@ -1169,3 +1169,11 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   Real merchant/card/3DS/deployed visual acceptance deferred. No application
   Build or manual full-CI rerun requested; normal emitted PR checks remain gates.
   Keep Draft branch/worktree and Issue for the authorized review/acceptance.
+
+- Initial exact-head CI passed quality and1,821 unit cases but failed6 boundary/
+  inventory cases: the reviewed UI-test storage digest and complete Source
+  inventory were stale after the approved changes. Renewed only that exact
+  digest and added the three new Source paths; no gate logic, assertions,
+  permission or scope exemption changed. Auth/LINE boundary checks pass after
+  renewal; negative mutation and packaged-inventory regressions are rerun.
+  Final-head CI/self-review supersede initial-head evidence in the Draft PR.
