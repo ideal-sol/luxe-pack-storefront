@@ -1133,3 +1133,47 @@ prohibited. This section supersedes the initial phase's local-only restriction.
 - All existing test assertions preserved; no test selection/skip/waiver added to workflow. Exact-source full1812 suite executes independently of Workflow control tests; only local maxWorkers2/testTimeout30s accommodates host contention, with repository timeout/assertions unchanged. Root-cause A/B, full-suite and new-head focused/CI outcomes recorded in PR/Issue after execution, without moving reviewed head.
 - docs/production-approved-source.json, scripts/production-provenance.mjs, Runtime src except workflow regression test, vendor/package/lock/Contract and Security Guards unchanged. Canonical authorize separates approved ancestor Runtime from current checked Workflow and imposes no fixed Workflow PR198 requirement; read-only verification accompanies final validation, no Guard change allowed. Contract alpha48 Artifact12819254428 and Platform Runtime6e945df343d3d42ffa844b3b369ca0c171a6bbbe / Authority1086d776cb2ca20f20883b3e8fa5578510bdce67 remain fixed.
 - Scope3files: production-artifact.yml, existing production-artifact-workflow.test.ts, this Worklog. Artifact Dispatch/Build0, Stage0, Runtime0, Migration0, operational DB/AWS0, provider/Rank/GTM/env/timer/worker changes0. Normal required CI validation Builds are separate from formal Artifact generation. No Production SSH. Existing rollback assets preserved. Final reviewed/merged SHA/Tree/checks/Strict review/cleanup proof recorded in PR; no unrelated tests or release tool development.
+## OLDTEST-UNIVAPAY-STUCK — source-only pending checkout recovery
+
+- Human authorizes the minimal Source fix through Draft PR only. Issue #201;
+  R3; Strict Change; Application Runtime Activation deferred. Reused existing
+  `fix/OLDTEST-UNIVAPAY-STUCK` and its isolated worktree after model-capacity
+  interruption; no duplicate branch/Issue/PR. Base protected main
+  `3777830b38356f497cf70a9a7b30bd59bcdb25a2`; OLD Test remains on its existing
+  alpha.48 source. Primary operational checkout changes were left untouched.
+- UnivaPay inline interaction stays visible without the site's full-screen
+  processing overlay. Duplicate starts/method changes remain locked. The site
+  stops awaiting submit after30s while keeping the provider document/3DS alive;
+  no automatic navigation, cancel, raw response parsing or success inference.
+  Late instance-bound public callbacks remain observable as fixed enums only.
+- Existing pending card status is reachable through canonical getPayment even
+  when the first-purchase product is ineligible or all new methods are OFF.
+  Existing correlation is retained; no eligibility/accounting rule is changed.
+  Server telemetry uses only the existing coarse inline error contract; detailed
+  phase enums stay in Console, with no callback payload/error/customer logging.
+- Focused SDK/provider/document tests and UI regressions cover uncertainty,
+  hanging/rejected submit, late3DS, input visibility, correlation and no duplicate
+  start. Initial tests exposed changed navigation expectations and asynchronous
+  fixture races under host load; expectations now require retained document and
+  status link, and immediate fixtures use async act without widening timeouts or
+  weakening assertions. Exact results/final-head self-review are in the Draft PR.
+- Read-only recovery preparation after expiry found the same pending TEST
+  payment, grant0, provider TEST LIST0 and exactly one canonical due target.
+  Proposed reconcile --limit=1 is NOT EXECUTED and requires separate Human GO;
+  it can perform canonical settlement as well as expiry. No forced expiry,
+  deletion, refund/cancel, manual grant or browser correlation cleanup occurred.
+- Client/Testkit alpha.48, Contract, dependency pins, fincode/other-provider
+  execution, GTM/rank/SMS, ENV, Worker flags and deployed Runtime unchanged.
+  No merge/ready/auto-merge or Runtime activation. New payments remain OFF.
+  Webhook Authorization rotation is recorded as a separate coordinated operation.
+  Real merchant/card/3DS/deployed visual acceptance deferred. No application
+  Build or manual full-CI rerun requested; normal emitted PR checks remain gates.
+  Keep Draft branch/worktree and Issue for the authorized review/acceptance.
+
+- Initial exact-head CI passed quality and1,821 unit cases but failed6 boundary/
+  inventory cases: the reviewed UI-test storage digest and complete Source
+  inventory were stale after the approved changes. Renewed only that exact
+  digest and added the three new Source paths; no gate logic, assertions,
+  permission or scope exemption changed. Auth/LINE boundary checks pass after
+  renewal; negative mutation and packaged-inventory regressions are rerun.
+  Final-head CI/self-review supersede initial-head evidence in the Draft PR.

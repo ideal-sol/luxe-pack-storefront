@@ -20,6 +20,8 @@ import {
 import { PaymentMethodSelector } from "@/components/payment/payment-method-selector";
 import { PaymentMethodLoader } from "@/components/payment/payment-method-loader";
 import { PaymentProcessingOverlay } from "@/components/payment/payment-processing-overlay";
+import { PendingPaymentStatus } from "@/components/payment/pending-payment-status";
+import { paymentThanksRoute } from "@/components/payment/provider-payment-actions";
 import { PAIDY_REJECTED_MESSAGE, useProviderPayment } from "@/components/payment/use-provider-payment";
 import { leaveProviderDocument } from "@/components/payment/provider-document";
 import { usePaymentReturnEvent } from "@/components/payment/use-payment-return-event";
@@ -110,7 +112,7 @@ function PurchaseForm({
   const providerMethod = isProviderMethod(selectedOption);
   const cardPolicy = options.find(o => o.method === "credit_card");
   const savedCardsEnabled = cardPolicy?.flow === "card_component" && cardPolicy.saved_cards_enabled;
-  const { busy: providerBusy, locked: providerLocked, error: providerError, message: providerMessage, attachTarget, valid: inlineValid, mounted: inlineMounted, providerValidates, checkValidity, submit: submitProvider } = useProviderPayment({ gateway: uiGateway, sdk: providerSdk, option: providerMethod ? selectedOption : undefined,
+  const { busy: providerBusy, locked: providerLocked, error: providerError, message: providerMessage, statusPaymentId, attachTarget, valid: inlineValid, mounted: inlineMounted, providerValidates, checkValidity, submit: submitProvider } = useProviderPayment({ gateway: uiGateway, sdk: providerSdk, option: providerMethod ? selectedOption : undefined,
     productId: product.id, subject, eligible: product.is_available && product.eligible && product.cta.state === "enabled" });
   const submitStartingRef = useRef(false);
   const alive = useRef(false);
@@ -529,7 +531,9 @@ function PurchaseForm({
       </PaymentMethodSelector>
       {error || providerMethod && providerError ? <p className="payment-inline-error" role="alert">{providerMethod ? providerError ?? error : error}</p> : null}
       {method && selectedOption && (!supportedPaymentMethod(selectedOption) || fincodeDisabled) ? <p role="alert">{PAYMENT_UI_UNAVAILABLE}</p> : null}
-      {providerMethod && providerMessage && !providerBusy ? <p role="status">{providerMessage} <Link href="/mypage/purchases">購入履歴</Link></p> : null}
+      {providerMethod && providerMessage && (!providerBusy || selectedOption?.flow === "inline_card_form") ? <p role="status">{providerMessage} {statusPaymentId && selectedOption?.flow === "inline_card_form"
+        ? <Link href={paymentThanksRoute(statusPaymentId)}>決済状況を確認する</Link>
+        : <Link href="/mypage/purchases">購入履歴</Link>}</p> : null}
       {submissionLocked ? <p className="payment-submission-locked">決済状況を確認できるまで、新しい決済は開始できません。</p> : null}
       <button className="button button--dark payment-purchase-button" disabled={disabled} onClick={() => {
         if (!providerMethod && savedCardsEnabled && method === "credit_card" && selectedCardId === "new") setConfirmationOpen(true);
@@ -537,7 +541,7 @@ function PurchaseForm({
       }} type="button">
         {submitting || providerBusy ? "処理中…" : "購入する"}
       </button>
-      {providerMethod && providerBusy && providerMessage ? <PaymentProcessingOverlay message={providerMessage} /> : null}
+      {providerMethod && selectedOption?.flow !== "inline_card_form" && providerBusy && providerMessage ? <PaymentProcessingOverlay message={providerMessage} /> : null}
       {confirmationOpen ? (
         <CardSaveConfirmation
           busy={submitting}
@@ -576,6 +580,7 @@ function ProductDetail({
       {!registrationProcessing ? <header className="point-purchase-detail__header"><p>COIN PURCHASE DETAIL</p><h1>{presentCoinTerminology(product.title)}</h1></header> : null}
       {client ? <PaymentReturnAlert client={client} pid={pid} productId={product.id} /> : null}
       {!registrationProcessing ? <PurchaseSummary product={product} /> : null}
+      {authenticated ? <PendingPaymentStatus subject={subject} productId={product.id} /> : null}
       {authenticated ? <PaymentMethodLoader productId={product.id} subject={subject}>{(options) =>
         <PurchaseForm options={options} product={product} registrationId={registrationId} registrationProcessing={registrationProcessing} onRegistrationStopped={onRegistrationStopped} subject={subject} />
       }</PaymentMethodLoader> : <LoginRequiredState />}

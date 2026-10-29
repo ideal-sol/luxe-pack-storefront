@@ -1,5 +1,5 @@
 import { StrictMode, forwardRef, useEffect, useImperativeHandle } from "react";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, type RenderResult } from "@testing-library/react";
 import { PUBLIC_AUTH_FIXTURE, PUBLIC_POINT_PRODUCT_FIXTURES, PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES, PUBLIC_POINT_BALANCE_FIXTURES } from "@oripa/storefront-testkit";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { PointClientProvider } from "@/components/points/point-client-provider";
@@ -10,6 +10,7 @@ import type { AuthClientAdapter, PaymentClientAdapter, PointClientAdapter } from
 import type { PaymentMethodOption, PaymentUiGateway, UiPayment } from "@/lib/platform/payment-ui-gateway";
 import type { InlineSession, PaymentProviderSdk } from "@/components/payment/provider-payment-sdk";
 import { readPaymentAttempt } from "@/components/payment/payment-attempt";
+import type { UnivapayEvent } from "@/components/payment/univapay-events";
 
 // Retain dormant provider regressions independently of purchase visibility.
 // Selection-policy acceptance below explicitly uses the real production policy.
@@ -73,20 +74,28 @@ function setup(methods: PaymentMethodOption[] = options) {
   const session: InlineSession = { update: vi.fn().mockResolvedValue(undefined), submit: vi.fn().mockResolvedValue({ result: "unknown" }), validate: vi.fn().mockResolvedValue(true), dispose: vi.fn() };
   let validity: (valid: boolean) => void = () => undefined;
   let callback: (value: unknown) => void = () => undefined;
+  let event: (value: UnivapayEvent) => void = () => undefined;
   const sdk: PaymentProviderSdk = {
-    mountInline: vi.fn().mockImplementation(async (_form, target, change) => { validity = change; target.appendChild(document.createElement("iframe")); change(true); return session; }),
+    mountInline: vi.fn().mockImplementation(async (_form, target, change, _signal, observe) => { validity = change; event = observe; target.appendChild(document.createElement("iframe")); change(true); return session; }),
     openPaidy: vi.fn().mockImplementation(async (_action, cb) => { callback = cb; return { dispose: vi.fn() }; }),
   };
   const auth = { getCurrentSession: vi.fn().mockResolvedValue({ data: PUBLIC_AUTH_FIXTURE.authenticated_session, metadata }), getSmsVerificationStatus: vi.fn().mockResolvedValue({ data: { verified: true }, metadata }) } as unknown as AuthClientAdapter;
   const points = { getWallet: vi.fn().mockResolvedValue({ data: PUBLIC_POINT_BALANCE_FIXTURES.positive, metadata }), listPointProducts: vi.fn().mockResolvedValue({ data: { ...PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible, data: [product] }, metadata }) } as unknown as PointClientAdapter;
   const tree = () => <StrictMode><SessionProvider client={auth}><PointClientProvider client={points}><PaymentClientProvider client={legacy} providerSdk={sdk} uiGateway={gateway}><PointPurchaseDetail productId={product.id} /></PaymentClientProvider></PointClientProvider></SessionProvider></StrictMode>;
-  return { legacy, gateway, sdk, session, validity: (v: boolean) => act(() => validity(v)), callback: (v: unknown) => act(() => callback(v)), mount: () => render(tree()) };
+  const mount = async () => {
+    let view!: RenderResult;
+    // Resolve the immediate Session/Point/Method fixtures inside React's async
+    // act boundary before asserting UI; do not race them against a wall clock.
+    await act(async () => { view = render(tree()); });
+    return view;
+  };
+  return { legacy, gateway, sdk, session, points, event: (value: UnivapayEvent) => act(() => event(value)), validity: (v: boolean) => act(() => validity(v)), callback: (v: unknown) => act(() => callback(v)), mount };
 }
 async function buy() {
   // Flush provider lifecycle/correlation initialization before asserting readiness.
   await act(async () => undefined);
   await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
-  fireEvent.click(screen.getByRole("button", { name: "購入する" }));
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "購入する" })); });
 }
 beforeEach(() => {
   policyScope.providerRegression = true;
@@ -107,7 +116,7 @@ it("renders API order/labels, unavailable reasons and unknown methods without re
     { ...options[1], available: false, unavailable_reason: "amount_too_large" },
     { ...options[0], method: "future", label: "新しい方式", flow: "future" },
   ]);
-  s.mount();
+  await s.mount();
   const radios = await screen.findAllByRole("radio");
   expect(radios.map(r => r.getAttribute("value"))).toEqual(["paidy", "netridecash", "future"]);
   expect(radios[0]).toBeDisabled(); expect(radios[1]).toBeDisabled();
@@ -138,7 +147,7 @@ it("does not invent methods when the canonical Client is unavailable", () => {
 it.each(["empty", "failure"])("keeps API %s fail-closed and allows explicit reload", async mode => {
   const s = setup([]);
   if (mode === "failure") vi.mocked(s.gateway.listPaymentMethods).mockRejectedValue(new Error("private provider detail"));
-  s.mount();
+  await s.mount();
   expect(await screen.findByText(mode === "empty" ? "現在ご利用いただけるお支払い方法はありません。" : "お支払い方法を取得できませんでした。")).toBeInTheDocument();
   expect(screen.queryByRole("radio")).not.toBeInTheDocument();
   if (mode === "failure") {
@@ -149,7 +158,7 @@ it.each(["empty", "failure"])("keeps API %s fail-closed and allows explicit relo
 });
 
 it("creates only on purchase, keeps cards out of inline input, and updates before submit", async () => {
-  const s = setup(); s.mount();
+  const s = setup(); await s.mount();
   await screen.findByRole("radio", { name: "クレジットカード" });
   await waitFor(() => expect(s.sdk.mountInline).toHaveBeenCalled());
   expect(s.gateway.startPayment).not.toHaveBeenCalled();
@@ -161,12 +170,13 @@ it("creates only on purchase, keeps cards out of inline input, and updates befor
   expect(s.session.update).toHaveBeenCalledWith(inlineAction.update, { forceUpdate: true });
   expect(vi.mocked(s.session.update).mock.invocationCallOrder[0]!).toBeLessThan(vi.mocked(s.session.submit).mock.invocationCallOrder[0]!);
   expect(s.gateway.reportUnivapayCharge).not.toHaveBeenCalled();
-  expect(navigation.replace).toHaveBeenCalledWith("/points/purchase/thanks?pid=payment-fixture");
+  expect(navigation.replace).not.toHaveBeenCalled();
+  expect(screen.getByRole("link", { name: "決済状況を確認する" })).toHaveAttribute("href", "/points/purchase/thanks?pid=payment-fixture");
   expect(JSON.stringify(readPaymentAttempt(subject))).not.toMatch(/member@example|appId|payload/);
 });
 
 it("blocks invalid inline fields, permits validation recheck and disposes on method change", async () => {
-  const s = setup(); const view = s.mount();
+  const s = setup(); const view = await s.mount();
   await waitFor(() => expect(s.sdk.mountInline).toHaveBeenCalled());
   s.validity(false);
   expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
@@ -179,7 +189,7 @@ it("blocks invalid inline fields, permits validation recheck and disposes on met
 
 it("allows another method after inline SDK load failure while keeping purchase disabled for the failed iframe", async () => {
   const s = setup(); vi.mocked(s.sdk.mountInline).mockRejectedValue(new Error("private SDK detail"));
-  s.mount();
+  await s.mount();
   expect(await screen.findByRole("alert")).toHaveTextContent("この決済方法は現在ご利用いただけません");
   expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
   const alternative = screen.getByRole("radio", { name: options[1].label });
@@ -192,14 +202,14 @@ it("allows another method after inline SDK load failure while keeping purchase d
 it("rejects amount skew before iframe submission and returns a safe error", async () => {
   const s = setup();
   vi.mocked(s.gateway.startPayment).mockResolvedValue({ data: fixturePayment("credit_card", { ...inlineAction, amount: product.price.amount + 1 }) });
-  s.mount(); await buy();
+  await s.mount(); await buy();
   expect(await screen.findByRole("alert")).toHaveTextContent("金額が変わりました");
   expect(s.session.update).not.toHaveBeenCalled(); expect(s.session.submit).not.toHaveBeenCalled();
 });
 
 it("retains the iframe on definite SDK failure and gives a fresh key only on the next click", async () => {
   const s = setup(); vi.mocked(s.session.submit).mockResolvedValue({ result: "failed" });
-  s.mount(); await buy();
+  await s.mount(); await buy();
   expect(await screen.findByRole("alert")).toHaveTextContent("カードがご利用いただけませんでした");
   expect(screen.queryByText("お支払いを処理しています")).not.toBeInTheDocument();
   const mounts = vi.mocked(s.sdk.mountInline).mock.calls.length;
@@ -211,9 +221,43 @@ it("retains the iframe on definite SDK failure and gives a fresh key only on the
 
 it.each([true, false])("reports a normalized fixture charge exactly once only when UUID is valid (%s)", async valid => {
   const s = setup(); vi.mocked(s.session.submit).mockResolvedValue({ result: "reported", charge_id: valid ? "00000000-0000-4000-8000-000000000001" : "not-a-charge" });
-  s.mount(); await buy(); await waitFor(() => expect(navigation.replace).toHaveBeenCalled());
+  await s.mount(); await buy(); await waitFor(() => expect(screen.getByRole("link", { name: "決済状況を確認する" })).toBeInTheDocument());
   expect(s.gateway.reportUnivapayCharge).toHaveBeenCalledTimes(valid ? 1 : 0);
   expect(JSON.stringify(vi.mocked(s.gateway.recordPaymentClientEvent).mock.calls)).not.toMatch(/member@example|phone|appId/);
+});
+
+it("keeps inline input visible and duplicate starts locked throughout a hanging submit and public validation/3DS events", async () => {
+  const s = setup(); vi.mocked(s.session.submit).mockReturnValue(new Promise(() => undefined));
+  await s.mount(); await buy(); await waitFor(() => expect(s.session.submit).toHaveBeenCalledOnce());
+  expect(document.querySelector(".payment-processing-overlay")).toBeNull();
+  expect(document.querySelector(".payment-inline-card iframe")).toBeVisible();
+  s.event("validation_error");
+  expect(screen.getByText(/カード入力欄の案内/)).toBeVisible();
+  s.event("validation_error"); s.event("three_ds_opened");
+  expect(screen.getByText(/カード会社の認証を進めて/)).toBeVisible();
+  s.event("charge_created");
+  expect(screen.queryByText("購入が完了しました")).not.toBeInTheDocument();
+  expect(s.gateway.reportUnivapayCharge).not.toHaveBeenCalled();
+  expect(s.gateway.recordPaymentClientEvent).toHaveBeenCalledWith("payment-fixture", { type: "inline_result", detail: { result: "error" } }, expect.anything());
+  expect(vi.mocked(s.gateway.recordPaymentClientEvent).mock.calls.filter(c => c[1].type === "inline_result")).toHaveLength(1);
+  fireEvent.click(screen.getByRole("button", { name: "処理中…" }));
+  expect(s.gateway.startPayment).toHaveBeenCalledOnce();
+  expect(navigation.replace).not.toHaveBeenCalled();
+  expect(readPaymentAttempt(subject)?.paymentId).toBe("payment-fixture");
+});
+
+it("retains a status link when the first-purchase product is blocked and all new methods are OFF", async () => {
+  const { beginPaymentAttempt } = await import("@/components/payment/payment-attempt");
+  beginPaymentAttempt(subject, { productId: product.id, paymentId: "payment-fixture", idempotencyKey: "existing-key" });
+  const s = setup([]);
+  vi.mocked(s.gateway.getPayment).mockResolvedValue({ data: fixturePayment("credit_card") });
+  vi.mocked(s.points.listPointProducts).mockResolvedValue({ data: { ...PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible,
+    data: [{ ...product, eligible: false, ineligible_reason: "first_purchase_required", cta: { ...product.cta, state: "disabled", reason: "first_purchase_required" } }] }, metadata });
+  await s.mount();
+  expect(await screen.findByRole("link", { name: "開始済みの決済状況を確認する" })).toHaveAttribute("href", "/points/purchase/thanks?pid=payment-fixture");
+  expect(screen.getByText("現在ご利用いただけるお支払い方法はありません。")).toBeInTheDocument();
+  expect(s.gateway.startPayment).not.toHaveBeenCalled();
+  expect(readPaymentAttempt(subject)?.idempotencyKey).toBe("existing-key");
 });
 
 it("POSTs six native hidden fields unchanged in server order despite stalled telemetry", async () => {
@@ -223,14 +267,14 @@ it("POSTs six native hidden fields unchanged in server order despite stalled tel
   const post = vi.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(function(this: HTMLFormElement) {
     submitted = { action: this.action, method: this.method, fields: Array.from(this.elements).map(e => [(e as HTMLInputElement).name, (e as HTMLInputElement).value]) };
   });
-  s.mount(); await buy();
+  await s.mount(); await buy();
   await waitFor(() => expect(post).toHaveBeenCalledOnce());
   expect(submitted).toEqual({ action: formAction.url, method: "post", fields: formAction.fields.map(f => [f.name, f.value]) });
   expect(navigation.assign).not.toHaveBeenCalled();
 });
 
 it("confirms an authorized Paidy callback once and never treats the callback as financial success", async () => {
-  const s = setup([options[2]]); s.mount(); await buy();
+  const s = setup([options[2]]); await s.mount(); await buy();
   await waitFor(() => expect(s.sdk.openPaidy).toHaveBeenCalledOnce());
   expect(vi.mocked(s.sdk.openPaidy).mock.calls[0]![0]).toEqual(paidyAction);
   s.callback({ status: "authorized", id: "pay_fixture", buyer: "private response" });
@@ -242,7 +286,7 @@ it("confirms an authorized Paidy callback once and never treats the callback as 
 });
 
 it.each(["rejected", "closed"])("returns Paidy %s to method selection without a financial mutation", async status => {
-  const s = setup([options[2]]); s.mount(); await buy();
+  const s = setup([options[2]]); await s.mount(); await buy();
   await waitFor(() => expect(s.sdk.openPaidy).toHaveBeenCalledOnce());
   s.callback({ status });
   await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
@@ -253,7 +297,7 @@ it.each(["rejected", "closed"])("returns Paidy %s to method selection without a 
 });
 
 it.each([{ status: "unknown" }, { status: "authorized", id: "bad-id" }])("queries canonical status for unknown Paidy response %j", async response => {
-  const s = setup([options[2]]); s.mount(); await buy();
+  const s = setup([options[2]]); await s.mount(); await buy();
   await waitFor(() => expect(s.sdk.openPaidy).toHaveBeenCalledOnce()); s.callback(response);
   await waitFor(() => expect(s.gateway.getPayment).toHaveBeenCalledOnce());
   expect(s.gateway.confirmPaidyAuthorization).not.toHaveBeenCalled();
@@ -261,10 +305,10 @@ it.each([{ status: "unknown" }, { status: "authorized", id: "bad-id" }])("querie
 
 it("locks an uncertain start across remount and never posts a replacement payment", async () => {
   const s = setup([options[1]]); vi.mocked(s.gateway.startPayment).mockRejectedValue(new Error("raw private transport data"));
-  const view = s.mount(); await buy();
+  const view = await s.mount(); await buy();
   expect(await screen.findByText(/お支払いを確認しています。購入履歴/)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
-  view.unmount(); s.mount();
+  view.unmount(); await s.mount();
   await screen.findByRole("button", { name: "購入する" });
   await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled());
   expect(s.gateway.startPayment).toHaveBeenCalledOnce();
@@ -275,13 +319,13 @@ it("discards a pending start after unmount instead of navigating a different ses
   const s = setup([options[1]]); let resolve!: (value: { data: UiPayment }) => void;
   vi.mocked(s.gateway.startPayment).mockReturnValue(new Promise(r => { resolve = r; }));
   const post = vi.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(() => undefined);
-  const view = s.mount(); await buy(); await waitFor(() => expect(s.gateway.startPayment).toHaveBeenCalledOnce());
+  const view = await s.mount(); await buy(); await waitFor(() => expect(s.gateway.startPayment).toHaveBeenCalledOnce());
   view.unmount(); await act(async () => resolve({ data: fixturePayment("netridecash") }));
   expect(post).not.toHaveBeenCalled(); expect(navigation.replace).not.toHaveBeenCalled();
 });
 
 it("does not request saved cards or offer registration when API saved_cards_enabled is false", async () => {
-  const s = setup([{ ...options[0], flow: "card_component", inline_form: null }]); s.mount();
+  const s = setup([{ ...options[0], flow: "card_component", inline_form: null }]); await s.mount();
   expect(await screen.findByRole("radio", { name: "クレジットカード" })).toBeInTheDocument();
   expect(screen.queryByTestId("fincode-fields")).not.toBeInTheDocument();
   expect(s.legacy.listCards).not.toHaveBeenCalled();
@@ -293,7 +337,7 @@ it("does not request saved cards or offer registration when API saved_cards_enab
 it.each(["paidy", "netridecash"])("hides both providers and ignores URL selection of %s for new purchases", async method => {
   policyScope.providerRegression = false;
   policyScope.requested = "?payment_method=" + method;
-  const s = setup(); s.mount();
+  const s = setup(); await s.mount();
   expect(await screen.findByRole("radio", { name: "クレジットカード" })).toBeInTheDocument();
   expect(screen.queryByRole("radio", { name: options[1].label })).not.toBeInTheDocument();
   expect(screen.queryByRole("radio", { name: options[2].label })).not.toBeInTheDocument();
@@ -306,7 +350,7 @@ it.each(["paidy", "netridecash"])("hides both providers and ignores URL selectio
 it.each(["paidy", "netridecash"])("has no purchase action when only hidden providers are available (%s URL)", async method => {
   policyScope.providerRegression = false;
   policyScope.requested = "?payment_method=" + method;
-  const s = setup(options.slice(1)); s.mount();
+  const s = setup(options.slice(1)); await s.mount();
   expect(await screen.findByText("現在ご利用いただけるお支払い方法はありません。")).toBeInTheDocument();
   expect(screen.queryByRole("radio")).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "購入する" })).not.toBeInTheDocument();
@@ -316,7 +360,7 @@ it.each(["paidy", "netridecash"])("has no purchase action when only hidden provi
 it("cannot fall back to a hidden provider when the visible method is unavailable", async () => {
   policyScope.providerRegression = false;
   const s = setup([{ ...options[0], available: false, unavailable_reason: "provider_unavailable" }, ...options.slice(1)]);
-  s.mount();
+  await s.mount();
   const card = await screen.findByRole("radio", { name: "クレジットカード" });
   expect(card).toBeDisabled();
   expect(screen.getAllByRole("radio")).toHaveLength(1);
