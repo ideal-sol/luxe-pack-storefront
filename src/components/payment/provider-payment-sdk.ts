@@ -2,6 +2,7 @@ import type { PaidyCheckoutAction, UnivapayInlineAction, UnivapayInlineForm } fr
 import { PAYMENT_UI_UNAVAILABLE } from "@/lib/platform/payment-ui-gateway";
 import { PAIDY_SCRIPT, UNIVAPAY_SCRIPT, validateInlineForm } from "./provider-payment-actions";
 import { boundedProviderOperation, leaveProviderDocument, ownProviderDocument } from "./provider-document";
+import { observeUnivapay, type UnivapayEvent } from "./univapay-events";
 
 export type InlineResult = { result: "unknown" } | { result: "failed" } | { result: "reported"; charge_id: string };
 export interface InlineSession {
@@ -12,7 +13,7 @@ export interface InlineSession {
   dispose(): void;
 }
 export interface PaymentProviderSdk {
-  mountInline(form: UnivapayInlineForm, target: HTMLElement, validity: (valid: boolean) => void, signal: AbortSignal): Promise<InlineSession>;
+  mountInline(form: UnivapayInlineForm, target: HTMLElement, validity: (valid: boolean) => void, signal: AbortSignal, onEvent?: (event: UnivapayEvent) => void): Promise<InlineSession>;
   openPaidy(action: PaidyCheckoutAction, callback: (response: unknown) => void, signal: AbortSignal): Promise<{ dispose(returnUrl?: string): void }>;
 }
 
@@ -81,27 +82,28 @@ interface PaidyGlobal {
 }
 
 interface UnivapayGlobal {
-  create(options: UnivapayInlineForm["options"]): { open(overrides: undefined, target: HTMLElement): Promise<HTMLIFrameElement | undefined> };
+  create(options: UnivapayInlineForm["options"] & ReturnType<typeof observeUnivapay>["callbacks"]): { open(overrides: undefined, target: HTMLElement): Promise<HTMLIFrameElement | undefined> };
   update(iframe: HTMLIFrameElement, update: UnivapayInlineAction["update"], options: { forceUpdate: true }): Promise<unknown>;
   submit(iframe: HTMLIFrameElement): Promise<unknown>;
 }
 
 export const browserPaymentProviderSdk: PaymentProviderSdk = {
-  mountInline: async (form, target, _validity, signal) => {
+  mountInline: async (form, target, _validity, signal, onEvent) => {
     validateInlineForm(form);
     const lifetime = ownProviderDocument(signal);
     await boundedProviderOperation(loadPaymentScript(form.script_url), signal);
     lifetime.assertActive();
     const sdk = (window as unknown as { UnivapayCheckout?: UnivapayGlobal }).UnivapayCheckout;
     if (!sdk || typeof sdk.create !== "function" || typeof sdk.update !== "function" || typeof sdk.submit !== "function") throw new Error(PAYMENT_UI_UNAVAILABLE);
-    const instance = sdk.create(form.options);
+    const events = observeUnivapay(lifetime.active, onEvent);
+    const instance = sdk.create({ ...form.options, ...events.callbacks });
     const iframe = await boundedProviderOperation(instance.open(undefined, target), signal);
     lifetime.assertActive();
     if (!(iframe instanceof HTMLIFrameElement) || !target.contains(iframe)) throw new Error(PAYMENT_UI_UNAVAILABLE);
     iframe.title = "UnivaPay カード入力";
-    // Public close notification is advisory only. No private connector.close,
-    // cross-origin frame access, global iframe query or raw result decoder.
-    window.addEventListener("univapay:closed", lifetime.dispose, { once: true });
+    // Instance-bound public callbacks remain advisory. Closing the provider
+    // must not unload this document or erase the unresolved payment.
+    events.emit("sdk_ready");
     let submitted = false;
     return {
       validationMode: "provider_submit",
@@ -111,17 +113,26 @@ export const browserPaymentProviderSdk: PaymentProviderSdk = {
       update: async (update, options) => {
         lifetime.assertActive();
         if (submitted || !target.contains(iframe)) throw new Error(PAYMENT_UI_UNAVAILABLE);
-        await boundedProviderOperation(sdk.update(iframe, update, options), signal);
+        events.emit("update_started");
+        try { await boundedProviderOperation(sdk.update(iframe, update, options), signal); }
+        catch (error) { events.emit("update_rejected"); throw error; }
         lifetime.assertActive();
+        events.emit("update_complete");
       },
       submit: async () => {
         lifetime.assertActive();
         if (submitted || !target.contains(iframe)) throw new Error(PAYMENT_UI_UNAVAILABLE);
         submitted = true;
-        // Give the provider's own 3DS UI time to complete. Both resolution and
-        // rejection are non-authoritative; only canonical GET/Webhook settles.
-        try { await boundedProviderOperation(sdk.submit(iframe), signal, 300_000); }
-        catch { /* Unknown outcome stays correlated and cannot be resubmitted. */ }
+        events.emit("submit_started");
+        let settled = false;
+        // Stop waiting on the site after 30s without canceling the SDK, closing
+        // 3DS, or navigating away. Late callbacks still update the status UI.
+        const operation = Promise.resolve().then(() => sdk.submit(iframe)).then(
+          () => { settled = true; events.emit("submit_resolved"); },
+          () => { settled = true; events.emit("submit_rejected"); },
+        );
+        try { await boundedProviderOperation(operation, signal, 30_000); }
+        catch { if (!settled) events.emit("submit_wait_elapsed"); }
         lifetime.assertActive();
         return { result: "unknown" };
       },

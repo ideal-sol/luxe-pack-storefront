@@ -10,6 +10,7 @@ import {
 import { beginPaymentAttempt, finishPaymentAttempt, identifyPaymentAttempt, readPaymentAttempt } from "./payment-attempt";
 import { dispatchProviderAction, paymentThanksRoute, postProviderForm, validateInlineForm } from "./provider-payment-actions";
 import type { InlineSession, PaymentProviderSdk } from "./provider-payment-sdk";
+import { UNIVAPAY_STATUS_PENDING, univapayEventMessages, type UnivapayEvent } from "./univapay-events";
 
 type FlowState = { busy: boolean; locked: boolean; error: string | null; message: string | null };
 const idle: FlowState = { busy: false, locked: false, error: null, message: null };
@@ -24,6 +25,10 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
   const [valid, setValid] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [providerValidates, setProviderValidates] = useState(false);
+  const [statusPaymentId, setStatusPaymentId] = useState<string | null>(null);
+  const observedPayment = useRef<string | null>(null);
+  const observedEvent = useRef<UnivapayEvent | null>(null);
+  const errorRecorded = useRef(false);
   const target = useRef<HTMLDivElement>(null);
   const inline = useRef<InlineSession | null>(null);
   const running = useRef(false);
@@ -40,6 +45,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
     void Promise.resolve().then(async () => {
       if (controller.signal.aborted) return;
       setState(idle); setValid(false); setMounted(false); setProviderValidates(false);
+      setStatusPaymentId(null); observedPayment.current = null; observedEvent.current = null; errorRecorded.current = false;
       running.current = false;
       if (!gateway || !option) { uncertain.current = false; return; }
       try {
@@ -47,6 +53,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
         correlationChecked = true;
         uncertain.current = Boolean(attempt);
         if (attempt) {
+          setStatusPaymentId(attempt.paymentId);
           setState({ ...idle, locked: true, message: PAYMENT_UI_PENDING });
           if (attempt.paymentId) {
             void gateway.getPayment(attempt.paymentId).then(({ data }) => {
@@ -65,7 +72,19 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
           validateInlineForm(option.inline_form);
           session = await sdk.mountInline(option.inline_form, target.current, value => {
             if (!controller.signal.aborted) setValid(value);
-          }, controller.signal);
+          }, controller.signal, event => {
+            if (controller.signal.aborted) return;
+            observedEvent.current = event;
+            const message = univapayEventMessages[event];
+            if (observedPayment.current && message) setState(previous => ({ ...previous, locked: true, message }));
+            // The unchanged server contract accepts coarse inline errors only.
+            // Rich public phase enums stay in Console; never send raw payloads.
+            if (observedPayment.current && !errorRecorded.current &&
+                ["validation_error", "three_ds_failed", "submit_rejected", "update_rejected"].includes(event)) {
+              errorRecorded.current = true;
+              void recordUiEvent(gateway, observedPayment.current, { type: "inline_result", detail: { result: "error" } });
+            }
+          });
           if (controller.signal.aborted) { session.dispose(); return; }
           inline.current = session;
           setProviderValidates(session.validationMode === "provider_submit");
@@ -124,10 +143,11 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
       }
       uncertain.current = false; running.current = false;
       if (active()) setState({ ...idle, error });
+      if (active()) setStatusPaymentId(null);
     };
-    const pending = () => {
+    const pending = (message = PAYMENT_UI_PENDING) => {
       uncertain.current = true;
-      if (active()) setState({ ...idle, locked: true, message: PAYMENT_UI_PENDING });
+      if (active()) setState({ ...idle, locked: true, message });
     };
     const thanks = (payment: UiPayment) => {
       if (active()) window.location.replace(paymentThanksRoute(payment.id));
@@ -141,6 +161,8 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
       createdPayment = payment;
       identifyPaymentAttempt(subject, key, payment.id);
       if (!active()) return;
+      observedPayment.current = payment.id;
+      setStatusPaymentId(payment.id);
       if (payment.method !== method || payment.point_product_id && payment.point_product_id !== productId || payment.amount.currency !== "JPY") throw new Error(PAYMENT_UI_UNAVAILABLE);
       if (["succeeded", "failed", "canceled", "expired"].includes(payment.status)) {
         finishPaymentAttempt(subject, key); thanks(payment); return;
@@ -174,8 +196,10 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
             await gateway.reportUnivapayCharge(payment.id, { charge_id: result.charge_id }, { signal: controller.signal });
             if (!active()) return;
           }
-          // No raw SDK Promise/event parser: unknown results wait for Webhook/GET.
-          pending(); thanks(payment); return;
+          // Keep the provider document alive, including any ongoing 3DS. Public
+          // callbacks and Promise results never settle or unlock the payment.
+          pending(observedEvent.current && univapayEventMessages[observedEvent.current] || UNIVAPAY_STATUS_PENDING);
+          return;
         }
         case "paidy_checkout": {
           void recordUiEvent(gateway, payment.id, { type: "paidy_checkout_opened" });
@@ -219,10 +243,14 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
         release(PAYMENT_UI_UNAVAILABLE);
       } else {
         pending();
-        if (sdkSubmitted && createdPayment) { thanks(createdPayment); return; }
+        if (sdkSubmitted && createdPayment) {
+          if (option.flow !== "inline_card_form") thanks(createdPayment);
+          else pending(UNIVAPAY_STATUS_PENDING);
+          return;
+        }
         if (!sdkSubmitted) setState({ ...idle, locked: true, error: PAYMENT_UI_UNAVAILABLE, message: PAYMENT_UI_PENDING });
       }
     }
   };
-  return { ...state, attachTarget, valid, mounted, providerValidates, checkValidity, submit };
+  return { ...state, statusPaymentId, attachTarget, valid, mounted, providerValidates, checkValidity, submit };
 }
