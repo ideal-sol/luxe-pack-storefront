@@ -131,6 +131,14 @@ describe("UnivaPay confirmed-owner result screen", () => {
     expect(readPaymentAttempt(subject)?.paymentId).toBe("payment-public-reference");
     expect(refreshWallet).not.toHaveBeenCalled();
   });
+  it("keeps Paidy read-error behavior even with an existing provider correlation", async () => {
+    vi.useFakeTimers(); const adapter = client({ ...payment("processing"), method: "paidy" });
+    await act(async () => renderThanks(adapter));
+    vi.mocked(adapter.getPayment).mockRejectedValue(new Error("temporary"));
+    await act(async () => { await vi.advanceTimersByTimeAsync(2_000); });
+    expect(screen.getByRole("heading", { name: "エラー" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "決済確認中" })).not.toBeInTheDocument();
+  });
 });
 
 describe("SITE-040 / SITE-047 Payment status UI", () => {

@@ -38,7 +38,7 @@ export function usePaymentPolling(client: PaymentClientAdapter | null, pid: stri
     if (!client || !pid || !validPid(pid)) return;
     let active = true;
     let timer: ReturnType<typeof setTimeout> | null = null;
-    let latest: Payment | null = retainOnError && lastVerified.current?.client === client && lastVerified.current.pid === pid ? lastVerified.current.payment : null;
+    let latest: Payment | null = retainOnError && lastVerified.current?.client === client && lastVerified.current.pid === pid && lastVerified.current.payment.method === "credit_card" ? lastVerified.current.payment : null;
     const startedAt = Date.now();
     const publish = (state: PaymentPollingState) => setResult({ client, pid, state, revision });
 
@@ -84,7 +84,7 @@ export function usePaymentPolling(client: PaymentClientAdapter | null, pid: stri
           schedule(Math.max(POLLING_INTERVAL_MS, retryAfter * 1_000));
           return;
         }
-        if (retainOnError && latest) publish({ status: "delayed", payment: latest });
+        if (retainOnError && latest?.method === "credit_card") publish({ status: "delayed", payment: latest });
         else publish({ status: "error" });
       }
     };
