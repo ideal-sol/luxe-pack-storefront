@@ -1238,3 +1238,11 @@ After separate Human runtime/upload authorization, verify the two file digests, 
 Out of scope: Platform, APIs, Admin/Worker/Timer, ENV, DB/migrations, auth internals, payment/SDK/3DS/UnivaPay/idempotency, rank/draw/inventory/accounting/shipping behavior, dependencies/build configuration, OLD Test and NEW Production activation. Migrations created/applied: 0/0. Runtime activations: 0. No Ready, Merge or Auto-Merge authorized. Dedicated branch/worktree retained for Draft PR review; original checkout and local main untouched.
 
 Required CI, Shadow and final-head fresh self-review results are recorded in the Draft PR after push.
+
+
+## SF206-PRODAUTH-20261030
+
+- R3 / Strict Change / Application Runtime Activation: deferred. Human selects exact Storefront PR206 merge d06c46b42f202ec54bf7ed276cec98a18ee4e0a6 / Tree c6344f8300b106508ce585d169e8872b5b327906 as Production Runtime Source; PR636 excluded. Source Authority only; Ready for Review permitted, Squash Merge requires separate Human approval.
+- Update only authority JSON source_sha/source_pr/explanation and the existing two exact-source positive expectations. activation_authorized=false and every Contract/Client/Testkit/Manifest/Platform provenance field stay byte-equivalent as parsed values. No verifier, workflow, dependency, application logic or settings change.
+- Reuse OLD Test Technical Acceptance and exact application Source CI. Four CDN403 exceptions and business/browser checks remain independent pending items; no Production acceptance inferred. Existing provenance-focused checks and emitted Required CI are final-head gates. No local Build, Artifact dispatch, Runtime/ENV/Provider/Worker/Rank/DB/AWS/Production operation. Existing occupied worktrees untouched.
+- Local provenance-focused tests: 1 file / 118 tests PASS. Changed-test ESLint and diff whitespace checks PASS. Negative rejection tests retained; no local full-suite, Typegen or Build rerun. Required CI and fresh final-head review are recorded on the PR.
