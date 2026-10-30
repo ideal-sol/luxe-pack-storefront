@@ -81,9 +81,25 @@ interface PaidyGlobal {
   configure(config: { api_key: string; closed: (response: unknown) => void }): { launch(payload: PaidyCheckoutAction["payload"]): void };
 }
 
+type SdkUpdate = Omit<UnivapayInlineAction["update"], "phoneNumber"> & {
+  phoneNumber?: { countryCode: "81"; localNumber: string };
+};
+
+// alpha.48 uses the international prefix +81; Checkout's IntlTelInput looks
+// up a dialCode (81) before calling setCountry. Keep the wire contract intact.
+export function toUnivapaySdkUpdate(update: UnivapayInlineAction["update"]): SdkUpdate {
+  const { phoneNumber, ...rest } = update;
+  if (phoneNumber === undefined) return rest;
+  if (!phoneNumber || phoneNumber.countryCode !== "+81" ||
+      typeof phoneNumber.localNumber !== "string" || !/^0[0-9]{9,10}$/.test(phoneNumber.localNumber)) {
+    throw new Error(PAYMENT_UI_UNAVAILABLE);
+  }
+  return { ...rest, phoneNumber: { countryCode: "81", localNumber: phoneNumber.localNumber } };
+}
+
 interface UnivapayGlobal {
   create(options: UnivapayInlineForm["options"] & ReturnType<typeof observeUnivapay>["callbacks"]): { open(overrides: undefined, target: HTMLElement): Promise<HTMLIFrameElement | undefined> };
-  update(iframe: HTMLIFrameElement, update: UnivapayInlineAction["update"], options: { forceUpdate: true }): Promise<unknown>;
+  update(iframe: HTMLIFrameElement, update: SdkUpdate, options: { forceUpdate: true }): Promise<unknown>;
   submit(iframe: HTMLIFrameElement): Promise<unknown>;
 }
 
@@ -114,7 +130,7 @@ export const browserPaymentProviderSdk: PaymentProviderSdk = {
         lifetime.assertActive();
         if (submitted || !target.contains(iframe)) throw new Error(PAYMENT_UI_UNAVAILABLE);
         events.emit("update_started");
-        try { await boundedProviderOperation(sdk.update(iframe, update, options), signal); }
+        try { await boundedProviderOperation(sdk.update(iframe, toUnivapaySdkUpdate(update), options), signal); }
         catch (error) { events.emit("update_rejected"); throw error; }
         lifetime.assertActive();
         events.emit("update_complete");
