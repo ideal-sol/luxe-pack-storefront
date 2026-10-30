@@ -1,4 +1,5 @@
 // Only opaque correlation. Never persist provider inputs or results.
+export const PAYMENT_STATUS_CHECK_EVENT = "luxe-pack:payment-status-check";
 export interface PaymentAttempt {
   productId: string;
   idempotencyKey: string;

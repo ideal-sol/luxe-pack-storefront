@@ -3,6 +3,10 @@ import { ApiProblemError, StorefrontTransportError } from "@oripa/storefront-cli
 import { vi } from "vitest";
 import { PAYMENT_POLLING_POLICY, usePaymentPolling } from "@/components/payment/use-payment-polling";
 import type { Payment, PaymentClientAdapter } from "@/lib/platform";
+import { PendingPaymentStatus } from "@/components/payment/pending-payment-status";
+import { PaymentClientProvider } from "@/components/payment/payment-client-provider";
+import { beginPaymentAttempt, finishPaymentAttempt, readPaymentAttempt, PAYMENT_STATUS_CHECK_EVENT } from "@/components/payment/payment-attempt";
+import type { PaymentUiGateway } from "@/lib/platform/payment-ui-gateway";
 
 const metadata = { idempotency_replayed: false, status: 200 } as const;
 
@@ -145,5 +149,58 @@ describe("SITE-040 Payment polling", () => {
     view.unmount();
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
     expect(getPayment).toHaveBeenCalledOnce();
+  });
+});
+
+describe("UnivaPay existing payment success navigation", () => {
+  const replace = vi.fn();
+  beforeEach(() => {
+    vi.useFakeTimers(); const attempt = readPaymentAttempt("member"); if (attempt) finishPaymentAttempt("member", attempt.idempotencyKey); replace.mockReset();
+    const browser = window;
+    vi.stubGlobal("window", new Proxy(browser, { get(target, key) {
+      return key === "location" ? { replace } : Reflect.get(target, key);
+    } }));
+  });
+  afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
+  function mount(getPayment = vi.fn().mockResolvedValue({ data: payment("requires_action"), metadata }), restore = true) {
+    if (restore) beginPaymentAttempt("member", { productId: "product-public-reference", paymentId: "payment-poll-public-reference", idempotencyKey: "existing-key" });
+    const adapter = client(getPayment);
+    const gateway = { getPayment } as unknown as PaymentUiGateway;
+    const view = render(<PaymentClientProvider client={adapter} uiGateway={gateway}><PendingPaymentStatus subject="member" productId="product-public-reference" /></PaymentClientProvider>);
+    return { view, getPayment };
+  }
+  it("starts a bounded observer after submit notification, then navigates once only on Platform success", async () => {
+    const s = mount(undefined, false); await flush();
+    expect(s.getPayment).not.toHaveBeenCalled();
+    beginPaymentAttempt("member", { productId: "product-public-reference", paymentId: "payment-poll-public-reference", idempotencyKey: "existing-key" });
+    await act(async () => window.dispatchEvent(new Event(PAYMENT_STATUS_CHECK_EVENT)));
+    expect(replace).not.toHaveBeenCalled();
+    s.getPayment.mockResolvedValue({ data: payment("succeeded"), metadata });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2_000); });
+    expect(replace).toHaveBeenCalledExactlyOnceWith("/points/purchase/thanks?pid=payment-poll-public-reference");
+    expect(readPaymentAttempt("member")?.paymentId).toBe("payment-poll-public-reference");
+  });
+  it.each(["requires_action", "processing", "failed", "canceled", "expired"] as const)("restores %s without success navigation or a replacement purchase", async status => {
+    const s = mount(vi.fn().mockResolvedValue({ data: payment(status), metadata })); await flush();
+    await act(async () => { await vi.advanceTimersByTimeAsync(90_000); });
+    expect(replace).not.toHaveBeenCalled();
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/points/purchase/thanks?pid=payment-poll-public-reference");
+    const count = s.getPayment.mock.calls.length;
+    await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+    expect(s.getPayment).toHaveBeenCalledTimes(count);
+  });
+  it("restores an already succeeded payment after reload", async () => {
+    mount(vi.fn().mockResolvedValue({ data: payment("succeeded"), metadata })); await flush();
+    expect(replace).toHaveBeenCalledOnce();
+  });
+  it("retains correlation and link on a read error", async () => {
+    mount(vi.fn().mockRejectedValue(new Error("offline"))); await flush();
+    expect(replace).not.toHaveBeenCalled(); expect(readPaymentAttempt("member")).not.toBeNull();
+    expect(screen.getByRole("link")).toBeInTheDocument();
+  });
+  it.each(["paidy", "netridecash", "mismatched"])("never redirects %s from the UnivaPay observer", async kind => {
+    const data = kind === "mismatched" ? { ...payment("succeeded"), id: "other-payment" } : { ...payment("succeeded"), method: kind };
+    mount(vi.fn().mockResolvedValue({ data, metadata })); await flush();
+    expect(replace).not.toHaveBeenCalled();
   });
 });

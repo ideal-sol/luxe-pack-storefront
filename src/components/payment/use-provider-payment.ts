@@ -7,7 +7,7 @@ import {
   PAYMENT_UI_PENDING, PAYMENT_UI_UNAVAILABLE, recordUiEvent, supportedPaymentMethod,
   type PaymentMethodOption, type PaymentUiGateway, type UiPayment,
 } from "@/lib/platform/payment-ui-gateway";
-import { beginPaymentAttempt, finishPaymentAttempt, identifyPaymentAttempt, readPaymentAttempt } from "./payment-attempt";
+import { beginPaymentAttempt, finishPaymentAttempt, identifyPaymentAttempt, readPaymentAttempt, PAYMENT_STATUS_CHECK_EVENT } from "./payment-attempt";
 import { dispatchProviderAction, paymentThanksRoute, postProviderForm, validateInlineForm } from "./provider-payment-actions";
 import type { InlineSession, PaymentProviderSdk } from "./provider-payment-sdk";
 import { UNIVAPAY_STATUS_PENDING, univapayEventMessages, type UnivapayEvent } from "./univapay-events";
@@ -60,6 +60,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
               if (controller.signal.aborted || data.id !== attempt.paymentId ||
                   data.point_product_id && data.point_product_id !== attempt.productId) return;
               if (["succeeded", "failed", "canceled", "expired"].includes(data.status)) {
+                if (option.flow === "inline_card_form") return; // Existing status observer owns this correlation through navigation.
                 finishPaymentAttempt(subject, attempt.idempotencyKey);
                 uncertain.current = false;
                 setState(idle);
@@ -164,6 +165,9 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
       observedPayment.current = payment.id;
       setStatusPaymentId(payment.id);
       if (payment.method !== method || payment.point_product_id && payment.point_product_id !== productId || payment.amount.currency !== "JPY") throw new Error(PAYMENT_UI_UNAVAILABLE);
+      if (option.flow === "inline_card_form" && payment.status !== "requires_action") {
+        pending(); window.dispatchEvent(new Event(PAYMENT_STATUS_CHECK_EVENT)); return;
+      }
       if (["succeeded", "failed", "canceled", "expired"].includes(payment.status)) {
         finishPaymentAttempt(subject, key); thanks(payment); return;
       }
@@ -199,6 +203,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
           // Keep the provider document alive, including any ongoing 3DS. Public
           // callbacks and Promise results never settle or unlock the payment.
           pending(observedEvent.current && univapayEventMessages[observedEvent.current] || UNIVAPAY_STATUS_PENDING);
+          window.dispatchEvent(new Event(PAYMENT_STATUS_CHECK_EVENT));
           return;
         }
         case "paidy_checkout": {
@@ -245,7 +250,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
         pending();
         if (sdkSubmitted && createdPayment) {
           if (option.flow !== "inline_card_form") thanks(createdPayment);
-          else pending(UNIVAPAY_STATUS_PENDING);
+          else { pending(UNIVAPAY_STATUS_PENDING); window.dispatchEvent(new Event(PAYMENT_STATUS_CHECK_EVENT)); }
           return;
         }
         if (!sdkSubmitted) setState({ ...idle, locked: true, error: PAYMENT_UI_UNAVAILABLE, message: PAYMENT_UI_PENDING });

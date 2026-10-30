@@ -236,6 +236,7 @@ it("keeps inline input visible and duplicate starts locked throughout a hanging 
   s.event("validation_error"); s.event("three_ds_opened");
   expect(screen.getByText(/カード会社の認証を進めて/)).toBeVisible();
   s.event("charge_created");
+  s.event("three_ds_succeeded"); s.event("submit_resolved");
   expect(screen.queryByText("購入が完了しました")).not.toBeInTheDocument();
   expect(s.gateway.reportUnivapayCharge).not.toHaveBeenCalled();
   expect(s.gateway.recordPaymentClientEvent).toHaveBeenCalledWith("payment-fixture", { type: "inline_result", detail: { result: "error" } }, expect.anything());
@@ -243,6 +244,17 @@ it("keeps inline input visible and duplicate starts locked throughout a hanging 
   fireEvent.click(screen.getByRole("button", { name: "処理中…" }));
   expect(s.gateway.startPayment).toHaveBeenCalledOnce();
   expect(navigation.replace).not.toHaveBeenCalled();
+  expect(readPaymentAttempt(subject)?.paymentId).toBe("payment-fixture");
+});
+
+it("navigates from an uncertain inline result only after the Platform read confirms success", async () => {
+  const s = setup();
+  vi.mocked(s.gateway.getPayment).mockResolvedValue({ data: fixturePayment("credit_card") });
+  vi.mocked(s.legacy.getPayment).mockResolvedValue({ data: { ...fixturePayment("credit_card"), method: "credit_card", next_action: null, status: "succeeded" }, metadata });
+  await s.mount(); await buy();
+  await waitFor(() => expect(navigation.replace).toHaveBeenCalledWith("/points/purchase/thanks?pid=payment-fixture"));
+  expect(s.gateway.startPayment).toHaveBeenCalledOnce();
+  expect(s.session.submit).toHaveBeenCalledOnce();
   expect(readPaymentAttempt(subject)?.paymentId).toBe("payment-fixture");
 });
 
