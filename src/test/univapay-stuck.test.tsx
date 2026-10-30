@@ -1,5 +1,23 @@
 import type { UnivapayInlineForm } from "@/lib/platform/payment-ui-gateway";
 import { observeUnivapay } from "@/components/payment/univapay-events";
+import { toUnivapaySdkUpdate } from "@/components/payment/provider-payment-sdk";
+import type { UnivapayInlineAction } from "@/lib/platform/payment-ui-gateway";
+
+it("maps the contract phone prefix to the SDK dial code without mutating the source or inventing missing phone data", () => {
+  const base = { metadata: { "oripa-payment-id": "synthetic", "oripa-member": "synthetic" }, email: "synthetic@example.test" };
+  expect(toUnivapaySdkUpdate(base)).toEqual(base);
+  const phoneNumber = Object.freeze({ countryCode: "+81" as const, localNumber: "09000000000" });
+  const input = Object.freeze({ ...base, phoneNumber });
+  expect(toUnivapaySdkUpdate(input)).toEqual({ ...base, phoneNumber: { countryCode: "81", localNumber: phoneNumber.localNumber } });
+  expect(input.phoneNumber.countryCode).toBe("+81");
+});
+
+it.each([null, {}, { countryCode: "81", localNumber: "09000000000" },
+  { countryCode: "+81", localNumber: "" }, { countryCode: "+81", localNumber: "090-0000-0000" },
+  { countryCode: "+81", localNumber: 9000000000 }, { countryCode: "+1", localNumber: "09000000000" },
+])("rejects malformed phone data before SDK update without including input in the error", phoneNumber => {
+  expect(() => toUnivapaySdkUpdate({ phoneNumber } as unknown as UnivapayInlineAction["update"])).toThrow("この決済方法は現在ご利用いただけません");
+});
 
 const form: UnivapayInlineForm = { provider: "univapay", script_url: "https://widget.univapay.com/client/checkout.js", options: {
   appId: "synthetic", checkout: "payment", amount: 50, currency: "jpy", tokenType: "one_time", capture: true, inline: true, locale: "ja", email: "synthetic@example.test", showCvv: true,
@@ -47,7 +65,8 @@ it("ends site waiting after 30s while retaining 3DS, late public callbacks and t
   vi.useFakeTimers(); vi.spyOn(console, "info").mockImplementation(() => undefined);
   let resolve!: (data: unknown) => void;
   const s = await mount(() => new Promise(r => { resolve = r; }));
-  await s.session.update({ metadata: { "oripa-payment-id": "synthetic", "oripa-member": "synthetic" }, email: "synthetic@example.test" }, { forceUpdate: true });
+  await s.session.update({ metadata: { "oripa-payment-id": "synthetic", "oripa-member": "synthetic" }, email: "synthetic@example.test", phoneNumber: { countryCode: "+81", localNumber: "09000000000" } }, { forceUpdate: true });
+  expect(s.sdk.update).toHaveBeenCalledWith(expect.any(HTMLIFrameElement), expect.objectContaining({ phoneNumber: { countryCode: "81", localNumber: "09000000000" } }), { forceUpdate: true });
   const options = s.sdk.create.mock.calls[0]![0] as unknown as ReturnType<typeof observeUnivapay>["callbacks"];
   const pending = s.session.submit();
   await vi.advanceTimersByTimeAsync(29_999);

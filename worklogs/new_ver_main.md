@@ -1177,3 +1177,14 @@ prohibited. This section supersedes the initial phase's local-only restriction.
   permission or scope exemption changed. Auth/LINE boundary checks pass after
   renewal; negative mutation and packaged-inventory regressions are rerun.
   Final-head CI/self-review supersede initial-head evidence in the Draft PR.
+
+
+## OLDTEST-UNIVAPAY-200JPY — SDK phone dial-code boundary
+
+- R3; Lane: Strict Change; Application Runtime Activation: deferred. Related acceptance Issue #201 remains open. Dedicated branch/worktree isolates occupied dirty checkouts. Draft only; no merge or Source Runtime activation.
+- Public Checkout source map shows IntlTelInput mapping country dialCode to ISO before setCountry; alpha48 action supplies +81 while the SDK expects81. Real SDK comparison after initialization reproduced toLowerCase errors and zero remaining inputs for +81; converting only the dial code to81 preserved six inputs with no exception. No submit, card entry or provider POST. Initial immediate-update probe did not reproduce; waiting for input initialization did.
+- Normalize the phone prefix only at the SDK adapter; retain the existing alpha48 contract, local number and immutable caller object. Missing phone remains absent; malformed values fail before SDK update. No fabricated number is sent. Existing pending payment correlation, duplicate lock, advisory events and Platform settlement authority remain intact.
+- Focused SDK/document/action47 tests PASS; typecheck, targeted lint, artifact verification, payment boundary, secret scan and diff check PASS. Initial typecheck used an unrelated older dependency tree and failed; corrected to existing exact alpha48 dependencies, then passed. No dependency/lockfile change, local Build or manual full-CI rerun. Normal PR checks remain pending until emitted.
+- Operational prerequisite: new starts OFF via existing canonical ENV path; TEST credentials/worker flags/rank retained. Pending payment untouched and no Worker execution. Provider TEST LIST completed with zero charges. Source-only change does not resolve financial state.
+- SDK evidence: https://widget.univapay.com/checkout/assets/js/checkout.06b50e84f8de.js.map and https://widget.univapay.com/client/checkout.js . Merchant requirement settings and real charge/3DS acceptance remain separate; no provider configuration change.
+- Recovery requires a fresh exact selection check: limit1 is not a payment-ID filter; older expired rows can precede the pending target. No recovery executed by this task. Detailed private plan and runtime evidence retained outside Git. Final HEAD/Tree, self-review and CI evidence are recorded in the Draft PR.
