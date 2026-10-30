@@ -3,9 +3,9 @@ import { createHash } from "node:crypto";
 // Source-reviewed opaque Payment correlation and its two synthetic tests.
 // Any byte change requires renewed review; this grants no directory exemption.
 const reviewed = new Map([
-  ["src/components/payment/payment-attempt.ts", "5b906fbbb29da37fd26e39c982164b3d7a1e68d821a1015228288a1f99d28e3a"],
+  ["src/components/payment/payment-attempt.ts", "adb5879ecfb55c870d4a458f93b6f2d9dff377924bb8eccf60e4194d18cee3b6"],
   ["src/test/payment-provider-actions.test.ts", "7c3618cab4e2561d008048da8dac626f3061aa1702021eac8acabd03c96f0b76"],
-  ["src/test/payment-provider-ui.test.tsx", "318c340d2b2e633561ed179adcf7670ce8d80ce2019a5a5594e132e6c099d090"],
+  ["src/test/payment-provider-ui.test.tsx", "87aa58bafbef3d8bd9c9e3513b791cc90e31018e8d26123c6f136689c510adaf"],
 ]);
 
 export function reviewedPaymentStorage(file, content) {

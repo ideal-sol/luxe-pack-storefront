@@ -12,7 +12,7 @@ import { usePaymentClient } from "./payment-client-provider";
 import { usePaymentPolling } from "./use-payment-polling";
 import { paymentMethodLabel } from "./payment-history-presentation";
 import { usePaymentReturnEvent } from "./use-payment-return-event";
-import { finishPaymentAttempt, readPaymentAttempt } from "./payment-attempt";
+import { finishPaymentAttempt, readPaymentAttempt, rememberFailedInlinePayment, isFailedInlinePayment } from "./payment-attempt";
 
 function formatAmount(payment: Payment) {
   return new Intl.NumberFormat("ja-JP", {
@@ -134,7 +134,7 @@ export function PaymentThanks({ pid }: { readonly pid: string | null }) {
     let active = true;
     void Promise.resolve().then(() => {
       try {
-        if (active && subject && pid && readPaymentAttempt(subject)?.paymentId === pid) setInlineContext({ subject, pid });
+        if (active && subject && pid && (readPaymentAttempt(subject)?.paymentId === pid || isFailedInlinePayment(subject, pid))) setInlineContext({ subject, pid });
       } catch { /* No trusted provider context. */ }
     });
     return () => { active = false; };
@@ -150,7 +150,10 @@ export function PaymentThanks({ pid }: { readonly pid: string | null }) {
     if (!subject || polling.status !== "ready" || !["succeeded", "failed", "canceled", "expired"].includes(polling.payment.status)) return;
     try {
       const attempt = readPaymentAttempt(subject);
-      if (univapay && polling.payment.status === "failed") return; // Preserve provider context across failure-page reloads.
+      if (univapay && polling.payment.status === "failed") {
+        try { rememberFailedInlinePayment(subject, polling.payment.id); }
+        catch { /* Optional display persistence must not retain a confirmed-failed purchase lock. */ }
+      }
       if (attempt?.paymentId === polling.payment.id) finishPaymentAttempt(subject, attempt.idempotencyKey);
     } catch { /* A broken correlation never permits another charge. */ }
   }, [polling, session, univapay]);

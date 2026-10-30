@@ -72,7 +72,7 @@ function renderThanks(adapter: PaymentClientAdapter, pid: string | null = "payme
     getCurrentSession: vi.fn().mockResolvedValue({ data: PUBLIC_AUTH_FIXTURE.authenticated_session, metadata }),
     getSmsVerificationStatus: vi.fn().mockResolvedValue({ data: { verified: smsVerified, phone: null, phone_masked: null, verified_at: null, challenge: null }, metadata }),
   } as unknown as AuthClientAdapter;
-  render(
+  return render(
     <SessionProvider client={auth}>
       <PaymentClientProvider client={adapter}>
         <PaymentThanks pid={pid} />
@@ -125,10 +125,16 @@ describe("UnivaPay confirmed-owner result screen", () => {
     expect(screen.getByRole("heading", { name: "エラー" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "決済確認中" })).not.toBeInTheDocument();
   });
-  it("uses the exact card failure copy only for a correlated credit-card Payment failed by Platform", async () => {
-    const adapter = client(payment("failed")); renderThanks(adapter);
+  it("clears the failed purchase lock but retains display-only context across reload", async () => {
+    finishPaymentAttempt(subject, "univapay-attempt");
+    beginPaymentAttempt(subject, { productId: "product-public-reference", paymentId: "failed-univapay-reference", idempotencyKey: "failed-key" });
+    const adapter = client({ ...payment("failed"), id: "failed-univapay-reference" });
+    const view = renderThanks(adapter, "failed-univapay-reference");
     expect(await screen.findByText("入力されたカードが使用できません、他のカードでお試しください。")).toBeInTheDocument();
-    expect(readPaymentAttempt(subject)?.paymentId).toBe("payment-public-reference");
+    await waitFor(() => expect(readPaymentAttempt(subject)).toBeNull());
+    view.unmount(); renderThanks(adapter, "failed-univapay-reference");
+    expect(await screen.findByText("入力されたカードが使用できません、他のカードでお試しください。")).toBeInTheDocument();
+    expect(readPaymentAttempt(subject)).toBeNull();
     expect(refreshWallet).not.toHaveBeenCalled();
   });
   it("keeps Paidy read-error behavior even with an existing provider correlation", async () => {

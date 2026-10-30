@@ -9,6 +9,7 @@ import { PointPurchaseDetail } from "@/components/points/point-purchase-detail";
 import type { AuthClientAdapter, PaymentClientAdapter, PointClientAdapter } from "@/lib/platform";
 import type { PaymentMethodOption, PaymentUiGateway, UiPayment } from "@/lib/platform/payment-ui-gateway";
 import type { InlineSession, PaymentProviderSdk } from "@/components/payment/provider-payment-sdk";
+import { PaymentThanks } from "@/components/payment/payment-thanks";
 import { readPaymentAttempt } from "@/components/payment/payment-attempt";
 import type { UnivapayEvent } from "@/components/payment/univapay-events";
 
@@ -81,12 +82,12 @@ function setup(methods: PaymentMethodOption[] = options) {
   };
   const auth = { getCurrentSession: vi.fn().mockResolvedValue({ data: PUBLIC_AUTH_FIXTURE.authenticated_session, metadata }), getSmsVerificationStatus: vi.fn().mockResolvedValue({ data: { verified: true }, metadata }) } as unknown as AuthClientAdapter;
   const points = { getWallet: vi.fn().mockResolvedValue({ data: PUBLIC_POINT_BALANCE_FIXTURES.positive, metadata }), listPointProducts: vi.fn().mockResolvedValue({ data: { ...PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible, data: [product] }, metadata }) } as unknown as PointClientAdapter;
-  const tree = () => <StrictMode><SessionProvider client={auth}><PointClientProvider client={points}><PaymentClientProvider client={legacy} providerSdk={sdk} uiGateway={gateway}><PointPurchaseDetail productId={product.id} /></PaymentClientProvider></PointClientProvider></SessionProvider></StrictMode>;
-  const mount = async () => {
+  const tree = (result = false) => <StrictMode><SessionProvider client={auth}><PointClientProvider client={points}><PaymentClientProvider client={legacy} providerSdk={sdk} uiGateway={gateway}>{result ? <PaymentThanks pid="payment-fixture" /> : <PointPurchaseDetail productId={product.id} />}</PaymentClientProvider></PointClientProvider></SessionProvider></StrictMode>;
+  const mount = async (result = false) => {
     let view!: RenderResult;
     // Resolve the immediate Session/Point/Method fixtures inside React's async
     // act boundary before asserting UI; do not race them against a wall clock.
-    await act(async () => { view = render(tree()); });
+    await act(async () => { view = render(tree(result)); });
     return view;
   };
   return { legacy, gateway, sdk, session, points, event: (value: UnivapayEvent) => act(() => event(value)), validity: (v: boolean) => act(() => validity(v)), callback: (v: unknown) => act(() => callback(v)), mount };
@@ -173,6 +174,21 @@ it("creates only on purchase, keeps cards out of inline input, and updates befor
   expect(navigation.replace).not.toHaveBeenCalled();
   expect(screen.getByRole("link", { name: "決済状況を確認する" })).toHaveAttribute("href", "/points/purchase/thanks?pid=payment-fixture");
   expect(JSON.stringify(readPaymentAttempt(subject))).not.toMatch(/member@example|appId|payload/);
+});
+
+it("unlocks a Platform-failed purchase and uses a fresh key for the next explicit card purchase", async () => {
+  const s = setup(); const purchase = await s.mount(); await buy();
+  const firstKey = vi.mocked(s.gateway.startPayment).mock.calls[0]![1].idempotency_key;
+  purchase.unmount();
+  vi.mocked(s.legacy.getPayment).mockResolvedValue({ data: { ...fixturePayment("credit_card"), method: "credit_card", next_action: null, status: "failed" }, metadata });
+  const result = await s.mount(true);
+  expect(screen.getByText("入力されたカードが使用できません、他のカードでお試しください。")).toBeInTheDocument();
+  expect(readPaymentAttempt(subject)).toBeNull();
+  result.unmount(); await s.mount();
+  await buy();
+  expect(s.gateway.startPayment).toHaveBeenCalledTimes(2);
+  expect(vi.mocked(s.gateway.startPayment).mock.calls[1]![1].idempotency_key).not.toBe(firstKey);
+  expect(s.session.submit).toHaveBeenCalledTimes(2);
 });
 
 it("blocks invalid inline fields, permits validation recheck and disposes on method change", async () => {
