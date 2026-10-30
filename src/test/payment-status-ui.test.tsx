@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beginPaymentAttempt, finishPaymentAttempt, readPaymentAttempt } from "@/components/payment/payment-attempt";
 import { ApiProblemError, StorefrontTransportError } from "@oripa/storefront-client";
 import { PUBLIC_AUTH_FIXTURE } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
@@ -79,6 +80,58 @@ function renderThanks(adapter: PaymentClientAdapter, pid: string | null = "payme
     </SessionProvider>,
   );
 }
+
+describe("UnivaPay confirmed-owner result screen", () => {
+  const subject = PUBLIC_AUTH_FIXTURE.authenticated_session.user!.id;
+  beforeEach(() => {
+    const old = readPaymentAttempt(subject); if (old) finishPaymentAttempt(subject, old.idempotencyKey);
+    beginPaymentAttempt(subject, { productId: "product-public-reference", paymentId: "payment-public-reference", idempotencyKey: "univapay-attempt" });
+    refreshWallet.mockClear();
+  });
+  afterEach(() => { const old = readPaymentAttempt(subject); if (old) finishPaymentAttempt(subject, old.idempotencyKey); vi.useRealTimers(); });
+  it.each(["requires_action", "processing"] as const)("shows 決済確認中 for owned %s then the existing success UI after delayed settlement", async status => {
+    vi.useFakeTimers(); const adapter = client(payment(status));
+    await act(async () => renderThanks(adapter));
+    expect(screen.getByRole("heading", { name: "決済確認中" })).toBeInTheDocument();
+    expect(refreshWallet).not.toHaveBeenCalled();
+    vi.mocked(adapter.getPayment).mockResolvedValue({ data: payment("succeeded"), metadata });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2_000); });
+    expect(screen.getByRole("heading", { name: "購入完了しました" })).toBeInTheDocument();
+    expect(refreshWallet).toHaveBeenCalledOnce();
+  });
+  it("retains checking after the bound and permits only a single in-flight GET recheck", async () => {
+    vi.useFakeTimers(); const adapter = client(payment("processing"));
+    await act(async () => renderThanks(adapter));
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    expect(screen.getByRole("heading", { name: "決済確認中" })).toBeInTheDocument();
+    let resolve!: (value: { data: Payment; metadata: typeof metadata }) => void;
+    vi.mocked(adapter.getPayment).mockReturnValue(new Promise(r => { resolve = r; }));
+    const prior = vi.mocked(adapter.getPayment).mock.calls.length;
+    const retry = screen.getByRole("button", { name: "決済状況を再確認する" });
+    await act(async () => { fireEvent.click(retry); });
+    fireEvent.click(retry); expect(retry).toBeDisabled();
+    expect(adapter.getPayment).toHaveBeenCalledTimes(prior + 1);
+    await act(async () => resolve({ data: payment("succeeded"), metadata }));
+    expect(screen.getByRole("heading", { name: "購入完了しました" })).toBeInTheDocument();
+  });
+  it("retains owner-verified checking on transient API errors, but not on authorization failure", async () => {
+    vi.useFakeTimers(); const adapter = client(payment("processing"));
+    await act(async () => renderThanks(adapter));
+    vi.mocked(adapter.getPayment).mockRejectedValue(new Error("temporary"));
+    await act(async () => { await vi.advanceTimersByTimeAsync(2_000); });
+    expect(screen.getByRole("heading", { name: "決済確認中" })).toBeInTheDocument();
+    vi.mocked(adapter.getPayment).mockRejectedValue(new ApiProblemError({ code: "FORBIDDEN", detail: "fixture", request_id: "fixture", retryable: false, status: 403, title: "Forbidden", type: "about:blank" }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "決済状況を再確認する" })); });
+    expect(screen.getByRole("heading", { name: "エラー" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "決済確認中" })).not.toBeInTheDocument();
+  });
+  it("uses the exact card failure copy only for a correlated credit-card Payment failed by Platform", async () => {
+    const adapter = client(payment("failed")); renderThanks(adapter);
+    expect(await screen.findByText("入力されたカードが使用できません、他のカードでお試しください。")).toBeInTheDocument();
+    expect(readPaymentAttempt(subject)?.paymentId).toBe("payment-public-reference");
+    expect(refreshWallet).not.toHaveBeenCalled();
+  });
+});
 
 describe("SITE-040 / SITE-047 Payment status UI", () => {
   it("keeps in-progress Payment status readable but withholds unpaid resume before SMS", async () => {

@@ -169,21 +169,21 @@ describe("UnivaPay existing payment success navigation", () => {
     const view = render(<PaymentClientProvider client={adapter} uiGateway={gateway}><PendingPaymentStatus subject="member" productId="product-public-reference" /></PaymentClientProvider>);
     return { view, getPayment };
   }
-  it("starts a bounded observer after submit notification, then navigates once only on Platform success", async () => {
+  it("routes a confirmed-owner pending Payment once to the existing result page", async () => {
     const s = mount(undefined, false); await flush();
     expect(s.getPayment).not.toHaveBeenCalled();
     beginPaymentAttempt("member", { productId: "product-public-reference", paymentId: "payment-poll-public-reference", idempotencyKey: "existing-key" });
     await act(async () => window.dispatchEvent(new Event(PAYMENT_STATUS_CHECK_EVENT)));
-    expect(replace).not.toHaveBeenCalled();
+    expect(replace).toHaveBeenCalledOnce();
     s.getPayment.mockResolvedValue({ data: payment("succeeded"), metadata });
     await act(async () => { await vi.advanceTimersByTimeAsync(2_000); });
     expect(replace).toHaveBeenCalledExactlyOnceWith("/points/purchase/thanks?pid=payment-poll-public-reference");
     expect(readPaymentAttempt("member")?.paymentId).toBe("payment-poll-public-reference");
   });
-  it.each(["requires_action", "processing", "failed", "canceled", "expired"] as const)("restores %s without success navigation or a replacement purchase", async status => {
+  it.each(["requires_action", "processing", "failed", "canceled", "expired"] as const)("restores %s into the existing result route without a replacement purchase", async status => {
     const s = mount(vi.fn().mockResolvedValue({ data: payment(status), metadata })); await flush();
     await act(async () => { await vi.advanceTimersByTimeAsync(90_000); });
-    expect(replace).not.toHaveBeenCalled();
+    expect(replace).toHaveBeenCalledExactlyOnceWith("/points/purchase/thanks?pid=payment-poll-public-reference");
     expect(screen.getByRole("link")).toHaveAttribute("href", "/points/purchase/thanks?pid=payment-poll-public-reference");
     const count = s.getPayment.mock.calls.length;
     await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });

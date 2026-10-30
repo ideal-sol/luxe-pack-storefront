@@ -207,16 +207,13 @@ it("rejects amount skew before iframe submission and returns a safe error", asyn
   expect(s.session.update).not.toHaveBeenCalled(); expect(s.session.submit).not.toHaveBeenCalled();
 });
 
-it("retains the iframe on definite SDK failure and gives a fresh key only on the next click", async () => {
+it("treats SDK failure as unconfirmed and never unlocks a replacement purchase", async () => {
   const s = setup(); vi.mocked(s.session.submit).mockResolvedValue({ result: "failed" });
   await s.mount(); await buy();
-  expect(await screen.findByRole("alert")).toHaveTextContent("カードがご利用いただけませんでした");
-  expect(screen.queryByText("お支払いを処理しています")).not.toBeInTheDocument();
-  const mounts = vi.mocked(s.sdk.mountInline).mock.calls.length;
-  await buy(); await waitFor(() => expect(s.gateway.startPayment).toHaveBeenCalledTimes(2));
-  const calls = vi.mocked(s.gateway.startPayment).mock.calls;
-  expect(calls[0]![1].idempotency_key).not.toBe(calls[1]![1].idempotency_key);
-  expect(s.sdk.mountInline).toHaveBeenCalledTimes(mounts);
+  expect(s.gateway.startPayment).toHaveBeenCalledOnce();
+  expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
+  expect(screen.queryByText(/カードがご利用いただけませんでした/)).not.toBeInTheDocument();
+  expect(readPaymentAttempt(subject)?.paymentId).toBe("payment-fixture");
 });
 
 it.each([true, false])("reports a normalized fixture charge exactly once only when UUID is valid (%s)", async valid => {
@@ -245,6 +242,19 @@ it("keeps inline input visible and duplicate starts locked throughout a hanging 
   expect(s.gateway.startPayment).toHaveBeenCalledOnce();
   expect(navigation.replace).not.toHaveBeenCalled();
   expect(readPaymentAttempt(subject)?.paymentId).toBe("payment-fixture");
+});
+
+it("retains ongoing 3DS even when Platform has an owned pending result, then routes after authorization closes", async () => {
+  const s = setup();
+  vi.mocked(s.gateway.getPayment).mockResolvedValue({ data: fixturePayment("credit_card") });
+  vi.mocked(s.legacy.getPayment).mockResolvedValue({ data: { ...fixturePayment("credit_card"), method: "credit_card", next_action: null, status: "processing" }, metadata });
+  vi.mocked(s.session.submit).mockImplementation(async () => { s.event("three_ds_opened"); return { result: "unknown" }; });
+  await s.mount(); await buy();
+  expect(navigation.replace).not.toHaveBeenCalled();
+  expect(document.querySelector(".payment-inline-card iframe")).toBeVisible();
+  s.event("three_ds_succeeded");
+  await waitFor(() => expect(navigation.replace).toHaveBeenCalledWith("/points/purchase/thanks?pid=payment-fixture"));
+  expect(s.gateway.startPayment).toHaveBeenCalledOnce();
 });
 
 it("navigates from an uncertain inline result only after the Platform read confirms success", async () => {
