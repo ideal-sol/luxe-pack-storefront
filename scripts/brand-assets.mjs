@@ -3,13 +3,19 @@ import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const BRAND_FILE_COUNT = 27;
+export const BRAND_FILE_COUNT = 29;
 export const EXISTING_BRAND_VERSION = "sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63";
 export const PRE_REGISTER_BRAND_VERSION = "sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d";
 export const PRE_REGISTER_IMAGE_PATHS = new Set(["sd_orika_touroku.webp", "sd_pokezou_coin.webp"]);
 export const PAYMENT_IMAGE_PATHS = new Map([
   ["payments/netridecash-logo.png", "e9726a4fcd722a5f2c7cc6c6f6a8da9ff317cd0ba2163b856ce4890a8e518e4e"],
   ["payments/paidy-logo.png", "2cd8cacd72b05f09ea9329e23dc4775b34d0bf9bab5621fd88ceae181c49f203"],
+]);
+export const PAYMENT_BRAND_VERSION = "sha256-e14476bb46508a7f82edab331cda7fb1b3071bda8dc63b4be693466d7ab92d12";
+// トップ「ご利用の流れ」STEP3・4 のキャラクター（デザイン 2026-10-28）。
+export const FLOW_STEP_IMAGE_PATHS = new Map([
+  ["sd_fukumaru_gacha.webp", "18e76d196e42beec23e014861ed4cb21f928fb858cdc46e1021841bbc45889c2"],
+  ["sd_orika_uketoru.webp", "a69095600fc389570ce8d9156eab2a86cd8e85da28bf70168a488834dea9a164"],
 ]);
 export const manifestPath = "src/lib/brand-assets.manifest.json";
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -44,7 +50,8 @@ export function generateBrandManifest(root = "public/brand") {
     const bytes = readFileSync(join(root, relative_path));
     return { relative_path, content_type: contentType(relative_path, bytes), byte_size: bytes.length, sha256: digest(bytes) };
   });
-  const prior = entries.filter(entry => !PAYMENT_IMAGE_PATHS.has(entry.relative_path));
+  const paymentPrior = entries.filter(entry => !FLOW_STEP_IMAGE_PATHS.has(entry.relative_path));
+  const prior = paymentPrior.filter(entry => !PAYMENT_IMAGE_PATHS.has(entry.relative_path));
   const existing = prior.filter((entry) => !PRE_REGISTER_IMAGE_PATHS.has(entry.relative_path));
   const existingVersion = `sha256-${digest(JSON.stringify(existing))}`;
   if (existing.length !== 23 || existingVersion !== EXISTING_BRAND_VERSION) {
@@ -56,13 +63,19 @@ export function generateBrandManifest(root = "public/brand") {
   for (const [path, sha] of PAYMENT_IMAGE_PATHS) {
     if (entries.find(entry => entry.relative_path === path)?.sha256 !== sha) throw new Error(`Supplied Payment logo changed: ${path}`);
   }
+  if (paymentPrior.length !== 27 || `sha256-${digest(JSON.stringify(paymentPrior))}` !== PAYMENT_BRAND_VERSION) {
+    throw new Error("Existing payment Brand assets changed; allocate a new immutable asset version");
+  }
+  for (const [path, sha] of FLOW_STEP_IMAGE_PATHS) {
+    if (entries.find(entry => entry.relative_path === path)?.sha256 !== sha) throw new Error(`Flow step image changed: ${path}`);
+  }
   const version = `sha256-${digest(JSON.stringify(entries))}`;
   return {
     schema_version: 1,
     version,
     files: entries.map((entry) => ({
       ...entry,
-      object_key: `static-assets/brand/${PAYMENT_IMAGE_PATHS.has(entry.relative_path) ? version : PRE_REGISTER_IMAGE_PATHS.has(entry.relative_path) ? PRE_REGISTER_BRAND_VERSION : EXISTING_BRAND_VERSION}/${entry.relative_path}`,
+      object_key: `static-assets/brand/${FLOW_STEP_IMAGE_PATHS.has(entry.relative_path) ? version : PAYMENT_IMAGE_PATHS.has(entry.relative_path) ? PAYMENT_BRAND_VERSION : PRE_REGISTER_IMAGE_PATHS.has(entry.relative_path) ? PRE_REGISTER_BRAND_VERSION : EXISTING_BRAND_VERSION}/${entry.relative_path}`,
     })),
   };
 }

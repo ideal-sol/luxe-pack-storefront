@@ -1202,3 +1202,39 @@ prohibited. This section supersedes the initial phase's local-only restriction.
 - Final review restricts transient-error retention to correlated credit-card reads; correlated Paidy still renders its existing read error. Focused total101 valid cases across retained runs; final polling/status58 rechecked PASS.
 
 - PR204 final review fix: Platform-owned failed now completes the active purchase attempt. A separate display-only, member-bound latest opaque failed Payment ID preserves the card-failure wording across reload; it is never read by purchase locking or used as financial authority. Persistence failure cannot prevent clearing the confirmed-failed lock. Focused68 status/provider cases PASS, including reload and another explicit purchase with a fresh key. Pending/3DS/success/other-provider behavior retained. Typecheck/Lint PASS; exact reviewed storage hashes renewed without a new exemption. No Ready/Merge/Runtime/ENV/Worker/DB/Production changes.
+
+
+## SITE-20261030 — design gaps, Source only (2026-10-30)
+
+Task ID: SITE-20261030
+Human Task ID: SITE-DESIGN-GAPS-20261030
+Risk: R3
+Lane: Strict Change
+Application Runtime Activation: deferred
+Issue: #205
+Base main: 23ae58e3e442c24aa7fe2d81f6e3f4fb49ee4df4
+
+Implemented only the missing Human ZIP design deltas: flow STEP 3/4 images at 251×200 and 140×216; register aside with two panels and the 900px responsive breakpoint; always-visible minor notice below Coin products; three safety card copies; only the expiry and shipping rows in the beginners guide. Preserved the existing layout and business logic. Register aside note uses #4f6a6c for readable small text on white.
+
+Verified ZIP SHA-256: acd13ff7c4b2738ef69f761faa4bf87587a3f6bdb098a4dc0dc04c987a85a7e2. Selected the three individual patches after Source comparison; all-in-one was not applied. Excluded AGENTS.md and next-env.d.ts modifications. STEP 1/2, rate notice, existing 27 Brand entries, pre-register, RegisterForm, SMS, sessions and payment behavior remain unchanged.
+
+Brand Manifest version: sha256-3370b6a58282ca0d0f194c561f0ad8c07eded773629742953afbd169b28befd0 (29 files).
+Manifest file SHA-256: 37832caca01e1ffc37f838152c2062a8471c25ba58551fad04a0872812c290cd.
+sd_fukumaru_gacha.webp: 18e76d196e42beec23e014861ed4cb21f928fb858cdc46e1021841bbc45889c2 (22138 bytes).
+sd_orika_uketoru.webp: a69095600fc389570ce8d9156eab2a86cd8e85da28bf70168a488834dea9a164 (17410 bytes).
+Both files match the nested S3_upload.zip byte for byte. Existing 27 complete Manifest entries are unchanged. Production Artifact validation retains exact 23/25/27 compatibility and admits the exact new 29 Manifest; tests reject tampering.
+
+Local validation: brand-assets:check, image/Manifest SHA validation, immutable-entry comparison, artifact:check, policy:check, every auth/identity/catalog/content/gacha/draw/prize/point/payment boundary check, security:check, lint, typecheck and git diff --check PASS. Focused runs: 8 files/162 tests PASS; strengthened notice/responsive/flow plus session regression 4 files/59 tests PASS; pre-register and handoff regression 2 files/50 tests PASS (counts overlap between runs). No local full-suite or Production build; Required CI supplies full-suite and build validation. No live payment/auth E2E, migration or deployment.
+
+Visual check: Chromium screenshots inspected for /register and /points at 1280px and 390px. Compared register panels to both ZIP references and the minor notice to ZIP points references; two columns on desktop and panels below form on mobile, with readable headings and decorative image hidden from assistive technology. Local auth/product APIs are unconfigured, so reference authenticated product states and enabled registration were not visually verified. Home returns its existing public-data error state in this environment: STEP/safety visual comparison was not completed; component/CDN/wording tests cover these changes. No claim of pixel equality or live E2E. Local dev server stopped; generated AGENTS.md/next-env changes removed.
+
+Human confirmation items before future activation: ZIP expiry copy says both paid/free Coins expire after 180 days; previous Source said paid Coins never expire. No accounting behavior was changed. Register benefit copy also describes bonuses while the existing home bonus samples currently show preparation/unavailable; no bonus eligibility/activation was changed. These are copy/availability follow-ups, not new Platform policy decisions.
+
+Deferred S3/CloudFront handoff (no upload or CDN changes executed):
+- static-assets/brand/sha256-3370b6a58282ca0d0f194c561f0ad8c07eded773629742953afbd169b28befd0/sd_fukumaru_gacha.webp
+- static-assets/brand/sha256-3370b6a58282ca0d0f194c561f0ad8c07eded773629742953afbd169b28befd0/sd_orika_uketoru.webp
+After separate Human runtime/upload authorization, verify the two file digests, upload only missing immutable keys to each independently authorized environment with Content-Type image/webp and its existing immutable Brand cache policy, verify downloaded CDN bytes and metadata, then build/activate from approved Source with the existing CDN base. Never overwrite/move the prior 23/25/27 keys. Do not invalidate CloudFront for these new immutable keys. An existing key with mismatched bytes must stop the handoff. Until upload, activating CDN references may cause missing STEP 3/4 images. Rollback uses previous approved Source/Manifest and retains all immutable objects.
+
+Out of scope: Platform, APIs, Admin/Worker/Timer, ENV, DB/migrations, auth internals, payment/SDK/3DS/UnivaPay/idempotency, rank/draw/inventory/accounting/shipping behavior, dependencies/build configuration, OLD Test and NEW Production activation. Migrations created/applied: 0/0. Runtime activations: 0. No Ready, Merge or Auto-Merge authorized. Dedicated branch/worktree retained for Draft PR review; original checkout and local main untouched.
+
+Required CI, Shadow and final-head fresh self-review results are recorded in the Draft PR after push.

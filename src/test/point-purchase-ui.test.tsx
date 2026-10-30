@@ -203,6 +203,31 @@ describe("SITE-030 Coin Product read regression", () => {
     expect(notice.compareDocumentPosition(products) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it.each([
+    [PUBLIC_AUTH_FIXTURE.authenticated_session, PUBLIC_POINT_PRODUCT_FIXTURES.anonymous_empty],
+    [PUBLIC_AUTH_FIXTURE.authenticated_session, PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible],
+    [PUBLIC_AUTH_FIXTURE.anonymous_session, PUBLIC_POINT_PRODUCT_FIXTURES.anonymous],
+  ])("商品数・ログイン状態にかかわらず商品一覧の後に未成年向け注記を表示する", async (session, productsResponse) => {
+    await renderPoints(pointClient({ products: productsResponse }), session);
+    const notice = screen.getByRole("region", { name: "未成年の方のご利用について" });
+    expect(notice).toHaveTextContent("18歳未満の方はご利用いただけません。18歳以上20歳未満の方は、保護者の方の同意が必要です。コインの購入には上限を設けています。");
+    const products = screen.getByRole("region", { name: "コイン商品" });
+    expect(products.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("keeps the minor notice visible during product loading and after a read failure", async () => {
+    let rejectProducts!: (error: Error) => void;
+    const client = pointClient();
+    client.listPointProducts = vi.fn().mockReturnValue(new Promise((_, reject) => { rejectProducts = reject; }));
+    render(<SessionProvider client={authClient()}><PointClientProvider client={client}><PointsPage /></PointClientProvider></SessionProvider>);
+    expect(screen.getByText("コイン商品を読み込み中")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "未成年の方のご利用について" })).toBeInTheDocument();
+    await waitFor(() => expect(client.listPointProducts).toHaveBeenCalled());
+    rejectProducts(new Error("Product read failed"));
+    await waitForElementToBeRemoved(screen.getByText("コイン商品を読み込み中"));
+    expect(screen.getByRole("region", { name: "未成年の方のご利用について" })).toBeInTheDocument();
+  });
+
   it("renders zero balance and a canonical empty product collection", async () => {
     await renderPoints(pointClient({ balance: PUBLIC_POINT_BALANCE_FIXTURES.zero, products: PUBLIC_POINT_PRODUCT_FIXTURES.anonymous_empty }));
     await waitFor(() => expect(screen.getByLabelText("現在のコイン残高")).toHaveTextContent("0"));

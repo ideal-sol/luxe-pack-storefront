@@ -24,6 +24,13 @@ describe("はじめての方へ", () => {
     expect(text).not.toMatch(/Google|LINE/);
   });
 
+  it("規約・特商法・サポートQ&Aと同じ条件を書く（コインの有効期限・お届けの目安）", () => {
+    const text = JSON.stringify(beginnersGuideContent);
+    expect(text).toContain("180日間");
+    expect(text).toContain("3～14営業日以内");
+    expect(text).not.toMatch(/有償コインに有効期限はありません|原則7日以内/);
+  });
+
   it("is registered as a public route", () => {
     expect(beginnersRoute).toBe("/beginners");
     expect(publicRoutes).toContain("/beginners");
