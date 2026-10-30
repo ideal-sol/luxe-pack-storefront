@@ -7,14 +7,13 @@ import {
   PAYMENT_UI_PENDING, PAYMENT_UI_UNAVAILABLE, recordUiEvent, supportedPaymentMethod,
   type PaymentMethodOption, type PaymentUiGateway, type UiPayment,
 } from "@/lib/platform/payment-ui-gateway";
-import { beginPaymentAttempt, finishPaymentAttempt, identifyPaymentAttempt, readPaymentAttempt } from "./payment-attempt";
+import { beginPaymentAttempt, finishPaymentAttempt, identifyPaymentAttempt, readPaymentAttempt, PAYMENT_STATUS_CHECK_EVENT } from "./payment-attempt";
 import { dispatchProviderAction, paymentThanksRoute, postProviderForm, validateInlineForm } from "./provider-payment-actions";
 import type { InlineSession, PaymentProviderSdk } from "./provider-payment-sdk";
 import { UNIVAPAY_STATUS_PENDING, univapayEventMessages, type UnivapayEvent } from "./univapay-events";
 
 type FlowState = { busy: boolean; locked: boolean; error: string | null; message: string | null };
 const idle: FlowState = { busy: false, locked: false, error: null, message: null };
-const failedCard = "カードがご利用いただけませんでした。カード情報をご確認いただくか、別のお支払い方法をお選びください";
 export const PAIDY_REJECTED_MESSAGE = "あと払い（ペイディ）をご利用いただけませんでした。別のお支払い方法をお選びください";
 
 export function useProviderPayment({ gateway, sdk, option, productId, subject, eligible }: {
@@ -29,6 +28,8 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
   const observedPayment = useRef<string | null>(null);
   const observedEvent = useRef<UnivapayEvent | null>(null);
   const errorRecorded = useRef(false);
+  const threeDsActive = useRef(false);
+  const requestStatus = () => window.dispatchEvent(new CustomEvent(PAYMENT_STATUS_CHECK_EVENT, { detail: { providerActive: threeDsActive.current } }));
   const target = useRef<HTMLDivElement>(null);
   const inline = useRef<InlineSession | null>(null);
   const running = useRef(false);
@@ -47,6 +48,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
       setState(idle); setValid(false); setMounted(false); setProviderValidates(false);
       setStatusPaymentId(null); observedPayment.current = null; observedEvent.current = null; errorRecorded.current = false;
       running.current = false;
+      threeDsActive.current = false;
       if (!gateway || !option) { uncertain.current = false; return; }
       try {
         const attempt = readPaymentAttempt(subject);
@@ -60,6 +62,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
               if (controller.signal.aborted || data.id !== attempt.paymentId ||
                   data.point_product_id && data.point_product_id !== attempt.productId) return;
               if (["succeeded", "failed", "canceled", "expired"].includes(data.status)) {
+                if (option.flow === "inline_card_form") return; // Existing status observer owns this correlation through navigation.
                 finishPaymentAttempt(subject, attempt.idempotencyKey);
                 uncertain.current = false;
                 setState(idle);
@@ -75,6 +78,10 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
           }, controller.signal, event => {
             if (controller.signal.aborted) return;
             observedEvent.current = event;
+            if (["three_ds_started", "three_ds_opened", "three_ds_succeeded", "three_ds_failed", "closed"].includes(event)) {
+              threeDsActive.current = event === "three_ds_started" || event === "three_ds_opened";
+              window.dispatchEvent(new CustomEvent(PAYMENT_STATUS_CHECK_EVENT, { detail: { providerActive: threeDsActive.current, check: false } }));
+            }
             const message = univapayEventMessages[event];
             if (observedPayment.current && message) setState(previous => ({ ...previous, locked: true, message }));
             // The unchanged server contract accepts coarse inline errors only.
@@ -164,6 +171,9 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
       observedPayment.current = payment.id;
       setStatusPaymentId(payment.id);
       if (payment.method !== method || payment.point_product_id && payment.point_product_id !== productId || payment.amount.currency !== "JPY") throw new Error(PAYMENT_UI_UNAVAILABLE);
+      if (option.flow === "inline_card_form" && payment.status !== "requires_action") {
+        pending(); requestStatus(); return;
+      }
       if (["succeeded", "failed", "canceled", "expired"].includes(payment.status)) {
         finishPaymentAttempt(subject, key); thanks(payment); return;
       }
@@ -189,7 +199,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
           if (!active()) return;
           if (result.result === "failed") {
             void recordUiEvent(gateway, payment.id, { type: "inline_result", detail: { result: "error" } });
-            release(failedCard); return;
+            pending(UNIVAPAY_STATUS_PENDING); requestStatus(); return;
           }
           if (result.result === "reported" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(result.charge_id)) {
             void recordUiEvent(gateway, payment.id, { type: "inline_result", detail: { result: "success", charge_id: result.charge_id } });
@@ -199,6 +209,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
           // Keep the provider document alive, including any ongoing 3DS. Public
           // callbacks and Promise results never settle or unlock the payment.
           pending(observedEvent.current && univapayEventMessages[observedEvent.current] || UNIVAPAY_STATUS_PENDING);
+          requestStatus();
           return;
         }
         case "paidy_checkout": {
@@ -245,7 +256,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
         pending();
         if (sdkSubmitted && createdPayment) {
           if (option.flow !== "inline_card_form") thanks(createdPayment);
-          else pending(UNIVAPAY_STATUS_PENDING);
+          else { pending(UNIVAPAY_STATUS_PENDING); requestStatus(); }
           return;
         }
         if (!sdkSubmitted) setState({ ...idle, locked: true, error: PAYMENT_UI_UNAVAILABLE, message: PAYMENT_UI_PENDING });

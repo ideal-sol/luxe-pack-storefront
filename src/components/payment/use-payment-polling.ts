@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   isInvalidPaymentRead,
   paymentRetryAfterSeconds,
@@ -12,33 +12,35 @@ const POLLING_INTERVAL_MS = 2_000;
 const MAXIMUM_WAIT_MS = 30_000;
 const terminalStatuses = new Set(["succeeded", "failed", "canceled", "expired"]);
 
-export type PaymentPollingState =
+export type PaymentPollingState = (
   | { readonly status: "loading" }
   | { readonly status: "ready"; readonly payment: Payment }
   | { readonly status: "delayed"; readonly payment: Payment }
   | { readonly status: "invalid" }
-  | { readonly status: "error" };
+  | { readonly status: "error" }) & { readonly refreshing?: boolean };
 
 interface CorrelatedPollingResult {
   readonly client: PaymentClientAdapter;
   readonly pid: string;
   readonly state: PaymentPollingState;
+  readonly revision: number;
 }
 
 function validPid(pid: string | null) {
   return Boolean(pid && pid.length <= 128 && !pid.includes("/") && !pid.includes("\0"));
 }
 
-export function usePaymentPolling(client: PaymentClientAdapter | null, pid: string | null): PaymentPollingState {
+export function usePaymentPolling(client: PaymentClientAdapter | null, pid: string | null, retainOnError = false, revision = 0): PaymentPollingState {
   const [result, setResult] = useState<CorrelatedPollingResult | null>(null);
+  const lastVerified = useRef<{ client: PaymentClientAdapter; pid: string; payment: Payment } | null>(null);
 
   useEffect(() => {
     if (!client || !pid || !validPid(pid)) return;
     let active = true;
     let timer: ReturnType<typeof setTimeout> | null = null;
-    let latest: Payment | null = null;
+    let latest: Payment | null = retainOnError && lastVerified.current?.client === client && lastVerified.current.pid === pid && lastVerified.current.payment.method === "credit_card" ? lastVerified.current.payment : null;
     const startedAt = Date.now();
-    const publish = (state: PaymentPollingState) => setResult({ client, pid, state });
+    const publish = (state: PaymentPollingState) => setResult({ client, pid, state, revision });
 
     const stopDelayed = () => {
       if (!active) return;
@@ -63,7 +65,9 @@ export function usePaymentPolling(client: PaymentClientAdapter | null, pid: stri
       try {
         const { data: payment } = await client.getPayment(pid);
         if (!active) return;
+        if (payment.id !== pid) { lastVerified.current = null; publish({ status: "invalid" }); return; }
         latest = payment;
+        lastVerified.current = { client, pid, payment };
         publish({ payment, status: "ready" });
         if (terminalStatuses.has(payment.status)) return;
         if (payment.method === "konbini" || payment.method === "virtual_account") return;
@@ -71,6 +75,7 @@ export function usePaymentPolling(client: PaymentClientAdapter | null, pid: stri
       } catch (error) {
         if (!active) return;
         if (isInvalidPaymentRead(error)) {
+          lastVerified.current = null;
           publish({ status: "invalid" });
           return;
         }
@@ -79,7 +84,8 @@ export function usePaymentPolling(client: PaymentClientAdapter | null, pid: stri
           schedule(Math.max(POLLING_INTERVAL_MS, retryAfter * 1_000));
           return;
         }
-        publish({ status: "error" });
+        if (retainOnError && latest?.method === "credit_card") publish({ status: "delayed", payment: latest });
+        else publish({ status: "error" });
       }
     };
 
@@ -88,10 +94,11 @@ export function usePaymentPolling(client: PaymentClientAdapter | null, pid: stri
       active = false;
       if (timer) clearTimeout(timer);
     };
-  }, [client, pid]);
+  }, [client, pid, retainOnError, revision]);
 
   if (!client || !pid || !validPid(pid)) return { status: "invalid" };
   if (!result || result.client !== client || result.pid !== pid) return { status: "loading" };
+  if (result.revision !== revision) return retainOnError && (result.state.status === "ready" || result.state.status === "delayed") ? { ...result.state, refreshing: true } : { status: "loading" };
   return result.state;
 }
 

@@ -9,6 +9,7 @@ import { PointPurchaseDetail } from "@/components/points/point-purchase-detail";
 import type { AuthClientAdapter, PaymentClientAdapter, PointClientAdapter } from "@/lib/platform";
 import type { PaymentMethodOption, PaymentUiGateway, UiPayment } from "@/lib/platform/payment-ui-gateway";
 import type { InlineSession, PaymentProviderSdk } from "@/components/payment/provider-payment-sdk";
+import { PaymentThanks } from "@/components/payment/payment-thanks";
 import { readPaymentAttempt } from "@/components/payment/payment-attempt";
 import type { UnivapayEvent } from "@/components/payment/univapay-events";
 
@@ -81,12 +82,12 @@ function setup(methods: PaymentMethodOption[] = options) {
   };
   const auth = { getCurrentSession: vi.fn().mockResolvedValue({ data: PUBLIC_AUTH_FIXTURE.authenticated_session, metadata }), getSmsVerificationStatus: vi.fn().mockResolvedValue({ data: { verified: true }, metadata }) } as unknown as AuthClientAdapter;
   const points = { getWallet: vi.fn().mockResolvedValue({ data: PUBLIC_POINT_BALANCE_FIXTURES.positive, metadata }), listPointProducts: vi.fn().mockResolvedValue({ data: { ...PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible, data: [product] }, metadata }) } as unknown as PointClientAdapter;
-  const tree = () => <StrictMode><SessionProvider client={auth}><PointClientProvider client={points}><PaymentClientProvider client={legacy} providerSdk={sdk} uiGateway={gateway}><PointPurchaseDetail productId={product.id} /></PaymentClientProvider></PointClientProvider></SessionProvider></StrictMode>;
-  const mount = async () => {
+  const tree = (result = false) => <StrictMode><SessionProvider client={auth}><PointClientProvider client={points}><PaymentClientProvider client={legacy} providerSdk={sdk} uiGateway={gateway}>{result ? <PaymentThanks pid="payment-fixture" /> : <PointPurchaseDetail productId={product.id} />}</PaymentClientProvider></PointClientProvider></SessionProvider></StrictMode>;
+  const mount = async (result = false) => {
     let view!: RenderResult;
     // Resolve the immediate Session/Point/Method fixtures inside React's async
     // act boundary before asserting UI; do not race them against a wall clock.
-    await act(async () => { view = render(tree()); });
+    await act(async () => { view = render(tree(result)); });
     return view;
   };
   return { legacy, gateway, sdk, session, points, event: (value: UnivapayEvent) => act(() => event(value)), validity: (v: boolean) => act(() => validity(v)), callback: (v: unknown) => act(() => callback(v)), mount };
@@ -175,6 +176,21 @@ it("creates only on purchase, keeps cards out of inline input, and updates befor
   expect(JSON.stringify(readPaymentAttempt(subject))).not.toMatch(/member@example|appId|payload/);
 });
 
+it("unlocks a Platform-failed purchase and uses a fresh key for the next explicit card purchase", async () => {
+  const s = setup(); const purchase = await s.mount(); await buy();
+  const firstKey = vi.mocked(s.gateway.startPayment).mock.calls[0]![1].idempotency_key;
+  purchase.unmount();
+  vi.mocked(s.legacy.getPayment).mockResolvedValue({ data: { ...fixturePayment("credit_card"), method: "credit_card", next_action: null, status: "failed" }, metadata });
+  const result = await s.mount(true);
+  expect(screen.getByText("入力されたカードが使用できません、他のカードでお試しください。")).toBeInTheDocument();
+  expect(readPaymentAttempt(subject)).toBeNull();
+  result.unmount(); await s.mount();
+  await buy();
+  expect(s.gateway.startPayment).toHaveBeenCalledTimes(2);
+  expect(vi.mocked(s.gateway.startPayment).mock.calls[1]![1].idempotency_key).not.toBe(firstKey);
+  expect(s.session.submit).toHaveBeenCalledTimes(2);
+});
+
 it("blocks invalid inline fields, permits validation recheck and disposes on method change", async () => {
   const s = setup(); const view = await s.mount();
   await waitFor(() => expect(s.sdk.mountInline).toHaveBeenCalled());
@@ -207,16 +223,13 @@ it("rejects amount skew before iframe submission and returns a safe error", asyn
   expect(s.session.update).not.toHaveBeenCalled(); expect(s.session.submit).not.toHaveBeenCalled();
 });
 
-it("retains the iframe on definite SDK failure and gives a fresh key only on the next click", async () => {
+it("treats SDK failure as unconfirmed and never unlocks a replacement purchase", async () => {
   const s = setup(); vi.mocked(s.session.submit).mockResolvedValue({ result: "failed" });
   await s.mount(); await buy();
-  expect(await screen.findByRole("alert")).toHaveTextContent("カードがご利用いただけませんでした");
-  expect(screen.queryByText("お支払いを処理しています")).not.toBeInTheDocument();
-  const mounts = vi.mocked(s.sdk.mountInline).mock.calls.length;
-  await buy(); await waitFor(() => expect(s.gateway.startPayment).toHaveBeenCalledTimes(2));
-  const calls = vi.mocked(s.gateway.startPayment).mock.calls;
-  expect(calls[0]![1].idempotency_key).not.toBe(calls[1]![1].idempotency_key);
-  expect(s.sdk.mountInline).toHaveBeenCalledTimes(mounts);
+  expect(s.gateway.startPayment).toHaveBeenCalledOnce();
+  expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
+  expect(screen.queryByText(/カードがご利用いただけませんでした/)).not.toBeInTheDocument();
+  expect(readPaymentAttempt(subject)?.paymentId).toBe("payment-fixture");
 });
 
 it.each([true, false])("reports a normalized fixture charge exactly once only when UUID is valid (%s)", async valid => {
@@ -236,6 +249,7 @@ it("keeps inline input visible and duplicate starts locked throughout a hanging 
   s.event("validation_error"); s.event("three_ds_opened");
   expect(screen.getByText(/カード会社の認証を進めて/)).toBeVisible();
   s.event("charge_created");
+  s.event("three_ds_succeeded"); s.event("submit_resolved");
   expect(screen.queryByText("購入が完了しました")).not.toBeInTheDocument();
   expect(s.gateway.reportUnivapayCharge).not.toHaveBeenCalled();
   expect(s.gateway.recordPaymentClientEvent).toHaveBeenCalledWith("payment-fixture", { type: "inline_result", detail: { result: "error" } }, expect.anything());
@@ -243,6 +257,30 @@ it("keeps inline input visible and duplicate starts locked throughout a hanging 
   fireEvent.click(screen.getByRole("button", { name: "処理中…" }));
   expect(s.gateway.startPayment).toHaveBeenCalledOnce();
   expect(navigation.replace).not.toHaveBeenCalled();
+  expect(readPaymentAttempt(subject)?.paymentId).toBe("payment-fixture");
+});
+
+it("retains ongoing 3DS even when Platform has an owned pending result, then routes after authorization closes", async () => {
+  const s = setup();
+  vi.mocked(s.gateway.getPayment).mockResolvedValue({ data: fixturePayment("credit_card") });
+  vi.mocked(s.legacy.getPayment).mockResolvedValue({ data: { ...fixturePayment("credit_card"), method: "credit_card", next_action: null, status: "processing" }, metadata });
+  vi.mocked(s.session.submit).mockImplementation(async () => { s.event("three_ds_opened"); return { result: "unknown" }; });
+  await s.mount(); await buy();
+  expect(navigation.replace).not.toHaveBeenCalled();
+  expect(document.querySelector(".payment-inline-card iframe")).toBeVisible();
+  s.event("three_ds_succeeded");
+  await waitFor(() => expect(navigation.replace).toHaveBeenCalledWith("/points/purchase/thanks?pid=payment-fixture"));
+  expect(s.gateway.startPayment).toHaveBeenCalledOnce();
+});
+
+it("navigates from an uncertain inline result only after the Platform read confirms success", async () => {
+  const s = setup();
+  vi.mocked(s.gateway.getPayment).mockResolvedValue({ data: fixturePayment("credit_card") });
+  vi.mocked(s.legacy.getPayment).mockResolvedValue({ data: { ...fixturePayment("credit_card"), method: "credit_card", next_action: null, status: "succeeded" }, metadata });
+  await s.mount(); await buy();
+  await waitFor(() => expect(navigation.replace).toHaveBeenCalledWith("/points/purchase/thanks?pid=payment-fixture"));
+  expect(s.gateway.startPayment).toHaveBeenCalledOnce();
+  expect(s.session.submit).toHaveBeenCalledOnce();
   expect(readPaymentAttempt(subject)?.paymentId).toBe("payment-fixture");
 });
 

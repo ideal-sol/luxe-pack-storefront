@@ -1,4 +1,5 @@
 // Only opaque correlation. Never persist provider inputs or results.
+export const PAYMENT_STATUS_CHECK_EVENT = "luxe-pack:payment-status-check";
 export interface PaymentAttempt {
   productId: string;
   idempotencyKey: string;
@@ -32,4 +33,15 @@ export function identifyPaymentAttempt(subject: string, key: string, paymentId: 
 }
 export function finishPaymentAttempt(subject: string, key: string) {
   if (readPaymentAttempt(subject)?.idempotencyKey === key) window.sessionStorage.removeItem(storageKey(subject));
+}
+
+// Display-only, latest failed inline Payment ID per member. Never a purchase lock
+// or settlement authority; every result screen still requires an owned GET.
+function failedDisplayKey(subject: string) { return `${storageKey(subject)}:failed-display`; }
+export function rememberFailedInlinePayment(subject: string, paymentId: string) {
+  if (!opaque(paymentId)) throw new Error("Payment correlation unavailable");
+  window.sessionStorage.setItem(failedDisplayKey(subject), paymentId);
+}
+export function isFailedInlinePayment(subject: string, paymentId: string) {
+  return opaque(paymentId) && window.sessionStorage.getItem(failedDisplayKey(subject)) === paymentId;
 }

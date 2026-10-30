@@ -39,5 +39,5 @@ export const univapayEventMessages: Partial<Record<UnivapayEvent, string>> = {
   three_ds_failed: "カード会社の認証結果を確認中です。購入し直さず、決済状況を確認してください。",
   closed: UNIVAPAY_STATUS_PENDING,
   submit_wait_elapsed: "確認に時間がかかっています。認証画面が開いている場合はそのまま続けてください。購入し直さず、完了後に決済状況を確認してください。",
-  submit_rejected: "入力欄の案内をご確認ください。結果が不明のため、購入し直さず決済状況を確認してください。",
+  submit_rejected: "決済確認中です。購入し直さず決済状況を確認してください。",
 };
