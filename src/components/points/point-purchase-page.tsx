@@ -205,6 +205,16 @@ export function PointRateNotice() {
   );
 }
 
+/** 未成年の方のご利用についての常時表示。商品一覧の後に、ログイン状態・取得状態にかかわらず出す。 */
+export function PointMinorNotice() {
+  return (
+    <section aria-labelledby="point-minor-title" className="point-minor-notice">
+      <h2 id="point-minor-title">未成年の方のご利用について</h2>
+      <p>18歳未満の方はご利用いただけません。18歳以上20歳未満の方は、保護者の方の同意が必要です。コインの購入には上限を設けています。</p>
+    </section>
+  );
+}
+
 export function PointPurchasePage() {
   const { state: session, smsAccess } = useSession();
   const { client, wallet } = usePointClient();
@@ -309,6 +319,7 @@ export function PointPurchasePage() {
           <PointProductRegion products={products} />
         </>}
       </div>
+      <PointMinorNotice />
     </div>
   );
 }

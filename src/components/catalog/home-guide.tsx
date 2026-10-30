@@ -9,18 +9,17 @@ import { HomeSectionHeading } from "./home-section-heading";
  */
 
 const flowSteps = [
-  // STEP 1・2 のキャラクターはデザイン 2026-10-28 の差し替え（sd_orika_touroku / sd_pokezou_coin）。
-  // STEP 3・4（sd_fukumaru_gacha / sd_orika_uketoru）は Brand 素材の追加後に差し替える。
+  // キャラクターはデザイン 2026-10-28 の差し替え（STEP 1〜4：sd_orika_touroku / sd_pokezou_coin / sd_fukumaru_gacha / sd_orika_uketoru）。
   { image: brandAssetUrl("sd_orika_touroku.webp"), width: 126, height: 208, title: "会員登録", body: "メールアドレスで登録し、携帯電話番号のSMS認証を行います。ご利用には年齢の確認をいただきます。" },
   { image: brandAssetUrl("sd_pokezou_coin.webp"), width: 173, height: 200, title: "コイン購入", body: "購入画面で商品の内容を確認し、案内に沿って購入します。" },
-  { image: brandAssetUrl("sd_fukumaru_osuwari.webp"), width: 215, height: 200, title: "ガチャを引く", body: "企画の内容と利用条件を確認して引きます。獲得した景品は結果画面で確認できます。" },
-  { image: brandAssetUrl("sd_orika_wink.webp"), width: 138, height: 216, title: "景品を受け取る", body: "景品ごとに利用可能な方法で発送依頼・コイン交換を行います。" },
+  { image: brandAssetUrl("sd_fukumaru_gacha.webp"), width: 251, height: 200, title: "ガチャを引く", body: "企画の内容と利用条件を確認して引きます。獲得した景品は結果画面で確認できます。" },
+  { image: brandAssetUrl("sd_orika_uketoru.webp"), width: 140, height: 216, title: "景品を受け取る", body: "景品ごとに利用可能な方法で発送依頼・コイン交換を行います。" },
 ] as const;
 
 const assurances = [
-  { icon: "ship", title: "発送について", body: "発送の条件や手続きは、景品の案内とご利用ガイドをご確認ください。景品ごとに利用可能な方法が異なります。" },
-  { icon: "minor", title: "ご利用条件について", body: "ご利用前に利用規約をご確認ください。各企画の利用条件は、ガチャの詳細画面でご確認いただけます。" },
-  { icon: "help", title: "お困りのときは", body: "ご利用方法はご利用ガイドをご確認ください。届いた景品やお手続きについてご不明な点は、お問い合わせからご相談ください。" },
+  { icon: "ship", title: "発送について", body: "発送のご依頼から3～14営業日以内のお届けを目安としています。追跡番号つきの方法でお送りします。" },
+  { icon: "minor", title: "未成年の方のご利用について", body: "ご登録時に生年月日をご入力いただき、18歳未満の方はご登録いただけません。当社から年齢の確認をお願いすることがあります。" },
+  { icon: "help", title: "お困りのときは", body: "届いたカードが破損していた場合や、注文と違うカードが届いた場合は、お受け取りから7日以内にお問い合わせください。状態を確認のうえ、代わりの品の発送やコインの返還などで対応いたします。" },
 ] as const;
 
 export const homeGuideContent = { assurances, flowSteps } as const;

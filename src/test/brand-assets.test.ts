@@ -3,13 +3,15 @@ import manifest from "@/lib/brand-assets.manifest.json";
 
 afterEach(() => { vi.unstubAllEnvs(); vi.resetModules(); });
 
-it("reuses all 25 prior Brand keys and serves only Payment logos from the new version", () => {
+it("reuses all 27 prior Brand keys and serves only the flow step images from the new version", () => {
   for (const file of manifest.files) {
     expect(brandAssetUrl(file.relative_path, "")).toBe(`/brand/${file.relative_path}`);
     for (const env of ["old", "new"]) {
       expect(brandAssetUrl(file.relative_path, `https://${env}.example.test/static-assets`)).toBe(`https://${env}.example.test/${file.object_key}`);
       const prereg = ["sd_orika_touroku.webp", "sd_pokezou_coin.webp"].includes(file.relative_path);
-      const version = file.relative_path.startsWith("payments/") ? brandAssetVersion : prereg
+      const flow = ["sd_fukumaru_gacha.webp", "sd_orika_uketoru.webp"].includes(file.relative_path);
+      const version = flow ? brandAssetVersion : file.relative_path.startsWith("payments/")
+        ? "sha256-e14476bb46508a7f82edab331cda7fb1b3071bda8dc63b4be693466d7ab92d12" : prereg
         ? "sha256-6f32debad818f4907f5eb1593c8a7a0e31b2cc2edfb2f1f7f1d9f813f1e89c5d"
         : "sha256-5d603bd6eab81d6ddca776af3a5a875a9c4840859e1f57c054047f29f081df63";
       expect(file.object_key).toBe(`static-assets/brand/${version}/${file.relative_path}`);

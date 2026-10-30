@@ -202,10 +202,23 @@ describe("HomeGuide", () => {
     const stepImages = Array.from(view.container.querySelectorAll(".home-guide__flow img")).map((image) => image.getAttribute("src"));
     expect(stepImages[0]).toContain("sd_orika_touroku.webp");
     expect(stepImages[1]).toContain("sd_pokezou_coin.webp");
+    expect(stepImages[2]).toContain("sd_fukumaru_gacha.webp");
+    expect(stepImages[3]).toContain("sd_orika_uketoru.webp");
+    const dimensions = Array.from(view.container.querySelectorAll(".home-guide__flow img"), image => [image.getAttribute("width"), image.getAttribute("height")]);
+    expect(dimensions).toEqual([["126", "208"], ["173", "200"], ["251", "200"], ["140", "216"]]);
   });
 
   it("keeps site-wide Coin terminology in the fixed copy", () => {
     expect(JSON.stringify(homeGuideContent)).not.toMatch(/ポイント|\dpt\b/);
+  });
+
+  it("「安心してご利用いただくために」は規約・特商法と同じ条件だけを書く（2026-10-30）", () => {
+    expect(homeGuideContent.assurances.map((item) => item.title)).toEqual(["発送について", "未成年の方のご利用について", "お困りのときは"]);
+    const text = JSON.stringify(homeGuideContent.assurances);
+    expect(text).toContain("3～14営業日以内");
+    expect(text).toContain("18歳未満の方はご登録いただけません");
+    expect(text).toContain("お受け取りから7日以内");
+    expect(text).not.toMatch(/鑑定番号|送料は当社の負担|保護者/);
   });
 });
 

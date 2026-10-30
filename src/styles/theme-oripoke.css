@@ -1950,3 +1950,27 @@ html[data-motion="ready"] .gacha-card[data-reveal="in"]:hover { transition-delay
 .point-rate-notice h2 { font-size: 1rem; line-height: 1.5; margin: 0; }
 .point-rate-notice h2 strong { color: var(--teal-dd, #0b6b66); font-size: 1.2em; margin: 0 .15em; }
 .point-rate-notice p { font-size: .82rem; line-height: 1.7; margin: 0; }
+
+/* 会員登録：右ペイン（デザイン 08_会員登録.html）。900px 以上で2列、未満はフォームの下に並べる */
+.register-page .page-title { max-width: none; }
+.register-layout { display: grid; gap: 18px; margin-inline: auto; max-width: 560px; }
+.register-layout .auth-form { margin: 0; max-width: none; }
+.register-aside { display: grid; gap: 18px; align-content: start; }
+.register-aside__panel { background: #fff; border: 1px solid #d9ecea; border-radius: 14px; padding: 22px 24px; }
+.register-aside__panel h2 { color: var(--ink, #12393b); font-size: 1.06rem; font-weight: 900; line-height: 1.5; margin: 0 0 6px; }
+.register-aside__panel--benefit { text-align: center; }
+.register-aside__character { display: block; height: 130px; margin: 0 auto 10px; width: auto; }
+.register-aside__list { margin: 0; text-align: left; }
+.register-aside__list div { border-bottom: 1px solid #eaf4f3; display: flex; font-size: .85rem; justify-content: space-between; padding: 9px 0; }
+.register-aside__list dt { font-weight: 500; }
+.register-aside__list dd { font-variant-numeric: tabular-nums; font-weight: 900; margin: 0; }
+.register-aside__note { color: #4f6a6c; font-size: .78rem; line-height: 1.8; margin: 12px 0 0; }
+.register-aside__panel:not(.register-aside__panel--benefit) .register-aside__note { margin-top: 0; }
+@media (min-width: 900px) {
+  .register-layout { align-items: start; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); max-width: 1140px; }
+}
+
+/* コイン購入：未成年の方のご利用について */
+.point-minor-notice { background: #fff; border: 1px solid #d9ecea; border-radius: 14px; display: grid; gap: 6px; margin-top: 24px; padding: 14px 16px; }
+.point-minor-notice h2 { color: var(--ink, #173a3c); font-size: 1rem; font-weight: 900; line-height: 1.5; margin: 0; }
+.point-minor-notice p { color: #4f6a6c; font-size: .82rem; line-height: 1.8; margin: 0; }
