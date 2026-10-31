@@ -1273,7 +1273,7 @@ Required CI, Shadow and final-head fresh self-review results are recorded in the
 
 ## SF211-PRODAUTH-20261031
 
-- Risk R3 / Strict Change / Application Runtime Activation deferred. Base and selected Application Source f9093e40ef0b4c1828f06da715f466f48f976d6d (PR211 including PR209). Isolated branch ops/storefront-production-source-211; existing worktrees preserved. Related Authority Issue197 retained for canonical wrapper binding.
+- Risk R3 / Strict Change / Application Runtime Activation deferred. Base and selected Application Source f9093e40ef0b4c1828f06da715f466f48f976d6d (PR211 including PR209). Isolated branch chore/SF211-PRODAUTH-20261031; existing worktrees preserved. Related Authority Issue197 retained for canonical wrapper binding.
 - Minimal three-file authority pattern: exact Source/PR explanation and existing positive test expectations only. Immutable alpha.48 and historical Platform provenance unchanged. Future coordinated cutover requires Platform PR646 a35468d259c99dda7e64ce6f0c7fccda2ee9e665 common first-purchase limit, PR211 copy and PR209 in the same Storefront Artifact.
 - Human reports OLD Test reflection. Preserve seven-day auto exchange OFF, test payment history, GTM, Basic, CloudFront and Brand images. No exception implementation or data correction.
 - Authorized endpoint is Ready for Review. Merge, Artifact Dispatch/production Build, Runtime, ENV, DB, Worker and Platform operations require separate Human GO. Migrations created/applied 0/0. Required CI validation builds remain CI only.
