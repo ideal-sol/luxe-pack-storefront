@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { PUBLIC_POINT_PRODUCT_FIXTURES } from "@oripa/storefront-testkit/fixtures";
 import type { PointProduct, PointProductCollection } from "@/lib/platform";
 import { firstBuyRemainingMilliseconds, presentFirstBuyDeal, presentFirstBuyOffer } from "@/lib/presentation/first-buy-offer";
-import { FirstBuyBar, FirstBuyHero } from "@/components/points/first-buy-offer";
+import { FirstBuyBar, FirstBuyCoinCard, FirstBuyHero, GuestHeroCard } from "@/components/points/first-buy-offer";
 import { HomeFirstBuy } from "@/components/points/first-buy-home";
 import { ConnectedFirstBuyHome } from "@/components/points/first-buy-connected";
 import { PointPurchasePage } from "@/components/points/point-purchase-page";
@@ -163,12 +163,16 @@ describe("first-user canonical product presentation", () => {
     expect(presentFirstBuyOffer(data)).toBeNull();
   });
 
-  it("uses the same canonical lead in Hero and Popup and states the qualification and per-product limits", () => {
-    render(<HomeFirstBuy offer={presentFirstBuyOffer(collection())!} showPopup />);
+  it("uses the same canonical lead in Hero and Popup and states the shared purchase limit on all offer surfaces", () => {
+    const offer = presentFirstBuyOffer(collection())!;
+    render(<><HomeFirstBuy offer={offer} showPopup /><GuestHeroCard lead={offer.leadDeal} /><FirstBuyCoinCard deal={offer.leadDeal} /></>);
     const popup = screen.getByRole("dialog");
     expect(within(popup).getByRole("link", { name: "50円で100コインを受け取る" })).toHaveAttribute("href", "/points/purchase/cheapest");
     expect(popup).toHaveTextContent("初回メール認証完了から24時間");
-    expect(popup).toHaveTextContent("各商品お一人さま1回かぎり");
+    expect(popup).toHaveTextContent("お一人さま1回・どれか1つかぎり／表示はすべて税込／期限後は購入できません");
+    expect(screen.getByText("初回メール認証完了から24時間／お一人さま1回・どれか1つかぎり／表示はすべて税込")).toBeInTheDocument();
+    expect(screen.getByText("お一人さま1回・どれか1つかぎり／税込")).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("各商品お一人さま1回かぎり");
     expect(popup).toHaveTextContent("50%OFF");
     expect(popup).not.toHaveTextContent("90%OFF");
     expect(popup).toHaveTextContent("通常 100円 → 50円");

@@ -91,7 +91,7 @@ export function FirstBuyActiveCard({
           </Link>
         </div>
       </div>
-      <p className="fb-note">各商品お一人さま1回かぎり／表示はすべて税込／期限後は購入できません</p>
+      <p className="fb-note">お一人さま1回・どれか1つかぎり／表示はすべて税込／期限後は購入できません</p>
     </div>
   );
 }
@@ -107,7 +107,7 @@ export function GuestHeroCard({ lead }: { readonly lead: FirstBuyDeal }) {
           <Link className="fb-cta" href="/register">無料で会員登録する</Link>
         </div>
       </div>
-      <p className="fb-note">初回メール認証完了から24時間／各商品お一人さま1回かぎり／表示はすべて税込</p>
+      <p className="fb-note">初回メール認証完了から24時間／お一人さま1回・どれか1つかぎり／表示はすべて税込</p>
     </div>
   );
 }
@@ -160,7 +160,7 @@ export function FirstBuyCoinCard({ deal }: { readonly deal: FirstBuyDeal }) {
         <Link className="fb-coin__btn" href={deal.href ?? firstBuyLayoutDetailHref(product.id, "active")}>
           <b>{yen.format(product.price.amount)}</b><span>で購入</span>
         </Link>
-        <p className="fb-coin__note">各商品お一人さま1回かぎり／税込</p>
+        <p className="fb-coin__note">お一人さま1回・どれか1つかぎり／税込</p>
       </div>
     </article>
   );
