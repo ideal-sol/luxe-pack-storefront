@@ -44,9 +44,9 @@ function mutateManifest(mutation) {
 }
 
 describe("exact alpha.48 Production provenance", () => {
-  it("pins the Human-approved PR206 alpha.48 Runtime Source independently of Workflow/main without Activation GO", () => {
-    expect(approvedSource.source_sha).toBe("d06c46b42f202ec54bf7ed276cec98a18ee4e0a6");
-    expect(approvedSource.source_pr).toBe(206);
+  it("pins the Human-approved PR211 alpha.48 Runtime Source independently of Workflow/main without Activation GO", () => {
+    expect(approvedSource.source_sha).toBe("f9093e40ef0b4c1828f06da715f466f48f976d6d");
+    expect(approvedSource.source_pr).toBe(211);
     expect(approvedSource.activation_authorized).toBe(false);
     expect(approvedSource.source_sha).not.toBe("7dc355d3174bdf8a4731741eea7aa4a80752b724");
     expect(approvedSource.source_sha).not.toBe("9702793ec7fdad4332e634b230dc6661ff176655");
@@ -119,7 +119,7 @@ describe("exact alpha.48 Production provenance", () => {
 
   it("accepts approved source pins, immutable artifact identity and every digest", () => {
     expect(validateProvenance(root)).toMatchObject({
-      source_sha: "d06c46b42f202ec54bf7ed276cec98a18ee4e0a6",
+      source_sha: "f9093e40ef0b4c1828f06da715f466f48f976d6d",
       contract_version: "2.0.0-alpha.48", contract_artifact_id: "12819254428",
       contract_manifest_sha256: "9affb95def4858a748a5343614dcdf4d8e0ca20705d5d227cc48e976f01df60f",
       client_pin: "2.0.0-alpha.48", testkit_pin: "2.0.0-alpha.48", public_openapi_pin: "2.0.0-alpha.44",
