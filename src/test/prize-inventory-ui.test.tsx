@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
 import { PUBLIC_AUTH_FIXTURE, PUBLIC_POINT_BALANCE_FIXTURES, PUBLIC_SMS_VERIFICATION_FIXTURES, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
@@ -306,10 +306,15 @@ describe("prize inventory UI", () => {
     const view = renderInventory();
     expect(await screen.findByRole("heading", { name: "両方可能な景品" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "発送のみ可能な景品" })).toBeInTheDocument();
-    expect(screen.getAllByText("保管中")).toHaveLength(3);
-    expect(screen.getAllByText(base.presentation!.rank.name)).toHaveLength(3);
-    expect(screen.getAllByText(`${base.exchange_points.toLocaleString()} コイン`)).toHaveLength(3);
-    expect(screen.getAllByText("PRIZE IMAGE")).toHaveLength(3);
+    const list = view.container.querySelector(".inventory__list") as HTMLElement;
+    expect(within(list).getAllByText("保管中")).toHaveLength(3);
+    expect(within(list).getAllByText(base.presentation!.rank.name)).toHaveLength(3);
+    expect(within(list).getAllByText(base.exchange_points.toLocaleString("ja-JP"))).toHaveLength(3);
+    expect(within(list).getAllByText("コイン交換")).toHaveLength(3);
+    expect(within(list).getAllByText("PRIZE IMAGE")).toHaveLength(3);
+    // 状態で絞り込む（デザイン 2026-10-31）
+    expect(screen.getByRole("button", { name: "すべて3" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "保管中3" })).toBeInTheDocument();
     expect(screen.getByText("お支払い状況の確認中です。")).toBeInTheDocument();
     expect(view.container).not.toHaveTextContent(/ポイント|\bpt\b/i);
   });
@@ -350,8 +355,10 @@ describe("prize inventory UI", () => {
       listPrizes: vi.fn().mockResolvedValue(response({ items: [converted, processing, unavailable], next_cursor: null })),
     }));
 
-    expect(await screen.findByText("コイン交換済み")).toBeInTheDocument();
-    expect(screen.getByText("コイン交換処理中")).toBeInTheDocument();
+    await screen.findByRole("heading", { name: "交換済み景品" });
+    const list = view.container.querySelector(".inventory__list") as HTMLElement;
+    expect(within(list).getByText("コイン交換済み")).toBeInTheDocument();
+    expect(within(list).getByText("コイン交換処理中")).toBeInTheDocument();
     expect(screen.getByText("コイン交換額を確認できません。")).toBeInTheDocument();
     expect(view.container).not.toHaveTextContent(/ポイント|\bpt\b/i);
   });
@@ -467,7 +474,7 @@ it("renders a new acquired prize through CloudFront without mutating it", async 
     const api = client({ listPrizes: vi.fn().mockResolvedValue(response({ items: [item], next_cursor: null })) });
     renderInventory(api);
     await screen.findByText(item.presentation.name);
-    expect(document.querySelector(".inventory-card__image img")).toHaveAttribute("src", "https://cdn.example.test/gacha/new-prize.webp");
+    expect(document.querySelector(".prize-row__image img")).toHaveAttribute("src", "https://cdn.example.test/gacha/new-prize.webp");
     expect(api.exchangePrizes).not.toHaveBeenCalled();
     expect(api.createShippingRequest).not.toHaveBeenCalled();
   } finally { vi.unstubAllEnvs(); }

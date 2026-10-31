@@ -32,7 +32,7 @@ export type GachaSummaryCollection = Schemas["GachaSummaryCollection"];
 
 export type PublicCatalogAdapter = Pick<
   StorefrontCatalogClient,
-  "listLoginGachas" | "getLoginGacha" | "getGachaBySlug" | "getGachaPresentation" | "listGachaCategories" | "listGachaTags" | "listGachas"
+  "listLoginGachas" | "getLoginGacha" | "getGacha" | "getGachaBySlug" | "getGachaPresentation" | "listGachaCategories" | "listGachaTags" | "listGachas"
 > & Pick<
   StorefrontContentContactClient,
   "getNotice" | "getStaticPage" | "listBanners" | "listFooterPages" | "listNotices"
@@ -44,6 +44,7 @@ export function createPublicCatalogAdapter(transport: StorefrontTransport): Publ
   return {
     listLoginGachas: catalog.listLoginGachas,
     getLoginGacha: catalog.getLoginGacha,
+    getGacha: catalog.getGacha,
     getGachaBySlug: catalog.getGachaBySlug,
     getGachaPresentation: catalog.getGachaPresentation,
     getNotice: content.getNotice,

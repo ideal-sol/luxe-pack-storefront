@@ -2,16 +2,22 @@
 
 import Link from "next/link";
 import { resolveAssetUrl } from "@/lib/asset-url";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { PublicComponents } from "@oripa/storefront-client/types";
 import { ApiProblemError } from "@oripa/storefront-client";
 import { useSession } from "@/components/auth/session-provider";
+import { useOptionalPublicClient } from "@/components/catalog/public-client-provider";
 import { RankLineupImage } from "@/components/catalog/rank-lineup-image";
 import { CatalogAsset } from "@/components/catalog/catalog-asset";
 import { LoadingState } from "@/components/common/loading-state";
 import { LoginRequiredState } from "@/components/common/state-panel";
 import { presentPlatformProblem, type DrawResponse, type PlatformProblemPresentation } from "@/lib/platform";
+import type { GachaDetail, GachaPresentationState } from "@/lib/platform";
+import { GachaDrawPanel } from "./gacha-draw-panel";
+import { gachaDetailRoute } from "@/lib/routes/navigation";
+import { usePointClient } from "@/components/points/point-client-provider";
 import { useDrawClient } from "./draw-client-provider";
+import { DrawResultFulfillment, useDrawResultFulfillmentAvailable } from "./draw-result-fulfillment";
 
 type ResultState =
   | { readonly status: "loading" }
@@ -143,16 +149,21 @@ function RepresentativeVideo({ presentation, onFinished }: {
   );
 }
 
-function SnapshotResults({ result }: { readonly result: DrawResponse }) {
+/** 横の帯に出す件数の上限（1000連でも重くしない） */
+const SNAPSHOT_STRIP_LIMIT = 100;
+
+function SnapshotResults({ result, strip = false }: { readonly result: DrawResponse; readonly strip?: boolean }) {
   // Compact legacy responses alone may lack results. Preserve every new result in API order.
-  const snapshots = result.results ?? result.high_rank_results;
-  if (snapshots.length === 0) return null;
+  const all = result.results ?? result.high_rank_results;
+  if (all.length === 0) return null;
+  const snapshots = strip ? all.slice(0, SNAPSHOT_STRIP_LIMIT) : all;
 
   return (
-    <section aria-labelledby="draw-snapshots" className="draw-result__snapshots">
+    <section aria-labelledby="draw-snapshots" className={`draw-result__snapshots${strip ? " draw-result__snapshots--strip" : ""}`}>
       <div className="section-heading">
         <p>DRAW RESULTS</p>
         <h2 id="draw-snapshots">抽選結果一覧</h2>
+        {strip && <span className="draw-result__snapshots-sub">1回ごとの結果です。{all.length > snapshots.length ? `（先頭の${number.format(snapshots.length)}件を表示）` : ""}</span>}
       </div>
       <div className="draw-snapshot-grid">
         {snapshots.map((snapshot) => {
@@ -184,7 +195,116 @@ function SnapshotResults({ result }: { readonly result: DrawResponse }) {
   );
 }
 
+type DrawAgainState =
+  | { readonly status: "loading" }
+  | { readonly status: "available"; readonly detail: GachaDetail; readonly presentation: GachaPresentationState }
+  | { readonly status: "sold-out"; readonly title: string; readonly slug: string }
+  | { readonly status: "unavailable" };
+
+/**
+ * 抽選結果の「もう一回挑戦しますか？」（2026-10-28 要望）。
+ * 結果には gacha_id しかないため、公開カタログから詳細と抽選状態を引き、
+ * ガチャ詳細と同じ抽選ボタンをこの画面にそのまま出す（詳細画面へは移動しない）。
+ * ログインガチャなど公開カタログにないものや取得失敗時は、ガチャ一覧への導線にする。
+ */
+function useDrawAgain(gachaId: string): DrawAgainState {
+  const client = useOptionalPublicClient();
+  const [state, setState] = useState<DrawAgainState>(client ? { status: "loading" } : { status: "unavailable" });
+  useEffect(() => {
+    if (!client) return;
+    let active = true;
+    void Promise.all([client.getGacha(gachaId), client.getGachaPresentation(gachaId)])
+      .then(([detailResponse, presentationResponse]) => {
+        if (!active) return;
+        const detail = detailResponse.data.data;
+        const presentation = presentationResponse.data.data;
+        if (presentation.sale_state === "sold_out" || detail.remaining_count <= 0) setState({ slug: detail.slug, status: "sold-out", title: detail.title });
+        else if (presentation.sale_state === "on_sale") setState({ detail, presentation, status: "available" });
+        else setState({ status: "unavailable" });
+      })
+      .catch(() => { if (active) setState({ status: "unavailable" }); });
+    return () => { active = false; };
+  }, [client, gachaId]);
+  return state;
+}
+
+function DrawAgain({ state }: { readonly state: DrawAgainState }) {
+  if (state.status === "loading") return null;
+  if (state.status !== "available") {
+    return (
+      <div className="draw-result__again-note">
+        {state.status === "sold-out" && <p>「{state.title}」は完売しました。</p>}
+        <Link className="button button--ghost" href="/gachas">ほかのオリパを探す</Link>
+      </div>
+    );
+  }
+  const { detail, presentation } = state;
+  const asset = detail.presentation_asset?.media_type === "image" ? detail.presentation_asset : null;
+  return (
+    <section aria-labelledby="draw-again-heading" className="draw-again">
+      <h2 id="draw-again-heading">もう一回挑戦しますか？</h2>
+      <div className="draw-again__banner">
+        <CatalogAsset alt={asset?.alt_text ?? detail.title} fallbackLabel="PACK IMAGE" {...(asset?.path ? { src: asset.path } : {})} />
+      </div>
+      <GachaDrawPanel detail={detail} presentation={presentation} variant="inline" />
+    </section>
+  );
+}
+
+/**
+ * 抽選結果の最後の「このあと」（デザイン 2026-10-31「画面改修案」）。
+ * 「このガチャをもう一度引く」だけを大きくし、押すとこの画面で回数を選んで引ける（詳細画面へは移らない）。
+ */
+function NextSteps({ drawAgain }: { readonly drawAgain: DrawAgainState }) {
+  const [open, setOpen] = useState(false);
+  const wallet = useOptionalWalletBalance();
+  const againRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (open) window.setTimeout(() => againRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" }), 0);
+  }, [open]);
+  return (
+    <>
+      <section aria-labelledby="draw-next-heading" className="draw-next">
+        <div>
+          <h2 id="draw-next-heading">このあと</h2>
+          <p>過去に獲得した景品も、あわせてお手続きいただけます。</p>
+        </div>
+        <div className="draw-next__actions">
+          <Link className="draw-next__sub" href="/mypage/prizes">獲得アイテムを見る</Link>
+          <Link className="draw-next__sub" href="/">トップに戻る</Link>
+          {drawAgain.status === "available" ? (
+            <button aria-expanded={open} className="draw-next__again" onClick={() => setOpen(true)} type="button">
+              このガチャをもう一度引く
+              <small>1回 {number.format(drawAgain.detail.price_points)}コイン{wallet !== null ? ` ／ 所持 ${number.format(wallet)}コイン` : ""}</small>
+            </button>
+          ) : drawAgain.status === "loading" ? null : (
+            <Link className="draw-next__again draw-next__again--other" href="/gachas">
+              ほかのオリパを探す
+              {drawAgain.status === "sold-out" && <small>「{drawAgain.title}」は完売しました</small>}
+            </Link>
+          )}
+        </div>
+      </section>
+      {open && drawAgain.status === "available" && <div className="draw-result__again-anchor" ref={againRef}><DrawAgain state={drawAgain} /></div>}
+    </>
+  );
+}
+
+function useOptionalWalletBalance(): number | null {
+  try {
+    const wallet = usePointClient().wallet;
+    return wallet?.status === "ready" ? wallet.balance.total_points : null;
+  } catch {
+    return null;
+  }
+}
+
 function DrawResultContent({ result }: { readonly result: DrawResponse }) {
+  const drawAgain = useDrawAgain(result.gacha_id);
+  const fulfillment = useDrawResultFulfillmentAvailable(result);
+  const handleExchanged = useCallback(() => undefined, []);
+  const backHref = drawAgain.status === "available" ? gachaDetailRoute(drawAgain.detail.slug)
+    : drawAgain.status === "sold-out" ? gachaDetailRoute(drawAgain.slug) : "/gachas";
   return (
     <article className="draw-result">
       <header className="draw-result__header">
@@ -201,7 +321,8 @@ function DrawResultContent({ result }: { readonly result: DrawResponse }) {
         <div><dt>コイン還元</dt><dd>{number.format(result.point_back_total)} コイン</dd></div>
         <div><dt>実行日時</dt><dd>{formatDateTime(result.created_at)}</dd></div>
       </dl>
-      <SnapshotResults result={result} />
+      <SnapshotResults result={result} strip={fulfillment} />
+      {fulfillment ? <DrawResultFulfillment backHref={backHref} onExchanged={handleExchanged} result={result} /> : (
       <section aria-labelledby="draw-prizes" className="draw-result__prizes">
         <div className="section-heading">
           <p>PRIZES</p>
@@ -229,10 +350,16 @@ function DrawResultContent({ result }: { readonly result: DrawResponse }) {
           </div>
         )}
       </section>
-      <nav aria-label="抽選結果の次の操作" className="draw-result__actions">
-        <Link className="button button--dark" href="/mypage/prizes">獲得アイテムを確認</Link>
-        <Link className="button button--ghost" href="/">トップに戻る</Link>
-      </nav>
+      )}
+      {fulfillment ? <NextSteps drawAgain={drawAgain} /> : (
+        <>
+          <DrawAgain state={drawAgain} />
+          <nav aria-label="抽選結果の次の操作" className="draw-result__actions">
+            <Link className="button button--dark" href="/mypage/prizes">獲得アイテムを確認</Link>
+            <Link className="button button--ghost" href="/">トップに戻る</Link>
+          </nav>
+        </>
+      )}
     </article>
   );
 }
