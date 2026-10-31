@@ -313,8 +313,17 @@ describe("prize inventory UI", () => {
     expect(within(list).getAllByText("コイン交換")).toHaveLength(3);
     expect(within(list).getAllByText("PRIZE IMAGE")).toHaveLength(3);
     // 状態で絞り込む（デザイン 2026-10-31）
-    expect(screen.getByRole("button", { name: "すべて3" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "保管中3" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "すべて" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "保管中" })).toBeInTheDocument();
+    const filters = screen.getByRole("group", { name: "状態で絞り込む" });
+    expect(within(filters).getAllByRole("button").map((button) => button.textContent)).toEqual(["保管中", "発送依頼済み", "コイン交換済み", "すべて"]);
+    expect(filters.querySelector(".prize-filters__count")).toBeNull();
+    fireEvent.click(screen.getByRole("checkbox", { name: "両方可能な景品を選択" }));
+    fireEvent.click(within(filters).getByRole("button", { name: "発送依頼済み" }));
+    expect(within(filters).getByRole("button", { name: "発送依頼済み" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(list).queryByRole("heading", { name: "両方可能な景品" })).toBeNull();
+    fireEvent.click(within(filters).getByRole("button", { name: "すべて" }));
+    expect(screen.getByRole("checkbox", { name: "両方可能な景品を選択" })).not.toBeChecked();
     expect(screen.getByText("お支払い状況の確認中です。")).toBeInTheDocument();
     expect(view.container).not.toHaveTextContent(/ポイント|\bpt\b/i);
   });

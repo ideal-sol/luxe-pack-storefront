@@ -83,6 +83,24 @@ async function fulfillmentRegion() {
 }
 
 describe("抽選結果で、今回の獲得景品をそのまま交換・発送する", () => {
+  it.each([1, 10, 100, 1000])("%i回の横帯はSnapshotのランクタグと共通サムネイルを表示する", async (count) => {
+    const result = drawWith(count);
+    result.results = result.results!.map((item, index) => ({ ...item,
+      rank: index === 0 ? null : { id: "historical-rank", name: `当時の等級${index}` },
+    }));
+    renderResult(result, prizeClient({ listPrizes: vi.fn().mockResolvedValue(response({ items: [], next_cursor: null })) }));
+    await screen.findByRole("heading", { name: "抽選結果一覧" });
+    const cards = document.querySelectorAll(".draw-result__snapshots--strip .draw-snapshot-card");
+    expect(cards).toHaveLength(Math.min(count, 100));
+    cards.forEach((card, index) => {
+      expect(card.querySelector(".draw-snapshot-card__thumbnail.prize-row__image")).not.toBeNull();
+      expect(card.querySelector(".rank-lineup-image")).toBeNull();
+      if (index === 0) expect(card.querySelector(".prize-tier")).toBeNull();
+      else expect(card.querySelector(".prize-tier")).toHaveTextContent(`当時の等級${index}`);
+      expect(card).toHaveTextContent(`抽選順 ${index + 1}`);
+    });
+  });
+
   it("権限や保管期限が違う景品を同じ行にまとめない", () => {
     const a = prize(0, 10);
     const b = { ...a, id: "different-deadline", storage_expires_at: "2026-11-06T00:00:00Z" };

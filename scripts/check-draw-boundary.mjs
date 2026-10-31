@@ -49,6 +49,8 @@ for (const required of [
   ["result-recovery", result.includes("client.getDrawRequest")],
   ["rank-lineup-image", result.includes("snapshot.rank_lineup_image")],
   ["rank-name-fallback", result.includes("name={snapshot.rank.name}")],
+  ["snapshot-rank-tag", result.includes('? <span className="prize-tier">{snapshot.rank.name}</span>')],
+  ["legacy-rank-image-only", result.includes(': <RankLineupImage image={snapshot.rank_lineup_image} name={snapshot.rank.name} />')],
   ["prize-thumbnail", result.includes("snapshot.prize?.presentation_asset")],
   ["representative-video", result.includes("presentation.video_snapshot")],
   ["snapshot-video-playback", result.includes("<video")],
