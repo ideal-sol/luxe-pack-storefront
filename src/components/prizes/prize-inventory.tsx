@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
 import { SmsVerificationRequiredDialog } from "@/components/account/sms-verification-required-dialog";
-import { CatalogAsset } from "@/components/catalog/catalog-asset";
 import { CatalogLoading, CatalogMessage } from "@/components/catalog/catalog-message";
 import { LoginRequiredState } from "@/components/common/state-panel";
 import {
@@ -12,11 +11,10 @@ import {
   type PlatformProblemPresentation,
   type UserPrize,
   type UserPrizeActionUnavailableReason,
-  type UserPrizeStatus,
 } from "@/lib/platform";
-import { presentCoinTerminology } from "@/lib/presentation/coin-terminology";
 import { usePrizeClient } from "./prize-client-provider";
 import { PrizeFulfillmentDialog } from "./prize-fulfillment";
+import { PrizeRow, PrizeStatusFilters, prizeStatusFilter, type PrizeStatusFilter } from "./prize-row";
 import { actionablePrizes, type FulfillmentAction } from "./prize-actions";
 
 type InventoryState =
@@ -35,20 +33,6 @@ type InventoryState =
 type BulkAction = FulfillmentAction;
 
 const number = new Intl.NumberFormat("ja-JP");
-const statusLabels: Readonly<Record<UserPrizeStatus, string>> = {
-  canceled: "取消",
-  converted: "コイン交換済み",
-  delivered: "配送完了",
-  exchange_processing: "コイン交換処理中",
-  expired: "保管期限終了",
-  hold: "保留",
-  packing: "梱包中",
-  returned: "返送済み",
-  return_requested: "返送手続中",
-  shipped: "発送済み",
-  shipping_requested: "発送依頼済み",
-  stored: "保管中",
-};
 const reasonLabels: Readonly<Record<UserPrizeActionUnavailableReason, string>> = {
   exchange_points_unavailable: "コイン交換額を確認できません。",
   payment_hold: "お支払い状況の確認中です。",
@@ -57,12 +41,6 @@ const reasonLabels: Readonly<Record<UserPrizeActionUnavailableReason, string>> =
   shipping_only: "配送のみ・コイン交換不可",
 };
 
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("ja-JP", {
-    dateStyle: "medium",
-    timeZone: "Asia/Tokyo",
-  }).format(new Date(value));
-}
 
 function selectionReason(prize: UserPrize) {
   const reason = prize.allowed_actions?.selection.unavailable_reason;
@@ -78,47 +56,18 @@ function PrizeCard({
   readonly onChange: (checked: boolean) => void;
   readonly prize: UserPrize;
 }) {
-  const presentation = prize.presentation;
-  const image = presentation?.image?.media_type === "image" ? presentation.image : null;
   const selectable = prize.allowed_actions?.selection.allowed === true;
-  const name = presentCoinTerminology(presentation?.name ?? "景品情報を表示できません");
-
-  return (
-    <article className={`inventory-card${checked ? " inventory-card--selected" : ""}`}>
-      <label className="inventory-card__select">
-        <input
-          aria-label={`${name}を選択`}
-          checked={checked}
-          disabled={!selectable}
-          onChange={(event) => onChange(event.currentTarget.checked)}
-          type="checkbox"
-        />
-        <span aria-hidden="true" />
-      </label>
-      <div className="inventory-card__image">
-        <CatalogAsset
-          alt={image?.alt_text ?? name}
-          fallbackLabel="PRIZE IMAGE"
-          {...(image?.path ? { src: image.path } : {})}
-        />
-      </div>
-      <div className="inventory-card__body">
-        <div className="inventory-card__badges">
-          <span>{statusLabels[prize.status]}</span>
-          {presentation?.rank && <span>{presentation.rank.name}</span>}
-          {prize.shipping_only === true && <span>配送のみ・コイン交換不可</span>}
-        </div>
-        <h2>{name}</h2>
-        <dl>
-          <div><dt>獲得日</dt><dd><time dateTime={prize.acquired_at}>{formatDateTime(prize.acquired_at)}</time></dd></div>
-          <div><dt>保管期限</dt><dd><time dateTime={prize.storage_expires_at}>{formatDateTime(prize.storage_expires_at)}</time></dd></div>
-          <div><dt>交換コイン</dt><dd>{number.format(prize.exchange_points)} コイン</dd></div>
-        </dl>
-        {!selectable && <p className="inventory-card__reason">{selectionReason(prize)}</p>}
-      </div>
-    </article>
-  );
+  // 保管中なのに選べないもの（お支払い確認中など）だけ理由を出す。発送依頼済み・交換済みは状態の札と説明で分かる。
+  const reason = !selectable && prizeStatusFilter(prize) === "stored" ? selectionReason(prize) : null;
+  return <PrizeRow checked={checked} disabled={!selectable} extraNote={reason} onToggle={onChange} prize={prize} />;
 }
+
+const statusFilterOptions = [
+  { key: "stored", label: "保管中" },
+  { key: "shipping", label: "発送依頼済み" },
+  { key: "done", label: "コイン交換済み" },
+  { key: "all", label: "すべて" },
+] as const;
 
 function availableBulkActions(items: readonly UserPrize[], selected: ReadonlySet<string>): readonly BulkAction[] {
   const selectedItems = items.filter((item) => selected.has(item.id));
@@ -147,6 +96,7 @@ function BulkActionTray({ actions, items, onAction, shippingChecking }: { readon
 }
 
 export function PrizeInventory() {
+  const [filter, setFilter] = useState<PrizeStatusFilter>("all");
   const { getSmsVerificationStatus, state: session } = useSession();
   const { client, configurationAvailable } = usePrizeClient();
   const [requestKey, setRequestKey] = useState(0);
@@ -171,6 +121,14 @@ export function PrizeInventory() {
     return () => { active = false; };
   }, [client, requestKey, sessionUserId]);
 
+  const visibleItems = useMemo(() => state.status === "ready"
+    ? state.items.filter((item) => filter === "all" || prizeStatusFilter(item) === filter)
+    : [], [filter, state]);
+  const filterCounts = useMemo(() => {
+    const counts: Record<PrizeStatusFilter, number> = { all: 0, done: 0, shipping: 0, stored: 0 };
+    if (state.status === "ready") for (const item of state.items) { counts.all += 1; counts[prizeStatusFilter(item)] += 1; }
+    return counts;
+  }, [state]);
   const actions = useMemo(() => state.status === "ready"
     ? availableBulkActions(state.items, selected)
     : [], [selected, state]);
@@ -265,10 +223,19 @@ export function PrizeInventory() {
         <div>
           <p>PRIZE INVENTORY</p>
           <h2 id="inventory-heading">保有景品</h2>
+          <p className="inventory__status-note">各景品の状態は、最新の受付状況を表示しています。</p>
         </div>
+        <PrizeStatusFilters counts={filterCounts} onChange={(value) => { setFilter(value as PrizeStatusFilter); setSelected(new Set()); }} options={statusFilterOptions} value={filter} />
+      </div>
+      <p className="prize-legend">
+        <span><i style={{ background: "#157A4C" }} />保管中 … 発送依頼とコイン交換ができます</span>
+        <span><i style={{ background: "#2A4FA8" }} />発送依頼済み … 受付が済み、発送をお待ちいただいています</span>
+        <span><i style={{ background: "#6B7B7C" }} />コイン交換済み … コインでお受け取り済みです</span>
+      </p>
+      <div className="inventory__selection-bar">
         <div className="inventory__selection-actions">
           {(["point_exchange", "shipping"] as const).map((action) => {
-            const ids = actionablePrizes(state.items, action).map((item) => item.id);
+            const ids = actionablePrizes(visibleItems, action).map((item) => item.id);
             return (
               <button disabled={ids.length === 0} key={action} onClick={() => setSelected(new Set(ids))} type="button">
                 {action === "point_exchange" ? "コイン交換対象を全選択" : "配送対象を全選択"}
@@ -278,9 +245,9 @@ export function PrizeInventory() {
           <button disabled={selected.size === 0} onClick={() => setSelected(new Set())} type="button">リセット</button>
         </div>
       </div>
-      <p className="inventory__status-note">各景品の状態は、最新の受付状況を表示しています。</p>
-      <div className="inventory__list">
-        {state.items.map((prize) => (
+      <div className="inventory__list prize-rows">
+        {visibleItems.length === 0 && <p className="inventory__filter-empty">この状態の景品はありません。</p>}
+        {visibleItems.map((prize) => (
           <PrizeCard
             checked={selected.has(prize.id)}
             key={prize.id}

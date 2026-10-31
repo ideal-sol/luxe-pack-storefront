@@ -2,6 +2,9 @@ import { readFileSync } from "node:fs";
 
 const panel = readFileSync("src/components/draw/gacha-draw-panel.tsx", "utf8");
 const result = readFileSync("src/components/draw/draw-result.tsx", "utf8");
+// Live catalog reads belong only to the retry panel; historical snapshots stay immutable.
+const historicalResult = result.replace(/function useDrawAgain\(gachaId: string\): DrawAgainState \{[\s\S]*?\n\}/, "");
+const boundedResult = result.replace("all.slice(0, SNAPSHOT_STRIP_LIMIT)", "all");
 const history = readFileSync("src/components/draw/draw-history-page.tsx", "utf8");
 const adapter = readFileSync("src/lib/platform/draw-client.ts", "utf8");
 const combined = `${panel}\n${result}\n${history}`;
@@ -24,9 +27,9 @@ const forbidden = new Map([
   ["history-current-gacha-read", /(?:getGacha|listGachas|getGachaPresentation)/.test(history)],
   ["history-count-comparison", /(?:requested_count|executed_count)[^\n]*(?:===|!==|<=|>=|<|>)[^\n]*(?:requested_count|executed_count)/.test(history)],
   ["result-per-card-video", /snapshot\.video_snapshot/.test(result)],
-  ["result-truncation-or-sort", /\.(?:slice|sort|toSorted)\s*\(/.test(result)],
+  ["result-truncation-or-sort", /\.(?:slice|sort|toSorted)\s*\(/.test(boundedResult)],
   ["result-rank-inference", /(?:rank\.(?:id|name)|sequence_number)\s*(?:===|!==|[<>])|high_rank_results\s*\[/.test(result)],
-  ["result-current-rank-read", /(?:getGacha|listGachas|getGachaPresentation)/.test(result)],
+  ["result-current-rank-read", /(?:getGacha|listGachas|getGachaPresentation)/.test(historicalResult)],
   ["result-current-rank-video", /\bcurrent_video\b/.test(result)],
   ["result-lineup-image-fallback", /\blineup_image\b/.test(result)],
   ["result-inventory-badge", /total_inventory|show_total_stock|total_stock/.test(result)],
@@ -52,6 +55,7 @@ for (const required of [
   ["presentation-error", result.includes("onError={finish}")],
   ["presentation-ended", result.includes("onEnded={finish}")],
   ["full-results", result.includes("result.results ?? result.high_rank_results")],
+  ["bounded-strip-only", result.includes("const SNAPSHOT_STRIP_LIMIT = 100;") && result.includes("strip ? all.slice(0, SNAPSHOT_STRIP_LIMIT) : all")],
   ["history-read", history.includes("client.listDrawHistory")],
   ["history-presentation", history.includes("entry.gacha.presentation_asset")],
   ["history-status-label", history.includes("entry.status.label")],
