@@ -72,9 +72,12 @@ interface PendingOperation {
 export function GachaDrawPanel({
   detail,
   presentation,
+  variant = "page",
 }: {
   readonly detail: GachaDetail;
   readonly presentation: GachaPresentationState;
+  /** "inline" は抽選結果の「もう一回挑戦しますか？」用。画面下に固定せず、抽選状態の欄も出さない。 */
+  readonly variant?: "page" | "inline";
 }) {
   const router = useRouter();
   const { client, configurationAvailable } = useDrawClient();
@@ -131,15 +134,15 @@ export function GachaDrawPanel({
 
   return (
     <>
-      <section aria-label="抽選状態" className={`gacha-eligibility gacha-eligibility--${presentation.sale_state}`}>
+      {variant === "page" && <section aria-label="抽選状態" className={`gacha-eligibility gacha-eligibility--${presentation.sale_state}`}>
         <div>
           <span>{gachaSaleStateLabels[presentation.sale_state]}</span>
           <strong>{statusMessage(presentation)}</strong>
           <small>対象: {audienceLabels[presentation.audience]}</small>
         </div>
         <DailyLimit dailyLimit={presentation.daily_limit} />
-      </section>
-      <aside aria-label="抽選オプション" className={`gacha-draw-tray gacha-draw-tray--${presentation.cta.state}`} data-cta-state={presentation.cta.state}>
+      </section>}
+      <aside aria-label="抽選オプション" className={`gacha-draw-tray gacha-draw-tray--${presentation.cta.state}${variant === "inline" ? " gacha-draw-tray--inline" : ""}`} data-cta-state={presentation.cta.state}>
         <div className="gacha-draw-tray__inner">
           <div className="gacha-draw-tray__summary">
             <p><span>1回</span><strong>{number.format(detail.price_points)} コイン</strong></p>

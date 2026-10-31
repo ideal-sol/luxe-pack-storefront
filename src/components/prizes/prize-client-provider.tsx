@@ -47,3 +47,8 @@ export function usePrizeClient() {
   if (!context) throw new Error("usePrizeClient must be used within PrizeClientProvider");
   return context;
 }
+
+/** PrizeClientProvider の外では null を返す（抽選結果の画面など、獲得アイテム以外から使うとき用）。 */
+export function useOptionalPrizeClient(): PrizeClientContextValue | null {
+  return useContext(PrizeClientContext);
+}
