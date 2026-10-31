@@ -550,6 +550,7 @@ describe("CloudFront Draw presentation", () => {
     document.querySelectorAll(".draw-snapshot-card").forEach((card, index) => {
       expect(card.querySelector(".draw-snapshot-card__image img")).toHaveAttribute("src", `https://cdn.example.test/gacha/prize_${index}.webp`);
       expect(card.querySelector(".rank-lineup-image img")).toHaveAttribute("src", `https://cdn.example.test/rank-masters/Rank_${index}.png`);
+      expect(card.querySelector(".prize-tier")).toBeNull();
     });
     expect(screen.getByText("消費コイン").nextElementSibling).toHaveTextContent(data.point_cost_total.toLocaleString("ja-JP"));
     expect(screen.getByRole("link", { name: "獲得アイテムを確認" })).toHaveAttribute("href", "/mypage/prizes");

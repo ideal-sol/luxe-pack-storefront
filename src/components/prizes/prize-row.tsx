@@ -135,12 +135,10 @@ export function PrizeRow({
 }
 
 export function PrizeStatusFilters({
-  counts,
   onChange,
   options,
   value,
 }: {
-  readonly counts: Readonly<Record<string, number>>;
   readonly onChange: (value: string) => void;
   readonly options: readonly { readonly key: string; readonly label: string }[];
   readonly value: string;
@@ -149,7 +147,7 @@ export function PrizeStatusFilters({
     <div aria-label="状態で絞り込む" className="prize-filters" role="group">
       {options.map((option) => (
         <button aria-pressed={value === option.key} key={option.key} onClick={() => onChange(option.key)} type="button">
-          {option.label}<span className="prize-filters__count">{number.format(counts[option.key] ?? 0)}</span>
+          {option.label}
         </button>
       ))}
     </div>

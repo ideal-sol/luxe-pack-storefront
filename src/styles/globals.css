@@ -441,7 +441,7 @@ body:has(.draw-presentation) { overflow: hidden; }
 .draw-snapshot-card__image .catalog-asset { height: 100%; }
 .draw-snapshot-card__image .catalog-asset img { object-fit: contain; }
 .draw-snapshot-card__copy { display: grid; gap: 5px; padding: 16px; }
-.draw-snapshot-card__copy span { color: var(--bronze); font-size: .65rem; font-weight: 800; letter-spacing: .08em; }
+.draw-snapshot-card__copy span:not(.prize-tier) { color: var(--bronze); font-size: .65rem; font-weight: 800; letter-spacing: .08em; }
 .draw-snapshot-card__copy h3 { font-size: .92rem; line-height: 1.5; margin: 0; }
 .draw-snapshot-card__copy p { color: var(--muted); font-size: .7rem; margin: 0; }
 .draw-result__prizes { display: grid; gap: 18px; }

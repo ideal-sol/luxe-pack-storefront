@@ -124,11 +124,6 @@ export function PrizeInventory() {
   const visibleItems = useMemo(() => state.status === "ready"
     ? state.items.filter((item) => filter === "all" || prizeStatusFilter(item) === filter)
     : [], [filter, state]);
-  const filterCounts = useMemo(() => {
-    const counts: Record<PrizeStatusFilter, number> = { all: 0, done: 0, shipping: 0, stored: 0 };
-    if (state.status === "ready") for (const item of state.items) { counts.all += 1; counts[prizeStatusFilter(item)] += 1; }
-    return counts;
-  }, [state]);
   const actions = useMemo(() => state.status === "ready"
     ? availableBulkActions(state.items, selected)
     : [], [selected, state]);
@@ -225,7 +220,7 @@ export function PrizeInventory() {
           <h2 id="inventory-heading">保有景品</h2>
           <p className="inventory__status-note">各景品の状態は、最新の受付状況を表示しています。</p>
         </div>
-        <PrizeStatusFilters counts={filterCounts} onChange={(value) => { setFilter(value as PrizeStatusFilter); setSelected(new Set()); }} options={statusFilterOptions} value={filter} />
+        <PrizeStatusFilters onChange={(value) => { setFilter(value as PrizeStatusFilter); setSelected(new Set()); }} options={statusFilterOptions} value={filter} />
       </div>
       <p className="prize-legend">
         <span><i style={{ background: "#157A4C" }} />保管中 … 発送依頼とコイン交換ができます</span>

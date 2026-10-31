@@ -479,7 +479,7 @@ body {
 .draw-result__header > p { color: var(--gold-lt); }
 .draw-result__header span { color: rgba(255, 255, 255, .9); }
 .draw-result__summary, .draw-snapshot-card, .draw-result-card { border: 2px solid var(--line); border-radius: 12px; }
-.draw-result-card span, .draw-snapshot-card__copy span { color: var(--teal-dd); }
+.draw-result-card span, .draw-snapshot-card__copy span:not(.prize-tier) { color: var(--teal-dd); }
 
 /* ---------- 保有景品・発送 ---------- */
 .inventory-card { border: 2px solid var(--line); }
@@ -2030,9 +2030,7 @@ html[data-motion="ready"] .gacha-card[data-reveal="in"]:hover { transition-delay
 .prize-tier--note { background: #fff6dc; border-color: #ebcf86; color: #8a5e00; }
 .prize-filters { display: flex; flex-wrap: wrap; gap: 8px; }
 .prize-filters button { align-items: center; background: #fff; border: 1.5px solid #cfe3e1; border-radius: 999px; color: #4a6b6c; cursor: pointer; display: inline-flex; font-size: .8rem; font-weight: 800; gap: 7px; line-height: 1; padding: 9px 16px; }
-.prize-filters__count { background: #eef7f6; border-radius: 999px; color: #4a6b6c; font-size: .68rem; font-variant-numeric: tabular-nums; padding: 3px 8px; }
 .prize-filters button[aria-pressed="true"] { background: var(--ink, #173a3c); border-color: var(--ink, #173a3c); color: #fff; }
-.prize-filters button[aria-pressed="true"] .prize-filters__count { background: rgba(255, 255, 255, .22); color: #fff; }
 .prize-legend { background: #f7fbfb; border: 1px solid #e6f1f0; border-radius: 10px; color: #6b8688; display: flex; flex-wrap: wrap; font-size: .75rem; gap: 6px 18px; margin: 0 0 16px; padding: 12px 16px; }
 .prize-legend span { align-items: center; display: inline-flex; gap: 7px; }
 .prize-legend i { border-radius: 50%; flex: none; height: 9px; width: 9px; }
@@ -2078,6 +2076,9 @@ html[data-motion="ready"] .gacha-card[data-reveal="in"]:hover { transition-delay
 .draw-result__snapshots-sub { color: #6b8688; font-size: .75rem; }
 .draw-result__snapshots--strip .draw-snapshot-grid { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; }
 .draw-result__snapshots--strip .draw-snapshot-card { flex: none; scroll-snap-align: start; width: 112px; }
+.draw-result__snapshots--strip .draw-snapshot-card__thumbnail { justify-self: center; margin-top: 12px; }
+.draw-result__snapshots--strip .draw-snapshot-card__thumbnail img { object-fit: contain; }
+.draw-result__snapshots--strip .draw-snapshot-card__copy { justify-items: start; }
 .draw-next { align-items: center; background: #fff; border: 1px solid #d9ecea; border-radius: 14px; display: flex; flex-wrap: wrap; gap: 16px 20px; justify-content: space-between; padding: 22px 20px; }
 .draw-next h2 { color: var(--ink, #173a3c); font-size: 1.06rem; font-weight: 900; margin: 0; }
 .draw-next p { color: #6b8688; font-size: .78rem; margin: 4px 0 0; }

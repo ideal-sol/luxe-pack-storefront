@@ -174,7 +174,7 @@ function SnapshotResults({ result, strip = false }: { readonly result: DrawRespo
           return (
             <article className="draw-snapshot-card" key={snapshot.id}>
               {snapshot.result_type === "prize" && (
-                <div className="draw-snapshot-card__image">
+                <div className={strip ? "draw-snapshot-card__thumbnail prize-row__image" : "draw-snapshot-card__image"}>
                   <CatalogAsset
                     alt={image?.alt_text ?? title}
                     fallbackLabel="PRIZE IMAGE"
@@ -183,7 +183,9 @@ function SnapshotResults({ result, strip = false }: { readonly result: DrawRespo
                 </div>
               )}
               <div className="draw-snapshot-card__copy">
-                {snapshot.rank && <RankLineupImage image={snapshot.rank_lineup_image} name={snapshot.rank.name} />}
+                {snapshot.rank && (strip
+                  ? <span className="prize-tier">{snapshot.rank.name}</span>
+                  : <RankLineupImage image={snapshot.rank_lineup_image} name={snapshot.rank.name} />)}
                 <h3>{title}</h3>
                 <p>抽選順 {number.format(snapshot.sequence_number)}</p>
               </div>
