@@ -1309,3 +1309,11 @@ Required CI, Shadow and final-head fresh self-review results are recorded in the
 - No Platform/Admin/API-contract/schema/migration/Auth-core/accounting/payment/draw-authority/dependency/Infrastructure changes. Migrations created/applied 0/0; local Build count 0; Runtime Activation count 0; CI reruns 0. Draft only; no Ready/Merge/auto-merge/OLD Test/Production. Rollback is a later reviewed source revert. Retain both task branches for Human review; remove the reused isolation worktree after publication. Final-head self-review and automatic CI status are PR records.
 
 - Source merge authorization: Human approves PR216 then PR217 squash only. PR216 merged at f40534aadc263769e6218d6cf61f991eb60d8a8a. GitHub confirmed PR217 dirty; resolve only this Worklog by retaining both records. No feature edits. New head requires automatic CI and canonical self-review; reuse prior local test evidence. No manual CI rerun, local Build, Runtime/Artifact/OLD Test/Production action. Browser acceptance remains Human work after separately authorized OLD Test reflection. Both task branches and temporary isolation worktree are cleaned only after verified squash merges.
+
+
+## SITE-RANKDASH-20261102
+
+- Issue none; Risk R1; Lane Lite Maintenance; Application Runtime Activation none. Base d66c81b753c647de19e92b4836336380116ec37c. One branch/PR; isolated checkout preserves the occupied primary directory and existing Runtime checkouts. No Source Lock. Canonical App capability record binds the PR itself; no new Issue.
+- Hide the reach-line element only when reach_line is null. Keep beginner name/current tag/colors and all configured numeric reach lines; CSS, monthly rank semantics and hidden breakdown remain unchanged.
+- Local member-rank UI 17 tests, changed-file ESLint, Next route type generation, TypeScript --noEmit and whitespace PASS. Automatic Required CI and final-head self-review recorded on PR; no manual CI rerun or local Build. Browser/visual acceptance not run.
+- No Platform/API/Admin/Contract/dependency/financial/schema impact; migrations created/applied 0/0; Runtime activations 0. Human authorizes Source squash after gates only. OLD Test and Production remain on their separately authorized sources. Rollback: reviewed source revert. Task branch and isolation checkout removed after verified merge.

@@ -85,6 +85,24 @@ beforeEach(() => {
 });
 
 describe("会員本人のランク", () => {
+  it("ビギナーの到達ラインとハイフンを描画せず、他ランクの到達ラインを保持する", async () => {
+    loadMyMemberRank.mockResolvedValue(enabled("beginner", 0));
+    renderRankPage();
+    await currentCard();
+    const steps = within(screen.getByRole("list", { name: "会員ランクの段" })).getAllByRole("listitem");
+    expect(steps).toHaveLength(7);
+    expect(steps[0]).toHaveTextContent("ビギナー");
+    expect(steps[0]).toHaveTextContent("いまここ");
+    expect(steps[0]).toHaveClass("mrank-t0", "is-current");
+    expect(steps[0]).not.toHaveTextContent("—");
+    expect(steps[0]!.querySelector(".mrank-ladder__line")).toBeNull();
+    for (const [index, rank] of ranks.entries()) {
+      if (rank.reach_line !== null) {
+        expect(steps[index]!.querySelector(".mrank-ladder__line")).toHaveTextContent(`${new Intl.NumberFormat("ja-JP").format(rank.reach_line)} 〜`);
+      }
+    }
+  });
+
   it("現行APIの月次ポイント・次ランク・特典・維持条件を表示し、説明はサポートへ誘導する", async () => {
     loadMyMemberRank.mockResolvedValue(enabled("silver", 42000, {
       maintain: { line: 20000, remaining: 0, achieved: true },
