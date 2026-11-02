@@ -20,6 +20,14 @@ import { markSmsRegistrationPrompt } from "@/lib/sms-registration-prompt";
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/mypage", useRouter: () => ({ push }) }));
+const { loadMyMemberRank } = vi.hoisted(() => ({ loadMyMemberRank: vi.fn() }));
+vi.mock("@/lib/platform/member-rank-client", () => ({ loadMyMemberRank }));
+beforeEach(() => { loadMyMemberRank.mockReset(); loadMyMemberRank.mockResolvedValue(disabledRank); });
+
+const disabledRank = { enabled: false, rank: null, period: null, rank_points: null, next_rank: null, maintain: null, demotion_protection: null, benefits: null, as_of: null };
+function enabledRank(rank: { code: string; name: string; level: number }, next: { code: string; name: string; reach_line: number; remaining: number } | null) {
+  return { enabled: true, rank, period: { month: "2026-11-01", resets_at: "2026-11-30T15:00:00Z" }, rank_points: 42000, next_rank: next, maintain: null, demotion_protection: null, benefits: null, as_of: "2026-11-01T08:00:00Z" };
+}
 
 const authenticated: AuthSession = {
   authenticated: true,
@@ -275,5 +283,50 @@ describe("my page top", () => {
     render(<MobileBottomNavigation />);
     expect(screen.getByRole("navigation", { name: "モバイルナビゲーション" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /マイページ/ })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("会員メニューの下に会員ランクの帯（ランク・ランクポイント・次のランクまでの残り・入口）を出す", async () => {
+    loadMyMemberRank.mockResolvedValue(enabledRank({ code: "silver", level: 3, name: "シルバー" }, { code: "gold", name: "ゴールド", reach_line: 100000, remaining: 58000 }));
+    renderMyPage(client());
+    const band = await screen.findByRole("region", { name: "会員ランク" });
+    expect(band).toHaveTextContent("シルバー");
+    expect(band).toHaveTextContent("ランクポイント 42,000");
+    expect(band).toHaveTextContent("次の ゴールド まであと 58,000 ランクポイント");
+    expect(band.querySelector(".mrank-badge")).toHaveClass("mrank-t2");
+    expect(screen.getByRole("link", { name: "会員ランクを見る" })).toHaveAttribute("href", "/mypage/member-rank");
+    // 会員メニューの直後に置き、会員メニューの中の行としては出さない
+    const summary = screen.getByRole("heading", { name: "会員メニュー" }).closest("section");
+    expect(summary?.nextElementSibling).toBe(band);
+    expect(summary).not.toHaveTextContent("シルバー");
+  });
+
+  it("最上位のランクでは次のランクの代わりに最上位である旨を帯に出す", async () => {
+    loadMyMemberRank.mockResolvedValue(enabledRank({ code: "vip", level: 7, name: "VIP" }, null));
+    renderMyPage(client());
+    expect(await screen.findByRole("region", { name: "会員ランク" })).toHaveTextContent("最上位のランクです");
+  });
+
+  it.each([
+    ["無効", () => loadMyMemberRank.mockResolvedValue(disabledRank)],
+    ["読み込めない", () => loadMyMemberRank.mockRejectedValue(new Error("offline"))],
+  ])("会員ランクが%sときは帯を出さず、ほかの表示はそのまま", async (_label, arrange) => {
+    arrange();
+    renderMyPage(client());
+    expect(await screen.findByRole("heading", { name: "会員メニュー" })).toBeInTheDocument();
+    await waitFor(() => expect(loadMyMemberRank).toHaveBeenCalled());
+    expect(screen.queryByRole("region", { name: "会員ランク" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "会員ランクを見る" })).not.toBeInTheDocument();
+    expect(screen.getByText("確認済み")).toBeInTheDocument();
+  });
+
+  it("会員ショートカットの最後に会員ランクへの入口を置く", async () => {
+    renderMyPage(client());
+    const shortcuts = await screen.findByRole("navigation", { name: "会員ショートカット" });
+    const last = Array.from(shortcuts.querySelectorAll("a")).at(-1);
+    expect(last).toHaveAttribute("href", "/mypage/member-rank");
+    expect(last).toHaveTextContent("MEMBER RANK");
+    expect(last).toHaveTextContent("会員ランク");
+    expect(publicRoutes).toContain("/mypage/member-rank");
+    expect(publicRoutes).not.toContain("/pages/member-rank");
   });
 });
