@@ -45,7 +45,7 @@ export function RankLadder({
             key={rank.code}
           >
             <span className="mrank-ladder__name">{rank.name}</span>
-            <span className="mrank-ladder__line">{rank.reach_line ? `${formatRankNumber(rank.reach_line)} 〜` : "—"}</span>
+            {rank.reach_line !== null ? <span className="mrank-ladder__line">{formatRankNumber(rank.reach_line)} 〜</span> : null}
             {current ? <span className="mrank-ladder__here">いまここ</span> : null}
           </li>
         );
