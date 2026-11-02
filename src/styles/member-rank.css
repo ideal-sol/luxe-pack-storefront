@@ -1,0 +1,255 @@
+/* 会員ランク（2026-11-01 デザイン 01_マイページ_会員ランク.html／02_会員ランク説明.html）
+   配色はいまのサイトのまま（--teal / --yellow / --ink）。足したのは7段のランクの色だけ。
+   ランクの色は札・帯・階段・表のどこでも同じ色にする（_ランク.css の t0〜t6 を移したもの）。
+   1つめ＝札と文字の色／2つめ＝帯の濃いほう／3つめ＝薄い地色／4つめ＝枠線 */
+
+/* ============ 7段のランクの色 ============ */
+.mrank-t0 { --mrank-c: #8a9fa0; --mrank-c2: #5e7273; --mrank-bg: #eef3f3; --mrank-line: #d3dede; } /* ビギナー */
+.mrank-t1 { --mrank-c: #a96b3c; --mrank-c2: #73411c; --mrank-bg: #f7ede4; --mrank-line: #e3c8b2; } /* ブロンズ */
+.mrank-t2 { --mrank-c: #7d8d99; --mrank-c2: #4f5d68; --mrank-bg: #eff3f6; --mrank-line: #cfd9e0; } /* シルバー */
+.mrank-t3 { --mrank-c: #c9971c; --mrank-c2: #8a5e00; --mrank-bg: #fdf5df; --mrank-line: #ebcf86; } /* ゴールド */
+.mrank-t4 { --mrank-c: #3f7f8c; --mrank-c2: #1f535e; --mrank-bg: #e9f4f6; --mrank-line: #b8d7dc; } /* プラチナ */
+.mrank-t5 { --mrank-c: #2e9bc7; --mrank-c2: #13607f; --mrank-bg: #e6f5fb; --mrank-line: #aedcee; } /* ダイヤモンド */
+.mrank-t6 { --mrank-c: #6c3fa8; --mrank-c2: #43216f; --mrank-bg: #f1eafa; --mrank-line: #d2beec; } /* VIP */
+
+/* ============ ランクの札 ============ */
+.mrank-badge {
+  align-items: center;
+  background: var(--mrank-bg);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1.5px currentColor;
+  color: var(--mrank-c);
+  display: inline-flex;
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 900;
+  gap: 7px;
+  line-height: 1;
+  padding: 5px 13px 5px 11px;
+  white-space: nowrap;
+}
+.mrank-badge::before { background: currentColor; border-radius: 2px; content: ""; flex: none; height: 9px; transform: rotate(45deg); width: 9px; }
+
+/* ============ 丸い枠のリンク（帯・階段の見出し） ============ */
+.mrank-pill-link {
+  border: 1.5px solid #cfe3e1;
+  border-radius: 999px;
+  color: var(--teal-dd);
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 8px 14px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.mrank-pill-link:hover { background: #f4fcfb; border-color: var(--teal); }
+
+/* ============ マイページ入口の1行の帯 ============ */
+.mrank-band {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #d9ecea;
+  border-radius: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  min-width: 0;
+  padding: 13px 16px;
+}
+.mrank-band__spacer { flex: 1; }
+.mrank-band__text { color: #4a6b6c; font-size: 12.5px; font-weight: 700; }
+.mrank-band__text b { color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 900; }
+
+/* ============ 会員ランクのページ ============ */
+.mrank-page { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); margin-top: 8px; min-width: 0; }
+
+/* いまのランクの箱 */
+.mrank-card { background: #fff; border: 1px solid #d9ecea; border-radius: 16px; min-width: 0; overflow: hidden; }
+.mrank-card__top {
+  align-items: center;
+  background: linear-gradient(135deg, var(--mrank-c), var(--mrank-c2));
+  color: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 22px 24px;
+}
+.mrank-card__level {
+  background: rgba(255, 255, 255, .18);
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .45);
+  display: grid;
+  flex: none;
+  font-size: 22px;
+  font-weight: 900;
+  height: 64px;
+  place-items: center;
+  width: 64px;
+}
+.mrank-card__caption { font-size: 13px; font-weight: 800; letter-spacing: .1em; margin: 0; opacity: .9; }
+.mrank-card__name { color: #fff; font-size: 30px; font-weight: 900; line-height: 1.2; margin: 2px 0 0; }
+.mrank-card__spacer { flex: 1; }
+.mrank-card__points { margin: 0; text-align: right; }
+.mrank-card__points dt { font-size: 11.5px; font-weight: 800; opacity: .9; }
+.mrank-card__points dd { font-size: 28px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1.2; margin: 0; }
+.mrank-card__body { padding: 20px 24px 22px; }
+
+/* 次のランクまで */
+.mrank-progress__label {
+  align-items: baseline;
+  color: var(--ink);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 9px;
+}
+.mrank-progress__goal { color: #4a6b6c; font-weight: 700; }
+.mrank-progress__goal b { color: var(--ink); font-size: 18px; font-variant-numeric: tabular-nums; font-weight: 900; }
+.mrank-progress__track {
+  background: #e8f3f2;
+  border-radius: 8px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .1);
+  height: 14px;
+  overflow: hidden;
+}
+.mrank-progress__track i { background: linear-gradient(90deg, var(--teal), var(--teal-lt)); border-radius: 8px; display: block; height: 100%; }
+.mrank-progress__ends {
+  color: #6b8688;
+  display: flex;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 7px;
+}
+.mrank-keep {
+  background: #e7f8f0;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1.5px #a8e3c6;
+  color: #157a4c;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.75;
+  margin: 12px 0 0;
+  padding: 10px 14px;
+}
+.mrank-keep b { font-weight: 900; }
+
+/* いま受けられる特典 */
+.mrank-perks { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 18px; }
+.mrank-perk { background: #fff; border: 1.5px solid #e2efee; border-radius: 12px; margin: 0; padding: 14px 16px; }
+.mrank-perk dt { color: #6b8688; font-size: 11.5px; font-weight: 800; }
+.mrank-perk dd { color: var(--ink); font-size: 21px; font-variant-numeric: tabular-nums; font-weight: 900; margin: 5px 0 0; }
+.mrank-perk dd small { color: #4a6b6c; font-size: 12px; font-weight: 800; margin-left: 2px; }
+.mrank-perk .mrank-perk__note { color: #6b8688; font-size: 11.5px; font-weight: 600; line-height: 1.7; margin-top: 6px; }
+.mrank-perk.is-on { background: #f4fcfb; border-color: var(--teal); }
+.mrank-perk.is-off dd:not(.mrank-perk__note) { color: #9ab3b2; }
+
+/* 白い箱 */
+.mrank-panel { background: #fff; border: 1px solid #d9ecea; border-radius: 14px; min-width: 0; padding: 22px 24px; }
+.mrank-panel h2 { color: var(--ink); font-size: 17px; font-weight: 900; margin: 0; }
+.mrank-panel__head {
+  align-items: flex-end;
+  border-bottom: 1px solid #eaf4f3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+}
+.mrank-panel__head p { color: #6b8688; font-size: 12.5px; margin: 4px 0 0; }
+.mrank-muted { color: #6b8688; font-size: 12.5px; line-height: 1.8; margin: 14px 0 0; }
+.mrank-muted b { color: var(--ink); }
+.mrank-notes { color: #6b8688; font-size: 12.5px; line-height: 1.8; list-style: none; margin: 12px 0 0; padding: 0; }
+.mrank-notes li::before { content: "・"; }
+.mrank-notes b { color: var(--ink); }
+.mrank-note {
+  background: #fff9e8;
+  border: 1px solid #f0dca8;
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.8;
+  margin: 14px 0 0;
+  padding: 12px 14px;
+}
+
+/* 7段の階段（幅が足りないときは箱の中だけ横にスクロール） */
+.mrank-ladder {
+  align-items: flex-end;
+  display: flex;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 6px 2px 2px;
+  -webkit-overflow-scrolling: touch;
+}
+.mrank-ladder__step {
+  background: var(--mrank-bg);
+  border-radius: 12px 12px 0 0;
+  box-shadow: inset 0 0 0 1.5px var(--mrank-line);
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 96px;
+  padding: 11px 10px 12px;
+  text-align: center;
+}
+.mrank-ladder__name { color: var(--mrank-c); font-size: 12.5px; font-weight: 900; }
+.mrank-ladder__line { color: #5c7f81; font-size: 11px; font-variant-numeric: tabular-nums; font-weight: 800; margin-top: 5px; }
+.mrank-ladder__step.is-current { background: var(--mrank-c); box-shadow: 0 0 0 3px rgba(0, 190, 177, .22); }
+.mrank-ladder__step.is-current .mrank-ladder__name { color: #fff; }
+.mrank-ladder__step.is-current .mrank-ladder__line { color: rgba(255, 255, 255, .92); }
+.mrank-ladder__here { background: rgba(0, 0, 0, .22); border-radius: 999px; color: #fff; display: block; font-size: 10.5px; font-weight: 900; margin-top: 6px; padding: 3px 0; }
+.mrank-ladder__step--h0 { height: 70px; }
+.mrank-ladder__step--h1 { height: 84px; }
+.mrank-ladder__step--h2 { height: 98px; }
+.mrank-ladder__step--h3 { height: 112px; }
+.mrank-ladder__step--h4 { height: 126px; }
+.mrank-ladder__step--h5 { height: 140px; }
+.mrank-ladder__step--h6 { height: 156px; }
+
+/* ランクポイントの内訳 */
+.mrank-calc { border: 1px solid #e2efee; border-radius: 12px; list-style: none; margin: 0; overflow: hidden; padding: 0; }
+.mrank-calc li {
+  border-bottom: 1px solid #eef5f4;
+  display: flex;
+  font-size: 13px;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+.mrank-calc li:last-child { border-bottom: 0; }
+.mrank-calc li > span { min-width: 0; overflow-wrap: anywhere; }
+.mrank-calc b { color: var(--ink); flex: none; font-variant-numeric: tabular-nums; font-weight: 900; }
+.mrank-calc li.is-sum { background: #f4fcfb; font-weight: 900; }
+.mrank-calc li.is-excluded { color: #8aa0a1; }
+.mrank-calc li.is-excluded b { color: #8aa0a1; font-weight: 800; }
+.mrank-calc__tag { background: #f0f2f3; border-radius: 5px; color: #6b7b7c; display: inline-block; font-size: 11px; font-weight: 800; margin-left: 8px; padding: 3px 7px; }
+
+/* 機能が無効のとき */
+.mrank-disabled { background: #fff; border: 1px solid #d9ecea; border-radius: 14px; margin-top: 8px; padding: 28px 24px; text-align: center; }
+.mrank-disabled h2 { color: var(--ink); font-size: 17px; font-weight: 900; margin: 0 0 8px; }
+.mrank-disabled p { color: #6b8688; font-size: 13px; margin: 0 0 16px; }
+.mrank-disabled a { color: var(--teal-dd); font-size: 13px; font-weight: 800; }
+
+@media (max-width: 820px) {
+  .mrank-perks { grid-template-columns: minmax(0, 1fr); }
+  .mrank-card__top { gap: 14px; }
+  .mrank-card__points { text-align: left; width: 100%; }
+  .mrank-card__name { font-size: 25px; }
+}
+
+@media (max-width: 600px) {
+  .mrank-card__top, .mrank-card__body, .mrank-panel { padding-inline: 16px; }
+  .mrank-band__spacer { display: none; }
+  .mrank-band .mrank-pill-link { margin-left: auto; }
+}

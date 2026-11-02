@@ -11,6 +11,8 @@ import { LoadingState } from "@/components/common/loading-state";
 import { ErrorState, LoginRequiredState } from "@/components/common/state-panel";
 import { useToast } from "@/components/common/toast-provider";
 import { presentAuthProblem, presentSmsProblem } from "@/lib/platform";
+import { MemberRankBand } from "@/components/member-rank/member-rank-band";
+import { loadMyMemberRank, type MyMemberRank } from "@/lib/platform/member-rank-client";
 import {
   accountClosureRoute,
   createMyPageSupportNavigation,
@@ -19,6 +21,7 @@ import {
   smsVerificationRoute,
 } from "@/lib/routes/navigation";
 import { consumeSmsRegistrationPrompt } from "@/lib/sms-registration-prompt";
+import "@/styles/member-rank.css";
 
 export function MyPageTop({
   accountUpdated,
@@ -44,6 +47,18 @@ export function MyPageTop({
   const [registrationPromptOpen, setRegistrationPromptOpen] = useState(false);
   const successShown = useRef(false);
   const promptUser = useRef<string | null>(null);
+  const [memberRank, setMemberRank] = useState<{ userId: string; rank: MyMemberRank } | null>(null);
+  const rankUserId = state.status === "authenticated" ? state.session.user?.id ?? null : null;
+
+  useEffect(() => {
+    // 会員ランク（デザイン 01：会員メニューの下に1行の帯を出す）。読めないとき・機能が無効のときは帯ごと出さない。
+    if (!rankUserId) return;
+    let active = true;
+    void loadMyMemberRank()
+      .then((rank) => { if (active) setMemberRank({ userId: rankUserId, rank }); })
+      .catch(() => { if (active) setMemberRank(null); });
+    return () => { active = false; };
+  }, [rankUserId]);
 
   useEffect(() => {
     if (!accountUpdated || successShown.current) return;
@@ -133,6 +148,8 @@ export function MyPageTop({
           </div>
         </dl>
       </section>
+
+      <MemberRankBand rank={memberRank?.userId === rankUserId ? memberRank.rank : null} />
 
       <nav aria-label="会員ショートカット" className="mypage-shortcuts">
         {myPageShortcutNavigation.map((item) => (

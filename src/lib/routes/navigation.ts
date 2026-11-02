@@ -41,6 +41,10 @@ export function requiresSmsVerification(pathname: string): boolean {
     pathname.startsWith("/points/purchase/");
 }
 export const lineAccountRoute = "/mypage/line";
+/** 会員ランク（マイページ内の1ページ。デザイン 01_マイページ_会員ランク.html）。 */
+export const memberRankRoute = "/mypage/member-rank";
+/** 完成済みサポートサイトの会員ランク説明。 */
+export const memberRankGuideRoute = "https://support.ori-poke.com/member-rank/";
 
 export const accountNavigation = [
   { href: "/mypage", label: "マイページ" },
@@ -53,6 +57,7 @@ export const accountNavigation = [
   { href: "/mypage/email", label: "メールアドレス変更" },
   { href: "/mypage/password", label: "パスワード変更" },
   { href: lineAccountRoute, label: "LINE連携" },
+  { href: memberRankRoute, label: "会員ランク" },
 ] as const;
 
 export function drawResultRoute(drawRequestId: string) {
@@ -97,6 +102,7 @@ export const myPageShortcutNavigation = [
   { ...accountNavigation[2], description: "コイン情報を確認する", eyebrow: "COINS" },
   { ...accountNavigation[3], description: "ガチャの利用履歴を確認する", eyebrow: "DRAW HISTORY" },
   { ...accountNavigation[4], description: "獲得した景品を確認する", eyebrow: "PRIZES" },
+  { ...accountNavigation[10], description: "いまのランクと特典を確認する", eyebrow: "MEMBER RANK" },
 ] as const;
 
 export const myPageAccountNavigation = [
@@ -151,4 +157,5 @@ export const publicRoutes = [
   "/mypage/sms-verification",
   "/mypage/line",
   "/mypage/account-closure",
+  "/mypage/member-rank",
 ] as const;
