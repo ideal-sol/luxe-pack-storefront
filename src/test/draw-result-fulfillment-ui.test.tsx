@@ -83,6 +83,44 @@ async function fulfillmentRegion() {
 }
 
 describe("抽選結果で、今回の獲得景品をそのまま交換・発送する", () => {
+  it.each([100, 101, 250, 839])("同一景品%i件を100件以下の重複しない行に分割する", (count) => {
+    const items = Array.from({ length: count }, (_, i) => prize(i, 10, { presentation: { ...base.presentation!, prize_id: "same" } }));
+    const groups = groupPrizes(items);
+    expect(groups.map((group) => group.items.length)).toEqual(Array.from({ length: Math.ceil(count / 100) }, (_, i) => Math.min(100, count - i * 100)));
+    expect(new Set(groups.map((group) => group.key)).size).toBe(groups.length);
+    expect(groups.flatMap((group) => group.items)).toEqual(items);
+  });
+
+  it("100件交換後は残りを再選択でき、最後の50件まで100件上限を維持する", async () => {
+    let remaining = Array.from({ length: 250 }, (_, i) => prize(i, 20, { presentation: { ...base.presentation!, name: "まとめ景品", prize_id: "same" } }));
+    const client = prizeClient({
+      listPrizes: vi.fn().mockImplementation(async () => response({ items: remaining, next_cursor: null })),
+      exchangePrizes: vi.fn().mockImplementation(async (ids: string[]) => {
+        expect(ids.length).toBeLessThanOrEqual(100);
+        remaining = remaining.filter((item) => !ids.includes(item.id));
+        return response({ id: "exchange", status: "completed", exchanged_count: ids.length, exchange_point_total: ids.length * 20, wallet_free_points_after: 5000, idempotent_replay: false });
+      }),
+    });
+    renderResult(drawWith(250), client);
+    await fulfillmentRegion();
+    for (const count of [100, 100, 50]) {
+      fireEvent.click(screen.getByRole("button", { name: "全て選択" }));
+      const bar = screen.getByRole("complementary", { name: "選択した景品の操作" });
+      expect(bar).toHaveTextContent(`${count} 点を選択中`);
+      if (count === 100) expect(within(bar).getByRole("button", { name: "発送を依頼する" })).toBeEnabled();
+      fireEvent.click(within(bar).getByRole("button", { name: "コインに交換する" }));
+      fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "コインに交換する" }));
+      fireEvent.click(await within(screen.getByRole("dialog")).findByRole("button", { name: "閉じる" }));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      await waitFor(() => {
+        const tray = screen.queryByRole("complementary", { name: "選択した景品の操作" });
+        if (count === 50) expect(tray).not.toBeInTheDocument();
+        else expect(tray).toHaveTextContent("0 点を選択中");
+      });
+    }
+    expect(client.exchangePrizes).toHaveBeenCalledTimes(3);
+    expect(remaining).toHaveLength(0);
+  }, 15000); // Three complete 100-item confirmation/reconciliation cycles.
   it.each([1, 10, 100, 1000])("%i回の横帯はSnapshotのランクタグと共通サムネイルを表示する", async (count) => {
     const result = drawWith(count);
     result.results = result.results!.map((item, index) => ({ ...item,
@@ -108,14 +146,21 @@ describe("抽選結果で、今回の獲得景品をそのまま交換・発送�
     expect(groupPrizes([a, b, c])).toHaveLength(3);
   });
 
-  it("1000回の結果でも横帯は先頭100件、まとめた実景品101件の行は選択しない", async () => {
-    const items = Array.from({ length: 101 }, (_, i) => prize(i, 10, { presentation: { ...base.presentation!, name: "まとめ景品", prize_id: "same" } }));
+  it("1000回の結果でも横帯は先頭100件。同じ景品が100件を超えたら100件ずつの行に分け、選んで交換できる", async () => {
+    const items = Array.from({ length: 250 }, (_, i) => prize(i, 10, { presentation: { ...base.presentation!, name: "まとめ景品", prize_id: "same" } }));
+    expect(groupPrizes(items).map((group) => group.items.length)).toEqual([100, 100, 50]);
     renderResult(drawWith(1000), prizeClient({ listPrizes: vi.fn().mockResolvedValue(response({ items, next_cursor: null })) }));
     const list = await fulfillmentRegion();
-    expect(within(list).getByRole("checkbox", { name: "まとめ景品を選択" })).toBeDisabled();
+    const boxes = within(list).getAllByRole("checkbox", { name: "まとめ景品を選択" });
+    expect(boxes).toHaveLength(3);
+    boxes.forEach((box) => expect(box).toBeEnabled());
     expect(document.querySelectorAll(".draw-snapshot-card")).toHaveLength(100);
     fireEvent.click(screen.getByRole("button", { name: "全て選択" }));
-    expect(screen.getByRole("complementary", { name: "選択した景品の操作" })).toHaveTextContent("0 点を選択中");
+    const bar = screen.getByRole("complementary", { name: "選択した景品の操作" });
+    expect(bar).toHaveTextContent("100 点を選択中");
+    expect(bar).toHaveTextContent("コイン交換すると 1,000 コイン");
+    expect(within(bar).getByRole("button", { name: "コインに交換する" })).toBeEnabled();
+    expect(boxes[1]).toBeDisabled();
   });
 
   it("ページが重複しても実景品IDを二重計上しない", async () => {
