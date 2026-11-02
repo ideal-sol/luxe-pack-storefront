@@ -107,13 +107,22 @@ export function groupPrizes(items: readonly UserPrize[]): readonly PrizeGroup[] 
     const list = groups.get(key);
     if (list) list.push(item); else groups.set(key, [item]);
   }
-  return [...groups.entries()].map(([key, list]) => ({
-    first: list[0]!,
-    items: list,
-    key,
-    points: list.reduce((sum, item) => sum + item.exchange_points, 0),
-    selectable: list[0]!.allowed_actions?.selection.allowed === true,
-  }));
+  // 1つの行は、1回で手続きできる件数（100件）までにする。
+  // 同じ景品が100件を超えると（1000連で 839 件など）その行を選べず、コイン交換も発送もできなくなるため（2026-11-01 不具合）。
+  return [...groups.entries()].flatMap(([key, list]) => {
+    const chunks: PrizeGroup[] = [];
+    for (let start = 0; start < list.length; start += DRAW_FULFILLMENT_MAX_SELECTION) {
+      const chunk = list.slice(start, start + DRAW_FULFILLMENT_MAX_SELECTION);
+      chunks.push({
+        first: chunk[0]!,
+        items: chunk,
+        key: start === 0 ? key : `${key}#${start}`,
+        points: chunk.reduce((sum, item) => sum + item.exchange_points, 0),
+        selectable: chunk[0]!.allowed_actions?.selection.allowed === true,
+      });
+    }
+    return chunks;
+  });
 }
 
 interface DrawResultFulfillmentProps {
