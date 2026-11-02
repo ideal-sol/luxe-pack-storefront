@@ -155,4 +155,3 @@ function MemberRankDetail({ rank, ranks }: { readonly rank: EnabledMemberRank; r
     </div>
   );
 }
-
