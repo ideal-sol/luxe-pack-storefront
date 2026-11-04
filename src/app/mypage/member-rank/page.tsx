@@ -9,7 +9,7 @@ export default function MyMemberRankPage() {
   return (
     <PageContainer className="route-page member-rank-page">
       <PageTitle
-        description="現在の会員ランク、今月のランクポイントと特典をご確認いただけます。"
+        description="現在の会員ランク、累計ランクポイントと特典をご確認いただけます。"
         eyebrow="MY PAGE / MEMBER RANK"
         title="会員ランク"
       />

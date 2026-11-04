@@ -7,27 +7,19 @@ type MemberRankSchemas = PublicComponents["schemas"];
 export type MemberRankSetting = MemberRankSchemas["MemberRankPublicSetting"];
 export type MemberRankCode = MemberRankSetting["code"];
 
-/** 内訳表示の準備用。現行API契約には含めず、履歴を生成しない。 */
-export interface MemberRankBreakdownEntry {
-  readonly occurred_at: string;
-  readonly kind: "purchase" | "manual" | "refund";
-  readonly points: number;
-  readonly label: string;
-}
+/** Generated from the formally published alpha.49 Public API contract. */
+export type CumulativeMemberRank = MemberRankSchemas["MyMemberRankEnabled"];
+export type MemberRankBreakdown = CumulativeMemberRank["breakdown"];
 
-/** 他サイトからの移行分（引き継ぎ）。 */
-export interface MemberRankTransfer {
-  readonly status: "transferred";
-  readonly equivalent_rank: { readonly code: MemberRankCode; readonly name: string; readonly level: number };
-  readonly points: number;
-}
-
-export interface MemberRankBreakdown {
-  readonly recent: readonly MemberRankBreakdownEntry[];
-  /** recent より前の明細（購入・調整・返金の減算）の合計。total ＝ recent の合計 ＋ earlier_total ＋ transfer.points */
-  readonly earlier_total: number;
-  readonly transfer: MemberRankTransfer | null;
-  readonly total: number;
+/** Display guard only; the pinned transport and generated response type stay unchanged. */
+export function isCumulativeMemberRank(value: unknown): value is CumulativeMemberRank {
+  if (!value || typeof value !== "object") return false;
+  const rank = value as Partial<CumulativeMemberRank>;
+  return rank.enabled === true && rank.point_basis === "cumulative"
+    && rank.period === null && rank.maintain === null && rank.demotion_protection === null
+    && Number.isSafeInteger(rank.rank_points) && rank.rank_points! >= 0
+    && !!rank.breakdown && Array.isArray(rank.breakdown.recent)
+    && typeof rank.promotion_bonus?.received === "boolean" && typeof rank.transferred === "boolean";
 }
 
 export type MyMemberRank = MemberRankSchemas["MyMemberRankResponse"]["data"];
