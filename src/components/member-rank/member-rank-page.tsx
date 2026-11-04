@@ -6,6 +6,8 @@ import { useSession } from "@/components/auth/session-provider";
 import { LoadingState } from "@/components/common/loading-state";
 import { ErrorState, LoginRequiredState } from "@/components/common/state-panel";
 import {
+  isCumulativeMemberRank,
+  type CumulativeMemberRank,
   listMemberRanks,
   loadMyMemberRank,
   type MemberRankSetting,
@@ -14,7 +16,7 @@ import {
 import { memberRankGuideRoute } from "@/lib/routes/navigation";
 import { formatBonusRate, formatRankNumber, RankLadder, rankToneClass } from "./member-rank-parts";
 
-type EnabledMemberRank = Extract<MyMemberRank, { enabled: true }>;
+import { MemberRankBreakdownSection } from "./member-rank-breakdown";
 
 type RankPageState =
   | { readonly status: "loading" }
@@ -52,10 +54,11 @@ export function MemberRankPage() {
       </section>
     );
   }
+  if (!isCumulativeMemberRank(state.rank)) return <ErrorState />;
   return <MemberRankDetail rank={state.rank} ranks={state.ranks} />;
 }
 
-function MemberRankDetail({ rank, ranks }: { readonly rank: EnabledMemberRank; readonly ranks: readonly MemberRankSetting[] }) {
+function MemberRankDetail({ rank, ranks }: { readonly rank: CumulativeMemberRank; readonly ranks: readonly MemberRankSetting[] }) {
   const current = rank.rank;
   const setting = ranks.find((item) => item.code === current.code);
   const next = rank.next_rank;
@@ -78,7 +81,7 @@ function MemberRankDetail({ rank, ranks }: { readonly rank: EnabledMemberRank; r
           </div>
           <span className="mrank-card__spacer" />
           <dl className="mrank-card__points">
-            <dt>今月のランクポイント</dt>
+            <dt>累計ランクポイント</dt>
             <dd>{formatRankNumber(rank.rank_points)}</dd>
           </dl>
         </div>
@@ -88,7 +91,7 @@ function MemberRankDetail({ rank, ranks }: { readonly rank: EnabledMemberRank; r
               <span>{next ? "次のランクまで" : "いちばん上のランクです"}</span>
               <span className="mrank-progress__goal">
                 {next
-                  ? <>{next.name} まであと <b>{formatRankNumber(next.remaining)}</b> ランクポイント</>
+                  ? next.remaining === 0 ? <>{next.name}の条件到達・ランク反映待ち</> : <>{next.name} まであと <b>{formatRankNumber(next.remaining)}</b> ランクポイント</>
                   : <b>到達済み</b>}
               </span>
             </div>
@@ -106,11 +109,6 @@ function MemberRankDetail({ rank, ranks }: { readonly rank: EnabledMemberRank; r
               <span>0</span>
               <span>{next ? next.name : current.name} {formatRankNumber(goal)}</span>
             </div>
-            <div className="mrank-keep">
-              <p>集計対象月：{rank.period.month}（次回リセット：{new Date(rank.period.resets_at).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })} JST）</p>
-              {rank.maintain ? <p>現在ランクの維持ライン：{formatRankNumber(rank.maintain.line)}。{rank.maintain.achieved ? "達成済みです。" : `あと${formatRankNumber(rank.maintain.remaining)}ランクポイントです。`}</p> : null}
-              {rank.demotion_protection ? <p>降格判定の見送り：残り{rank.demotion_protection.remaining_judgments}回</p> : null}
-            </div>
           </div>
           <div className="mrank-perks">
             <dl className={`mrank-perk ${rate ? "is-on" : "is-off"}`}>
@@ -125,7 +123,7 @@ function MemberRankDetail({ rank, ranks }: { readonly rank: EnabledMemberRank; r
             {setting ? <dl className="mrank-perk">
               <dt>{current.name}の昇格ボーナス設定</dt>
               <dd>{formatRankNumber(setting.promotion_bonus.points)}<small>無償コイン</small></dd>
-              <dd className="mrank-perk__note">設定額です。受領状況を示すものではありません。</dd>
+              <dd className="mrank-perk__note">{rank.promotion_bonus.received ? "受領済みです。" : "公開設定額です。付与対象・今後の受領を保証するものではありません。"}</dd>
             </dl> : null}
           </div>
         </div>
@@ -144,11 +142,11 @@ function MemberRankDetail({ rank, ranks }: { readonly rank: EnabledMemberRank; r
         </section>
       ) : null}
 
-      {/* 内訳はHumanの表示許可と正式API対応後にMemberRankBreakdownSectionを接続する。現在はDOMへ出力しない。 */}
+      <MemberRankBreakdownSection breakdown={rank.breakdown} rankPoints={rank.rank_points} />
 
       <section aria-labelledby="mrank-notes-heading" className="mrank-panel">
         <h2 id="mrank-notes-heading">ご確認ください</h2>
-        <p>ランクポイントは月ごとに集計され、維持条件と降格判定があります。</p>
+        <p>ランクポイントは全期間の累計です。月ごとのリセットや自動降格はありません。管理者によるランク変更が行われる場合があります。</p>
         <a className="mrank-pill-link" href={memberRankGuideRoute}>会員ランクの説明を見る</a>
         <a className="mrank-pill-link" href="https://support.ori-poke.com/">よくあるご質問</a>
       </section>

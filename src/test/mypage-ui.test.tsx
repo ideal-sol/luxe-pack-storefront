@@ -21,7 +21,7 @@ import { markSmsRegistrationPrompt } from "@/lib/sms-registration-prompt";
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/mypage", useRouter: () => ({ push }) }));
 const { loadMyMemberRank } = vi.hoisted(() => ({ loadMyMemberRank: vi.fn() }));
-vi.mock("@/lib/platform/member-rank-client", () => ({ loadMyMemberRank }));
+vi.mock("@/lib/platform/member-rank-client", async (original) => ({ ...await original<object>(), loadMyMemberRank }));
 beforeEach(() => { loadMyMemberRank.mockReset(); loadMyMemberRank.mockResolvedValue(disabledRank); });
 
 const disabledRank = { enabled: false, rank: null, period: null, rank_points: null, next_rank: null, maintain: null, demotion_protection: null, benefits: null, as_of: null };
