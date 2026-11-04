@@ -1389,3 +1389,19 @@ Required CI, Shadow and final-head fresh self-review results are recorded in the
 - Handoff: docs/implementation/EXCHANGEONLY_20261104_DRAFT_HANDOFF.md.
   Retain branch/worktree for Human continuation. Rollback: revert source PR before
   activation; never deploy alpha.49 as exchange-only support. HOLD_DRAFT.
+
+
+### Draft PR221 final review correction
+
+- Draft created at https://github.com/ideal-sol/luxe-pack-storefront/pull/221.
+- Final broad focused run: 100 PASS / 12 FAIL (112 total). Ten failures were
+  timeout/readiness waits during severe host contention; two were a real display
+  regression from hiding the completed exchange selection count. Restore the
+  exchange count and retain a separate confirmed-shipping count. No assertions
+  or timeouts modified. Run only affected/new tests for this correction.
+- Full lint and typecheck PASS before the correction; changed-file lint/typecheck
+  and final focused results recorded on PR221. Automatic CI was in progress;
+  the ordinary fix push triggers new exact-head checks, with no manual rerun.
+- Draft remains HOLD. No SEV-0/1 found in source review; unresolved broad-suite
+  timing failures and all formal-artifact/browser integration gaps remain merge
+  blockers until verified. Preserve dedicated branch/worktree, no cleanup/merge.

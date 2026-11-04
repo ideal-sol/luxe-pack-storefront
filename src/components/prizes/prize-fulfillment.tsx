@@ -60,6 +60,7 @@ function FulfillmentDialog({
   const [problem, setProblem] = useState<string | null>(null);
   const [refreshFailed, setRefreshFailed] = useState(false);
   const [completedShipping, setCompletedShipping] = useState<ShippingRequestSummary | null>(null);
+  const [completedCount, setCompletedCount] = useState<number | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
@@ -226,6 +227,7 @@ function FulfillmentDialog({
       completionRef.current = { action, processedIds: prizeIds, retainedIds: selectedItems.filter(isExchangeOnly).map((item) => item.id) };
       pendingShipping.current = null;
       setCompletedShipping(data);
+      setCompletedCount(prizeIds.length);
       setSuccess(`発送依頼を受け付けました。受付番号: ${data.id}`);
       try { await reconcileReads(data); } catch { setRefreshFailed(true); }
     } catch (error) {
@@ -333,7 +335,7 @@ function FulfillmentDialog({
       <section aria-labelledby={titleId} aria-modal="true" className="dialog-card fulfillment-dialog__card" role="dialog">
         <p className="dialog-card__eyebrow">FULFILLMENT</p>
         <h2 id={titleId}>{action === "shipping" ? "発送内容を確認" : "コイン交換を確認"}</h2>
-        {!success && <p>選択した景品: {number.format(actionItems.length)}件</p>}
+        <p>選択した景品: {number.format(completedCount ?? actionItems.length)}件</p>
         {!success && selectedItems.length !== actionItems.length && <p>選択{number.format(selectedItems.length)}件のうち、対象外{number.format(selectedItems.length - actionItems.length)}件は処理しません。</p>}
         {!success && action === "shipping" && selectedItems.some(isExchangeOnly) && <p role="note">コイン交換限定景品が選択されています。コイン交換限定景品以外を発送いたします。</p>}
 
