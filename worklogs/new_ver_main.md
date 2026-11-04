@@ -1405,3 +1405,21 @@ Required CI, Shadow and final-head fresh self-review results are recorded in the
 - Draft remains HOLD. No SEV-0/1 found in source review; unresolved broad-suite
   timing failures and all formal-artifact/browser integration gaps remain merge
   blockers until verified. Preserve dedicated branch/worktree, no cleanup/merge.
+
+
+### EXCHANGEONLY-20261104 — PR221 minimal CI inventory correction
+
+- Authorized starting HEAD49633ceb671fb773aeb5c50c152ab17909d3ece4 verified
+  against local/Remote/Draft PR221. Main remains ba11e00741c3857764b85c18892b9ed547e40506.
+  Existing dedicated branch/worktree reused. R3 / Strict Change / Activation deferred.
+- Register exactly exchange-only-notice.tsx and exchange-only-presentation.test.tsx
+  in scripts/readiness/source-inventory.v1.json, preserving lexical order and
+  complete source matching (304 ->306 entries). No completeness/check weakening.
+- Human-confirmed CI41810505923:1935 PASS/2 FAIL, both inventory mismatches.
+  Prior application/UI PASS reused because source and test bytes are unchanged.
+  No timeout changes, functionality changes, local full-suite/Build/audit, Artifact
+  adoption, Browser/E2E, migration, Ready, merge or runtime activation.
+- Focused Readiness test result, automatic final-head Required5 checks and
+  machine-readable Focused Review are recorded in PR221 after push. Worklog is
+  the only additional changed path. Alpha.49 vendor/pins/hashes untouched;
+  alpha.50 generated-contract/UI wiring and Human acceptance remain deferred.
