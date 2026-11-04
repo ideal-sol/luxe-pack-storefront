@@ -1446,3 +1446,7 @@ Required CI, Shadow and final-head fresh self-review results are recorded in the
   grouped-state focused9 PASS. Initial contract24 executed:23 PASS/1 stale digest
   expectation; updated to official digest and reran affected contract suite.
   No prior alpha.49 bytes or historical Production authority changed.
+
+- Official Client cursor query test initially assumed a different query order;
+  align its exact mock URL with the published Client cursor/status_group/limit
+  serialization. The complete affected contract15 PASS after correction.

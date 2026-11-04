@@ -31,7 +31,7 @@ const csrf = "f".repeat(64);
 it("uses official grouped 100-item cursor queries and preserves the acquisition classification", async () => {
   const harness = createPrizeClientTestHarness();
   for (const group of ["stored", "shipping"] as const) {
-    harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/prizes?status_group=${group}&limit=100&cursor=group-cursor` }, {
+    harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/prizes?cursor=group-cursor&status_group=${group}&limit=100` }, {
       body: { items: [PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE], next_cursor: null }, status: 200,
     });
     const { data } = await harness.client.listPrizes({ status_group: group, limit: 100, cursor: "group-cursor" });
