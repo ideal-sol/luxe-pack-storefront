@@ -52,7 +52,7 @@ describe("alpha.49 canonical Payment browser client", () => {
     for (const name of ["storefront-client", "storefront-testkit"]) {
       expect(JSON.parse(readFileSync(`node_modules/@oripa/${name}/package.json`, "utf8")).version).toBe("2.0.0-alpha.49");
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("4b6ecc4f85aefac18614075d61e3d54e70736457f1a1348cb9d9963e09dfed76");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("8612273ffe9e32d7508bb1bf14145fa052babc4a8f117d8db8928ef7a2232263");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_count).toBe(93);
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getPaymentCardUiBootstrap", "createPayment", "getPayment", "resumeUnpaidPayment",

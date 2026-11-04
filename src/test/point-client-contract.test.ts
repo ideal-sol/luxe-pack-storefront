@@ -22,7 +22,7 @@ describe("MIG-063B canonical Point contract", () => {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
       expect(packageJson.version).toBe(version);
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("4b6ecc4f85aefac18614075d61e3d54e70736457f1a1348cb9d9963e09dfed76");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("8612273ffe9e32d7508bb1bf14145fa052babc4a8f117d8db8928ef7a2232263");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getWallet",
       "listPointLedgerEntries",

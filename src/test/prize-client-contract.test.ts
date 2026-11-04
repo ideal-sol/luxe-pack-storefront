@@ -48,7 +48,7 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
     expect(harness.mock.requests[0]?.headers["x-xsrf-token"]).toBeUndefined();
     assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.49", site_version: "0.1.0" });
     // no-store is the formal endpoint cache policy; mock reads are not Runtime proof.
-    const contract = JSON.parse(readFileSync("vendor/oripa/CLOSURE-ALPHA48-20261028/public.openapi.json", "utf8"));
+    const contract = JSON.parse(readFileSync("vendor/oripa/MEMBERRANK-ALPHA49-20261104/public.openapi.json", "utf8"));
     expect(contract.paths["/me/shipping-policy"].get).toMatchObject({
       "x-sms-verification": "required", "x-cache-policy": "no-store", security: [{ userSession: [] }],
     });
@@ -109,7 +109,7 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
       expect(packageJson.version).toBe(version);
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("4b6ecc4f85aefac18614075d61e3d54e70736457f1a1348cb9d9963e09dfed76");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("8612273ffe9e32d7508bb1bf14145fa052babc4a8f117d8db8928ef7a2232263");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getUserSession",
       "loginUser",
