@@ -1,5 +1,5 @@
 import { cleanup, configure, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { PUBLIC_AUTH_FIXTURE, PUBLIC_DRAW_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
+import { PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE, PUBLIC_AUTH_FIXTURE, PUBLIC_DRAW_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
 import { readFileSync } from "node:fs";
 import { vi } from "vitest";
 import { SessionProvider } from "@/components/auth/session-provider";
@@ -290,7 +290,7 @@ describe("抽選結果で、今回の獲得景品をそのまま交換・発送�
 
 it("preserves both exchange-only selections after successful mixed shipping", async () => {
   const a = prize(0, 2000);
-  const b = prize(1, 100, { allowed_actions: { ...a.allowed_actions!, shipping: { allowed: false, unavailable_reason: "status_not_actionable" } } });
+  const b = prize(1, 100, { exchange_only: PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE.exchange_only, allowed_actions: { ...a.allowed_actions!, shipping: { allowed: false, unavailable_reason: "status_not_actionable" } } });
   const d = { ...b, id: "prize-2", draw_result_id: "result-2", presentation: { ...b.presentation!, name: "景品2", prize_id: "master2" } };
   const sent = { ...a, status: "shipping_requested" as const, allowed_actions: { point_exchange: { allowed: false, unavailable_reason: "status_not_actionable" as const }, shipping: { allowed: false, unavailable_reason: "status_not_actionable" as const }, selection: { allowed: false, unavailable_reason: "status_not_actionable" as const } } };
   const api = prizeClient({
@@ -300,7 +300,7 @@ it("preserves both exchange-only selections after successful mixed shipping", as
     getShippingRequest: vi.fn().mockResolvedValue(response({ id: "shipping" })),
   });
   const auth = { getCurrentSession: vi.fn().mockResolvedValue(response(PUBLIC_AUTH_FIXTURE.authenticated_session)), getSmsVerificationStatus: vi.fn().mockResolvedValue(response({ verified: true })) } as unknown as AuthClientAdapter;
-  render(<SessionProvider client={auth}><PrizeClientProvider client={api}><DrawResultFulfillment backHref="/gachas" onExchanged={vi.fn()} result={drawWith(3)} isExchangeOnly={(p) => p.id === b.id || p.id === d.id} /></PrizeClientProvider></SessionProvider>);
+  render(<SessionProvider client={auth}><PrizeClientProvider client={api}><DrawResultFulfillment backHref="/gachas" onExchanged={vi.fn()} result={drawWith(3)} /></PrizeClientProvider></SessionProvider>);
   await fulfillmentRegion();
   fireEvent.click(screen.getByRole("button", { name: "全て選択" }));
   fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));

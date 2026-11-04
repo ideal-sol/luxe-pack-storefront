@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { PUBLIC_USER_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
+import { PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
 import { ExchangeOnlyNotice } from "@/components/catalog/exchange-only-notice";
 import { groupPrizes } from "@/components/draw/draw-result-fulfillment";
 import { retainedSelection } from "@/components/prizes/prize-actions";
@@ -18,9 +18,9 @@ it("lists every purchase-notice name once without adding a prize badge", () => {
 
 it("keeps different classifications separate even with identical rights and presentation", () => {
   const a = { ...PUBLIC_USER_PRIZE_FIXTURE, id: "A" };
-  const b = { ...a, id: "B" };
-  expect(groupPrizes([a, b], (p) => p.id === "B")).toHaveLength(2);
-  expect(groupPrizes([a, b], () => false)).toHaveLength(1);
+  const b = { ...a, exchange_only: PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE.exchange_only, id: "B" };
+  expect(groupPrizes([a, b])).toHaveLength(2);
+  expect(groupPrizes([a, { ...b, exchange_only: false }])).toHaveLength(1);
 });
 
 it("retains only requested, still selectable and exchangeable nonshipping IDs", () => {

@@ -18,7 +18,7 @@ import {
   type ShippingRequestSummary,
   type UserPrize,
 } from "@/lib/platform";
-import { actionablePrizes, type FulfillmentAction, type FulfillmentCompletion, type ExchangeOnlyClassification, noExchangeOnlyClassification } from "./prize-actions";
+import { actionablePrizes, type FulfillmentAction, type FulfillmentCompletion, isExchangeOnly } from "./prize-actions";
 import type { ShippingMinimumSnapshot, ShippingPolicySnapshot } from "@/lib/platform/shipping-policy";
 import { shippingMinimumMessage, shippingRequirement, shippingShortfall, shippingTotal, validShippingMinimum } from "./shipping-minimum";
 
@@ -27,7 +27,6 @@ interface FulfillmentDialogProps {
   readonly client: PrizeFulfillmentAdapter;
   readonly onClose: () => void;
   readonly onReconcile: (completion: FulfillmentCompletion) => Promise<void>;
-  readonly isExchangeOnly?: ExchangeOnlyClassification;
   readonly onSmsVerificationRequired: () => void;
   readonly selectedItems: readonly UserPrize[];
 }
@@ -48,7 +47,6 @@ function FulfillmentDialog({
   onReconcile,
   onSmsVerificationRequired,
   selectedItems,
-  isExchangeOnly = noExchangeOnlyClassification,
 }: FulfillmentDialogProps & { readonly action: FulfillmentAction }) {
   const titleId = useId();
   const [addresses, setAddresses] = useState<readonly AddressSummary[] | null>(null);

@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
-import { PUBLIC_AUTH_FIXTURE, PUBLIC_POINT_BALANCE_FIXTURES, PUBLIC_SMS_VERIFICATION_FIXTURES, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
+import { PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE, PUBLIC_AUTH_FIXTURE, PUBLIC_POINT_BALANCE_FIXTURES, PUBLIC_SMS_VERIFICATION_FIXTURES, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { policy, policyAccess } from "./fixtures/shipping-policy";
 import { SessionProvider } from "@/components/auth/session-provider";
@@ -77,6 +77,7 @@ const denied = prize({
   name: "選択不可の景品",
 });
 const pointOnly = prize({
+  ...PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE,
   allowed_actions: {
     point_exchange: { allowed: true, unavailable_reason: null },
     selection: { allowed: true, unavailable_reason: null },
@@ -313,17 +314,16 @@ describe("prize inventory UI", () => {
     expect(within(list).getAllByText("コイン交換")).toHaveLength(3);
     expect(within(list).getAllByText("PRIZE IMAGE")).toHaveLength(3);
     // 状態で絞り込む（デザイン 2026-10-31）
-    expect(screen.getByRole("button", { name: "すべて" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "保管中" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "保管中" })).toBeInTheDocument();
     const filters = screen.getByRole("group", { name: "状態で絞り込む" });
-    expect(within(filters).getAllByRole("button").map((button) => button.textContent)).toEqual(["保管中", "発送依頼済み", "コイン交換済み", "すべて"]);
+    expect(within(filters).getAllByRole("button").map((button) => button.textContent)).toEqual(["保管中", "発送依頼済み"]);
     expect(filters.querySelector(".prize-filters__count")).toBeNull();
     fireEvent.click(screen.getByRole("checkbox", { name: "両方可能な景品を選択" }));
     fireEvent.click(within(filters).getByRole("button", { name: "発送依頼済み" }));
-    expect(within(filters).getByRole("button", { name: "発送依頼済み" })).toHaveAttribute("aria-pressed", "true");
-    expect(within(list).queryByRole("heading", { name: "両方可能な景品" })).toBeNull();
-    fireEvent.click(within(filters).getByRole("button", { name: "すべて" }));
-    expect(screen.getByRole("checkbox", { name: "両方可能な景品を選択" })).not.toBeChecked();
+    await waitFor(() => expect(screen.getByRole("button", { name: "発送依頼済み" })).toHaveAttribute("aria-pressed", "true"));
+    fireEvent.click(screen.getByRole("button", { name: "保管中" }));
+    expect(await screen.findByRole("checkbox", { name: "両方可能な景品を選択" })).not.toBeChecked();
     expect(screen.getByText("お支払い状況の確認中です。")).toBeInTheDocument();
     expect(view.container).not.toHaveTextContent(/ポイント|\bpt\b/i);
   });
@@ -421,8 +421,8 @@ describe("prize inventory UI", () => {
     renderInventory(prizeClient);
     fireEvent.click(await screen.findByRole("button", { name: "さらに表示" }));
     expect(await screen.findByRole("heading", { name: "発送のみ可能な景品" })).toBeInTheDocument();
-    expect(listPrizes).toHaveBeenNthCalledWith(1);
-    expect(listPrizes).toHaveBeenNthCalledWith(2, "next-page");
+    expect(listPrizes).toHaveBeenNthCalledWith(1, {status_group: "stored", limit: 100});
+    expect(listPrizes).toHaveBeenNthCalledWith(2, {status_group: "stored", limit: 100, cursor: "next-page"});
     expect(prizeClient.exchangePrizes).not.toHaveBeenCalled();
     expect(prizeClient.createShippingRequest).not.toHaveBeenCalled();
   });
@@ -434,7 +434,7 @@ describe("prize inventory UI", () => {
     loading.unmount();
 
     const empty = renderInventory(client({ listPrizes: vi.fn().mockResolvedValue(response({ items: [], next_cursor: null })) }));
-    expect(await screen.findByText("獲得景品はありません")).toBeInTheDocument();
+    expect(await screen.findByText("この状態の景品はありません。")).toBeInTheDocument();
     empty.unmount();
 
     const problem = new ApiProblemError({
@@ -524,7 +524,7 @@ describe("server-grouped inventory UI input (alpha.50 connection pending)", () =
       getShippingRequest: vi.fn().mockResolvedValue(response({ id: "shipping" })),
       listShippingAddresses: vi.fn().mockResolvedValue(response({ items: [{ id: "address", recipient_name_masked: "テスト***" }] })),
     });
-    render(<SessionProvider client={authClient()}><PrizeClientProvider client={api}><PrizeInventory loadGroup={loadGroup} isExchangeOnly={(p) => p.id === pointOnly.id || p.id === d.id} /></PrizeClientProvider></SessionProvider>);
+    render(<SessionProvider client={authClient()}><PrizeClientProvider client={api}><PrizeInventory loadGroup={loadGroup} /></PrizeClientProvider></SessionProvider>);
     fireEvent.click(await screen.findByRole("checkbox", { name: "両方可能な景品を選択" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "コイン交換のみ可能な景品を選択" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "交換景品Dを選択" }));
@@ -574,4 +574,18 @@ it("loads on intersection once while a continuation is pending and disconnects",
     view.unmount();
     expect(disconnect).toHaveBeenCalled();
   } finally { vi.unstubAllGlobals(); }
+});
+
+it("uses the official typed 100-item server-group query for both tabs and cursors", async () => {
+  const listPrizes = vi.fn().mockResolvedValueOnce(response({items: [both], next_cursor: "stored-next"}))
+    .mockResolvedValueOnce(response({items: [pointOnly], next_cursor: null}))
+    .mockResolvedValueOnce(response({items: [{...both, status: "hold"}], next_cursor: null}));
+  renderInventory(client({listPrizes}));
+  fireEvent.click(await screen.findByRole("button", {name: "さらに表示"}));
+  await screen.findByText("コイン交換のみ可能な景品");
+  expect(listPrizes).toHaveBeenNthCalledWith(1, {status_group: "stored", limit: 100});
+  expect(listPrizes).toHaveBeenNthCalledWith(2, {status_group: "stored", limit: 100, cursor: "stored-next"});
+  fireEvent.click(screen.getByRole("button", {name: "発送依頼済み"}));
+  await waitFor(() => expect(listPrizes).toHaveBeenNthCalledWith(3, {status_group: "shipping", limit: 100}));
+  expect(await screen.findByText("保留")).toBeInTheDocument();
 });

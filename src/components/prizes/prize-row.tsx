@@ -78,6 +78,7 @@ export function PrizeRow({
   onToggle,
   prize,
   totalPoints,
+  statusGroup,
 }: {
   readonly checked: boolean;
   /** 同じ景品をまとめて1行にしたときの件数 */
@@ -89,11 +90,12 @@ export function PrizeRow({
   readonly prize: UserPrize;
   /** 右側に出すコイン（まとめた行は合計） */
   readonly totalPoints?: number;
+  readonly statusGroup?: "stored" | "shipping";
 }) {
   const presentation = prize.presentation;
   const image = presentation?.image?.media_type === "image" ? presentation.image : null;
   const name = prizeName(prize);
-  const badge = prizeStatusBadge(prize);
+  const badge = prize.status === "hold" && statusGroup ? { label: "保留", tone: statusGroup } : prizeStatusBadge(prize);
   const done = prize.status === "converted";
   const off = disabled && !checked;
   const note = prizeStateNote(prize);

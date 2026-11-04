@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ApiProblemError, StorefrontTransportError } from "@oripa/storefront-client";
-import { PUBLIC_SHIPPING_REQUEST_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE, SHIPPING_MINIMUM_PROBLEM_FIXTURE } from "@oripa/storefront-testkit";
+import { PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE, PUBLIC_SHIPPING_REQUEST_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE, SHIPPING_MINIMUM_PROBLEM_FIXTURE } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { PrizeFulfillmentDialog } from "@/components/prizes/prize-fulfillment";
 import { deferred, policy, policyAccess } from "./fixtures/shipping-policy";
@@ -563,18 +563,17 @@ describe("prize fulfillment UI", () => {
 });
 
 describe("exchange-only presentation input (formal Contract wiring pending)", () => {
-  const b: UserPrize = { ...prize, id: "exchange-B", allowed_actions: {
+  const b: UserPrize = { ...PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE, id: "exchange-B", allowed_actions: {
     ...prize.allowed_actions!, shipping: { allowed: false, unavailable_reason: "status_not_actionable" },
   } };
   const d: UserPrize = { ...b, id: "exchange-D" };
   const c: UserPrize = { ...PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE, id: "shipping-C", exchange_points: 2500 };
-  const classify = (item: UserPrize) => item.id === b.id || item.id === d.id;
   const warning = "コイン交換限定景品が選択されています。コイン交換限定景品以外を発送いたします。";
 
   it("submits only A/C and passes every B/D ID for canonical reconciliation", async () => {
     const api = client();
     const onReconcile = vi.fn().mockResolvedValue(undefined);
-    render(<PrizeFulfillmentDialog action="shipping" client={api} isExchangeOnly={classify} onClose={vi.fn()} onReconcile={onReconcile} onSmsVerificationRequired={vi.fn()} selectedItems={[prize, b, c, d]} />);
+    render(<PrizeFulfillmentDialog action="shipping" client={api} onClose={vi.fn()} onReconcile={onReconcile} onSmsVerificationRequired={vi.fn()} selectedItems={[prize, b, c, d]} />);
     expect(screen.getByRole("note")).toHaveTextContent(warning);
     expect(screen.getByText("選択した景品: 2件")).toBeInTheDocument();
     expect(screen.getByText(`選択中の合計：${(prize.exchange_points + c.exchange_points).toLocaleString("ja-JP")}コイン`)).toBeInTheDocument();
@@ -588,7 +587,7 @@ describe("exchange-only presentation input (formal Contract wiring pending)", ()
   it("keeps confirmed shipping successful when reads fail and retries only reads", async () => {
     const api = client();
     const onReconcile = vi.fn().mockRejectedValueOnce(new Error("offline")).mockResolvedValue(undefined);
-    render(<PrizeFulfillmentDialog action="shipping" client={api} isExchangeOnly={classify} onClose={vi.fn()} onReconcile={onReconcile} onSmsVerificationRequired={vi.fn()} selectedItems={[prize, b, d]} />);
+    render(<PrizeFulfillmentDialog action="shipping" client={api} onClose={vi.fn()} onReconcile={onReconcile} onSmsVerificationRequired={vi.fn()} selectedItems={[prize, b, d]} />);
     await waitFor(() => expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
     fireEvent.click(await screen.findByRole("button", { name: "最新情報を再取得" }));
@@ -601,7 +600,7 @@ describe("exchange-only presentation input (formal Contract wiring pending)", ()
   it("does not reconcile an uncertain shipment and keeps the retry key", async () => {
     const api = client({ createShippingRequest: vi.fn().mockRejectedValueOnce(new StorefrontTransportError("NETWORK_ERROR", "unknown")).mockResolvedValue(response(shippingRequest)) });
     const onReconcile = vi.fn().mockResolvedValue(undefined);
-    render(<PrizeFulfillmentDialog action="shipping" client={api} isExchangeOnly={classify} onClose={vi.fn()} onReconcile={onReconcile} onSmsVerificationRequired={vi.fn()} selectedItems={[prize, b]} />);
+    render(<PrizeFulfillmentDialog action="shipping" client={api} onClose={vi.fn()} onReconcile={onReconcile} onSmsVerificationRequired={vi.fn()} selectedItems={[prize, b]} />);
     await waitFor(() => expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
     await screen.findByRole("alert");

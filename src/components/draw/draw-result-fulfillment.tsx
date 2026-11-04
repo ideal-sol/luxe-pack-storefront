@@ -7,7 +7,7 @@ import { SmsVerificationRequiredDialog } from "@/components/account/sms-verifica
 import { CatalogLoading } from "@/components/catalog/catalog-message";
 import { useOptionalPrizeClient } from "@/components/prizes/prize-client-provider";
 import { PrizeFulfillmentDialog } from "@/components/prizes/prize-fulfillment";
-import { actionablePrizes, type FulfillmentAction, type FulfillmentCompletion, type ExchangeOnlyClassification, noExchangeOnlyClassification, retainedSelection } from "@/components/prizes/prize-actions";
+import { actionablePrizes, type FulfillmentAction, type FulfillmentCompletion, isExchangeOnly, retainedSelection } from "@/components/prizes/prize-actions";
 import { shippingRequirement } from "@/components/prizes/shipping-minimum";
 import { presentPlatformProblem, presentSmsProblem, type DrawResponse, type UserPrize } from "@/lib/platform";
 import { PrizeRow } from "@/components/prizes/prize-row";
@@ -99,7 +99,7 @@ interface PrizeGroup {
 }
 
 /** 同じ景品（景品・状態・交換コイン・等級が同じもの）を1行にまとめる（デザイン 2026-10-31「10コイン × 6」）。 */
-export function groupPrizes(items: readonly UserPrize[], isExchangeOnly: ExchangeOnlyClassification = noExchangeOnlyClassification): readonly PrizeGroup[] {
+export function groupPrizes(items: readonly UserPrize[]): readonly PrizeGroup[] {
   const groups = new Map<string, UserPrize[]>();
   for (const item of items) {
     const selectable = item.allowed_actions?.selection.allowed === true;
@@ -126,7 +126,6 @@ export function groupPrizes(items: readonly UserPrize[], isExchangeOnly: Exchang
 }
 
 interface DrawResultFulfillmentProps {
-  readonly isExchangeOnly?: ExchangeOnlyClassification;
   readonly backHref: string;
   readonly onExchanged: () => void;
   readonly onRemainingChange?: (remaining: number) => void;
@@ -140,7 +139,6 @@ export function DrawResultFulfillment(props: DrawResultFulfillmentProps) {
 }
 
 function DrawResultFulfillmentContent({
-  isExchangeOnly = noExchangeOnlyClassification,
   backHref,
   onExchanged,
   onRemainingChange,
@@ -196,19 +194,19 @@ function DrawResultFulfillmentContent({
     if (retained.size > 0) {
       const ordered = items.filter((item) => item.status !== "converted" && item.status !== "exchange_processing")
         .sort((a, b) => sort === "desc" ? b.exchange_points - a.exchange_points : a.exchange_points - b.exchange_points);
-      const groups = groupPrizes(ordered, isExchangeOnly);
+      const groups = groupPrizes(ordered);
       const lastRetained = groups.reduce((last, group, index) => group.items.some((item) => retained.has(item.id)) ? index + 1 : last, 0);
       setVisibleCount((count) => Math.max(count, lastRetained));
     }
     if (actionRef.current === "point_exchange") onExchanged();
-  }, [loadAll, onExchanged, sort, isExchangeOnly]);
+  }, [loadAll, onExchanged, sort]);
 
   const items = useMemo(() => {
     if (state.status !== "ready") return [];
     // この画面でコインに交換した景品（交換処理中を含む）は、一覧から消す（2026-10-31 要望）。獲得アイテムの画面には今までどおり残る。
     return state.items.filter((item) => item.status !== "converted" && item.status !== "exchange_processing").sort((a, b) => sort === "desc" ? b.exchange_points - a.exchange_points : a.exchange_points - b.exchange_points);
   }, [sort, state]);
-  const groups = useMemo(() => groupPrizes(items, isExchangeOnly), [items, isExchangeOnly]);
+  const groups = useMemo(() => groupPrizes(items), [items]);
   const visibleGroups = useMemo(() => groups.slice(0, visibleCount), [groups, visibleCount]);
   const visibleItems = useMemo(() => visibleGroups.flatMap((group) => group.items), [visibleGroups]);
   const selectedItems = useMemo(() => visibleItems.filter((item) => selected.has(item.id)), [selected, visibleItems]);
@@ -334,7 +332,6 @@ function DrawResultFulfillmentContent({
 
       <PrizeFulfillmentDialog
         action={action}
-        isExchangeOnly={isExchangeOnly}
         client={client}
         onClose={() => setAction(null)}
         onReconcile={reconcile}

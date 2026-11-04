@@ -14,8 +14,8 @@ import {
 } from "@/lib/platform";
 import { usePrizeClient } from "./prize-client-provider";
 import { PrizeFulfillmentDialog } from "./prize-fulfillment";
-import { PrizeRow, PrizeStatusFilters, prizeStatusFilter, type PrizeStatusFilter } from "./prize-row";
-import { actionablePrizes, type FulfillmentAction, type FulfillmentCompletion, type ExchangeOnlyClassification, noExchangeOnlyClassification, retainedSelection } from "./prize-actions";
+import { PrizeRow, PrizeStatusFilters, type PrizeStatusFilter } from "./prize-row";
+import { actionablePrizes, type FulfillmentAction, type FulfillmentCompletion, retainedSelection } from "./prize-actions";
 
 type InventoryState =
   | { readonly status: "idle" }
@@ -34,6 +34,7 @@ type BulkAction = FulfillmentAction;
 
 const number = new Intl.NumberFormat("ja-JP");
 const reasonLabels: Readonly<Record<UserPrizeActionUnavailableReason, string>> = {
+  exchange_only: "この景品はコイン交換のみ可能です。",
   exchange_points_unavailable: "コイン交換額を確認できません。",
   payment_hold: "お支払い状況の確認中です。",
   status_not_actionable: "現在の状態では選択できません。",
@@ -51,22 +52,22 @@ function PrizeCard({
   checked,
   onChange,
   prize,
+  group,
 }: {
   readonly checked: boolean;
   readonly onChange: (checked: boolean) => void;
   readonly prize: UserPrize;
+  readonly group: InventoryGroup;
 }) {
   const selectable = prize.allowed_actions?.selection.allowed === true;
   // 保管中なのに選べないもの（お支払い確認中など）だけ理由を出す。発送依頼済み・交換済みは状態の札と説明で分かる。
-  const reason = !selectable && prizeStatusFilter(prize) === "stored" ? selectionReason(prize) : null;
-  return <PrizeRow checked={checked} disabled={!selectable} extraNote={reason} onToggle={onChange} prize={prize} />;
+  const reason = !selectable && group === "stored" ? selectionReason(prize) : null;
+  return <PrizeRow checked={checked} disabled={!selectable} extraNote={reason} onToggle={onChange} prize={prize} statusGroup={group} />;
 }
 
 const statusFilterOptions = [
   { key: "stored", label: "保管中" },
   { key: "shipping", label: "発送依頼済み" },
-  { key: "done", label: "コイン交換済み" },
-  { key: "all", label: "すべて" },
 ] as const;
 
 function availableBulkActions(items: readonly UserPrize[], selected: ReadonlySet<string>): readonly BulkAction[] {
@@ -96,13 +97,12 @@ function BulkActionTray({ actions, items, onAction, shippingChecking }: { readon
 }
 
 export type InventoryGroup = "stored" | "shipping";
-/** UI data source, not a substitute Client contract. Production wiring awaits alpha.50. */
+/** Optional test data source; production uses the official typed Client below. */
 export type InventoryGroupLoader = (group: InventoryGroup, cursor?: string) => Promise<{
   readonly items: readonly UserPrize[]; readonly next_cursor: string | null;
 }>;
 interface InventoryProps {
   readonly loadGroup?: InventoryGroupLoader;
-  readonly isExchangeOnly?: ExchangeOnlyClassification;
 }
 
 export function PrizeInventory(props: InventoryProps) {
@@ -111,8 +111,8 @@ export function PrizeInventory(props: InventoryProps) {
   return <PrizeInventoryContent key={user} {...props} />;
 }
 
-function PrizeInventoryContent({ loadGroup, isExchangeOnly = noExchangeOnlyClassification }: InventoryProps) {
-  const [filter, setFilter] = useState<PrizeStatusFilter>(loadGroup ? "stored" : "all");
+function PrizeInventoryContent({ loadGroup }: InventoryProps) {
+  const [filter, setFilter] = useState<PrizeStatusFilter>("stored");
   const { getSmsVerificationStatus, state: session } = useSession();
   const { client, configurationAvailable } = usePrizeClient();
   const [requestKey, setRequestKey] = useState(0);
@@ -128,11 +128,11 @@ function PrizeInventoryContent({ loadGroup, isExchangeOnly = noExchangeOnlyClass
   const loadingCursor = useRef(false);
   const seenCursors = useRef(new Set<string>());
   const moreRef = useRef<HTMLButtonElement>(null);
-  const serverGroup = loadGroup && filter === "shipping" ? "shipping" : "stored";
+  const serverGroup = filter === "shipping" ? "shipping" : "stored";
   const readPage = useCallback(async (cursor?: string) => {
     if (loadGroup) return loadGroup(serverGroup, cursor);
     if (!client) throw new Error("Prize client unavailable");
-    return (cursor ? await client.listPrizes(cursor) : await client.listPrizes()).data;
+    return (await client.listPrizes({ status_group: serverGroup, limit: 100, ...(cursor ? { cursor } : {}) })).data;
   }, [client, serverGroup, loadGroup]);
 
   useEffect(() => {
@@ -152,8 +152,8 @@ function PrizeInventoryContent({ loadGroup, isExchangeOnly = noExchangeOnlyClass
   }, [client, readPage, requestKey, sessionUserId]);
 
   const visibleItems = useMemo(() => state.status === "ready"
-    ? state.items.filter((item) => loadGroup || filter === "all" || prizeStatusFilter(item) === filter)
-    : [], [filter, state, loadGroup]);
+    ? state.items
+    : [], [state]);
   const actions = useMemo(() => state.status === "ready"
     ? availableBulkActions(state.items, selected)
     : [], [selected, state]);
@@ -204,7 +204,7 @@ function PrizeInventoryContent({ loadGroup, isExchangeOnly = noExchangeOnlyClass
   }, [client, readPage, state]);
 
   useEffect(() => {
-    if (!loadGroup || state.status !== "ready" || state.loadingMore || state.continuationProblem || !state.nextCursor
+    if (state.status !== "ready" || state.loadingMore || state.continuationProblem || !state.nextCursor
       || !moreRef.current || typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver((entries) => {
       if (entries.some((entry) => entry.isIntersecting)) void loadMore();
@@ -260,9 +260,7 @@ function PrizeInventoryContent({ loadGroup, isExchangeOnly = noExchangeOnlyClass
       setRequestKey((value) => value + 1);
     }} description={state.problem.message} eyebrow="ERROR" title="獲得景品を取得できませんでした" tone="error" />;
   }
-  if (state.items.length === 0 && !loadGroup) {
-    return <CatalogMessage description="現在表示できる獲得景品はありません。" eyebrow="EMPTY" title="獲得景品はありません" />;
-  }
+
 
   return (
     <section aria-labelledby="inventory-heading" className="inventory">
@@ -274,14 +272,13 @@ function PrizeInventoryContent({ loadGroup, isExchangeOnly = noExchangeOnlyClass
         </div>
         <PrizeStatusFilters onChange={(value) => {
           if (value === filter || fulfillmentAction || shippingChecking) return;
-          if (loadGroup) { generation.current += 1; setState({ status: "loading" }); }
+          generation.current += 1; setState({ status: "loading" });
           setFilter(value as PrizeStatusFilter); setSelected(new Set());
-        }} options={loadGroup ? statusFilterOptions.slice(0, 2) : statusFilterOptions} value={filter} />
+        }} options={statusFilterOptions} value={filter} />
       </div>
       <p className="prize-legend">
         <span><i style={{ background: "#157A4C" }} />保管中 … 景品ごとに利用可能な操作を選べます</span>
         <span><i style={{ background: "#2A4FA8" }} />発送依頼済み … 受付が済み、発送をお待ちいただいています</span>
-        {!loadGroup && <span><i style={{ background: "#6B7B7C" }} />コイン交換済み … コインでお受け取り済みです</span>}
       </p>
       <div className="inventory__selection-bar">
         <div className="inventory__selection-actions">
@@ -300,6 +297,7 @@ function PrizeInventoryContent({ loadGroup, isExchangeOnly = noExchangeOnlyClass
         {visibleItems.length === 0 && <p className="inventory__filter-empty">この状態の景品はありません。</p>}
         {visibleItems.map((prize) => (
           <PrizeCard
+            group={serverGroup}
             checked={selected.has(prize.id)}
             key={prize.id}
             onChange={(checked) => setSelected((current) => {
@@ -321,7 +319,6 @@ function PrizeInventoryContent({ loadGroup, isExchangeOnly = noExchangeOnlyClass
       <BulkActionTray actions={actions} items={selectedItems} onAction={(action) => void startFulfillment(action)} shippingChecking={shippingChecking} />
       {client && (
         <PrizeFulfillmentDialog
-          isExchangeOnly={isExchangeOnly}
           action={fulfillmentAction}
           client={client}
           onClose={() => setFulfillmentAction(null)}

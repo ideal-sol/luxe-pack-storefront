@@ -1423,3 +1423,26 @@ Required CI, Shadow and final-head fresh self-review results are recorded in the
   machine-readable Focused Review are recorded in PR221 after push. Worklog is
   the only additional changed path. Alpha.49 vendor/pins/hashes untouched;
   alpha.50 generated-contract/UI wiring and Human acceptance remain deferred.
+
+
+### PR221 formal alpha.50 integration — EXCHANGEONLY-20261104
+
+- Human authorizes existing Draft implementation/push/CI/review only; R3 Strict,
+  Activation deferred. Start915594aa2aa3c87d661ac35c80c187a3ad685ca6; main unchanged.
+- Downloaded official Artifact13324454382 from workflow41835790272; outer/inner
+  hashes match Human values and release Ledger at7587539. Source14f7819c retained
+  as Artifact authority. Client/Testkit50 and Public46; Site Schema23 retained.
+- Connected formal classification, two-tab100-item Client retrieval, both-screen
+  retention and ordinary/login/signup notices. Preserved server allowed_actions,
+  SMS/address/idempotency and read-only retry after confirmed shipping.
+- Official Fixture integration, notice/query regressions added. Initial focused:
+  160 PASS/4 FAIL (3 timeouts,1 missing punctuation corrected). No Gate/timeout
+  weakening. Final tests, CI5 and fixed-head review recorded in PR to freeze head.
+- No local full suite/Build/audit, Platform changes, Runtime, migration, release
+  or image publication. Browser/E2E remains Human after Source merge/OLD Test.
+  Existing Worktree/branch retained; stop Draft. Handoff rewritten for final state.
+
+- Final local typecheck/lint/artifact validation PASS. Additional notice/query/
+  grouped-state focused9 PASS. Initial contract24 executed:23 PASS/1 stale digest
+  expectation; updated to official digest and reran affected contract suite.
+  No prior alpha.49 bytes or historical Production authority changed.

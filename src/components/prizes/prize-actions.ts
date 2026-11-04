@@ -6,9 +6,9 @@ export function actionablePrizes(items: readonly UserPrize[], action: Fulfillmen
   return items.filter((item) => item.allowed_actions?.[action].allowed === true);
 }
 
-/** UI input only: connect to the formal generated field after Artifact adoption. */
+/** Read the immutable acquisition classification from the generated contract. */
 export type ExchangeOnlyClassification = (prize: UserPrize) => boolean;
-export const noExchangeOnlyClassification: ExchangeOnlyClassification = () => false;
+export const isExchangeOnly: ExchangeOnlyClassification = (prize) => prize.exchange_only === true;
 
 export interface FulfillmentCompletion {
   readonly action: FulfillmentAction;

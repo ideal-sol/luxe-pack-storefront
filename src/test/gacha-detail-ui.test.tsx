@@ -347,3 +347,12 @@ it("resolves new detail, lineup and prize images through CloudFront", async () =
     expect(document.querySelector(".prize-rank__prize img")).toHaveAttribute("src", "https://cdn.example.test/gacha/prize.webp");
   } finally { vi.unstubAllEnvs(); }
 });
+
+it("connects all formally classified lineup names to purchase notices without badges", async () => {
+  const first = detail.prizes![0]!;
+  const prizes = ["限定B", "限定D"].map((name, i) => ({ ...first, id: String(i), name, exchange_only: true }));
+  renderDetail(publicClient({ getGachaBySlug: vi.fn().mockResolvedValue(response({ data: { ...detail, notices: null, prizes } })) }));
+  const notice = await screen.findByRole("region", { name: "コイン交換限定景品の注意事項" });
+  expect(within(notice).getAllByRole("listitem").map((item) => item.textContent)).toEqual(["限定B", "限定D"]);
+  expect(screen.getByLabelText("限定B")).not.toHaveTextContent("コイン交換限定");
+});

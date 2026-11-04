@@ -1,81 +1,55 @@
-# EXCHANGEONLY-20261104 Storefront Draft handoff
+# EXCHANGEONLY PR221 formal alpha.50 integration
 
-R3 / Strict Change / Application Runtime Activation: deferred. Issue: none.
-Human authorizes implementation, push and Draft PR only. No Ready, merge,
-auto-merge, release or runtime activation. Keep this branch/worktree for continuation.
+R3 / Strict Change / Application Runtime Activation deferred. Draft HOLD;
+Ready, merge and Runtime require separate explicit Human authorization.
+Starting HEAD915594aa2aa3c87d661ac35c80c187a3ad685ca6; base/main
+ba11e00741c3857764b85c18892b9ed547e40506. Existing branch/worktree reused.
 
-Base: ba11e00741c3857764b85c18892b9ed547e40506 (live main at start).
-Platform authority: PR657, squash db89dd7e4ae74bfa7fc88e28a63c0ddcb46a999a;
-read its implementation handoff and spec v1.1, SHA256
-57dca153e36442297cfb79c2c4e20c25b13f1575c555c547dfb629481d29a41d.
-The expanded specification was available locally. The attached ZIP and
-Oripoke_Codex_Storefront_ExchangeOnly_DraftPR_2026-11-04.md were not available;
-the detailed latest Human request was used. Platform prompt was not executed.
+## Official dependency authority
 
-## Implemented source
+Artifact13324454382, workflow41835790272 attempt1, official source
+14f7819c72c5908aa6e5778303b87dc4b1202493. Ledger main
+7587539aa7104db60203775c0a5813b5c8d291de records the same immutable release.
+Outer ZIP67d9fbbe7c31fcfaa2ed674eeb4e35d5d60a07e01f0bb0ce34523e4783037b75;
+manifest bbf4284afc47d912a13b039b7a3168fc09ae58ace682c005ef46d852e0b9c44a.
+Every inner digest and SHA256SUMS verified before adoption; full hashes are in
+vendor/oripa/EXCHANGEONLY-ALPHA50-20261104/PROVENANCE.md.
+Client/Testkit alpha.50; Public/Admin alpha.46; Webhook alpha.45;93 operations;
+Site Schema alpha.23 retained byte-identically. Prior alpha.49 files unchanged.
 
-- Existing allowed_actions filtering, shipping minimum, SMS, addresses and
-  idempotency remain authoritative. Confirmation explains excluded counts.
-- Classified UI input enables the exact mixed-shipping warning and retained IDs.
-  Both inventory and draw screens reconcile canonical reads before restoring
-  only still-selectable, exchangeable, nonshipping retained prizes. Inventory
-  fetches retained IDs individually to preserve selections beyond page one.
-- Confirmed shipping remains successful if refresh fails. The modal blocks
-  another shipment and offers reads-only retry; the original completion snapshot
-  survives partial refreshes. Mutation errors/uncertainty never reconcile selection.
-- Grouping accepts classification independently of action availability. Existing
-  100-item mutation limits remain; inventory select-all/individual selection now
-  also stay within 100. No classification-specific count limit is introduced.
-- Purchase notice component renders exact spec wording and all target names;
-  no exchange-only badges. Draw exchange estimate excludes shipping-only prizes.
-- Inventory's optional server-grouped data source enables stored-default/two tabs,
-  trusts the Platform result without browser status filtering, supports observer
-  continuation/manual fallback, deduplicates IDs/cursors, ignores stale responses
-  and resets cursors/selection on tab/session changes. Refresh resets cursor history.
+## Connected source
 
-## Explicitly NOT integrated / NOT complete
+- Generated exchange_only drives grouping, exact mixed-shipping warning and
+  retained acquisition IDs. No custom classification injection remains.
+- Inventory defaults stored, exposes only stored/shipping, uses typed
+  listPrizes({status_group,limit:100,cursor}) and trusts server filtering.
+  Financial hold remains in stored; shipping-linked hold remains in shipping.
+  Observer/manual continuation, repeated cursor/ID guards, generation checks,
+  session unmount and canonical retained-ID reads are reused.
+- Shipping/exchange targets and minimum totals use server allowed_actions.
+  A/C ship; all B/D remain selected after canonical refresh, on both screens.
+  Failed/uncertain/cancelled mutations keep selections. Confirmed shipping with
+  failed reads offers read-only retry, with a stable completed operation snapshot.
+- Ordinary Gacha and shared login_daily/signup_once detail render all classified
+  prize names in purchase notices, even without other notices. Images/ranks/card
+  effects remain. No customer exchange-only badges.100-operation limit retained.
 
-The shipped application still uses alpha.49 and its existing inventory route
-(legacy all-status list and four tabs). No component manufactures exchange_only
-or status_group on that Client. New classification inputs default to no classified
-prizes; grouped loader is absent until formal adoption. The notice component is
-ready but not yet connected to ordinary/login/signup Gacha detail data.
+## Validation and Human handoff
 
-UI input callbacks are presentation seams, NOT generated API definitions or
-proof that alpha.49 supports the feature. Tests inject classification and grouped
-pages separately from existing alpha.49 fixtures. They do not simulate a released
-alpha.50 Artifact or claim real 100-item server pagination acceptance.
+Official alpha.50 fixtures replace classification injections. Focused tests cover
+mixed actions, minimum totals, retention, uncertain writes/read-only retry,
+two tabs, query shape/cursors, six shipping states/holds and all notice surfaces.
+Exact local outcomes and final-head Required5 checks/review are recorded in PR221.
+An initial focused run had160 PASS,3 existing5s timeouts and1 empty-text assertion
+missing punctuation; punctuation corrected. No timeout/assertion weakening.
+Local full suite/Build/audit not repeated; existing Required CI performs its normal
+checks. No Browser/E2E or non-running Runtime PASS is claimed.
 
-## Minimum continuation after official alpha.50 publication
-
-1. Verify actual published manifest, source SHA, immutable files and hashes,
-   Client/Testkit/Public contract compatibility. Adopt exact official pins under
-   the authorized adoption scope; do not reuse the unpublished candidate tgz.
-2. Connect InventoryGroupLoader to the typed Client
-   listPrizes({status_group: group, limit: 100, cursor}). Omit absent optional cursor
-   according to the generated type. Keep server-owned hold grouping; remove
-   legacy four-tab/browser-filter fallback after the new route is tested.
-3. Wire isExchangeOnly from generated UserPrize.exchange_only in inventory and
-   DrawResultFulfillment. Add exchange_only to the exhaustive unavailable-reason
-   labels. Feed the same generated classification into grouping.
-4. Mount ExchangeOnlyNotice in ordinary/login/signup purchase notices, passing
-   names of generated classified lineup entries. Preserve images/ranks/cards.
-5. Replace injected classification tests with official Testkit fixture integration;
-   verify real stored/shipping 100-item cursors, all six shipping states and both
-   hold kinds. Verify session changes, empty tabs and retained IDs beyond page one.
-6. Run relevant tests and unchanged Required Checks, review exact final HEAD,
-   obtain Human logged-in browser acceptance and explicit Ready/merge approval.
-   Runtime acceptance/activation requires separate authorization.
-
-## Verification and limits
-
-Focused UI/contract checks, lint, typecheck and Artifact validation are recorded
-in the PR at the exact final HEAD. Earlier failed attempts and unresolved checks
-are not hidden. No local build, operational migration, Browser/E2E, logged-in
-visual check, OLD Test or Production activation. Automatic CI's own required
-builds/tests are distinct from release/runtime actions.
-
-No Platform modification, dependency/lockfile/vendor/manifest change, direct API
-fetch, API/schema/auth/payment/draw authority change, secret or PII introduction.
-Migration created/applied: 0/0. Rollback before activation: revert this source PR.
-Do not deploy alpha.49 as support for exchange-only inventory. This Draft is HOLD.
+After separate Source merge and OLD Test activation approval, Human should verify:
+ordinary/login/signup notices and absence of badges; mixed A/B/C/D confirmation,
+SMS/address/minimum, shipping success retention and exchange; read-failure retry;
+stored/shipping scroll, tab/user switch, hold classification and mobile layout.
+No Platform write, release/tag/image publication, migration000105/000106,
+Runtime/ENV/Worker/Timer change. Rollback is a reviewed source revert before
+activation. Actual alpha.50 Runtime compatibility and Human acceptance remain
+release/activation concerns; no Ready or merge is authorized here.

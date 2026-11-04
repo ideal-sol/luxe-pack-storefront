@@ -22,7 +22,7 @@ it.each(Object.entries(PUBLIC_ACCOUNT_CLOSURE_FIXTURES))("projects the formal %s
   const h = harness(); h.mock.enqueueJson({ method: "GET", url: origin + "/me/account-closure" }, { body: fixture });
   await expect(h.client.load()).resolves.toEqual({ pointBalance: fixture.data.point_balance, unclaimedPrizeCount: fixture.data.unclaimed_prize_count, shippingInProgressCount: fixture.data.shipping_in_progress_count,
     canClose: fixture.data.can_close, verificationMethod: fixture.data.verification_method, maskedEmail: fixture.data.masked_email ?? "" });
-  assertBrowserRequestBoundary(h.mock.requests[0]!, { client_version: "2.0.0-alpha.49", site_version: "0.1.0" });
+  assertBrowserRequestBoundary(h.mock.requests[0]!, { client_version: "2.0.0-alpha.50", site_version: "0.1.0" });
   h.mock.assertExhausted();
 });
 it.each([
@@ -41,7 +41,7 @@ it("uses canonical CSRF-managed OTP with actual server resend and expiry values"
     { body: { data: { masked_email: "t***@example.test", expires_at: new Date(now + 600000).toISOString(), resend_available_at: new Date(now + 60000).toISOString() } } });
   await expect(h.client.sendCode()).resolves.toEqual({ maskedEmail: "t***@example.test", expiresInMinutes: 10, resendAvailableAt: now + 60000 });
   expect(h.mock.requests).toHaveLength(2);
-  assertBrowserRequestBoundary(h.mock.requests[1]!, { client_version: "2.0.0-alpha.49", site_version: "0.1.0" });
+  assertBrowserRequestBoundary(h.mock.requests[1]!, { client_version: "2.0.0-alpha.50", site_version: "0.1.0" });
   expect(h.mock.requests[1]!.headers["x-xsrf-token"]).toBe(csrf);
   h.mock.assertExhausted();
 });
@@ -55,7 +55,7 @@ it.each(["password", "email_code"])("posts only approved %s verification, previe
     ...(method === "password" ? { password: "fixture-password" } : { email_code: "123456" }) });
   expect(request.headers["x-xsrf-token"]).toBe(csrf);
   expect(request.headers["idempotency-key"]).toBe(key);
-  assertBrowserRequestBoundary(request, { client_version: "2.0.0-alpha.49", site_version: "0.1.0" });
+  assertBrowserRequestBoundary(request, { client_version: "2.0.0-alpha.50", site_version: "0.1.0" });
   h.mock.assertExhausted();
 });
 it.each([
