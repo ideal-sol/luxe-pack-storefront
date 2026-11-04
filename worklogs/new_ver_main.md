@@ -1356,3 +1356,36 @@ Required CI, Shadow and final-head fresh self-review results are recorded in the
 
 - Continuation validation: Typecheck, full ESLint plus changed-script lint, Artifact/Policy/all9Boundary/secret checks PASS. Local optimized Build2PASS (second after removing the remaining monthly page introduction); synthetic loopback Chromium16cases PASS across390/1280px, all API traffic mocked and external requests blocked. Loopback process stopped. Browser setup initially lacked default Chromium and complete Wallet/SMS fixtures; explicit installed Chromium and formal synthetic fixtures resolved setup failures without changing application safeguards.
 - Final focused54tests PASS; unchanged draw-result regression plus rank/MyPage58tests PASS. Production manifest4tests PASS on limited rerun (89excluded by filter). Full local run exposed4stale OpenAPI hash expectations in Draw/Payment/Prize/Point contracts; updated to verified alpha.45 hash and formal vendor path, then all53affected contract tests PASS. No weakened assertions/timeouts or business changes. Full-run initial failures and final-head automatic CI results remain separately recorded in PR220; no claim that the initial full run passed.
+
+
+## EXCHANGEONLY-20261104 — Storefront Draft preparation (2026-11-04)
+
+- Human scope: implement/push/Draft PR only. R3; Strict Change; Application
+  Runtime Activation deferred; Issue none. Ready/merge/runtime prohibited.
+- Base ba11e00741c3857764b85c18892b9ed547e40506; dedicated worktree and branch
+  feat/EXCHANGEONLY-20261104 isolate occupied main checkout. Live main rechecked.
+- Platform PR657 squash db89dd7e4ae74bfa7fc88e28a63c0ddcb46a999a read-only.
+  Read spec v1.1 matching handoff hash. Storefront ZIP/prompt unavailable locally;
+  latest detailed Human message is implementation authority. Platform prompt not run.
+- Implemented classification-driven presentation inputs, exact warning, exclusion
+  counts, both-screen retained-selection reconciliation, reads-only recovery after
+  confirmed shipment, grouping distinction, purchase notice component and server-
+  grouped two-tab inventory input with observer/cursor/session protections.
+- Production connection awaits formal alpha.50. Existing alpha.49 vendor,
+  manifest, integrity, package/lock pins unchanged. Legacy route remains active;
+  do not represent new grouped retrieval or classification as integrated.
+- Tests add mixed A/B/C/D, both-screen retention, refresh failure, uncertain
+  mutation, no badge, grouping, server hold groups, duplicate cursor, observer
+  concurrency and stale-tab coverage with explicit presentation inputs.
+- Artifact/policy/prize-boundary/draw-boundary/security checks PASS. Initial
+  type/lint errors corrected without weakening gates. Earlier focused attempt:
+  108 PASS / 1 existing 5-second timeout; isolated diagnostic at 15 seconds PASS
+  (6.6 seconds). Diagnostic timeout is NOT a Required Check PASS or config change.
+  Final local and automatic CI results, exact final SHA and focused-review JSON
+  are recorded in the Draft PR to avoid changing the reviewed head for results.
+- No local Build, Browser/E2E/visual acceptance, runtime activation, migration,
+  release/tag, Platform write or dependency adoption. Build0 / activation0 /
+  manual CI reruns0 / Human wait0. Automatic CI builds are reported separately.
+- Handoff: docs/implementation/EXCHANGEONLY_20261104_DRAFT_HANDOFF.md.
+  Retain branch/worktree for Human continuation. Rollback: revert source PR before
+  activation; never deploy alpha.49 as exchange-only support. HOLD_DRAFT.

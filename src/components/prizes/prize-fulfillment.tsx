@@ -18,7 +18,7 @@ import {
   type ShippingRequestSummary,
   type UserPrize,
 } from "@/lib/platform";
-import { actionablePrizes, type FulfillmentAction } from "./prize-actions";
+import { actionablePrizes, type FulfillmentAction, type FulfillmentCompletion, type ExchangeOnlyClassification, noExchangeOnlyClassification } from "./prize-actions";
 import type { ShippingMinimumSnapshot, ShippingPolicySnapshot } from "@/lib/platform/shipping-policy";
 import { shippingMinimumMessage, shippingRequirement, shippingShortfall, shippingTotal, validShippingMinimum } from "./shipping-minimum";
 
@@ -26,7 +26,8 @@ interface FulfillmentDialogProps {
   readonly action: FulfillmentAction | null;
   readonly client: PrizeFulfillmentAdapter;
   readonly onClose: () => void;
-  readonly onReconcile: () => Promise<void>;
+  readonly onReconcile: (completion: FulfillmentCompletion) => Promise<void>;
+  readonly isExchangeOnly?: ExchangeOnlyClassification;
   readonly onSmsVerificationRequired: () => void;
   readonly selectedItems: readonly UserPrize[];
 }
@@ -47,6 +48,7 @@ function FulfillmentDialog({
   onReconcile,
   onSmsVerificationRequired,
   selectedItems,
+  isExchangeOnly = noExchangeOnlyClassification,
 }: FulfillmentDialogProps & { readonly action: FulfillmentAction }) {
   const titleId = useId();
   const [addresses, setAddresses] = useState<readonly AddressSummary[] | null>(null);
@@ -56,11 +58,14 @@ function FulfillmentDialog({
   const [addressInput, setAddressInput] = useState<ShippingAddressInput | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Readonly<Record<string, readonly string[]>>>({});
   const [problem, setProblem] = useState<string | null>(null);
+  const [refreshFailed, setRefreshFailed] = useState(false);
+  const [completedShipping, setCompletedShipping] = useState<ShippingRequestSummary | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const pendingExchange = useRef<string | null>(null);
   const pendingShipping = useRef<{ key: string; payload: string } | null>(null);
+  const completionRef = useRef<FulfillmentCompletion | null>(null);
   const policyAccess = client.shippingPolicyAccess;
   const [policyAttempt, setPolicyAttempt] = useState(0);
   const [policyResult, setPolicyResult] = useState<{
@@ -176,7 +181,7 @@ function FulfillmentDialog({
 
   async function reconcileReads(shipping?: ShippingRequestSummary) {
     const reads: Promise<unknown>[] = [
-      onReconcile(),
+      onReconcile(completionRef.current ?? { action, processedIds: prizeIds, retainedIds: [] }),
       refreshAddresses(),
       client.listShippingRequests(),
     ];
@@ -193,7 +198,7 @@ function FulfillmentDialog({
     setProblem(null);
     try {
       const { data } = await client.exchangePrizes(prizeIds, { idempotency_key: key });
-      await onReconcile();
+      await onReconcile({ action, processedIds: prizeIds, retainedIds: [] });
       document.dispatchEvent(new Event("storefront:wallet-refresh"));
       pendingExchange.current = null;
       setSuccess(exchangeSuccess(data));
@@ -209,7 +214,7 @@ function FulfillmentDialog({
   }
 
   async function ship() {
-    if (!shippingAllowed || prizeIds.length === 0 || !selectedAddressId || submittingRef.current) return;
+    if (completedShipping || !shippingAllowed || prizeIds.length === 0 || !selectedAddressId || submittingRef.current) return;
     const payload = JSON.stringify([selectedAddressId, prizeIds]);
     const key = pendingShipping.current?.payload === payload ? pendingShipping.current.key : createFulfillmentIdempotencyKey();
     pendingShipping.current = { key, payload };
@@ -218,9 +223,11 @@ function FulfillmentDialog({
     setProblem(null);
     try {
       const { data } = await client.createShippingRequest(selectedAddressId, prizeIds, { idempotency_key: key });
-      await reconcileReads(data);
+      completionRef.current = { action, processedIds: prizeIds, retainedIds: selectedItems.filter(isExchangeOnly).map((item) => item.id) };
       pendingShipping.current = null;
+      setCompletedShipping(data);
       setSuccess(`発送依頼を受け付けました。受付番号: ${data.id}`);
+      try { await reconcileReads(data); } catch { setRefreshFailed(true); }
     } catch (error) {
       if (!policyLifetime.current) return;
       const minimum = policyAccess?.minimumRejection(error);
@@ -326,13 +333,21 @@ function FulfillmentDialog({
       <section aria-labelledby={titleId} aria-modal="true" className="dialog-card fulfillment-dialog__card" role="dialog">
         <p className="dialog-card__eyebrow">FULFILLMENT</p>
         <h2 id={titleId}>{action === "shipping" ? "発送内容を確認" : "コイン交換を確認"}</h2>
-        <p>選択した景品: {number.format(actionItems.length)}件</p>
+        {!success && <p>選択した景品: {number.format(actionItems.length)}件</p>}
+        {!success && selectedItems.length !== actionItems.length && <p>選択{number.format(selectedItems.length)}件のうち、対象外{number.format(selectedItems.length - actionItems.length)}件は処理しません。</p>}
+        {!success && action === "shipping" && selectedItems.some(isExchangeOnly) && <p role="note">コイン交換限定景品が選択されています。コイン交換限定景品以外を発送いたします。</p>}
 
         {success ? (
           <div className="fulfillment-dialog__success" role="status">
             <strong>手続きが完了しました</strong>
             <p>{success}</p>
-            <p>{action === "point_exchange" ? "景品は最新の情報を表示しています。" : "景品・発送・お届け先は最新の情報を表示しています。"}</p>
+            {refreshFailed && completedShipping && <button disabled={submitting} onClick={async () => {
+              setSubmitting(true);
+              try { await reconcileReads(completedShipping); setRefreshFailed(false); }
+              catch { setRefreshFailed(true); }
+              finally { setSubmitting(false); }
+            }} type="button">最新情報を再取得</button>}
+            <p>{refreshFailed ? "発送依頼は受付済みです。最新情報の取得に失敗しました。再発送せず、情報を再取得してください。" : action === "point_exchange" ? "景品は最新の情報を表示しています。" : "景品・発送・お届け先は最新の情報を表示しています。"}</p>
           </div>
         ) : editingAddressId && addressInput ? (
           <form onSubmit={(event) => { event.preventDefault(); void saveAddress(); }}>
@@ -411,7 +426,7 @@ function FulfillmentDialog({
             </div>
           </>
         )}
-        {success && <div className="dialog-card__actions"><button className="button button--dark" onClick={closeDialog} type="button">閉じる</button></div>}
+        {success && !refreshFailed && !submitting && <div className="dialog-card__actions"><button className="button button--dark" onClick={closeDialog} type="button">閉じる</button></div>}
       </section>
     </div>
   );
