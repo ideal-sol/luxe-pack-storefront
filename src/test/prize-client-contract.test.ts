@@ -46,7 +46,7 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
     expect(harness.mock.requests).toHaveLength(1);
     expect(harness.mock.requests[0]).toMatchObject({ method: "GET", credentials: "include" });
     expect(harness.mock.requests[0]?.headers["x-xsrf-token"]).toBeUndefined();
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.48", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.49", site_version: "0.1.0" });
     // no-store is the formal endpoint cache policy; mock reads are not Runtime proof.
     const contract = JSON.parse(readFileSync("vendor/oripa/CLOSURE-ALPHA48-20261028/public.openapi.json", "utf8"));
     expect(contract.paths["/me/shipping-policy"].get).toMatchObject({
@@ -103,8 +103,8 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
   it("pins the canonical immutable versions and retains existing contracts", () => {
     for (const [packageName, version] of Object.entries({
       "site-schema": "2.0.0-alpha.23",
-      "storefront-client": "2.0.0-alpha.48",
-      "storefront-testkit": "2.0.0-alpha.48",
+      "storefront-client": "2.0.0-alpha.49",
+      "storefront-testkit": "2.0.0-alpha.49",
     })) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
       expect(packageJson.version).toBe(version);
@@ -178,7 +178,7 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
     });
     expect(data.items[0]?.allowed_actions).toEqual(fixture.allowed_actions);
     expect(data.next_cursor).toBe("next-page");
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.48", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.49", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -219,7 +219,7 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
     expect(harness.mock.requests[1]?.credentials).toBe("include");
     expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBe(key);
     expect(harness.mock.requests[1]?.headers["x-xsrf-token"]).toBe(csrf);
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.48", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.49", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 

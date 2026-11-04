@@ -7,15 +7,37 @@ import { pathToFileURL } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 
 const root = process.cwd();
-const vendor = path.join(root, "vendor/oripa/CLOSURE-ALPHA48-20261028");
+const vendor = path.join(root, "vendor/oripa/MEMBERRANK-ALPHA49-20261104");
 const retainedVendor = path.join(root, "vendor/oripa/SHIPONLY-20260926");
 const schemaVendor = path.join(root, "vendor/oripa/MIG-063B");
-const bundleVersion = "2.0.0-alpha.48";
-const predecessorBundleVersion = "2.0.0-alpha.47";
-const publicApiVersion = "2.0.0-alpha.44";
+const bundleVersion = "2.0.0-alpha.49";
+const predecessorBundleVersion = "2.0.0-alpha.48";
+const publicApiVersion = "2.0.0-alpha.45";
 const siteSchemaVersion = "2.0.0-alpha.23";
-const sourceCommit = "6e945df343d3d42ffa844b3b369ca0c171a6bbbe";
+const sourceCommit = "58c79bca49353268f4ee1b2e2047f39afc51fe94";
 const expected = new Map([
+  [
+    "artifact-manifest.json",
+    "3a893845663a9de6cc07254632f2148c5cac21a58271f3f74c8d09a0d90eb66e"
+  ],
+  [
+    "SHA256SUMS",
+    "30125c5f7cf0fa5dba1f854b741cb0ba2f63b8a4d859407b69e559961cc72cd7"
+  ],
+  [
+    "public.openapi.json",
+    "8612273ffe9e32d7508bb1bf14145fa052babc4a8f117d8db8928ef7a2232263"
+  ],
+  [
+    "oripa-storefront-client-2.0.0-alpha.49.tgz",
+    "244fab4a035a477ca6151a53d5c8287084ac463801f3b2f762c1173abe8c7ae8"
+  ],
+  [
+    "oripa-storefront-testkit-2.0.0-alpha.49.tgz",
+    "70b094b5ee0b9994811c7f0f43384ef858e456d8d032a700bbcc51ea583b4ff6"
+  ]
+]);
+const alpha48Expected = new Map([
   [
     "artifact-manifest.json",
     "9affb95def4858a748a5343614dcdf4d8e0ca20705d5d227cc48e976f01df60f"
@@ -37,6 +59,9 @@ const expected = new Map([
     "37b23c6378c79c7553ca52da58f389ecf8e5ca01d78483a97141e716920a2ceb"
   ]
 ]);
+for (const [file, digest] of alpha48Expected) {
+  if (sha256(path.join(root, "vendor/oripa/CLOSURE-ALPHA48-20261028", file)) !== digest) throw new Error(`Retained alpha.48 digest mismatch: ${file}`);
+}
 const alpha47Expected = new Map([
   [
     "artifact-manifest.json",
@@ -86,11 +111,11 @@ const retainedExpected = new Map([
 ]);
 const publishedPackages = new Map([
   ["@oripa/storefront-client", {
-    file: "oripa-storefront-client-2.0.0-alpha.48.tgz",
+    file: "oripa-storefront-client-2.0.0-alpha.49.tgz",
     version: bundleVersion,
   }],
   ["@oripa/storefront-testkit", {
-    file: "oripa-storefront-testkit-2.0.0-alpha.48.tgz",
+    file: "oripa-storefront-testkit-2.0.0-alpha.49.tgz",
     version: bundleVersion,
   }],
 ]);
@@ -195,8 +220,8 @@ const sums = new Map(
     }),
 );
 for (const file of [
-  "oripa-storefront-client-2.0.0-alpha.48.tgz",
-  "oripa-storefront-testkit-2.0.0-alpha.48.tgz",
+  "oripa-storefront-client-2.0.0-alpha.49.tgz",
+  "oripa-storefront-testkit-2.0.0-alpha.49.tgz",
   "public.openapi.json",
 ]) {
   if (sums.get(file) !== expected.get(file)) throw new Error(`SHA256SUMS mismatch: ${file}`);
@@ -204,18 +229,18 @@ for (const file of [
 if (sums.size !== 3) throw new Error("SHA256SUMS entry set is invalid");
 
 const manifest = JSON.parse(readFileSync(path.join(vendor, "artifact-manifest.json"), "utf8"));
-if (manifest.task_id !== "ACCOUNT-CLOSURE-20261028" || manifest.source_commit !== sourceCommit) {
+if (manifest.task_id !== "ADMIN-USER-SEARCH-20261103" || manifest.source_commit !== sourceCommit) {
   throw new Error("Artifact provenance mismatch");
 }
 if (manifest.bundle?.version !== bundleVersion || manifest.bundle?.predecessor !== predecessorBundleVersion ||
-    manifest.bundle?.release_mode !== "contract-additive" || manifest.bundle?.immutable !== true) {
-  throw new Error("Contract-additive bundle declaration mismatch");
+    manifest.bundle?.release_mode !== "contract-breaking" || manifest.bundle?.immutable !== true) {
+  throw new Error("Contract-breaking bundle declaration mismatch");
 }
 if (manifest.public_openapi?.file !== "public.openapi.json" ||
     manifest.public_openapi?.version !== publicApiVersion ||
     manifest.public_openapi?.sha256 !== expected.get("public.openapi.json") ||
     manifest.public_openapi?.operation_count !== 93 ||
-    manifest.public_openapi?.breaking_change !== false) {
+    manifest.public_openapi?.breaking_change !== true) {
   throw new Error("Referenced Public OpenAPI manifest entry mismatch");
 }
 const manifestPackages = new Map((manifest.packages ?? []).map((entry) => [entry.name, entry]));
@@ -237,7 +262,7 @@ if (schemaEntry?.disposition !== "referenced" || schemaEntry.file !== undefined 
 if (manifestPackages.size !== 3 || manifest.packages?.length !== 3) throw new Error("Package manifest is incomplete");
 
 const provenance = readFileSync(path.join(vendor, "PROVENANCE.md"), "utf8");
-for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "ACCOUNT-CLOSURE-20261028", "40697440380", "12819254428", "0d2606a8a5b4e282f183bae0484b3b9bc2212b74a91c176a41f59ee6cffba897", ...expected.values(), referencedSiteSchema.sha256]) {
+for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "ADMIN-USER-SEARCH-20261103", "41774049916", "13295779119", "fd3cf292c597e13117b5708236b3a884fd3afb32b5d187d685f5e1493bec7dbd", ...expected.values(), referencedSiteSchema.sha256]) {
   if (!provenance.includes(value)) throw new Error(`Artifact provenance is incomplete: ${value}`);
 }
 if (/\/(?:var\/(?:www|lib)|home)\//.test(provenance)) {
@@ -673,8 +698,25 @@ for (const [route, contract] of Object.entries(alpha46OpenApi.paths)) {
     throw new Error(`Operation changed outside published alpha.47 additive contract: ${route}`);
   }
 }
+const alpha48OpenApi = JSON.parse(readFileSync(path.join(root, "vendor/oripa/CLOSURE-ALPHA48-20261028/public.openapi.json"), "utf8"));
+if (!isDeepStrictEqual(alpha48OpenApi.paths, openApi.paths)) throw new Error("alpha.49 changed existing operations");
+const rankChanges = new Set(["MemberRankPublicSetting", "MyMemberRankDisabled", "MyMemberRankEnabled"]);
+if (!isDeepStrictEqual(Object.keys(alpha48OpenApi.components.schemas).sort(), Object.keys(openApi.components.schemas).sort())) throw new Error("alpha.49 schema inventory changed");
+for (const [name, schema] of Object.entries(alpha48OpenApi.components.schemas)) {
+  if (!rankChanges.has(name) && !isDeepStrictEqual(schema, openApi.components.schemas[name])) throw new Error(`Unrelated alpha.49 schema change: ${name}`);
+}
+const cumulative = openApi.components.schemas.MyMemberRankEnabled.properties;
+if (cumulative.point_basis.const !== "cumulative" || cumulative.period.type !== "null" ||
+    cumulative.maintain.type !== "null" || cumulative.demotion_protection.type !== "null" ||
+    cumulative.breakdown.properties.recent.maxItems !== 3 ||
+    cumulative.breakdown.properties.recent.items.properties.kind.const !== "purchase" ||
+    !isDeepStrictEqual(cumulative.breakdown.required, ["recent", "total"]) ||
+    cumulative.promotion_bonus.properties.received.type !== "boolean" || cumulative.transferred.type !== "boolean" ||
+    openApi.components.schemas.MemberRankPublicSetting.properties.maintain_line.type !== "null") {
+  throw new Error("alpha.49 cumulative member rank contract mismatch");
+}
 for (const [route, contract] of Object.entries(alpha47OpenApi.paths)) {
-  if (!isDeepStrictEqual(contract, openApi.paths[route])) throw new Error(`Retained alpha.47 operation changed: ${route}`);
+  if (!isDeepStrictEqual(contract, alpha48OpenApi.paths[route])) throw new Error(`Retained alpha.47 operation changed: ${route}`);
 }
 for (const operation of ["getAccountClosurePreview", "sendAccountClosureEmailCode", "closeAccount"]) {
   if (!archiveText(clientArchive, "package/dist/identity.d.ts").includes(operation)) throw new Error(`Closure Client operation missing: ${operation}`);
@@ -847,8 +889,8 @@ for (const content of [packageJsonText, lockfileText]) {
     throw new Error("Server-specific file dependency");
   }
   for (const required of [
-    "vendor/oripa/CLOSURE-ALPHA48-20261028/oripa-storefront-client-2.0.0-alpha.48.tgz",
-    "vendor/oripa/CLOSURE-ALPHA48-20261028/oripa-storefront-testkit-2.0.0-alpha.48.tgz",
+    "vendor/oripa/MEMBERRANK-ALPHA49-20261104/oripa-storefront-client-2.0.0-alpha.49.tgz",
+    "vendor/oripa/MEMBERRANK-ALPHA49-20261104/oripa-storefront-testkit-2.0.0-alpha.49.tgz",
     "vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
   ]) {
     if (!content.includes(required)) throw new Error(`Canonical package pin is missing: ${required}`);
@@ -860,6 +902,8 @@ if (JSON.parse(packageJsonText).dependencies?.["@fincode/js"] !== "1.1.0" ||
   throw new Error("Canonical fincode SDK dependency is not exactly pinned");
 }
 for (const obsolete of [
+  "oripa-storefront-client-2.0.0-alpha.48.tgz",
+  "oripa-storefront-testkit-2.0.0-alpha.48.tgz",
   "oripa-storefront-client-2.0.0-alpha.47.tgz",
   "oripa-storefront-testkit-2.0.0-alpha.47.tgz",
   "oripa-storefront-client-2.0.0-alpha.46.tgz",

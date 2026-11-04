@@ -4,7 +4,7 @@ import { vi } from "vitest";
 import MyMemberRankPage from "@/app/mypage/member-rank/page";
 import { isConsistentBreakdown, MemberRankBreakdownSection } from "@/components/member-rank/member-rank-breakdown";
 import { MemberRankBand } from "@/components/member-rank/member-rank-band";
-import type { MemberRankBreakdown } from "@/lib/platform/member-rank-client";
+import type { CumulativeMemberRank, MemberRankBreakdown } from "@/lib/platform/member-rank-client";
 import { useSession } from "@/components/auth/session-provider";
 import { SessionProvider } from "@/components/auth/session-provider";
 import type { AuthClientAdapter, AuthSession } from "@/lib/platform";
@@ -36,7 +36,7 @@ function rankOf(code: Code) {
   return { code: found.code, level: found.level, name: found.name };
 }
 
-function enabled(code: Code, points: number, extra: Record<string, unknown> = {}) {
+function enabled(code: Code, points: number, extra: Record<string, unknown> = {}): CumulativeMemberRank {
   const index = ranks.findIndex((rank) => rank.code === code);
   const next = ranks[index + 1];
   return {
@@ -45,7 +45,7 @@ function enabled(code: Code, points: number, extra: Record<string, unknown> = {}
     demotion_protection: null,
     enabled: true,
     maintain: null,
-    next_rank: next ? { code: next.code, name: next.name, reach_line: next.reach_line, remaining: Math.max(0, next.reach_line! - points) } : null,
+    next_rank: next && next.code !== "beginner" ? { code: next.code, name: next.name, reach_line: next.reach_line!, remaining: Math.max(0, next.reach_line! - points) } : null,
     period: null,
     point_basis: "cumulative",
     breakdown: { recent: [], total: points },
@@ -115,6 +115,7 @@ describe("会員本人のランク", () => {
     expect(card).toHaveClass("mrank-t2");
     expect(card).toHaveTextContent("3/7");
     expect(card).toHaveTextContent("累計ランクポイント42,000");
+    expect(document.body).not.toHaveTextContent("今月のランクポイント");
     expect(card).toHaveTextContent("ゴールド まであと 59,000 ランクポイント");
     expect(card).not.toHaveTextContent("集計対象月：2026-11");
     expect(card).not.toHaveTextContent("次回リセット：");
@@ -240,10 +241,9 @@ const breakdown: MemberRankBreakdown = {
   total: 52000,
 };
 
-describe("累計内訳（merged OpenAPIの合成入力、正式Artifact検証ではない）", () => {
+describe("累計内訳（正式生成型に適合する合成入力）", () => {
   it("マイページの帯も残数0を反映待ちとして表示する", () => {
-    // Runtime input only: alpha.48's generated response is deliberately not recast as alpha.49.
-    render(<MemberRankBand rank={enabled("silver", 128000) as unknown as Parameters<typeof MemberRankBand>[0]["rank"]} />);
+    render(<MemberRankBand rank={enabled("silver", 128000)} />);
     expect(screen.getByRole("region", { name: "会員ランク" })).toHaveTextContent("累計ランクポイント");
     expect(screen.getByRole("region", { name: "会員ランク" })).toHaveTextContent("ゴールドの条件到達・ランク反映待ち");
   });

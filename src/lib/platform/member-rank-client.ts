@@ -7,22 +7,9 @@ type MemberRankSchemas = PublicComponents["schemas"];
 export type MemberRankSetting = MemberRankSchemas["MemberRankPublicSetting"];
 export type MemberRankCode = MemberRankSetting["code"];
 
-/** Presentation input from merged Public OpenAPI alpha.45; NOT generated Client compatibility.
- * Replace with generated aliases only after the formal Artifact handoff. */
-export interface MemberRankBreakdown {
-  readonly recent: readonly { readonly occurred_at: string; readonly kind: "purchase"; readonly points: number; readonly label: string }[];
-  readonly total: number;
-}
-
-export type CumulativeMemberRank = Omit<Extract<MyMemberRank, { enabled: true }>, "period" | "maintain" | "demotion_protection"> & {
-  readonly point_basis: "cumulative";
-  readonly period: null;
-  readonly maintain: null;
-  readonly demotion_protection: null;
-  readonly breakdown: MemberRankBreakdown;
-  readonly promotion_bonus: { readonly received: boolean };
-  readonly transferred: boolean;
-};
+/** Generated from the formally published alpha.49 Public API contract. */
+export type CumulativeMemberRank = MemberRankSchemas["MyMemberRankEnabled"];
+export type MemberRankBreakdown = CumulativeMemberRank["breakdown"];
 
 /** Display guard only; the pinned transport and generated response type stay unchanged. */
 export function isCumulativeMemberRank(value: unknown): value is CumulativeMemberRank {

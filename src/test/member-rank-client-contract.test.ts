@@ -13,14 +13,16 @@ function harness() {
 }
 
 describe("pinned member rank Public API client", () => {
-  it.each(["disabled", "beginner"] as const)("reads %s via the canonical browser client without fabricating fields", async (key) => {
+  it.each(["disabled", "beginner", "silver", "vip", "month_boundary"] as const)("reads %s via the canonical browser client without fabricating fields", async (key) => {
     const mock = harness();
     mock.enqueueJson({ method: "GET", url: `${origin}/me/member-rank` }, { status: 200, body: PUBLIC_MEMBER_RANK_FIXTURES[key] });
     const rank = await loadMyMemberRank();
     expect(rank).toEqual(PUBLIC_MEMBER_RANK_FIXTURES[key].data);
-    expect(rank).not.toHaveProperty("breakdown");
-    expect(rank).not.toHaveProperty("point_basis");
-    assertBrowserRequestBoundary(mock.requests[0]!, { client_version: "2.0.0-alpha.48", site_version: "0.1.0" });
+    expect(rank).toHaveProperty("breakdown");
+    expect(rank.point_basis).toBe(rank.enabled ? "cumulative" : null);
+    expect(rank.period).toBeNull();
+    if (rank.enabled) expect(rank.breakdown.total).toBe(rank.rank_points);
+    assertBrowserRequestBoundary(mock.requests[0]!, { client_version: "2.0.0-alpha.49", site_version: "0.1.0" });
     expect(mock.requests[0]).toMatchObject({ method: "GET", credentials: "include" });
     mock.assertExhausted();
   });
