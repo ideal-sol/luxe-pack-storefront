@@ -1501,3 +1501,5 @@ application build or Browser/E2E; ordinary existing CI builds remain required.
 All records below are historical and cannot restore superseded Production settings.
 
 Issue: https://github.com/ideal-sol/luxe-pack-storefront/issues/222. Local verification: 118 focused tests PASS; artifact:check, policy:check and security:check PASS. Initial focused run: 116 PASS / 2 FAIL due to old expected error strings; updated to the new strict digest rejection, then all 118 PASS. Exact Runtime checkout validation PASS. No application build or Runtime operation.
+
+Final focused review corrected an accidental duplicate historical alpha.46 negative case back to alpha.44 and added explicit alpha.48/49 rejection cases. Final focused suite: 122 PASS. Head update requires automatic CI on the new head; no manual rerun/dispatch. Platform remote/local task branch and dedicated worktree removed after merge-tree equality; local main and origin/main synchronized to 5ade57a7d40830a2cf137552f242a2001724b295 while the occupied primary branch remains untouched.

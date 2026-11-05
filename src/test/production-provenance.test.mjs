@@ -85,21 +85,21 @@ describe("exact alpha.50 Production provenance", () => {
 
   it("rejects alpha.44 dependencies under the new Production authority", () => {
     mutateJson("package.json", (value) => {
-      value.dependencies["@oripa/storefront-client"] = "file:vendor/oripa/SIGNUP-SMS-GATE-20261012/oripa-storefront-client-2.0.0-alpha.46.tgz";
-      value.devDependencies["@oripa/storefront-testkit"] = "file:vendor/oripa/SIGNUP-SMS-GATE-20261012/oripa-storefront-testkit-2.0.0-alpha.46.tgz";
+      value.dependencies["@oripa/storefront-client"] = "file:vendor/oripa/SIGNUP-SMS-GATE-20261012/oripa-storefront-client-2.0.0-alpha.44.tgz";
+      value.devDependencies["@oripa/storefront-testkit"] = "file:vendor/oripa/SIGNUP-SMS-GATE-20261012/oripa-storefront-testkit-2.0.0-alpha.44.tgz";
     });
     expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
   });
 
   it("rejects the old alpha.44 authority for new source dependencies", () => {
-    authority.contract_version = "2.0.0-alpha.46";
+    authority.contract_version = "2.0.0-alpha.44";
     authority.manifest_path = "vendor/oripa/SIGNUP-SMS-GATE-20261012/artifact-manifest.json";
     authority.artifact_id = "11745799489";
     expect(() => validateProvenance(root, authority)).toThrow("stale provenance authority");
   });
 
   it("rejects alpha.44 authority even with the current directory", () => {
-    authority.contract_version = "2.0.0-alpha.46";
+    authority.contract_version = "2.0.0-alpha.44";
     expect(() => validateProvenance(root, authority)).toThrow("unapproved contract version");
   });
   it("rejects predecessor alpha.41 source dependency pins", () => {
@@ -133,14 +133,14 @@ describe("exact alpha.50 Production provenance", () => {
     });
   });
 
-  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40", "2.0.0-alpha.41", "2.0.0-alpha.42", "2.0.0-alpha.43", "2.0.0-alpha.46", "2.0.0-alpha.45", "2.0.0-alpha.46", "2.0.0-alpha.47"])("rejects %s source pins", (version) => {
+  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40", "2.0.0-alpha.41", "2.0.0-alpha.42", "2.0.0-alpha.43", "2.0.0-alpha.44", "2.0.0-alpha.45", "2.0.0-alpha.46", "2.0.0-alpha.47", "2.0.0-alpha.48", "2.0.0-alpha.49"])("rejects %s source pins", (version) => {
     mutateJson("package.json", (value) => {
       value.dependencies["@oripa/storefront-client"] = `file:vendor/oripa/EXCHANGEONLY-ALPHA50-20261104/oripa-storefront-client-${version}.tgz`;
     });
     expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
   });
 
-  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40", "2.0.0-alpha.41", "2.0.0-alpha.42", "2.0.0-alpha.43", "2.0.0-alpha.46", "2.0.0-alpha.45", "2.0.0-alpha.46", "2.0.0-alpha.47"])("rejects %s manifest contract", (version) => {
+  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40", "2.0.0-alpha.41", "2.0.0-alpha.42", "2.0.0-alpha.43", "2.0.0-alpha.44", "2.0.0-alpha.45", "2.0.0-alpha.46", "2.0.0-alpha.47", "2.0.0-alpha.48", "2.0.0-alpha.49"])("rejects %s manifest contract", (version) => {
     mutateManifest((manifest) => { manifest.bundle.version = version; });
     expect(() => validateProvenance(root, authority)).toThrow("source and manifest contract mismatch");
   });
