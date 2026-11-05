@@ -1,5 +1,7 @@
 "use client";
 
+import { ExchangeOnlyNotice } from "./exchange-only-notice";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -71,7 +73,7 @@ function AuthenticatedDetail({ gachaId }: { readonly gachaId: string }) {
         <dl className="gacha-detail__facts"><div><dt>1回</dt><dd>{detail.price_points === 0 ? "無料" : `${new Intl.NumberFormat("ja-JP").format(detail.price_points)} コイン`}</dd></div></dl>
       </div>
     </section>
-    {detail.notices && <details className="gacha-notices" open><summary>注意事項・ご利用条件</summary><p>{detail.notices}</p></details>}
+    {(detail.notices || (detail.prizes ?? []).some((prize) => prize.exchange_only === true)) && <details className="gacha-notices" open><summary>注意事項・ご利用条件</summary><p>{detail.notices}</p><ExchangeOnlyNotice names={(detail.prizes ?? []).filter((prize) => prize.exchange_only === true).map((prize) => prize.name)} /></details>}
     <section aria-labelledby="gacha-prizes" className="gacha-prizes">
       <header className="gacha-section-heading"><p>PRIZE LINEUP</p><h2 id="gacha-prizes">景品ラインナップ</h2></header>
       {detail.ranks.map((rank) => <section aria-labelledby={`rank-${rank.id}`} className="prize-rank" key={rank.id}>

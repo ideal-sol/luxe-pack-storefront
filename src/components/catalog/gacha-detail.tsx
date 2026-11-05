@@ -1,5 +1,7 @@
 "use client";
 
+import { ExchangeOnlyNotice } from "./exchange-only-notice";
+
 import Link from "next/link";
 import { MemberAccess, SessionBoundContent } from "@/components/auth/member-access";
 import { useEffect, useState } from "react";
@@ -111,10 +113,10 @@ function DetailContent({ detail, presentation }: { readonly detail: GachaDetail;
           </div>
         </div>
       </section>
-      {detail.notices && (
+      {(detail.notices || (detail.prizes ?? []).some((prize) => prize.exchange_only === true)) && (
         <details className="gacha-notices" open>
           <summary>注意事項・ご利用条件</summary>
-          <p>{detail.notices}</p>
+          <p>{detail.notices}</p><ExchangeOnlyNotice names={(detail.prizes ?? []).filter((prize) => prize.exchange_only === true).map((prize) => prize.name)} />
         </details>
       )}
       <Link className="gacha-rate-link" href={gachaPrizeRateRoute(detail.slug)}>

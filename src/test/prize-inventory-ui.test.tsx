@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
-import { PUBLIC_AUTH_FIXTURE, PUBLIC_POINT_BALANCE_FIXTURES, PUBLIC_SMS_VERIFICATION_FIXTURES, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
+import { PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE, PUBLIC_AUTH_FIXTURE, PUBLIC_POINT_BALANCE_FIXTURES, PUBLIC_SMS_VERIFICATION_FIXTURES, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { policy, policyAccess } from "./fixtures/shipping-policy";
 import { SessionProvider } from "@/components/auth/session-provider";
@@ -77,6 +77,7 @@ const denied = prize({
   name: "選択不可の景品",
 });
 const pointOnly = prize({
+  ...PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE,
   allowed_actions: {
     point_exchange: { allowed: true, unavailable_reason: null },
     selection: { allowed: true, unavailable_reason: null },
@@ -313,17 +314,16 @@ describe("prize inventory UI", () => {
     expect(within(list).getAllByText("コイン交換")).toHaveLength(3);
     expect(within(list).getAllByText("PRIZE IMAGE")).toHaveLength(3);
     // 状態で絞り込む（デザイン 2026-10-31）
-    expect(screen.getByRole("button", { name: "すべて" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "保管中" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "保管中" })).toBeInTheDocument();
     const filters = screen.getByRole("group", { name: "状態で絞り込む" });
-    expect(within(filters).getAllByRole("button").map((button) => button.textContent)).toEqual(["保管中", "発送依頼済み", "コイン交換済み", "すべて"]);
+    expect(within(filters).getAllByRole("button").map((button) => button.textContent)).toEqual(["保管中", "発送依頼済み"]);
     expect(filters.querySelector(".prize-filters__count")).toBeNull();
     fireEvent.click(screen.getByRole("checkbox", { name: "両方可能な景品を選択" }));
     fireEvent.click(within(filters).getByRole("button", { name: "発送依頼済み" }));
-    expect(within(filters).getByRole("button", { name: "発送依頼済み" })).toHaveAttribute("aria-pressed", "true");
-    expect(within(list).queryByRole("heading", { name: "両方可能な景品" })).toBeNull();
-    fireEvent.click(within(filters).getByRole("button", { name: "すべて" }));
-    expect(screen.getByRole("checkbox", { name: "両方可能な景品を選択" })).not.toBeChecked();
+    await waitFor(() => expect(screen.getByRole("button", { name: "発送依頼済み" })).toHaveAttribute("aria-pressed", "true"));
+    fireEvent.click(screen.getByRole("button", { name: "保管中" }));
+    expect(await screen.findByRole("checkbox", { name: "両方可能な景品を選択" })).not.toBeChecked();
     expect(screen.getByText("お支払い状況の確認中です。")).toBeInTheDocument();
     expect(view.container).not.toHaveTextContent(/ポイント|\bpt\b/i);
   });
@@ -421,8 +421,8 @@ describe("prize inventory UI", () => {
     renderInventory(prizeClient);
     fireEvent.click(await screen.findByRole("button", { name: "さらに表示" }));
     expect(await screen.findByRole("heading", { name: "発送のみ可能な景品" })).toBeInTheDocument();
-    expect(listPrizes).toHaveBeenNthCalledWith(1);
-    expect(listPrizes).toHaveBeenNthCalledWith(2, "next-page");
+    expect(listPrizes).toHaveBeenNthCalledWith(1, {status_group: "stored", limit: 100});
+    expect(listPrizes).toHaveBeenNthCalledWith(2, {status_group: "stored", limit: 100, cursor: "next-page"});
     expect(prizeClient.exchangePrizes).not.toHaveBeenCalled();
     expect(prizeClient.createShippingRequest).not.toHaveBeenCalled();
   });
@@ -434,7 +434,7 @@ describe("prize inventory UI", () => {
     loading.unmount();
 
     const empty = renderInventory(client({ listPrizes: vi.fn().mockResolvedValue(response({ items: [], next_cursor: null })) }));
-    expect(await screen.findByText("獲得景品はありません")).toBeInTheDocument();
+    expect(await screen.findByText("この状態の景品はありません。")).toBeInTheDocument();
     empty.unmount();
 
     const problem = new ApiProblemError({
@@ -487,4 +487,105 @@ it("renders a new acquired prize through CloudFront without mutating it", async 
     expect(api.exchangePrizes).not.toHaveBeenCalled();
     expect(api.createShippingRequest).not.toHaveBeenCalled();
   } finally { vi.unstubAllEnvs(); }
+});
+
+describe("server-grouped inventory UI input (alpha.50 connection pending)", () => {
+  it("defaults to stored, renders only two tabs, and trusts server hold classification", async () => {
+    const loadGroup = vi.fn().mockResolvedValueOnce({ items: [{ ...denied, status: "hold" }], next_cursor: null })
+      .mockResolvedValueOnce({ items: ["shipping_requested", "packing", "hold", "shipped", "delivered", "return_requested"].map((status, i) => ({ ...both, id: String(i), status })), next_cursor: null });
+    render(<SessionProvider client={authClient()}><PrizeClientProvider client={client()}><PrizeInventory loadGroup={loadGroup} /></PrizeClientProvider></SessionProvider>);
+    await screen.findByText("選択不可の景品");
+    expect(loadGroup).toHaveBeenCalledWith("stored", undefined);
+    const filters = screen.getByRole("group", { name: "状態で絞り込む" });
+    expect(within(filters).getAllByRole("button").map((b) => b.textContent)).toEqual(["保管中", "発送依頼済み"]);
+    expect(within(filters).getByRole("button", { name: "保管中" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(within(filters).getByRole("button", { name: "発送依頼済み" }));
+    await waitFor(() => expect(screen.getAllByRole("checkbox")).toHaveLength(6));
+    expect(loadGroup).toHaveBeenLastCalledWith("shipping", undefined);
+  });
+
+  it("deduplicates pages and terminates a repeated cursor", async () => {
+    const loadGroup = vi.fn().mockResolvedValueOnce({ items: [both], next_cursor: "next" })
+      .mockResolvedValueOnce({ items: [both, shippingOnly], next_cursor: "next" });
+    render(<SessionProvider client={authClient()}><PrizeClientProvider client={client()}><PrizeInventory loadGroup={loadGroup} /></PrizeClientProvider></SessionProvider>);
+    fireEvent.click(await screen.findByRole("button", { name: "さらに表示" }));
+    await screen.findByText("発送のみ可能な景品");
+    expect(screen.getAllByRole("checkbox")).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: "さらに表示" })).not.toBeInTheDocument();
+    expect(loadGroup).toHaveBeenCalledTimes(2);
+  });
+
+  it("retains multiple classified prizes beyond the refreshed first page after shipping", async () => {
+    const d = { ...pointOnly, id: "exchange-D", presentation: { ...pointOnly.presentation!, name: "交換景品D" } };
+    const loadGroup = vi.fn().mockResolvedValueOnce({ items: [both, pointOnly, d], next_cursor: null }).mockResolvedValue({ items: [], next_cursor: null });
+    const api = client({
+      getPrize: vi.fn(async (id: string) => response({ ...(id === d.id ? d : pointOnly), status_history: [] })),
+      createShippingRequest: vi.fn().mockResolvedValue(response({ id: "shipping" })),
+      getShippingRequest: vi.fn().mockResolvedValue(response({ id: "shipping" })),
+      listShippingAddresses: vi.fn().mockResolvedValue(response({ items: [{ id: "address", recipient_name_masked: "テスト***" }] })),
+    });
+    render(<SessionProvider client={authClient()}><PrizeClientProvider client={api}><PrizeInventory loadGroup={loadGroup} /></PrizeClientProvider></SessionProvider>);
+    fireEvent.click(await screen.findByRole("checkbox", { name: "両方可能な景品を選択" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "コイン交換のみ可能な景品を選択" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "交換景品Dを選択" }));
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
+    fireEvent.click(await screen.findByRole("button", { name: "閉じる" }));
+    expect(screen.getByRole("checkbox", { name: "コイン交換のみ可能な景品を選択" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "交換景品Dを選択" })).toBeChecked();
+    expect(screen.queryByRole("button", { name: "発送を依頼" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "コインに交換" })).toBeEnabled();
+  });
+});
+
+it("ignores the old tab continuation after switching groups", async () => {
+  let resolveOld!: (value: { items: UserPrize[]; next_cursor: null }) => void;
+  const old = new Promise<{ items: UserPrize[]; next_cursor: null }>((resolve) => { resolveOld = resolve; });
+  const loadGroup = vi.fn().mockResolvedValueOnce({ items: [both], next_cursor: "stored-next" })
+    .mockReturnValueOnce(old).mockResolvedValueOnce({ items: [shippingOnly], next_cursor: null });
+  render(<SessionProvider client={authClient()}><PrizeClientProvider client={client()}><PrizeInventory loadGroup={loadGroup} /></PrizeClientProvider></SessionProvider>);
+  fireEvent.click(await screen.findByRole("button", { name: "さらに表示" }));
+  fireEvent.click(screen.getByRole("button", { name: "発送依頼済み" }));
+  await screen.findByText("発送のみ可能な景品");
+  await act(async () => resolveOld({ items: [pointOnly], next_cursor: null }));
+  expect(screen.queryByText("コイン交換のみ可能な景品")).not.toBeInTheDocument();
+  expect(screen.getByText("発送のみ可能な景品")).toBeInTheDocument();
+});
+
+it("loads on intersection once while a continuation is pending and disconnects", async () => {
+  let intersect!: IntersectionObserverCallback;
+  const disconnect = vi.fn();
+  vi.stubGlobal("IntersectionObserver", class {
+    constructor(callback: IntersectionObserverCallback) { intersect = callback; }
+    observe() {}
+    disconnect() { disconnect(); }
+  });
+  try {
+    const loadGroup = vi.fn().mockResolvedValueOnce({ items: [both], next_cursor: "next" }).mockReturnValue(new Promise(() => {}));
+    const view = render(<SessionProvider client={authClient()}><PrizeClientProvider client={client()}><PrizeInventory loadGroup={loadGroup} /></PrizeClientProvider></SessionProvider>);
+    await screen.findByRole("button", { name: "さらに表示" });
+    // Callback only consumes isIntersecting; use the real element's complete entry shape.
+    const target = screen.getByRole("button", { name: "さらに表示" });
+    const rect = target.getBoundingClientRect();
+    const entry: IntersectionObserverEntry = { target, time: 0, isIntersecting: true, intersectionRatio: 1, boundingClientRect: rect, intersectionRect: rect, rootBounds: null };
+    act(() => { intersect([entry], {} as IntersectionObserver); intersect([entry], {} as IntersectionObserver); });
+    expect(loadGroup).toHaveBeenCalledTimes(2);
+    view.unmount();
+    expect(disconnect).toHaveBeenCalled();
+  } finally { vi.unstubAllGlobals(); }
+});
+
+it("uses the official typed 100-item server-group query for both tabs and cursors", async () => {
+  const listPrizes = vi.fn().mockResolvedValueOnce(response({items: [both], next_cursor: "stored-next"}))
+    .mockResolvedValueOnce(response({items: [pointOnly], next_cursor: null}))
+    .mockResolvedValueOnce(response({items: [{...both, status: "hold"}], next_cursor: null}));
+  renderInventory(client({listPrizes}));
+  fireEvent.click(await screen.findByRole("button", {name: "さらに表示"}));
+  await screen.findByText("コイン交換のみ可能な景品");
+  expect(listPrizes).toHaveBeenNthCalledWith(1, {status_group: "stored", limit: 100});
+  expect(listPrizes).toHaveBeenNthCalledWith(2, {status_group: "stored", limit: 100, cursor: "stored-next"});
+  fireEvent.click(screen.getByRole("button", {name: "発送依頼済み"}));
+  await waitFor(() => expect(listPrizes).toHaveBeenNthCalledWith(3, {status_group: "shipping", limit: 100}));
+  expect(await screen.findByText("保留")).toBeInTheDocument();
 });

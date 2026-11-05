@@ -1356,3 +1356,97 @@ Required CI, Shadow and final-head fresh self-review results are recorded in the
 
 - Continuation validation: Typecheck, full ESLint plus changed-script lint, Artifact/Policy/all9Boundary/secret checks PASS. Local optimized Build2PASS (second after removing the remaining monthly page introduction); synthetic loopback Chromium16cases PASS across390/1280px, all API traffic mocked and external requests blocked. Loopback process stopped. Browser setup initially lacked default Chromium and complete Wallet/SMS fixtures; explicit installed Chromium and formal synthetic fixtures resolved setup failures without changing application safeguards.
 - Final focused54tests PASS; unchanged draw-result regression plus rank/MyPage58tests PASS. Production manifest4tests PASS on limited rerun (89excluded by filter). Full local run exposed4stale OpenAPI hash expectations in Draw/Payment/Prize/Point contracts; updated to verified alpha.45 hash and formal vendor path, then all53affected contract tests PASS. No weakened assertions/timeouts or business changes. Full-run initial failures and final-head automatic CI results remain separately recorded in PR220; no claim that the initial full run passed.
+
+
+## EXCHANGEONLY-20261104 — Storefront Draft preparation (2026-11-04)
+
+- Human scope: implement/push/Draft PR only. R3; Strict Change; Application
+  Runtime Activation deferred; Issue none. Ready/merge/runtime prohibited.
+- Base ba11e00741c3857764b85c18892b9ed547e40506; dedicated worktree and branch
+  feat/EXCHANGEONLY-20261104 isolate occupied main checkout. Live main rechecked.
+- Platform PR657 squash db89dd7e4ae74bfa7fc88e28a63c0ddcb46a999a read-only.
+  Read spec v1.1 matching handoff hash. Storefront ZIP/prompt unavailable locally;
+  latest detailed Human message is implementation authority. Platform prompt not run.
+- Implemented classification-driven presentation inputs, exact warning, exclusion
+  counts, both-screen retained-selection reconciliation, reads-only recovery after
+  confirmed shipment, grouping distinction, purchase notice component and server-
+  grouped two-tab inventory input with observer/cursor/session protections.
+- Production connection awaits formal alpha.50. Existing alpha.49 vendor,
+  manifest, integrity, package/lock pins unchanged. Legacy route remains active;
+  do not represent new grouped retrieval or classification as integrated.
+- Tests add mixed A/B/C/D, both-screen retention, refresh failure, uncertain
+  mutation, no badge, grouping, server hold groups, duplicate cursor, observer
+  concurrency and stale-tab coverage with explicit presentation inputs.
+- Artifact/policy/prize-boundary/draw-boundary/security checks PASS. Initial
+  type/lint errors corrected without weakening gates. Earlier focused attempt:
+  108 PASS / 1 existing 5-second timeout; isolated diagnostic at 15 seconds PASS
+  (6.6 seconds). Diagnostic timeout is NOT a Required Check PASS or config change.
+  Final local and automatic CI results, exact final SHA and focused-review JSON
+  are recorded in the Draft PR to avoid changing the reviewed head for results.
+- No local Build, Browser/E2E/visual acceptance, runtime activation, migration,
+  release/tag, Platform write or dependency adoption. Build0 / activation0 /
+  manual CI reruns0 / Human wait0. Automatic CI builds are reported separately.
+- Handoff: docs/implementation/EXCHANGEONLY_20261104_DRAFT_HANDOFF.md.
+  Retain branch/worktree for Human continuation. Rollback: revert source PR before
+  activation; never deploy alpha.49 as exchange-only support. HOLD_DRAFT.
+
+
+### Draft PR221 final review correction
+
+- Draft created at https://github.com/ideal-sol/luxe-pack-storefront/pull/221.
+- Final broad focused run: 100 PASS / 12 FAIL (112 total). Ten failures were
+  timeout/readiness waits during severe host contention; two were a real display
+  regression from hiding the completed exchange selection count. Restore the
+  exchange count and retain a separate confirmed-shipping count. No assertions
+  or timeouts modified. Run only affected/new tests for this correction.
+- Full lint and typecheck PASS before the correction; changed-file lint/typecheck
+  and final focused results recorded on PR221. Automatic CI was in progress;
+  the ordinary fix push triggers new exact-head checks, with no manual rerun.
+- Draft remains HOLD. No SEV-0/1 found in source review; unresolved broad-suite
+  timing failures and all formal-artifact/browser integration gaps remain merge
+  blockers until verified. Preserve dedicated branch/worktree, no cleanup/merge.
+
+
+### EXCHANGEONLY-20261104 — PR221 minimal CI inventory correction
+
+- Authorized starting HEAD49633ceb671fb773aeb5c50c152ab17909d3ece4 verified
+  against local/Remote/Draft PR221. Main remains ba11e00741c3857764b85c18892b9ed547e40506.
+  Existing dedicated branch/worktree reused. R3 / Strict Change / Activation deferred.
+- Register exactly exchange-only-notice.tsx and exchange-only-presentation.test.tsx
+  in scripts/readiness/source-inventory.v1.json, preserving lexical order and
+  complete source matching (304 ->306 entries). No completeness/check weakening.
+- Human-confirmed CI41810505923:1935 PASS/2 FAIL, both inventory mismatches.
+  Prior application/UI PASS reused because source and test bytes are unchanged.
+  No timeout changes, functionality changes, local full-suite/Build/audit, Artifact
+  adoption, Browser/E2E, migration, Ready, merge or runtime activation.
+- Focused Readiness test result, automatic final-head Required5 checks and
+  machine-readable Focused Review are recorded in PR221 after push. Worklog is
+  the only additional changed path. Alpha.49 vendor/pins/hashes untouched;
+  alpha.50 generated-contract/UI wiring and Human acceptance remain deferred.
+
+
+### PR221 formal alpha.50 integration — EXCHANGEONLY-20261104
+
+- Human authorizes existing Draft implementation/push/CI/review only; R3 Strict,
+  Activation deferred. Start915594aa2aa3c87d661ac35c80c187a3ad685ca6; main unchanged.
+- Downloaded official Artifact13324454382 from workflow41835790272; outer/inner
+  hashes match Human values and release Ledger at7587539. Source14f7819c retained
+  as Artifact authority. Client/Testkit50 and Public46; Site Schema23 retained.
+- Connected formal classification, two-tab100-item Client retrieval, both-screen
+  retention and ordinary/login/signup notices. Preserved server allowed_actions,
+  SMS/address/idempotency and read-only retry after confirmed shipping.
+- Official Fixture integration, notice/query regressions added. Initial focused:
+  160 PASS/4 FAIL (3 timeouts,1 missing punctuation corrected). No Gate/timeout
+  weakening. Final tests, CI5 and fixed-head review recorded in PR to freeze head.
+- No local full suite/Build/audit, Platform changes, Runtime, migration, release
+  or image publication. Browser/E2E remains Human after Source merge/OLD Test.
+  Existing Worktree/branch retained; stop Draft. Handoff rewritten for final state.
+
+- Final local typecheck/lint/artifact validation PASS. Additional notice/query/
+  grouped-state focused9 PASS. Initial contract24 executed:23 PASS/1 stale digest
+  expectation; updated to official digest and reran affected contract suite.
+  No prior alpha.49 bytes or historical Production authority changed.
+
+- Official Client cursor query test initially assumed a different query order;
+  align its exact mock URL with the published Client cursor/status_group/limit
+  serialization. The complete affected contract15 PASS after correction.

@@ -1,11 +1,11 @@
 import { cleanup, configure, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { PUBLIC_AUTH_FIXTURE, PUBLIC_DRAW_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
+import { PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE, PUBLIC_AUTH_FIXTURE, PUBLIC_DRAW_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE } from "@oripa/storefront-testkit";
 import { readFileSync } from "node:fs";
 import { vi } from "vitest";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { DrawClientProvider } from "@/components/draw/draw-client-provider";
 import { DrawResultView } from "@/components/draw/draw-result";
-import { DRAW_FULFILLMENT_MAX_SELECTION, DRAW_FULFILLMENT_PAGE_SIZE, groupPrizes } from "@/components/draw/draw-result-fulfillment";
+import { DrawResultFulfillment, DRAW_FULFILLMENT_MAX_SELECTION, DRAW_FULFILLMENT_PAGE_SIZE, groupPrizes } from "@/components/draw/draw-result-fulfillment";
 import { PrizeClientProvider } from "@/components/prizes/prize-client-provider";
 import type { AuthClientAdapter, DrawClientAdapter, DrawResponse, PrizeFulfillmentAdapter, UserPrize } from "@/lib/platform";
 import { policy, policyAccess } from "./fixtures/shipping-policy";
@@ -286,4 +286,31 @@ describe("抽選結果で、今回の獲得景品をそのまま交換・発送�
     expect(await screen.findByRole("heading", { name: "獲得景品" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "今回の獲得景品" })).not.toBeInTheDocument();
   });
+});
+
+it("preserves both exchange-only selections after successful mixed shipping", async () => {
+  const a = prize(0, 2000);
+  const b = prize(1, 100, { exchange_only: PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE.exchange_only, allowed_actions: { ...a.allowed_actions!, shipping: { allowed: false, unavailable_reason: "status_not_actionable" } } });
+  const d = { ...b, id: "prize-2", draw_result_id: "result-2", presentation: { ...b.presentation!, name: "景品2", prize_id: "master2" } };
+  const sent = { ...a, status: "shipping_requested" as const, allowed_actions: { point_exchange: { allowed: false, unavailable_reason: "status_not_actionable" as const }, shipping: { allowed: false, unavailable_reason: "status_not_actionable" as const }, selection: { allowed: false, unavailable_reason: "status_not_actionable" as const } } };
+  const api = prizeClient({
+    listPrizes: vi.fn().mockResolvedValueOnce(response({ items: [a, b, d], next_cursor: null })).mockResolvedValue(response({ items: [sent, b, d], next_cursor: null })),
+    listShippingAddresses: vi.fn().mockResolvedValue(response({ items: [{ id: "address", recipient_name_masked: "テスト***" }] })),
+    createShippingRequest: vi.fn().mockResolvedValue(response({ id: "shipping" })),
+    getShippingRequest: vi.fn().mockResolvedValue(response({ id: "shipping" })),
+  });
+  const auth = { getCurrentSession: vi.fn().mockResolvedValue(response(PUBLIC_AUTH_FIXTURE.authenticated_session)), getSmsVerificationStatus: vi.fn().mockResolvedValue(response({ verified: true })) } as unknown as AuthClientAdapter;
+  render(<SessionProvider client={auth}><PrizeClientProvider client={api}><DrawResultFulfillment backHref="/gachas" onExchanged={vi.fn()} result={drawWith(3)} /></PrizeClientProvider></SessionProvider>);
+  await fulfillmentRegion();
+  fireEvent.click(screen.getByRole("button", { name: "全て選択" }));
+  fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
+  const dialog = await screen.findByRole("dialog");
+  await waitFor(() => expect(within(dialog).getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
+  fireEvent.click(within(dialog).getByRole("button", { name: "発送を依頼する" }));
+  fireEvent.click(await screen.findByRole("button", { name: "閉じる" }));
+  expect(screen.getByRole("checkbox", { name: "景品0を選択" })).not.toBeChecked();
+  expect(screen.getByRole("checkbox", { name: "景品1を選択" })).toBeChecked();
+  expect(screen.getByRole("checkbox", { name: "景品2を選択" })).toBeChecked();
+  expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "コインに交換する" })).toBeEnabled();
 });

@@ -7,34 +7,34 @@ import { pathToFileURL } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 
 const root = process.cwd();
-const vendor = path.join(root, "vendor/oripa/MEMBERRANK-ALPHA49-20261104");
+const vendor = path.join(root, "vendor/oripa/EXCHANGEONLY-ALPHA50-20261104");
 const retainedVendor = path.join(root, "vendor/oripa/SHIPONLY-20260926");
 const schemaVendor = path.join(root, "vendor/oripa/MIG-063B");
-const bundleVersion = "2.0.0-alpha.49";
-const predecessorBundleVersion = "2.0.0-alpha.48";
-const publicApiVersion = "2.0.0-alpha.45";
+const bundleVersion = "2.0.0-alpha.50";
+const predecessorBundleVersion = "2.0.0-alpha.49";
+const publicApiVersion = "2.0.0-alpha.46";
 const siteSchemaVersion = "2.0.0-alpha.23";
-const sourceCommit = "58c79bca49353268f4ee1b2e2047f39afc51fe94";
+const sourceCommit = "14f7819c72c5908aa6e5778303b87dc4b1202493";
 const expected = new Map([
   [
     "artifact-manifest.json",
-    "3a893845663a9de6cc07254632f2148c5cac21a58271f3f74c8d09a0d90eb66e"
+    "bbf4284afc47d912a13b039b7a3168fc09ae58ace682c005ef46d852e0b9c44a"
   ],
   [
     "SHA256SUMS",
-    "30125c5f7cf0fa5dba1f854b741cb0ba2f63b8a4d859407b69e559961cc72cd7"
+    "810cfffdbfe5e6e43a9883cfdc5c7f9ac47c4bca45fb5d381d1eb7efbf96eded"
   ],
   [
     "public.openapi.json",
-    "8612273ffe9e32d7508bb1bf14145fa052babc4a8f117d8db8928ef7a2232263"
+    "c5cbb72aa0b5a2fa8a76d9e034ae223d2209ea468dcba68de8a8dad2b58eb2a3"
   ],
   [
-    "oripa-storefront-client-2.0.0-alpha.49.tgz",
-    "244fab4a035a477ca6151a53d5c8287084ac463801f3b2f762c1173abe8c7ae8"
+    "oripa-storefront-client-2.0.0-alpha.50.tgz",
+    "ce09af8175331cb534f031987770744109ccd422f966c367f9c2038a0dda98c3"
   ],
   [
-    "oripa-storefront-testkit-2.0.0-alpha.49.tgz",
-    "70b094b5ee0b9994811c7f0f43384ef858e456d8d032a700bbcc51ea583b4ff6"
+    "oripa-storefront-testkit-2.0.0-alpha.50.tgz",
+    "369aad933f312e00a2e6d121cb44d8ee4054e03c46b053c5f4e1f3b5cd955ee9"
   ]
 ]);
 const alpha48Expected = new Map([
@@ -111,11 +111,11 @@ const retainedExpected = new Map([
 ]);
 const publishedPackages = new Map([
   ["@oripa/storefront-client", {
-    file: "oripa-storefront-client-2.0.0-alpha.49.tgz",
+    file: "oripa-storefront-client-2.0.0-alpha.50.tgz",
     version: bundleVersion,
   }],
   ["@oripa/storefront-testkit", {
-    file: "oripa-storefront-testkit-2.0.0-alpha.49.tgz",
+    file: "oripa-storefront-testkit-2.0.0-alpha.50.tgz",
     version: bundleVersion,
   }],
 ]);
@@ -220,8 +220,8 @@ const sums = new Map(
     }),
 );
 for (const file of [
-  "oripa-storefront-client-2.0.0-alpha.49.tgz",
-  "oripa-storefront-testkit-2.0.0-alpha.49.tgz",
+  "oripa-storefront-client-2.0.0-alpha.50.tgz",
+  "oripa-storefront-testkit-2.0.0-alpha.50.tgz",
   "public.openapi.json",
 ]) {
   if (sums.get(file) !== expected.get(file)) throw new Error(`SHA256SUMS mismatch: ${file}`);
@@ -229,18 +229,18 @@ for (const file of [
 if (sums.size !== 3) throw new Error("SHA256SUMS entry set is invalid");
 
 const manifest = JSON.parse(readFileSync(path.join(vendor, "artifact-manifest.json"), "utf8"));
-if (manifest.task_id !== "ADMIN-USER-SEARCH-20261103" || manifest.source_commit !== sourceCommit) {
+if (manifest.task_id !== "BANNER-MODEL-20261104" || manifest.source_commit !== sourceCommit) {
   throw new Error("Artifact provenance mismatch");
 }
 if (manifest.bundle?.version !== bundleVersion || manifest.bundle?.predecessor !== predecessorBundleVersion ||
-    manifest.bundle?.release_mode !== "contract-breaking" || manifest.bundle?.immutable !== true) {
+    manifest.bundle?.release_mode !== "contract-additive" || manifest.bundle?.immutable !== true) {
   throw new Error("Contract-breaking bundle declaration mismatch");
 }
 if (manifest.public_openapi?.file !== "public.openapi.json" ||
     manifest.public_openapi?.version !== publicApiVersion ||
     manifest.public_openapi?.sha256 !== expected.get("public.openapi.json") ||
     manifest.public_openapi?.operation_count !== 93 ||
-    manifest.public_openapi?.breaking_change !== true) {
+    manifest.public_openapi?.breaking_change !== false) {
   throw new Error("Referenced Public OpenAPI manifest entry mismatch");
 }
 const manifestPackages = new Map((manifest.packages ?? []).map((entry) => [entry.name, entry]));
@@ -262,7 +262,7 @@ if (schemaEntry?.disposition !== "referenced" || schemaEntry.file !== undefined 
 if (manifestPackages.size !== 3 || manifest.packages?.length !== 3) throw new Error("Package manifest is incomplete");
 
 const provenance = readFileSync(path.join(vendor, "PROVENANCE.md"), "utf8");
-for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "ADMIN-USER-SEARCH-20261103", "41774049916", "13295779119", "fd3cf292c597e13117b5708236b3a884fd3afb32b5d187d685f5e1493bec7dbd", ...expected.values(), referencedSiteSchema.sha256]) {
+for (const value of [bundleVersion, publicApiVersion, siteSchemaVersion, sourceCommit, "BANNER-MODEL-20261104", "41835790272", "13324454382", "67d9fbbe7c31fcfaa2ed674eeb4e35d5d60a07e01f0bb0ce34523e4783037b75", ...expected.values(), referencedSiteSchema.sha256]) {
   if (!provenance.includes(value)) throw new Error(`Artifact provenance is incomplete: ${value}`);
 }
 if (/\/(?:var\/(?:www|lib)|home)\//.test(provenance)) {
@@ -699,11 +699,13 @@ for (const [route, contract] of Object.entries(alpha46OpenApi.paths)) {
   }
 }
 const alpha48OpenApi = JSON.parse(readFileSync(path.join(root, "vendor/oripa/CLOSURE-ALPHA48-20261028/public.openapi.json"), "utf8"));
-if (!isDeepStrictEqual(alpha48OpenApi.paths, openApi.paths)) throw new Error("alpha.49 changed existing operations");
+{
+const openApi = JSON.parse(readFileSync(path.join(root, "vendor/oripa/MEMBERRANK-ALPHA49-20261104/public.openapi.json"), "utf8"));
+if (!isDeepStrictEqual(alpha48OpenApi.paths, openApi.paths)) throw new Error("alpha.50 changed existing operations");
 const rankChanges = new Set(["MemberRankPublicSetting", "MyMemberRankDisabled", "MyMemberRankEnabled"]);
-if (!isDeepStrictEqual(Object.keys(alpha48OpenApi.components.schemas).sort(), Object.keys(openApi.components.schemas).sort())) throw new Error("alpha.49 schema inventory changed");
+if (!isDeepStrictEqual(Object.keys(alpha48OpenApi.components.schemas).sort(), Object.keys(openApi.components.schemas).sort())) throw new Error("alpha.50 schema inventory changed");
 for (const [name, schema] of Object.entries(alpha48OpenApi.components.schemas)) {
-  if (!rankChanges.has(name) && !isDeepStrictEqual(schema, openApi.components.schemas[name])) throw new Error(`Unrelated alpha.49 schema change: ${name}`);
+  if (!rankChanges.has(name) && !isDeepStrictEqual(schema, openApi.components.schemas[name])) throw new Error(`Unrelated alpha.50 schema change: ${name}`);
 }
 const cumulative = openApi.components.schemas.MyMemberRankEnabled.properties;
 if (cumulative.point_basis.const !== "cumulative" || cumulative.period.type !== "null" ||
@@ -713,7 +715,8 @@ if (cumulative.point_basis.const !== "cumulative" || cumulative.period.type !== 
     !isDeepStrictEqual(cumulative.breakdown.required, ["recent", "total"]) ||
     cumulative.promotion_bonus.properties.received.type !== "boolean" || cumulative.transferred.type !== "boolean" ||
     openApi.components.schemas.MemberRankPublicSetting.properties.maintain_line.type !== "null") {
-  throw new Error("alpha.49 cumulative member rank contract mismatch");
+  throw new Error("alpha.50 cumulative member rank contract mismatch");
+}
 }
 for (const [route, contract] of Object.entries(alpha47OpenApi.paths)) {
   if (!isDeepStrictEqual(contract, alpha48OpenApi.paths[route])) throw new Error(`Retained alpha.47 operation changed: ${route}`);
@@ -889,8 +892,8 @@ for (const content of [packageJsonText, lockfileText]) {
     throw new Error("Server-specific file dependency");
   }
   for (const required of [
-    "vendor/oripa/MEMBERRANK-ALPHA49-20261104/oripa-storefront-client-2.0.0-alpha.49.tgz",
-    "vendor/oripa/MEMBERRANK-ALPHA49-20261104/oripa-storefront-testkit-2.0.0-alpha.49.tgz",
+    "vendor/oripa/EXCHANGEONLY-ALPHA50-20261104/oripa-storefront-client-2.0.0-alpha.50.tgz",
+    "vendor/oripa/EXCHANGEONLY-ALPHA50-20261104/oripa-storefront-testkit-2.0.0-alpha.50.tgz",
     "vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz",
   ]) {
     if (!content.includes(required)) throw new Error(`Canonical package pin is missing: ${required}`);
@@ -950,6 +953,21 @@ for (const obsolete of [
 if (packageJsonText.includes(obsolete) || lockfileText.includes(obsolete)) {
     throw new Error(`Obsolete Production package pin remains: ${obsolete}`);
   }
+}
+
+
+
+const alpha49 = JSON.parse(readFileSync(path.join(root, "vendor/oripa/MEMBERRANK-ALPHA49-20261104/public.openapi.json"), "utf8"));
+const exchangeSchemas = new Set(["LoginGachaPrize", "UserPrizeActionUnavailableReason", "UserPrize", "GachaLineupPrize", "DrawPrizeReference"]);
+if (!isDeepStrictEqual(Object.keys(alpha49.components.schemas).sort(), Object.keys(openApi.components.schemas).sort())) throw new Error("alpha.50 schema inventory changed");
+for (const [name, schema] of Object.entries(alpha49.components.schemas)) {
+  if (!exchangeSchemas.has(name) && !isDeepStrictEqual(schema, openApi.components.schemas[name])) throw new Error(`Unrelated alpha.50 schema change: ${name}`);
+}
+for (const [route, contract] of Object.entries(alpha49.paths)) {
+  if (route !== "/me/prizes" && !isDeepStrictEqual(contract, openApi.paths[route])) throw new Error(`Unrelated alpha.50 path change: ${route}`);
+}
+for (const name of ["LoginGachaPrize", "UserPrize", "GachaLineupPrize", "DrawPrizeReference"]) {
+  if (openApi.components.schemas[name].properties.exchange_only.type !== "boolean") throw new Error(`Missing exchange_only: ${name}`);
 }
 
 console.log("artifact-check: passed");

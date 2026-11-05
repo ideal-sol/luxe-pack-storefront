@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ApiProblemError, StorefrontTransportError } from "@oripa/storefront-client";
-import { PUBLIC_SHIPPING_REQUEST_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE, SHIPPING_MINIMUM_PROBLEM_FIXTURE } from "@oripa/storefront-testkit";
+import { PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE, PUBLIC_SHIPPING_REQUEST_FIXTURE, PUBLIC_USER_PRIZE_FIXTURE, PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE, SHIPPING_MINIMUM_PROBLEM_FIXTURE } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
 import { PrizeFulfillmentDialog } from "@/components/prizes/prize-fulfillment";
 import { deferred, policy, policyAccess } from "./fixtures/shipping-policy";
@@ -559,5 +559,61 @@ describe("prize fulfillment UI", () => {
     await waitFor(() => expect(listShippingAddresses).toHaveBeenCalledTimes(3));
     expect(deleteShippingAddress).toHaveBeenCalledOnce();
     expect(screen.queryByText("削除結果を確認できません")).not.toBeInTheDocument();
+  });
+});
+
+describe("exchange-only presentation input (formal Contract wiring pending)", () => {
+  const b: UserPrize = { ...PUBLIC_EXCHANGE_ONLY_PRIZE_FIXTURE, id: "exchange-B", allowed_actions: {
+    ...prize.allowed_actions!, shipping: { allowed: false, unavailable_reason: "status_not_actionable" },
+  } };
+  const d: UserPrize = { ...b, id: "exchange-D" };
+  const c: UserPrize = { ...PUBLIC_SHIPPING_ONLY_PRIZE_FIXTURE, id: "shipping-C", exchange_points: 2500 };
+  const warning = "コイン交換限定景品が選択されています。コイン交換限定景品以外を発送いたします。";
+
+  it("submits only A/C and passes every B/D ID for canonical reconciliation", async () => {
+    const api = client();
+    const onReconcile = vi.fn().mockResolvedValue(undefined);
+    render(<PrizeFulfillmentDialog action="shipping" client={api} onClose={vi.fn()} onReconcile={onReconcile} onSmsVerificationRequired={vi.fn()} selectedItems={[prize, b, c, d]} />);
+    expect(screen.getByRole("note")).toHaveTextContent(warning);
+    expect(screen.getByText("選択した景品: 2件")).toBeInTheDocument();
+    expect(screen.getByText(`選択中の合計：${(prize.exchange_points + c.exchange_points).toLocaleString("ja-JP")}コイン`)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
+    await screen.findByText("手続きが完了しました");
+    expect(api.createShippingRequest).toHaveBeenCalledWith(address.id, [prize.id, c.id], { idempotency_key: expect.any(String) });
+    expect(onReconcile).toHaveBeenCalledWith({ action: "shipping", processedIds: [prize.id, c.id], retainedIds: [b.id, d.id] });
+  });
+
+  it("keeps confirmed shipping successful when reads fail and retries only reads", async () => {
+    const api = client();
+    const onReconcile = vi.fn().mockRejectedValueOnce(new Error("offline")).mockResolvedValue(undefined);
+    render(<PrizeFulfillmentDialog action="shipping" client={api} onClose={vi.fn()} onReconcile={onReconcile} onSmsVerificationRequired={vi.fn()} selectedItems={[prize, b, d]} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
+    fireEvent.click(await screen.findByRole("button", { name: "最新情報を再取得" }));
+    await screen.findByRole("button", { name: "閉じる" });
+    expect(api.createShippingRequest).toHaveBeenCalledOnce();
+    expect(onReconcile).toHaveBeenCalledTimes(2);
+    expect(onReconcile.mock.calls[1]).toEqual(onReconcile.mock.calls[0]);
+  });
+
+  it("does not reconcile an uncertain shipment and keeps the retry key", async () => {
+    const api = client({ createShippingRequest: vi.fn().mockRejectedValueOnce(new StorefrontTransportError("NETWORK_ERROR", "unknown")).mockResolvedValue(response(shippingRequest)) });
+    const onReconcile = vi.fn().mockResolvedValue(undefined);
+    render(<PrizeFulfillmentDialog action="shipping" client={api} onClose={vi.fn()} onReconcile={onReconcile} onSmsVerificationRequired={vi.fn()} selectedItems={[prize, b]} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "発送を依頼する" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
+    await screen.findByRole("alert");
+    expect(onReconcile).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "発送を依頼する" }));
+    await screen.findByText("手続きが完了しました");
+    const calls = vi.mocked(api.createShippingRequest).mock.calls;
+    expect(calls[0]?.[2]).toEqual(calls[1]?.[2]);
+  });
+
+  it("does not show the warning without classified prizes", async () => {
+    renderDialog("shipping", client());
+    await screen.findByText("テスト***");
+    expect(screen.queryByText(warning)).not.toBeInTheDocument();
   });
 });

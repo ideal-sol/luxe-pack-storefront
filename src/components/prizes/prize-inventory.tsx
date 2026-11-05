@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "@/components/auth/session-provider";
 import { SmsVerificationRequiredDialog } from "@/components/account/sms-verification-required-dialog";
 import { CatalogLoading, CatalogMessage } from "@/components/catalog/catalog-message";
@@ -14,8 +14,8 @@ import {
 } from "@/lib/platform";
 import { usePrizeClient } from "./prize-client-provider";
 import { PrizeFulfillmentDialog } from "./prize-fulfillment";
-import { PrizeRow, PrizeStatusFilters, prizeStatusFilter, type PrizeStatusFilter } from "./prize-row";
-import { actionablePrizes, type FulfillmentAction } from "./prize-actions";
+import { PrizeRow, PrizeStatusFilters, type PrizeStatusFilter } from "./prize-row";
+import { actionablePrizes, type FulfillmentAction, type FulfillmentCompletion, retainedSelection } from "./prize-actions";
 
 type InventoryState =
   | { readonly status: "idle" }
@@ -34,6 +34,7 @@ type BulkAction = FulfillmentAction;
 
 const number = new Intl.NumberFormat("ja-JP");
 const reasonLabels: Readonly<Record<UserPrizeActionUnavailableReason, string>> = {
+  exchange_only: "この景品はコイン交換のみ可能です。",
   exchange_points_unavailable: "コイン交換額を確認できません。",
   payment_hold: "お支払い状況の確認中です。",
   status_not_actionable: "現在の状態では選択できません。",
@@ -51,22 +52,22 @@ function PrizeCard({
   checked,
   onChange,
   prize,
+  group,
 }: {
   readonly checked: boolean;
   readonly onChange: (checked: boolean) => void;
   readonly prize: UserPrize;
+  readonly group: InventoryGroup;
 }) {
   const selectable = prize.allowed_actions?.selection.allowed === true;
   // 保管中なのに選べないもの（お支払い確認中など）だけ理由を出す。発送依頼済み・交換済みは状態の札と説明で分かる。
-  const reason = !selectable && prizeStatusFilter(prize) === "stored" ? selectionReason(prize) : null;
-  return <PrizeRow checked={checked} disabled={!selectable} extraNote={reason} onToggle={onChange} prize={prize} />;
+  const reason = !selectable && group === "stored" ? selectionReason(prize) : null;
+  return <PrizeRow checked={checked} disabled={!selectable} extraNote={reason} onToggle={onChange} prize={prize} statusGroup={group} />;
 }
 
 const statusFilterOptions = [
   { key: "stored", label: "保管中" },
   { key: "shipping", label: "発送依頼済み" },
-  { key: "done", label: "コイン交換済み" },
-  { key: "all", label: "すべて" },
 ] as const;
 
 function availableBulkActions(items: readonly UserPrize[], selected: ReadonlySet<string>): readonly BulkAction[] {
@@ -95,8 +96,23 @@ function BulkActionTray({ actions, items, onAction, shippingChecking }: { readon
   );
 }
 
-export function PrizeInventory() {
-  const [filter, setFilter] = useState<PrizeStatusFilter>("all");
+export type InventoryGroup = "stored" | "shipping";
+/** Optional test data source; production uses the official typed Client below. */
+export type InventoryGroupLoader = (group: InventoryGroup, cursor?: string) => Promise<{
+  readonly items: readonly UserPrize[]; readonly next_cursor: string | null;
+}>;
+interface InventoryProps {
+  readonly loadGroup?: InventoryGroupLoader;
+}
+
+export function PrizeInventory(props: InventoryProps) {
+  const { state } = useSession();
+  const user = state.status === "authenticated" ? state.session.user?.id : state.status;
+  return <PrizeInventoryContent key={user} {...props} />;
+}
+
+function PrizeInventoryContent({ loadGroup }: InventoryProps) {
+  const [filter, setFilter] = useState<PrizeStatusFilter>("stored");
   const { getSmsVerificationStatus, state: session } = useSession();
   const { client, configurationAvailable } = usePrizeClient();
   const [requestKey, setRequestKey] = useState(0);
@@ -108,22 +124,36 @@ export function PrizeInventory() {
   const [smsDialogOpen, setSmsDialogOpen] = useState(false);
   const sessionUserId = session.status === "authenticated" ? session.session.user?.id ?? null : null;
 
+  const generation = useRef(0);
+  const loadingCursor = useRef(false);
+  const seenCursors = useRef(new Set<string>());
+  const moreRef = useRef<HTMLButtonElement>(null);
+  const serverGroup = filter === "shipping" ? "shipping" : "stored";
+  const readPage = useCallback(async (cursor?: string) => {
+    if (loadGroup) return loadGroup(serverGroup, cursor);
+    if (!client) throw new Error("Prize client unavailable");
+    return (await client.listPrizes({ status_group: serverGroup, limit: 100, ...(cursor ? { cursor } : {}) })).data;
+  }, [client, serverGroup, loadGroup]);
+
   useEffect(() => {
     if (!sessionUserId || !client) return;
     let active = true;
-    void client.listPrizes()
-      .then(({ data }) => {
+    generation.current += 1;
+    loadingCursor.current = false;
+    seenCursors.current.clear();
+    void readPage()
+      .then((data) => {
         if (active) setState({ items: data.items, loadingMore: false, nextCursor: data.next_cursor, sessionUserId, status: "ready" });
       })
       .catch((error: unknown) => {
         if (active) setState({ problem: presentPlatformProblem(error), status: "error" });
       });
-    return () => { active = false; };
-  }, [client, requestKey, sessionUserId]);
+    return () => { active = false; generation.current += 1; };
+  }, [client, readPage, requestKey, sessionUserId]);
 
   const visibleItems = useMemo(() => state.status === "ready"
-    ? state.items.filter((item) => filter === "all" || prizeStatusFilter(item) === filter)
-    : [], [filter, state]);
+    ? state.items
+    : [], [state]);
   const actions = useMemo(() => state.status === "ready"
     ? availableBulkActions(state.items, selected)
     : [], [selected, state]);
@@ -131,35 +161,57 @@ export function PrizeInventory() {
     ? state.items.filter((item) => selected.has(item.id))
     : [], [selected, state]);
 
-  const reconcileInventory = useCallback(async () => {
+  const reconcileInventory = useCallback(async (completion: FulfillmentCompletion) => {
     if (!client || !sessionUserId) return;
-    const { data } = await client.listPrizes();
-    setState({ items: data.items, loadingMore: false, nextCursor: data.next_cursor, sessionUserId, status: "ready" });
-    setSelected(new Set());
-  }, [client, sessionUserId]);
+    const current = ++generation.current;
+    loadingCursor.current = false;
+    // getPrize preserves selected items outside the refreshed first page.
+    const [data, retained] = await Promise.all([
+      readPage(),
+      Promise.all(completion.retainedIds.map(async (id) => (await client.getPrize(id)).data)),
+    ]);
+    if (current !== generation.current) return;
+    const items = [...new Map([...data.items, ...retained].map((item) => [item.id, item])).values()];
+    seenCursors.current.clear();
+    setState({ items, loadingMore: false, nextCursor: data.next_cursor, sessionUserId, status: "ready" });
+    setSelected(retainedSelection(items, completion.retainedIds));
+  }, [client, readPage, sessionUserId]);
 
   const loadMore = useCallback(async () => {
-    if (!client || state.status !== "ready" || !state.nextCursor || state.loadingMore) return;
+    if (!client || state.status !== "ready" || !state.nextCursor || loadingCursor.current) return;
     const snapshot = state;
     const cursor = state.nextCursor;
-    setState({ items: snapshot.items, loadingMore: true, nextCursor: snapshot.nextCursor, sessionUserId: snapshot.sessionUserId, status: "ready" });
+    if (seenCursors.current.has(cursor)) return;
+    const current = generation.current;
+    loadingCursor.current = true;
+    setState({ status: "ready", items: snapshot.items, nextCursor: snapshot.nextCursor, sessionUserId: snapshot.sessionUserId, loadingMore: true });
     try {
-      const { data } = await client.listPrizes(cursor);
+      const data = await readPage(cursor);
+      if (current !== generation.current) return;
+      seenCursors.current.add(cursor);
       setState({
-        items: [...snapshot.items, ...data.items],
+        items: [...new Map([...snapshot.items, ...data.items].map((item) => [item.id, item])).values()],
         loadingMore: false,
-        nextCursor: data.next_cursor,
+        nextCursor: data.next_cursor && !seenCursors.current.has(data.next_cursor) ? data.next_cursor : null,
         sessionUserId: snapshot.sessionUserId,
         status: "ready",
       });
     } catch (error) {
-      setState({
-        ...snapshot,
-        continuationProblem: presentPlatformProblem(error),
-        loadingMore: false,
-      });
+      if (current === generation.current) setState({ ...snapshot, continuationProblem: presentPlatformProblem(error), loadingMore: false });
+    } finally {
+      if (current === generation.current) loadingCursor.current = false;
     }
-  }, [client, state]);
+  }, [client, readPage, state]);
+
+  useEffect(() => {
+    if (state.status !== "ready" || state.loadingMore || state.continuationProblem || !state.nextCursor
+      || !moreRef.current || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) void loadMore();
+    });
+    observer.observe(moreRef.current);
+    return () => observer.disconnect();
+  }, [loadGroup, loadMore, state]);
 
   const startFulfillment = useCallback(async (action: FulfillmentAction) => {
     if (action === "point_exchange") {
@@ -208,9 +260,7 @@ export function PrizeInventory() {
       setRequestKey((value) => value + 1);
     }} description={state.problem.message} eyebrow="ERROR" title="獲得景品を取得できませんでした" tone="error" />;
   }
-  if (state.items.length === 0) {
-    return <CatalogMessage description="現在表示できる獲得景品はありません。" eyebrow="EMPTY" title="獲得景品はありません" />;
-  }
+
 
   return (
     <section aria-labelledby="inventory-heading" className="inventory">
@@ -220,17 +270,20 @@ export function PrizeInventory() {
           <h2 id="inventory-heading">保有景品</h2>
           <p className="inventory__status-note">各景品の状態は、最新の受付状況を表示しています。</p>
         </div>
-        <PrizeStatusFilters onChange={(value) => { setFilter(value as PrizeStatusFilter); setSelected(new Set()); }} options={statusFilterOptions} value={filter} />
+        <PrizeStatusFilters onChange={(value) => {
+          if (value === filter || fulfillmentAction || shippingChecking) return;
+          generation.current += 1; setState({ status: "loading" });
+          setFilter(value as PrizeStatusFilter); setSelected(new Set());
+        }} options={statusFilterOptions} value={filter} />
       </div>
       <p className="prize-legend">
-        <span><i style={{ background: "#157A4C" }} />保管中 … 発送依頼とコイン交換ができます</span>
+        <span><i style={{ background: "#157A4C" }} />保管中 … 景品ごとに利用可能な操作を選べます</span>
         <span><i style={{ background: "#2A4FA8" }} />発送依頼済み … 受付が済み、発送をお待ちいただいています</span>
-        <span><i style={{ background: "#6B7B7C" }} />コイン交換済み … コインでお受け取り済みです</span>
       </p>
       <div className="inventory__selection-bar">
         <div className="inventory__selection-actions">
           {(["point_exchange", "shipping"] as const).map((action) => {
-            const ids = actionablePrizes(visibleItems, action).map((item) => item.id);
+            const ids = actionablePrizes(visibleItems, action).slice(0, 100).map((item) => item.id);
             return (
               <button disabled={ids.length === 0} key={action} onClick={() => setSelected(new Set(ids))} type="button">
                 {action === "point_exchange" ? "コイン交換対象を全選択" : "配送対象を全選択"}
@@ -244,11 +297,12 @@ export function PrizeInventory() {
         {visibleItems.length === 0 && <p className="inventory__filter-empty">この状態の景品はありません。</p>}
         {visibleItems.map((prize) => (
           <PrizeCard
+            group={serverGroup}
             checked={selected.has(prize.id)}
             key={prize.id}
             onChange={(checked) => setSelected((current) => {
               const next = new Set(current);
-              if (checked) next.add(prize.id); else next.delete(prize.id);
+              if (checked && next.size < 100) next.add(prize.id); else next.delete(prize.id);
               return next;
             })}
             prize={prize}
@@ -258,7 +312,7 @@ export function PrizeInventory() {
       {state.continuationProblem && <p className="inventory__continuation-error">{state.continuationProblem.message}</p>}
       {shippingGateProblem && <p className="inventory__continuation-error" role="alert">{shippingGateProblem}</p>}
       {state.nextCursor && (
-        <button className="button button--ghost inventory__more" disabled={state.loadingMore} onClick={() => void loadMore()} type="button">
+        <button ref={moreRef} className="button button--ghost inventory__more" disabled={state.loadingMore} onClick={() => void loadMore()} type="button">
           {state.loadingMore ? "読み込み中" : "さらに表示"}
         </button>
       )}

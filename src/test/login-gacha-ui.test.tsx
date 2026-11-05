@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
 import { PUBLIC_DRAW_FIXTURE } from "@oripa/storefront-testkit";
 import { HomeLoginBonusFeed } from "@/components/catalog/home-login-bonus";
@@ -140,4 +140,13 @@ it("uses CloudFront for new login Gacha list and detail thumbnails", async () =>
     render(wrap(<LoginGachaDetailView gachaId={id} />, api));
     expect(await screen.findByRole("img", { name: "New login" })).toHaveAttribute("src", "https://cdn.example.test/gacha/Login_New.webp");
   } finally { vi.unstubAllEnvs(); }
+});
+
+it.each([daily, signup])("connects exchange-only purchase notices for $gacha_type", async (summary) => {
+  const api = client();
+  const prizes: LoginGachaDetail["prizes"] = ["限定B", "限定D"].map((name, i) => ({ id: String(i), name, rank_id: "r", exchange_points: 1, asset: null, exchange_only: true }));
+  vi.mocked(api.getLoginGacha).mockResolvedValue(response({ data: { ...detail, ...summary, notices: null, prizes } }));
+  render(wrap(<LoginGachaDetailView gachaId={summary.id} />, api));
+  const notice = await screen.findByRole("region", { name: "コイン交換限定景品の注意事項" });
+  expect(within(notice).getAllByRole("listitem").map((item) => item.textContent)).toEqual(["限定B", "限定D"]);
 });
