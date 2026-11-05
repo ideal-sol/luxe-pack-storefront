@@ -54,7 +54,7 @@ describe("exact alpha.50 Production provenance", () => {
     expect(approvedSource.authority).toContain("Storefront Authority merge requires separate explicit Human approval");
     expect(approvedSource.authority).not.toContain("Formal Human Source GO is NOT ISSUED");
     expect(approvedSource.authority).not.toContain("Draft candidate exact Runtime Source:");
-    expect(approvedSource.platform_authority_merge_sha).toBe("5ade57a7d40830a2cf137552f242a2001724b295");
+    expect(approvedSource.platform_authority_merge_sha).toBe("8eadec09a187e3f220dc09d36e9a14b98511931b");
     expect(approvedSource.authority).not.toContain("PR #186 GTM is excluded");
   });
 
@@ -123,8 +123,8 @@ describe("exact alpha.50 Production provenance", () => {
       contract_version: "2.0.0-alpha.50", contract_artifact_id: "13324454382",
       contract_manifest_sha256: "bbf4284afc47d912a13b039b7a3168fc09ae58ace682c005ef46d852e0b9c44a",
       client_pin: "2.0.0-alpha.50", testkit_pin: "2.0.0-alpha.50", public_openapi_pin: "2.0.0-alpha.46",
-      platform_runtime_source_sha: "14f7819c72c5908aa6e5778303b87dc4b1202493",
-      platform_authority_merge_sha: "5ade57a7d40830a2cf137552f242a2001724b295",
+      platform_runtime_source_sha: "cad8be03cbab8b7fba18825a4a9b2a276f402010",
+      platform_authority_merge_sha: "8eadec09a187e3f220dc09d36e9a14b98511931b",
       contract_archive_sha256: "67d9fbbe7c31fcfaa2ed674eeb4e35d5d60a07e01f0bb0ce34523e4783037b75",
       platform_source_sha: "14f7819c72c5908aa6e5778303b87dc4b1202493",
       client_sha256: "ce09af8175331cb534f031987770744109ccd422f966c367f9c2038a0dda98c3",
@@ -169,6 +169,22 @@ describe("exact alpha.50 Production provenance", () => {
 
   it("keeps artifact source separate from runtime source", () => {
     authority.platform_source_sha = "0".repeat(40);
+    expect(() => validateProvenance(root, authority)).toThrow("Platform source mismatch");
+  });
+
+  it.each([undefined, "14f7819c72c5908aa6e5778303b87dc4b1202493", "a6affd68253a0bb162fb480159778f4c79dd51ab"])("rejects missing, base-only or full PR666 runtime source %s", (value) => {
+    authority.platform_runtime_source_sha = value;
+    expect(() => validateProvenance(root, authority)).toThrow("Platform runtime authority mismatch");
+  });
+
+  it.each([undefined, "5ade57a7d40830a2cf137552f242a2001724b295", "3eee947ba34a6af55a1c396dbb14bb4032d14127"])("rejects missing, obsolete or reviewed-head Platform authority %s", (value) => {
+    authority.platform_authority_merge_sha = value;
+    expect(() => validateProvenance(root, authority)).toThrow("Platform runtime authority mismatch");
+  });
+
+  it("retains the contract publisher independently of the derived runtime", () => {
+    expect(validateProvenance(root).platform_source_sha).toBe("14f7819c72c5908aa6e5778303b87dc4b1202493");
+    authority.platform_source_sha = approvedSource.platform_runtime_source_sha;
     expect(() => validateProvenance(root, authority)).toThrow("Platform source mismatch");
   });
 
