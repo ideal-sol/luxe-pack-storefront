@@ -1,3 +1,17 @@
+# SF-PR666-20261105 — Platform limited-payload Authority follow-up
+
+R3 / Strict Change / Activation none. Draft only; Storefront Ready/Merge requires separate Human approval.
+Platform PR669 was canonically squash merged at 8eadec09a187e3f220dc09d36e9a14b98511931b from approved head3eee947ba34a6af55a1c396dbb14bb4032d14127. Reviewed/merged tree fdb97af9cba6e22ae598860812818768d23eecf1; content diff0; Required5 and fresh Strict review reused, SEV0/1 zero.
+Platform Runtime source cad8be03cbab8b7fba18825a4a9b2a276f402010, tree0978c97a3a1d90036f5173aff4409398b93c5a87, inventory a98161e34cf90e8b075fbdf9b25812cde884577846c33c7a292676b1facaf4f1. Only two PR666 normalizer blobs are added to alpha50; full PR666/latest main are excluded.
+Storefront source remains PR221 1e3ba92780825a12485f651ea79025ad47f1321b. Contract publication source platform_source_sha remains 14f7819c72c5908aa6e5778303b87dc4b1202493; immutable alpha50 Artifact13324454382 and all Vendor/package/lock digests remain unchanged. Source authority is separate from actual activation, which is not authorized.
+OLDTEST_PR666_API_ONLY_RUNTIME_TECHNICAL_PASS: https://github.com/ideal-sol/oripa/pull/668#issuecomment-6662848658. Active API OCI derived SHA matched and complete tree/inventory/two-file composition independently reproduced against pinned PR667 specification. Original handoff reserves authenticated detail and browser CDN acceptance for Human; do not invent acceptance. No OLD Test runtime was changed here.
+No formal Artifact Build/Dispatch/Stage, Production connection or Runtime/ALB/ENV/DB/Migration/Worker/Timer operation. Migration scope104 ->105 ->106 unchanged; created/applied operational migrations0. Rollback: abandon this Draft without runtime effect, or reviewed authority revert before later separately approved dispatch. Dedicated Worktree protects existing dirty primary checkout; no active source collision or allocation lock.
+Final focused tests, CI and fixed-head review results are recorded in the PR after fixing HEAD. No local application Build or Browser/E2E is claimed; ordinary CI remains required.
+
+The following alpha50-only authority records are historical and superseded by the exact pins above.
+
+---
+
 # SFAUTH-20261105 — alpha.50 Authority / Human merge HOLD
 
 Risk R3; Lane: Strict Change; Application Runtime Activation: none.
