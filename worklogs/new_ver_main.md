@@ -1450,3 +1450,54 @@ Required CI, Shadow and final-head fresh self-review results are recorded in the
 - Official Client cursor query test initially assumed a different query order;
   align its exact mock URL with the published Client cursor/status_group/limit
   serialization. The complete affected contract15 PASS after correction.
+
+## SFAUTH-20261105 — alpha.50 Authority / Human merge HOLD
+
+Risk R3; Lane: Strict Change; Application Runtime Activation: none.
+Platform PR #664 was explicitly approved and canonically squash merged at
+5ade57a7d40830a2cf137552f242a2001724b295. Reviewed HEAD
+0df3c3a9c995bad6b1fad27106d565230d3f19f4 and merge share tree
+4d84b1dc0b58db326530f1e2d75345109460f161; content diff 0. Required CI 5/5
+and fresh self-review were reused with no rerun. This is Authority approval only.
+
+Storefront Runtime remains PR #221, Source 1e3ba92780825a12485f651ea79025ad47f1321b,
+Tree 15139d5713b9c17c50c39b017f68720984632a58. Platform Runtime remains PR #659,
+Source 14f7819c72c5908aa6e5778303b87dc4b1202493,
+Tree 1a2a4cf3fa30c39c6903d11472c7e8c63a69168c. Authority/Workflow commits
+are distinct; later main must never replace these application sources.
+
+Contract Artifact 13324454382 / Run 41835790272, Client/Testkit alpha.50,
+Public/Admin alpha.46, Webhook alpha.45, Site Schema alpha.23 are immutable.
+The authentic PROVENANCE.md format is pinned by SHA256
+127bf11031339951d2703a2f9da4a4d34600b054283c9737ff37ee668a5685d2;
+this binds its artifact URL, run, archive, source, versions, ledger and declared
+digests without translating it to alpha.48 syntax. SHA256SUMS is also pinned;
+manifest, package/OpenAPI actual bytes and package/lock pins remain checked.
+The formal manifest digest is fixed even when caller metadata supplies a changed
+digest. No Vendor/dependency/lockfile rewrite or Contract republication.
+
+Preserve current Production UnivaPay LIVE, seven-day automatic exchange ON,
+Rank ON/Generation1 and existing settings/history. Never restore historical
+TEST/OFF settings. Future Platform migration sequence 104 -> 105 -> 106;
+no migration created/applied here. Reuse Human-reported
+OLDTEST_ALPHA50_RUNTIME_TECHNICAL_PASS, with no newly claimed Browser acceptance.
+
+Only this Storefront Authority Draft PR is authorized. Separate Human approval
+is required before Storefront merge. activation_authorized=false; neither
+Authority merge authorizes Production Build/Dispatch/Stage or Runtime GO.
+No Production connection, ENV/Secret/DB/Worker/Timer/ALB change or activation.
+No API/auth/payment/point/draw implementation or application source changes.
+
+Dedicated worktree isolates existing work. Exact-path transient wrapper policy
+has no merge/ready/build permission. Issue tracks cross-repository approval and
+is required by the installed canonical transport schema. Source/Migration locks
+not needed: no collision or allocation. Rollback is a separately reviewed
+Authority revert; runtime remains untouched. Focused tests cover valid pins,
+old/missing/duplicate/changed provenance, SHA256SUMS, metadata and byte mismatch,
+current-main substitution, reviewed-tree mismatch and forged/failed checks.
+Required CI and final-head review results will be recorded in the PR. No local
+application build or Browser/E2E; ordinary existing CI builds remain required.
+
+All records below are historical and cannot restore superseded Production settings.
+
+Issue: https://github.com/ideal-sol/luxe-pack-storefront/issues/222. Local verification: 118 focused tests PASS; artifact:check, policy:check and security:check PASS. Initial focused run: 116 PASS / 2 FAIL due to old expected error strings; updated to the new strict digest rejection, then all 118 PASS. Exact Runtime checkout validation PASS. No application build or Runtime operation.
