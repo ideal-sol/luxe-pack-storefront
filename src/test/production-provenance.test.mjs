@@ -44,9 +44,12 @@ function mutateManifest(mutation) {
 }
 
 describe("exact alpha.50 Production provenance", () => {
-  it("pins the Human-approved PR221 alpha.50 Runtime Source independently of Workflow/main without Activation GO", () => {
-    expect(approvedSource.source_sha).toBe("1e3ba92780825a12485f651ea79025ad47f1321b");
-    expect(approvedSource.source_pr).toBe(221);
+  it("pins the Human-approved PR226 GTM Runtime Source independently of Workflow/main without Activation GO", () => {
+    expect(approvedSource.source_sha).toBe("8e9df3501e5451523a56e57aa1149e6290b92aee");
+    expect(approvedSource.source_pr).toBe(226);
+    expect(approvedSource.source_sha).not.toBe("1e3ba92780825a12485f651ea79025ad47f1321b");
+    expect(approvedSource.authority).toContain("e6c11382199c63f51c1770bf7c1d0ff63654d427");
+    expect(approvedSource.authority).toContain("GTM-5DQRPNN2");
     expect(approvedSource.activation_authorized).toBe(false);
     expect(approvedSource.source_sha).not.toBe("7dc355d3174bdf8a4731741eea7aa4a80752b724");
     expect(approvedSource.source_sha).not.toBe("9702793ec7fdad4332e634b230dc6661ff176655");
@@ -119,7 +122,7 @@ describe("exact alpha.50 Production provenance", () => {
 
   it("accepts approved source pins, immutable artifact identity and every digest", () => {
     expect(validateProvenance(root)).toMatchObject({
-      source_sha: "1e3ba92780825a12485f651ea79025ad47f1321b",
+      source_sha: "8e9df3501e5451523a56e57aa1149e6290b92aee",
       contract_version: "2.0.0-alpha.50", contract_artifact_id: "13324454382",
       contract_manifest_sha256: "bbf4284afc47d912a13b039b7a3168fc09ae58ace682c005ef46d852e0b9c44a",
       client_pin: "2.0.0-alpha.50", testkit_pin: "2.0.0-alpha.50", public_openapi_pin: "2.0.0-alpha.46",
@@ -419,7 +422,7 @@ describe("Production source authority", () => {
     expect(consulted).toBe(false);
   });
 
-  it.each(["main", "abc", "A".repeat(40), "0".repeat(40), "f".repeat(40),
+  it.each(["1e3ba92780825a12485f651ea79025ad47f1321b", "main", "abc", "A".repeat(40), "0".repeat(40), "f".repeat(40),
     "dcde7c91926d725a69b305e7bd9cc9b48d5d4fe6",
     "00e10604ee262470a96f4c392d2c3b4f2511e98a", "cc398cc4d943f4a426fa9540cc6258edf9bc5208",
     "7dc355d3174bdf8a4731741eea7aa4a80752b724", "9702793ec7fdad4332e634b230dc6661ff176655",
