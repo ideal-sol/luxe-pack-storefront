@@ -1584,3 +1584,75 @@ were corrected. No timeout, assertion, Required Check or Security policy changed
 Unchanged draw-result-fulfillment file retry: 21/21 PASS at the original 5000ms
 limit. Thus every local test passed, with the initial whole-suite timeout failures
 retained as separate evidence. No unrelated Source fix was needed.
+
+## GTM-REG-20261106 v1.3 — purchase completion, same Draft PR #226
+
+Human v1.3 addition 2026-11-06. R3 / Strict Change / Activation none / Issue none.
+Continue `feat/gtm-registration-attributes` and its existing isolated Worktree.
+Starting task head `b7d2b374c388f31fe18ce3ef4b7bb5b5df4de072`; remote main remains
+`7c8085c22754464164e1694706c14ac6f9bed9ba`. Both remote refs rechecked before push.
+Other Worktrees were read-only audited for overlapping edits: no active overlap
+observed. An old empty Worktree reports wholesale missing files and is untouched.
+No new Issue, Worktree, Task Policy, Source Lock or migration allocation needed.
+
+PaymentThanks adds one non-blocking effect gated by authenticated session, existing
+Polling ready, Payment.status succeeded and JPY. UUID and positive safe integer
+validation rejects malformed identities/amounts. Revenue is amount.amount, never
+coin grants or balances; transaction_id is the fetched Payment.id, never URL pid.
+No new API, owner lookup, payment retry or financial decision. Existing Polling,
+wallet refresh, provider handling and authorization remain unchanged.
+
+Registration behavior remains; both events share one normalization/hash function.
+Event-specific runtime allowlists prevent purchase attributes on registration.
+Missing/failed email hashing omits the email key. Purchase in-flight and sent Sets
+suppress overlap and repeated display even with refused storage. The existing
+compact marker pattern is used per Payment UUID, written only after successful
+push. Failed pushes remain retryable. No raw UUID/email/email hash is persisted;
+storage denial, clearing, other browsers/devices and non-atomic cross-tab behavior
+are documented limitations. No claim that hashed email is anonymous.
+
+Reviewed storage bytes renewed only for the same existing helper/test exemption
+paths; no new storage exemption or Auth/LINE policy expansion. Source digests add
+PaymentThanks, the unchanged polling hook and the new explicit client verifier.
+The verifier registers actual emitted Turbopack factories, runs the real compiled
+SMS form callback and PaymentThanks effects with React/I/O mocks, and uses real
+Web Crypto with deferred completion/failure. It verifies all emitted analytics/UI
+variants, runtime ENV poisoning, payloads, statuses, persisted/memory suppression,
+reload, multiple payments, failed pushes, wallet continuation and tampering.
+Fixtures compile actual Source, not a parallel analytics implementation. Exact-byte
+behavioral cache reuses only previously completed checks for identical bytes and
+expected state; observations/manifest/checksums are always recomputed. VM code
+execution limits stay 1000ms per operation. The expanded compiled matrix plus
+independent CLI tests use a bounded 30-second case budget; app/business timers,
+assertions, security controls and Required Checks are not weakened.
+
+Focused seven-file suite 306 PASS; an additional invalid compiled GTM test PASS
+(the other 36 cases were intentionally not rerun in that targeted invocation).
+Repository lint, real Build TypeScript, artifact/policy/secrets and every
+Auth/LINE/domain boundary check PASS. Two local Next16.4.2 builds: unset GTM and
+synthetic GTM-TEST0001, both PASS; both actual compiled observations PASS.
+The real GTM container is never loaded by tests. Initial verifier failures exposed
+compiler-shape/mock-realm and insufficient negative fixture issues; those were
+corrected and the negative assertions retained. Final CI and exact-head review
+are recorded in the updated Draft PR; old-head evidence is historical only.
+
+Human v1.2/v1.3 explicitly keeps OLD Test and Preview GTM OFF with no ENV setting,
+no Browser event acceptance or Runtime changes. This supersedes the earlier GTM
+Preview-measurement handoff, not general security or Production approvals.
+Source/autotests/compiled Build are acceptance evidence. Real dataLayer checking
+is a future post-Production Human task. This task does not authorize Source Merge,
+Ready, formal Artifact Dispatch/Build, Source/Manifest Authority changes, tag
+publication or any Runtime activation. Production verification remains main
+build-authority; later approved main/source/build authority must be coherent.
+One existing PR suffices; no technical two-stage split is needed for this Draft.
+
+Changed runtime Source only in analytics helper and PaymentThanks; no API/DB/
+Migration/Client/Testkit/vendor/lockfile/auth or payment business logic/provider/
+infrastructure changes. Existing Artifacts/Stable Tags unchanged. Migrations 0/0;
+Runtime activations 0. Human owns disclosures, agency configuration/publication,
+post-Production checks and all future Merge/Build/Runtime approval. Rollback before
+merge is abandoning the Draft; a later Source rollback is a reviewed revert.
+Independent local-only packaging, extraction and checksum-matched copy validation
+PASS with poisoned runtime ENV. Archive SHA256
+`1a83f493baa2b593b3252aba91d9ec1d653cda3e26adffd5228d9c50482e1be4`.
+No formal Artifact was built, dispatched, uploaded or overwritten.

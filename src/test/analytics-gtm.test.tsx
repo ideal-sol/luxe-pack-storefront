@@ -3,7 +3,7 @@ import { render } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { vi } from "vitest";
 import { GoogleTagManagerNoScript, GoogleTagManagerScript } from "@/components/analytics/google-tag-manager";
-import { gtmContainerId, pushDataLayerEvent, reportRegistrationComplete } from "@/lib/analytics/gtm";
+import { gtmContainerId, pushDataLayerEvent, reportPurchaseComplete, reportRegistrationComplete } from "@/lib/analytics/gtm";
 
 // Inert Script mock: never executes a container or makes advertising requests.
 vi.mock("next/script", () => ({
@@ -165,4 +165,98 @@ describe("Google Tag Manager", () => {
     expect(target.dataLayer).toEqual(Array(4).fill({ event: "registration_complete", user_id: user }));
   });
 
+});
+
+let purchaseSequence = 0;
+function purchaseInput() {
+  purchaseSequence++;
+  return { userId: user, email: "  Test.User@Example.COM ", revenue: 1500, paymentId: `00000000-0000-4000-9000-${String(purchaseSequence).padStart(12, "0")}` };
+}
+
+describe("purchase conversion", () => {
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_GTM_ID", "GTM-TEST0001");
+    vi.stubGlobal("crypto", webcrypto);
+    delete target.dataLayer;
+    window.localStorage.clear();
+  });
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+
+  it("pushes one exact payload, persists only an opaque marker, and suppresses overlap/reload", async () => {
+    const input = purchaseInput();
+    await Promise.all([reportPurchaseComplete(input), reportPurchaseComplete(input)]);
+    const digest = createHash("sha256").update("test.user@example.com").digest("hex");
+    expect(target.dataLayer).toEqual([{ event: "purchase_complete", user_id: user, user_email: digest, revenue: 1500, transaction_id: input.paymentId }]);
+    expect(JSON.stringify(window.localStorage)).not.toMatch(/@|00000000-/);
+    expect(JSON.stringify(window.localStorage)).not.toContain(digest);
+    vi.resetModules();
+    await (await import("@/lib/analytics/gtm")).reportPurchaseComplete(input);
+    expect(target.dataLayer).toHaveLength(1);
+    await reportPurchaseComplete(purchaseInput());
+    expect(target.dataLayer).toHaveLength(2);
+  });
+
+  it.each([undefined, "", "bad"])("does no analytics work for disabled ID %j", async id => {
+    vi.stubEnv("NEXT_PUBLIC_GTM_ID", id);
+    const storage = vi.spyOn(window, "localStorage", "get").mockImplementation(() => { throw new Error("must not access"); });
+    const digest = vi.fn(); vi.stubGlobal("crypto", { subtle: { digest } });
+    const layer = vi.fn(); Object.defineProperty(window, "dataLayer", { configurable: true, get: layer });
+    await reportPurchaseComplete(purchaseInput());
+    expect(storage).not.toHaveBeenCalled(); expect(layer).not.toHaveBeenCalled(); expect(digest).not.toHaveBeenCalled();
+    delete target.dataLayer;
+  });
+
+  it.each([0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, "1500", undefined])("rejects invalid amount %j", async revenue => {
+    await reportPurchaseComplete({ ...purchaseInput(), revenue: revenue as number });
+    expect(target.dataLayer).toBeUndefined(); expect(window.localStorage.length).toBe(0);
+  });
+
+  it.each([null, "", "not-a-uuid"])("rejects invalid user/payment identity %j", async value => {
+    await reportPurchaseComplete({ ...purchaseInput(), userId: value });
+    await reportPurchaseComplete({ ...purchaseInput(), paymentId: value as string });
+    expect(target.dataLayer).toBeUndefined(); expect(window.localStorage.length).toBe(0);
+  });
+
+  it.each(["missing", "failed", "unavailable", "fullwidth"])("handles email %s with the shared normalization", async mode => {
+    const input = purchaseInput();
+    if (mode === "missing") input.email = "　\t\n";
+    if (mode === "fullwidth") input.email = "ＴＥＳＴ．ＵＳＥＲ＠ＥＸＡＭＰＬＥ．ＣＯＭ";
+    if (mode === "failed") vi.stubGlobal("crypto", { subtle: { digest: async () => { throw new Error("denied"); } } });
+    if (mode === "unavailable") vi.stubGlobal("crypto", undefined);
+    await reportPurchaseComplete(input);
+    const expected = { event: "purchase_complete", user_id: user, revenue: 1500, transaction_id: input.paymentId };
+    expect(target.dataLayer).toEqual([mode === "fullwidth" ? { event: expected.event, user_id: user, user_email: createHash("sha256").update("test.user@example.com").digest("hex"), revenue: 1500, transaction_id: input.paymentId } : expected]);
+  });
+
+  it.each(["getItem", "setItem"] as const)("suppresses repeats in memory when storage %s fails", async operation => {
+    vi.spyOn(Storage.prototype, operation).mockImplementation(() => { throw new Error("denied"); });
+    const input = purchaseInput();
+    await reportPurchaseComplete(input); await reportPurchaseComplete(input);
+    expect(target.dataLayer).toHaveLength(1);
+  });
+
+  it("reserves pending work without a premature marker, and retries a failed push", async () => {
+    let finish!: (value: ArrayBuffer) => void;
+    vi.stubGlobal("crypto", { subtle: { digest: () => new Promise<ArrayBuffer>(resolve => { finish = resolve; }) } });
+    const input = purchaseInput();
+    const pending = reportPurchaseComplete(input);
+    await reportPurchaseComplete(input);
+    expect(target.dataLayer).toBeUndefined(); expect(window.localStorage.length).toBe(0);
+    target.dataLayer = Object.freeze([]) as unknown as unknown[];
+    finish(new Uint8Array(32).buffer); await pending;
+    expect(window.localStorage.length).toBe(0);
+    target.dataLayer = []; vi.stubGlobal("crypto", webcrypto);
+    await reportPurchaseComplete(input);
+    expect(target.dataLayer).toHaveLength(1); expect(window.localStorage.length).toBe(1);
+  });
+
+  it("uses event-specific allowlists and validates purchases at the push boundary", () => {
+    const input = purchaseInput();
+    const attrs = { user_id: user, user_email: "raw@example.test", revenue: 1500, transaction_id: input.paymentId, phone: "fixture" };
+    expect(pushDataLayerEvent({ event: "registration_complete", ...attrs })).toBe(true);
+    expect(target.dataLayer).toEqual([{ event: "registration_complete", user_id: user }]);
+    expect(pushDataLayerEvent({ event: "purchase_complete", user_id: user })).toBe(false);
+    expect(pushDataLayerEvent({ event: "purchase_complete", ...attrs })).toBe(true);
+    expect(target.dataLayer?.[1]).toEqual({ event: "purchase_complete", user_id: user, revenue: 1500, transaction_id: input.paymentId });
+  });
 });

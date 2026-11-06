@@ -1,14 +1,18 @@
 import assert from "node:assert/strict";
-import { createHash, webcrypto } from "node:crypto";
+import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import vm from "node:vm";
+import { verifyClientChunks } from "./verify-gtm-client.mjs";
 
-const marker = "oripoke:cv:registration_complete:";
+
 const observationPath = ".next/gtm-build-observation.json";
 const sourceDigests = {
-  "src/lib/analytics/gtm.ts": "ec7e637667673808fe3a7a0197ab26496491bc161a328086d19b3f30fa49fe89",
+  "scripts/verify-gtm-client.mjs": "bca48a957a4619e8809378889e3191881cf6f3379fbdf37cce8e37a425e58fc3",
+  "src/components/payment/payment-thanks.tsx": "30e67d5e8379c8f6c8ed013debd1b8a8db7688da82d386997801cf9267a8ca9c",
+  "src/components/payment/use-payment-polling.ts": "a88f2e5ac1a032dffdbad53001dfeb85bf89de042eb3ae459286ebf569d634ea",
+  "src/lib/analytics/gtm.ts": "4954f8c5118a6a3cfec98295b4dad5fa726cb4f94682d75ae07d23df65b00fc2",
   "src/components/analytics/google-tag-manager.tsx": "012e0bea04cbca46f943cd4f6146c90d0f2f359c7b1c16386e3f3ace979dc337",
   "src/components/account/sms-verification.tsx": "cd3389248bc07927b7c5ed02ebdb86e8f95142d20d93cbb83cb2f2b0b3cf48b8",
   "src/app/layout.tsx": "f4e56f7a0695bd5a0773065be3a8989edcd3226836d1dbb268557263c837ca68",
@@ -64,85 +68,6 @@ function gateDeclaration(code, gateName) {
   return `let ${pattern[1]}=/^GTM-[A-Z0-9]{4,12}$/;${gate}`;
 }
 
-async function verifySmsFragment(code, state) {
-  const position = code.indexOf(marker);
-  const start = code.lastIndexOf("async function ", position);
-  const report = functionAt(code, start);
-  const name = report.match(/^async function ([$\w]+)\(/)?.[1];
-  const gate = report.match(/if\(!([$\w]+)\(\)\|\|/);
-  const pending = report.match(/([$\w]+)\.has\(/)?.[1];
-  assert(name && gate && pending && report.includes(marker), "compiled registration helper missing");
-  const pendingDeclaration = code.match(new RegExp(`(?:let|const|var|,) ?(${pending}=new Set)(?:;|,)`));
-  assert(pendingDeclaration, "compiled in-flight guard missing");
-  const declaration = `${gateDeclaration(code, gate[1])};let ${pendingDeclaration[1]};${report}`;
-  // Extract and execute the actual compiled SMS predicate, verification and call.
-  // Fail closed on any unsupported compiler/hook shape. No substitute implementation.
-  const flow = code.match(new RegExp(`let ([$\\w]+)=!([$\\w]+)\\?\\.verified&&!([$\\w]+);try\\{let ([$\\w]+)=await ([$\\w]+)\\(\\{challenge_id:([$\\w]+)\\.id,code:([$\\w]+)\\}\\);\\1&&\\4\\.verified&&${name}\\(([$\\w]+),"authenticated"===([$\\w]+)\\.status\\?\\9\\.session\\.user\\?\\.email:null\\)`));
-  assert(flow, "compiled initial SMS condition missing");
-  const [, , status, changing, , verify, challenge, otp, user, session] = flow;
-  const fragment = flow[0].replace("try{", "");
-  for (const runtimeId of ["", "GTM-TEST0001", "invalid"]) {
-    for (const mode of ["initial", "failed", "unverified-result", "redisplay", "phone-change"]) {
-      for (const mail of ["normal", "fullwidth", "missing", "failure", "no-user"]) {
-        const events = [];
-        const storage = new Map();
-        let touched = 0;
-        let finish;
-        let digestCalls = 0;
-        const window = {};
-        Object.defineProperties(window, {
-          dataLayer: { get() { touched++; return events; } },
-          localStorage: { get() { touched++; return { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value) }; } },
-        });
-        const email = mail === "missing" ? null : mail === "fullwidth" ? "　ＴＥＳＴ．ＵＳＥＲ＠ＥＸＡＭＰＬＥ．ＣＯＭ\t\n" : "  Test.User@Example.COM ";
-        const uuid = "00000000-0000-4000-8000-000000000001";
-        const context = vm.createContext({
-          window, TextEncoder, process: { env: { NEXT_PUBLIC_GTM_ID: runtimeId } },
-          crypto: { subtle: { digest: (algorithm, bytes) => {
-            digestCalls++;
-            assert.equal(algorithm, "SHA-256");
-            assert.equal(Buffer.from(bytes).toString("utf8"), "test.user@example.com");
-            return new Promise((resolve, reject) => { finish = async () => {
-              if (mail === "failure") reject(new Error("synthetic crypto failure"));
-              else resolve(await webcrypto.subtle.digest(algorithm, bytes));
-            }; });
-          } } },
-          [status]: { verified: mode === "redisplay" }, [changing]: mode === "phone-change",
-          [challenge]: { id: "synthetic-challenge" }, [otp]: "000000", [user]: mail === "no-user" ? null : uuid,
-          [session]: { status: "authenticated", session: { user: { id: uuid, email } } },
-          [verify]: async () => {
-            if (mode === "failed") throw new Error("synthetic SMS failure");
-            return { verified: mode !== "unverified-result" };
-          },
-        });
-        evaluate(declaration, context);
-        const invoke = () => evaluate(`(async()=>{${fragment}})()`, context);
-        if (mode === "failed") await assert.rejects(invoke, /synthetic SMS failure/);
-        else {
-          await invoke();
-          // A pending digest must never block the SMS continuation or mark storage.
-          if (finish) { assert.equal(events.length, 0); assert.equal(storage.size, 0); }
-          await invoke();
-          if (finish) { assert.equal(digestCalls, 1, "concurrent duplicate hashing"); await finish(); }
-          await new Promise(resolve => setImmediate(resolve));
-          await invoke();
-        }
-        const count = state.gtm_enabled && mode === "initial" && mail !== "no-user" ? 1 : 0;
-        assert.equal(events.length, count, `compiled SMS event mismatch: ${mode}/${mail}`);
-        for (const event of events) {
-          const expected = { event: "registration_complete", user_id: uuid };
-          if (mail !== "missing" && mail !== "failure") expected.user_email = hash("test.user@example.com");
-          assert.equal(JSON.stringify(event), JSON.stringify(expected), "unapproved event payload / raw email");
-          if (event.user_email) assert.match(event.user_email, /^[a-f0-9]{64}$/);
-        }
-        assert(!JSON.stringify([...storage]).includes(uuid), "raw UUID persisted");
-        assert(!JSON.stringify([...storage]).includes(hash("test.user@example.com")), "email hash persisted");
-        if (!state.gtm_enabled) { assert.equal(touched, 0, "disabled build accessed analytics"); assert.equal(digestCalls, 0); }
-      }
-    }
-  }
-}
-
 function verifyHtml(html, state) {
   const flight = [];
   for (const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
@@ -188,7 +113,7 @@ export async function observe(root, id) {
     verifyHtml(readFileSync(join(root, path), "utf8"), path.endsWith("/_global-error.html") ? expectedState("disabled") : state);
     checked.push(path);
   }
-  let smsChunks = 0;
+  const clientChunks = [];
   let serverGates = 0;
   for (const surface of [".next/static", ".next/server"]) {
     for (const path of files(root, surface, ".js")) {
@@ -196,10 +121,9 @@ export async function observe(root, id) {
       if (code.includes("NEXT_PUBLIC_GTM_ID")) {
         assert(!/process\.env(?:\.NEXT_PUBLIC_GTM_ID|\[["']NEXT_PUBLIC_GTM_ID["']\])/.test(code), "runtime GTM lookup in compiled code");
       }
-      if (surface === ".next/static" && code.includes(marker)) {
-        await verifySmsFragment(code, state);
+      if (surface === ".next/static" && /oripoke:cv:|\b(?:SmsVerification|PaymentThanks)\b/.test(code)) {
+        clientChunks.push({ path, code });
         checked.push(path);
-        smsChunks++;
       }
       if (surface === ".next/server" && code.includes("google-tag-manager") && code.includes("/^GTM-[A-Z0-9]{4,12}$/")) {
         const match = code.match(/function ([$\w]+)\(\)\{let ([$\w]+)=(?:"[^"\n]*"|'[^'\n]*')\.trim\(\)/);
@@ -213,7 +137,7 @@ export async function observe(root, id) {
       }
     }
   }
-  assert(smsChunks >= 1, "compiled SMS behavior missing");
+  await verifyClientChunks(clientChunks, state);
   assert(serverGates >= 1, "compiled server GTM behavior missing");
   return {
     schema_version: "1.0", ...state,
