@@ -1656,3 +1656,14 @@ Independent local-only packaging, extraction and checksum-matched copy validatio
 PASS with poisoned runtime ENV. Archive SHA256
 `1a83f493baa2b593b3252aba91d9ec1d653cda3e26adffd5228d9c50482e1be4`.
 No formal Artifact was built, dispatched, uploaded or overwritten.
+
+First v1.3 CI head 58d2bce: policy/quality/security/shadow PASS; integration FAIL
+with 2019 tests PASS / 1 FAIL, so Build and clean-directory validation were skipped.
+The new failed-push UI test did not await the real asynchronous digest/push before
+teardown, permitting a late event to enter the following negative case. Corrected
+the test to witness and await the actual throwing push; no assertion removed and
+no app/runtime code changed. The subsequent final head receives all new Required
+Checks and fresh review. No manual CI rerun; failed-head evidence stays historical.
+Corrected Payment status UI file: 57/57 PASS; targeted lint and exact Source
+validation PASS. Runtime source bytes and compiled-verification bytes are identical
+to the two already validated local builds; no additional local Build needed.

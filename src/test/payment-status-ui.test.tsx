@@ -331,10 +331,15 @@ describe("GTM purchase completion from canonical Payment polling", () => {
   });
 
   it("contains a failed push without a UI error or payment retry", async () => {
-    Object.defineProperty(window, "dataLayer", { configurable: true, value: Object.freeze([]) });
+    const layer: unknown[] = [];
+    const push = vi.spyOn(layer, "push").mockImplementation(() => { throw new Error("synthetic push failure"); });
+    Object.defineProperty(window, "dataLayer", { configurable: true, value: layer });
     const value = conversionPayment(); const adapter = client(value); renderThanks(adapter, value.id);
     await screen.findByRole("heading", { name: "購入完了しました" });
     await waitFor(() => expect(refreshWallet).toHaveBeenCalledOnce());
+    // Wait for the actual failed push so pending Web Crypto cannot leak into the next test.
+    await waitFor(() => expect(push).toHaveBeenCalledOnce());
+    expect(layer).toHaveLength(0);
     expect(adapter.getPayment).toHaveBeenCalledOnce();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
