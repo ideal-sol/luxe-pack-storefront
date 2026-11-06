@@ -1703,3 +1703,41 @@ Focused provenance: 130/130 PASS. Artifact and secret checks PASS. Initial polic
 check found a trailing blank line in this new Worklog entry; corrected before
 commit and rechecked. No test assertion or security control changed. Existing
 Authority coordination Issue197 is reused by the installed wrapper; no new Issue.
+
+## 2026-11-06 — SF-PAIDY-V23-20261106
+
+- Human authorization: Source implementation and Draft PR only. R3 / Strict
+  Change / Application Runtime Activation: deferred. Issue none; no Task Policy
+  or Source Lock required. One isolated branch/worktree protects occupied work.
+- Base `06b669e3e8356ba25a0236631bdb9b27064fe00d`, branch
+  `feat/SF-PAIDY-V23-20261106`. Final HEAD/Tree and live CI/review evidence are
+  recorded in the Draft PR after commit, avoiding self-referential hashes.
+- Read Storefront AGENTS/governance/security/CI, existing payment handoffs,
+  action/SDK/lifecycle/selection code and tests. Read Platform PR662, squash
+  `417b5558d6dc439605c57685c6972c6300b2842b` Public contract and live main schema.
+  No Platform files changed; its existing unrelated work is preserved.
+- Strict buyer_data validation adds five v2.3 fields, calendar-date validation,
+  exact nested boolean keys and optional omission. Existing amount/order/item,
+  buyer/history/balance checks remain. No SDK/lifecycle/client I/O change.
+- Paidy/NetRideCash new-purchase hiding is unchanged. No new address form,
+  Capture/retry, settlement or grant authority; no other provider behavior change.
+- Live ledger confirms formal Client/Testkit alpha.50 and candidate null.
+  Artifact Manifest/checksums/vendor, generated types and package/lock pins are
+  unchanged. No alpha.51 publication/adoption or release-ledger operation.
+- Focused actions/SDK/UI: 129 PASS. Additional payment regressions: 196 PASS /
+  4 FAIL initially, all four due to expected stale whole-file storage-review
+  hashes. Reviewed both edited synthetic tests (no storage changes), renewed only
+  their hashes and reran the eight negative Boundary tests. Lint/typecheck,
+  Artifact, policy and Payment Boundary PASS. Subsequent Auth/LINE/security and
+  final-head Required5 outcomes are recorded in the PR.
+- Browser/visual/E2E, formal v2.3 Preview Runtime Acceptance, real Paidy calls,
+  real Capture/Webhook: NOT RUN. Formal alpha.51 adoption and later acceptance
+  need separate Human approval. Source tests do not substitute for Runtime GO.
+- Migration created/applied0; Runtime/DB/ENV/Secret/Worker/Scheduler changes0;
+  local Build0, manual CI rerun0. Normal Required CI retains its full suite and
+  clean-directory builds. No new deployment/package/publication workflow.
+- Exact scope, exclusions, provider replies, Artifact evidence and rollback are
+  in `docs/implementation/SF_PAIDY_V23_20261106_HANDOFF.md`. Rollback is withdrawal
+  or reviewed Source revert before activation, with no financial history mutation.
+- Draft branch/worktree remain for Human review. No Ready, merge, branch cleanup,
+  main switch/synchronization, OLD Test or Production operation is authorized.

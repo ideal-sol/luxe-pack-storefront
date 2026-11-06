@@ -1,6 +1,7 @@
 import type { UnivapayInlineDriver } from "@/components/payment/provider-payment-sdk";
 import type { PaidyCheckoutAction, UiPayment, UnivapayInlineForm } from "@/lib/platform/payment-ui-gateway";
 import { validateInlineAction } from "@/components/payment/provider-payment-actions";
+import { paidyV23Action } from "./fixtures/paidy-v23";
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.useRealTimers(); document.querySelectorAll("script[src]").forEach(s => s.remove()); });
 const form: UnivapayInlineForm = { provider: "univapay", script_url: "https://widget.univapay.com/client/checkout.js", options: { appId: "fixture", checkout: "payment", amount: 1000, currency: "jpy", tokenType: "one_time", capture: true, inline: true, locale: "ja", email: "member@example.test", showCvv: true } };
@@ -65,13 +66,16 @@ it("uses normal Paidy configure.closed and forwards the same payload without add
   let closed!: (v: unknown) => void;
   const launch = vi.fn(); const configure = vi.fn(config => { closed = config.closed; return { launch }; });
   vi.stubGlobal("Paidy", { configure });
-  const action = { type: "paidy_checkout", script_url: "https://apps.paidy.com/", public_key: "pk_fixture", payload: { amount: 1000 } } as PaidyCheckoutAction;
+  const action = paidyV23Action() as PaidyCheckoutAction;
+  const original = structuredClone(action.payload);
   const callback = vi.fn(); const controller = new AbortController();
   const pending = browserPaymentProviderSdk.openPaidy(action, callback, controller.signal);
   document.querySelector('script[src="https://apps.paidy.com/"]')!.dispatchEvent(new Event("load"));
   const session = await pending;
   expect(configure).toHaveBeenCalledWith({ api_key: action.public_key, closed: expect.any(Function) });
   expect(launch).toHaveBeenCalledWith(action.payload);
+  expect(launch.mock.calls[0]![0]).toBe(action.payload);
+  expect(action.payload).toEqual(original);
   closed({ status: "closed" }); expect(callback).toHaveBeenCalledOnce();
   session.dispose(); closed({ status: "authorized", id: "pay_fixture" }); expect(callback).toHaveBeenCalledOnce();
 });
