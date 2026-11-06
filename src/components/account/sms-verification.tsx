@@ -259,7 +259,7 @@ export function SmsVerification({
     const firstVerification = !status?.verified && !changingPhone;
     try {
       const verified = await verifySmsCode({ challenge_id: challenge.id, code });
-      if (firstVerification && verified.verified) reportRegistrationComplete(sessionUserId);
+      if (firstVerification && verified.verified) void reportRegistrationComplete(sessionUserId, session.status === "authenticated" ? session.session.user?.email : null);
       setStatus(verified);
       setStage("verified");
       setCode("");

@@ -1,5 +1,43 @@
 # SITE-GTM-20261026 — GTM Source / Production handoff
 
+## GTM-REG-20261106 — 登録完了属性（Human承認 2026-11-06）
+
+以下は従来の「イベント名のみ・会員IDを送信しない」仕様を更新する。
+後続に残す過去のSource / Build Authorityと承認履歴は変更しない。
+
+代理店向けイベントは `registration_complete`。初回SMS認証が成功した時だけ、
+1回の `dataLayer.push` に次のキーをまとめる。
+
+| キー | 内容 |
+| --- | --- |
+| `event` | `registration_complete` |
+| `user_id` | セッションの会員UUID（管理画面の会員ID）。加工しない。欠落時はイベント自体を送信しない |
+| `user_email` | セッションのメールを正規化しSHA-256にした小文字16進数64桁。欠落・空白のみ・Crypto失敗時はキーを省略 |
+
+正規化はUnicode NFKC → 前後の半角・全角空白、タブ、改行除去 → 小文字化 →
+UTF-8 → Web Crypto `SHA-256` → 小文字16進数の順。Gmailのドット除去等は行わない。
+生メール、電話番号、氏名、住所、OTP等は送信しない。
+ハッシュメールも完全匿名情報ではなく、匿名化済みとは扱わない。
+
+ハッシュ処理は非同期。SMS成功、画面表示、事前登録完了コールバックを待たせない。
+認証失敗、認証済み画面の再表示、電話番号変更では発火しない。
+処理中はメモリ上で同一会員の重複実行を抑止し、push成功後のみ従来の会員ID由来の
+短いマーカーをlocalStorageへ記録する。UUID、生メール、メールハッシュは保存しない。
+localStorage拒否時はbest effort。別端末・別ブラウザ・保存消去後の一意性や、
+複数タブ間の原子的な一意性は保証しない。
+
+コンテナは既存の `GTM-5DQRPNN2` を継続し、追加しない。
+無効・未設定BuildではdataLayerとlocalStorageにアクセスしない。
+OLD TestはGTM OFFを維持し、`NEXT_PUBLIC_GTM_ID` を設定しない。
+
+今回の承認はSource実装と1つのDraft PRまで。Merge、Runtime反映、正式Production
+Artifact Dispatchは未承認。正式Workflowはmainの `build-authority` の検証スクリプトを
+使用するため、このPRのスクリプトがmainへ反映される前に正式Buildへ使用できない。
+Source・テスト・検証・文書は同じPRでレビューし、独立したローカルBuildで検証する。
+Production Source Authority、Manifest Authority、承認済みArtifactは更新しない。
+Human側でプライバシーポリシー（外部送信を含む）を更新し、代理店への招待・共有、
+既存コンテナのタグ設定と公開、今後のSource Merge／Runtimeの承認を行う。
+
 ## GTM-SOURCE-AUTH-20261027 — Formal Human Source GO
 
 Human has issued formal Source GO for PR191 to approve Application Runtime Source

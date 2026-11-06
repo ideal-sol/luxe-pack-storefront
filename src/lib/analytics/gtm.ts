@@ -1,12 +1,13 @@
 /**
  * Google Tag Manager（広告のコンバージョン計測）。
  * コンテナIDは NEXT_PUBLIC_GTM_ID（ビルド時に埋め込まれる）。未設定・形式違いなら何も出さない。
- * dataLayer には個人情報（メールアドレス・会員IDなど）を載せない。
+ * dataLayer は会員UUIDとSHA-256メールのみ。生メール・電話番号・氏名・住所は送信しない。
  */
 const GTM_ID_PATTERN = /^GTM-[A-Z0-9]{4,12}$/;
 const REGISTRATION_COMPLETE_KEY_PREFIX = "oripoke:cv:registration_complete:";
 
-type DataLayerEvent = { readonly event: string };
+type DataLayerEvent = { readonly event: string; readonly user_id?: string; readonly user_email?: string | undefined };
+const registrationInFlight = new Set<string>();
 type DataLayerWindow = Window & { dataLayer?: unknown[] };
 
 export function gtmContainerId(): string | null {
@@ -20,7 +21,11 @@ export function pushDataLayerEvent(event: DataLayerEvent): boolean {
     const target = window as DataLayerWindow;
     if (target.dataLayer === undefined) target.dataLayer = [];
     if (!Array.isArray(target.dataLayer)) return false;
-    target.dataLayer.push({ event: event.event });
+    target.dataLayer.push({
+      event: event.event,
+      ...(event.user_id ? { user_id: event.user_id } : {}),
+      ...(/^[a-f0-9]{64}$/.test(event.user_email ?? "") ? { user_email: event.user_email } : {}),
+    });
     return true;
   } catch {
     // 計測の失敗は認証・画面遷移へ伝播させない。
@@ -33,17 +38,31 @@ export function pushDataLayerEvent(event: DataLayerEvent): boolean {
  * 別ブラウザ・別端末・保存拒否や消去後の完全な一意性は保証しない。
  * 短いハッシュは匿名化や一意性を保証するものではない。
  */
-export function reportRegistrationComplete(userKey: string | null): void {
+export async function reportRegistrationComplete(userKey: string | null, email?: string | null): Promise<void> {
+  let reserved = false;
   try {
     // 無効時は dataLayer / localStorage の getter にも触らない。
     if (!gtmContainerId() || typeof window === "undefined" || !userKey) return;
+    if (registrationInFlight.has(userKey)) return;
+    registrationInFlight.add(userKey);
+    reserved = true;
     const key = REGISTRATION_COMPLETE_KEY_PREFIX + compactKey(userKey);
     try {
       if (window.localStorage.getItem(key) === "1") return;
     } catch {
       // 保存拒否時も認証を継続する。重複抑止は best effort。
     }
-    if (!pushDataLayerEvent({ event: "registration_complete" })) return;
+    let userEmail: string | undefined;
+    try {
+      const normalized = email?.normalize("NFKC").trim().toLowerCase();
+      if (normalized) {
+        const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(normalized));
+        userEmail = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+      }
+    } catch {
+      // メール欠落・Crypto失敗はキーを省略し、CV自体は通知する。
+    }
+    if (!pushDataLayerEvent({ event: "registration_complete", user_id: userKey, user_email: userEmail })) return;
     try {
       window.localStorage.setItem(key, "1");
     } catch {
@@ -51,6 +70,8 @@ export function reportRegistrationComplete(userKey: string | null): void {
     }
   } catch {
     // 計測処理の例外は SMS 成功・事前登録完了へ伝播させない。
+  } finally {
+    if (reserved && userKey) registrationInFlight.delete(userKey);
   }
 }
 

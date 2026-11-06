@@ -1520,3 +1520,67 @@ The following alpha50-only authority records are historical and superseded by th
 ---
 
 Issue #224. Focused provenance/workflow222 PASS, targeted ESLint PASS, immutable artifact verification PASS, policy and secret scan PASS. Initial policy check rejected a new blank line at EOF; corrected whitespace only. No dependency/package/lock/Vendor/application path changed; pnpm offline frozen install reused477 packages with0 downloads. CI and final-head review remain separate PR records.
+
+## GTM-REG-20261106 — registration UUID and SHA-256 email
+
+Human approval 2026-11-06 / specification v1.1. R3 / Strict Change / Activation
+none. One Change, branch `feat/gtm-registration-attributes`, one Draft PR only.
+Issue none; dedicated Worktree isolates the occupied primary checkout. Base and
+rechecked remote main: `7c8085c22754464164e1694706c14ac6f9bed9ba`.
+No source/migration lock: no observed collision or migration allocation.
+
+Session UUID is preserved; email is NFKC, trimmed, lowercase, UTF-8, Web Crypto
+SHA-256, lowercase hex64. One allowlisted push follows hashing, without awaiting
+analytics in SMS. Missing UUID suppresses the event; missing/empty email or crypto
+failure omits user_email. In-flight Set suppresses overlapping calls; the existing
+compact per-member marker is saved only after push succeeds. No new persistent
+UUID/email/hash storage. Storage denial remains best effort; no global or atomic
+cross-tab uniqueness claim. Failure, redisplay and phone-change conditions remain.
+
+Reviewed analytics storage digests cover only the same three reviewed paths;
+Auth/LINE boundary scope is unchanged. Build Source digests renewed after review.
+Compiled verifier executes extracted real SMS/helper bytes, deferred Web Crypto
+and failure, poisoning runtime ENV and checking exact payloads. Tests compile the
+actual Source rather than a parallel helper implementation; unsafe compiled
+payload/normalization/gate mutations must fail before observations are recorded.
+Existing manifest, Build ID, packaged-byte/checksum and single-container gates
+remain. Existing `GTM-5DQRPNN2` is unchanged; only synthetic GTM-TEST0001 is used
+for local enabled verification. OLD Test remains GTM OFF with no ENV mutation.
+
+Local artifact/policy/security and all domain/Auth/LINE boundary checks PASS.
+Two completed real Next16.4.2 builds (unset GTM and synthetic enabled GTM) and
+their compiled observations PASS. Two earlier Build attempts failed TypeScript
+on optional values; fixed without weakening checks (four local Build attempts).
+Local-only package/extract/independent-copy verification with poisoned runtime ENV
+PASS; archive SHA256
+`06ae264e3902a6ed4d0dc4e91ad395eab6a021f619695b8f2a17c94b67fc2507`.
+Initial focused test failures concerned old payload/compiler expectations; updated
+tests retain negative cases. Duplicate local test runs were interrupted for host
+memory pressure; the full suite runs with one worker. Final suite/lint, Required
+CI and fresh immutable-head machine-readable review results are PR records.
+
+One PR contains Source, verification, tests and operations documentation. Formal
+Production Workflow still executes main build-authority verification: this PR's
+script must reach main under later Human approval before a future approved
+Production Source can use it. No two-stage split is currently required for Draft
+preparation. No official Production Build/Dispatch, Authority update, Merge,
+Ready transition, Preview/OLD Test/NEW Production activation or GTM publication.
+Preview/Browser acceptance is not executed or claimed; local VM and React UI
+tests are separate evidence. Human retains affected-flow Preview acceptance,
+privacy-policy/external-transmission disclosure, agency sharing/configuration,
+tag publication and future Merge/Build/Runtime approval.
+
+API/OpenAPI/Client/Testkit/vendor/database/auth business rules/point/payment/draw/
+shipping/infrastructure and immutable Artifact/Stable Tags are out of scope and
+unchanged. Migrations created/applied: 0/0. Runtime Activations: 0. Rollback before
+merge is abandoning the Draft; later source rollback requires a reviewed revert.
+
+Final focused suite: 5 files / 196 tests PASS. Whole suite: 86 files PASS,
+1 file FAIL; 1965 tests PASS / 2 existing draw-result-fulfillment UI tests timed
+out at their unchanged 5000ms limit during host load. The unchanged file is
+retried independently with the same timeout; result is recorded in the PR.
+Final repository-wide lint PASS; the earlier two unused verifier binding warnings
+were corrected. No timeout, assertion, Required Check or Security policy changed.
+Unchanged draw-result-fulfillment file retry: 21/21 PASS at the original 5000ms
+limit. Thus every local test passed, with the initial whole-suite timeout failures
+retained as separate evidence. No unrelated Source fix was needed.

@@ -1,3 +1,4 @@
+import { createHash, webcrypto } from "node:crypto";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ApiProblemError } from "@oripa/storefront-client";
 import { PUBLIC_AUTH_FIXTURE, PUBLIC_SMS_VERIFICATION_FIXTURES } from "@oripa/storefront-testkit";
@@ -64,12 +65,13 @@ function registrationEvents() {
 
 describe("SMS phone ownership verification UI", () => {
   beforeEach(() => {
+    vi.stubGlobal("crypto", webcrypto);
     delete (window as DataLayerWindow).dataLayer;
     window.localStorage.clear();
     vi.stubEnv("NEXT_PUBLIC_GTM_ID", "GTM-TEST0001");
   });
 
-  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); delete (window as DataLayerWindow).dataLayer; });
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); delete (window as DataLayerWindow).dataLayer; });
 
   it.each([
     ["07012345678", "07012345678"],
@@ -82,8 +84,11 @@ describe("SMS phone ownership verification UI", () => {
     expect(normalizeJapaneseMobilePhone(input)).toBe(expected);
   });
 
-  it.each(["configured", "configured-normal", "unset", "invalid", "storage-getter-denied", "storage-read-denied", "storage-write-denied", "malformed-layer", "frozen-layer", "throwing-layer", "throwing-push"])(
+  it.each(["configured", "configured-normal", "crypto-failure", "crypto-pending", "unset", "invalid", "storage-getter-denied", "storage-read-denied", "storage-write-denied", "malformed-layer", "frozen-layer", "throwing-layer", "throwing-push"])(
     "completes initial verification and preregistration callback despite analytics state: %s", async (mode) => {
+    if (mode === "crypto-failure") vi.stubGlobal("crypto", { subtle: { digest: async () => { throw new Error("crypto denied"); } } });
+    let finishDigest: ((value: ArrayBuffer) => void) | undefined;
+    if (mode === "crypto-pending") vi.stubGlobal("crypto", { subtle: { digest: () => new Promise<ArrayBuffer>(resolve => { finishDigest = resolve; }) } });
     if (mode === "unset") vi.stubEnv("NEXT_PUBLIC_GTM_ID", undefined);
     if (mode === "invalid") vi.stubEnv("NEXT_PUBLIC_GTM_ID", "invalid");
     if (mode === "storage-getter-denied") vi.spyOn(window, "localStorage", "get").mockImplementation(() => { throw new Error("storage denied"); });
@@ -134,7 +139,14 @@ describe("SMS phone ownership verification UI", () => {
     expect(verifySmsCode).toHaveBeenCalledWith({ challenge_id: accepted.challenge.id, code: "123456" }, {});
     await waitFor(() => expect(onVerified).toHaveBeenCalled());
     if (["configured", "configured-normal", "storage-getter-denied", "storage-read-denied", "storage-write-denied"].includes(mode)) {
-      expect(registrationEvents()).toEqual([{ event: "registration_complete" }]);
+      await waitFor(() => expect(registrationEvents()).toEqual([{ event: "registration_complete", user_id: authenticated.user!.id, user_email: createHash("sha256").update(authenticated.user!.email!.normalize("NFKC").trim().toLowerCase()).digest("hex") }]));
+    } else if (mode === "crypto-failure" || mode === "crypto-pending") {
+      if (finishDigest) {
+        expect(registrationEvents()).toEqual([]);
+        finishDigest(new Uint8Array(32).buffer);
+      }
+      await waitFor(() => expect(registrationEvents()).toHaveLength(1));
+      if (mode === "crypto-failure") expect(registrationEvents()).toEqual([{ event: "registration_complete", user_id: authenticated.user!.id }]);
     } else if (mode === "unset" || mode === "invalid") {
       expect((window as DataLayerWindow).dataLayer).toBeUndefined();
       expect(window.localStorage.length).toBe(0);

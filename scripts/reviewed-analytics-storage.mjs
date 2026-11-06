@@ -3,9 +3,9 @@ import { createHash } from "node:crypto";
 // Human-authorized non-authentication markers, pinned to entire reviewed bytes.
 // Any helper/test edit needs renewed review. No directory-wide storage exemption.
 const reviewed = new Map([
-  ["src/lib/analytics/gtm.ts", "f8f9beb8da3cbb8d07c28cf7ac087da3d4ff6bf94a4e4d55645155075b5bfa09"],
-  ["src/test/analytics-gtm.test.tsx", "a087a14e353018fd36babcc86c51becf3fc1d2a7da843d9b3aecdbd421f4b8e6"],
-  ["src/test/sms-verification-ui.test.tsx", "33ee28a8a6e06d910a99f32548a0f36419cf2466a24bb12bc633bb5bc7a145fe"],
+  ["src/lib/analytics/gtm.ts", "ec7e637667673808fe3a7a0197ab26496491bc161a328086d19b3f30fa49fe89"],
+  ["src/test/analytics-gtm.test.tsx", "24512ed2cdba42156b91aab6e8dd137f585a17777ebd39c30cb47265ac9c7f2b"],
+  ["src/test/sms-verification-ui.test.tsx", "957f87910a829b487f08bac4885e26863b6e94906d83aec0108c5dc4ad958353"],
 ]);
 
 export function reviewedAnalyticsStorage(file, content) {
