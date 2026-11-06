@@ -1,3 +1,38 @@
+# SF226-PRODAUTH-20261106 — PR226 Production Authority Draft
+
+Risk R3; Lane: Strict Change; Application Runtime Activation: none.
+Draft preparation only. Prior Authority PR225 / 7c8085c22754464164e1694706c14ac6f9bed9ba
+is replaced only for Storefront Source selection: PR226 / GTM-REG-20261106,
+Merge 8e9df3501e5451523a56e57aa1149e6290b92aee, approved HEAD
+928ce84156dad0edf51a6dbb9a4aa7220cca1b13, reviewed/merged Tree
+e6c11382199c63f51c1770bf7c1d0ff63654d427. Tree equality/content diff0 checked.
+Scope: registration_complete UUID/optional hashed email and purchase_complete
+UUID/hashed email/payment amount/payment UUID attributes already merged in PR226.
+Application Source, scripts/production-provenance.mjs, workflows and security
+guards unchanged. Existing source/PR/reviewed-tree/check and negative tests retained.
+Platform Runtime cad8be03cbab8b7fba18825a4a9b2a276f402010, Platform Authority
+8eadec09a187e3f220dc09d36e9a14b98511931b and Contract publisher
+14f7819c72c5908aa6e5778303b87dc4b1202493 unchanged. Contract alpha.50,
+Artifact13324454382, Manifest bbf4284afc47d912a13b039b7a3168fc09ae58ace682c005ef46d852e0b9c44a,
+Vendor/Client/Testkit/package/lock and all digests unchanged.
+GTM-5DQRPNN2 is already enabled in NEW Production; no ON operation, container
+creation/publication or ENV change. activation_authorized=false unchanged.
+Dedicated Worktree isolates existing dirty checkouts and OLD Test work. OLD Test
+PR226 final Technical PASS pending; no acceptance inferred. OLD Test GTM OFF,
+Runtime/Artifact/settings unchanged. No NEW server connection, Ready, Merge,
+formal Artifact Build/Dispatch, Stage, Runtime/ALB/API/Admin/Agency/DB/Migration/
+Worker/Timer/F2-B/ENV/Secret operations. Migrations created0/applied0.
+Reuse unchanged PR226 source/focused/compiled-build evidence; no local Next Build,
+full E2E or Contract republication. Required CI runs normally without manual rerun.
+Focused validation and final-head Strict self-review/CI results are recorded in
+this Draft PR after HEAD is fixed. Human must separately approve Authority merge,
+formal Artifact creation and Runtime cutover after OLD Test final result.
+Rollback now: abandon Draft with no runtime effect; later use reviewed Authority revert.
+
+Prior authority records below are historical for Storefront Source selection.
+
+---
+
 # SF-PR666-20261105 — Platform limited-payload Authority follow-up
 
 R3 / Strict Change / Activation none. Draft only; Storefront Ready/Merge requires separate Human approval.
