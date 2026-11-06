@@ -1,5 +1,92 @@
 # SITE-GTM-20261026 — GTM Source / Production handoff
 
+## GTM v1.3 — 決済完了の追加（Human承認 2026-11-06）
+
+この追記はv1.3の正式追加仕様。登録完了の3キーは維持する。
+v1.2以降のHuman決定により、OLD Test／PreviewはGTM OFFを継続し、
+`NEXT_PUBLIC_GTM_ID` を設定しない。実ブラウザでの発火確認も行わない。
+受け入れはSource、自動テスト、実コンパイル済みBuildのオフライン検証を根拠とする。
+以下に残す旧文書のPreview計測確認・受け入れ要求は、このGTM変更には適用しない。
+一般のGovernanceやProduction承認の方針は変更しない。今回もDraft PR #226まで。
+
+`purchase_complete` は `/points/purchase/thanks?pid=` の完了画面で、既存の
+認証済みPayment APIを利用するPolling結果が `ready`、正式なPaymentのstatusが
+`succeeded` の時だけ送信する。URLのpidや決済会社のリダイレクト結果は成立根拠に
+しない。クレジットカード・NetRideCash・Paidy等の手段を問わない。
+
+| キー | 意味 |
+| --- | --- |
+| `event` | `purchase_complete` |
+| `user_id` | ログイン中セッションの会員UUID（加工しない） |
+| `user_email` | 下記の共通正規化とSHA-256による小文字16進数64桁。欠落・失敗時はキーを省略 |
+| `revenue` | Platformの `payment.amount.amount`。実際に支払った税込みの円整数。コイン付与量、ボーナス、残高を含めない |
+| `transaction_id` | Platformから取得した正式な `payment.id`（決済UUID）。URLから転記しない |
+
+会員UUID、決済UUID、JPYの正の安全な整数額が不正・欠落ならイベントを送信しない。
+未確定、処理中、失敗、取消、期限切れ、API取得失敗、権限エラー、遅延状態では送信しない。
+既存APIの認可を利用し、他ユーザーの決済を取得する新しい手段は追加しない。
+処理中から成功になった時に送信する。登録完了は初回SMS成功が根拠であり、
+登録イベントにrevenueやtransaction_idを載せることはない。
+
+メールは登録完了と同じ処理を共用する：NFKC → 前後の空白・タブ・改行除去 →
+小文字 → UTF-8 → Web Crypto SHA-256 → 小文字16進数64桁。
+生メール、電話番号、氏名、住所、OTPは送信しない。ハッシュメールも匿名情報ではない。
+属性はすべて1回のpushにまとめ、ハッシュ処理・計測失敗が完了画面、ウォレット再取得、
+Polling、購入履歴への遷移を待たせない。計測失敗で決済を再実行しない。
+
+同一決済IDの処理中実行をメモリ上で抑止し、push成功後だけ短い決済ID由来の
+localStorageマーカーを保存する。メール・メールハッシュ・生UUIDは保存しない。
+Storage拒否時も同じ表示中の送信済みIDをメモリ上で抑止する。保存可能なら
+再読込・再訪問でも送信済みマーカーで抑止する。別ブラウザ、別端末、Storage消去後、
+複数タブの原子的な一意性や短いマーカーの衝突がないことは保証しない。
+完了前に画面を閉じた等、完了画面で成功を確認しない決済は計測されない可能性がある。
+広告計測件数はPlatformの正式な決済件数と一致する保証はない。
+
+既存コンテナ `GTM-5DQRPNN2` を継続し、追加コンテナは作らない。
+正式Production Workflowは引き続きmainのbuild-authority検証を使うため、
+更新済み検証のmain反映と将来の正式Source／Build承認は別途必要。
+今回のSource追加はMerge・正式Artifact Dispatch・Runtime反映を承認するものではない。
+Humanがプライバシーポリシー／外部送信の公表、代理店共有、既存コンテナのタグ設定・
+公開、本番反映後の実ブラウザ確認を担当する。
+
+## GTM-REG-20261106 — 登録完了属性（Human承認 2026-11-06）
+
+以下は従来の「イベント名のみ・会員IDを送信しない」仕様を更新する。
+後続に残す過去のSource / Build Authorityと承認履歴は変更しない。
+
+代理店向けイベントは `registration_complete`。初回SMS認証が成功した時だけ、
+1回の `dataLayer.push` に次のキーをまとめる。
+
+| キー | 内容 |
+| --- | --- |
+| `event` | `registration_complete` |
+| `user_id` | セッションの会員UUID（管理画面の会員ID）。加工しない。欠落時はイベント自体を送信しない |
+| `user_email` | セッションのメールを正規化しSHA-256にした小文字16進数64桁。欠落・空白のみ・Crypto失敗時はキーを省略 |
+
+正規化はUnicode NFKC → 前後の半角・全角空白、タブ、改行除去 → 小文字化 →
+UTF-8 → Web Crypto `SHA-256` → 小文字16進数の順。Gmailのドット除去等は行わない。
+生メール、電話番号、氏名、住所、OTP等は送信しない。
+ハッシュメールも完全匿名情報ではなく、匿名化済みとは扱わない。
+
+ハッシュ処理は非同期。SMS成功、画面表示、事前登録完了コールバックを待たせない。
+認証失敗、認証済み画面の再表示、電話番号変更では発火しない。
+処理中はメモリ上で同一会員の重複実行を抑止し、push成功後のみ従来の会員ID由来の
+短いマーカーをlocalStorageへ記録する。UUID、生メール、メールハッシュは保存しない。
+localStorage拒否時はbest effort。別端末・別ブラウザ・保存消去後の一意性や、
+複数タブ間の原子的な一意性は保証しない。
+
+コンテナは既存の `GTM-5DQRPNN2` を継続し、追加しない。
+無効・未設定BuildではdataLayerとlocalStorageにアクセスしない。
+OLD TestはGTM OFFを維持し、`NEXT_PUBLIC_GTM_ID` を設定しない。
+
+今回の承認はSource実装と1つのDraft PRまで。Merge、Runtime反映、正式Production
+Artifact Dispatchは未承認。正式Workflowはmainの `build-authority` の検証スクリプトを
+使用するため、このPRのスクリプトがmainへ反映される前に正式Buildへ使用できない。
+Source・テスト・検証・文書は同じPRでレビューし、独立したローカルBuildで検証する。
+Production Source Authority、Manifest Authority、承認済みArtifactは更新しない。
+Human側でプライバシーポリシー（外部送信を含む）を更新し、代理店への招待・共有、
+既存コンテナのタグ設定と公開、今後のSource Merge／Runtimeの承認を行う。
+
 ## GTM-SOURCE-AUTH-20261027 — Formal Human Source GO
 
 Human has issued formal Source GO for PR191 to approve Application Runtime Source

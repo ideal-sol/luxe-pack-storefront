@@ -13,6 +13,7 @@ import { usePaymentPolling } from "./use-payment-polling";
 import { paymentMethodLabel } from "./payment-history-presentation";
 import { usePaymentReturnEvent } from "./use-payment-return-event";
 import { finishPaymentAttempt, readPaymentAttempt, rememberFailedInlinePayment, isFailedInlinePayment } from "./payment-attempt";
+import { reportPurchaseComplete } from "@/lib/analytics/gtm";
 
 function formatAmount(payment: Payment) {
   return new Intl.NumberFormat("ja-JP", {
@@ -144,6 +145,16 @@ export function PaymentThanks({ pid }: { readonly pid: string | null }) {
   const polling = usePaymentPolling(authenticatedClient, pid, correlatedInline, revision);
   const verified = polling.status === "ready" || polling.status === "delayed" ? polling.payment : null;
   const univapay = correlatedInline && verified?.method === "credit_card";
+
+  useEffect(() => {
+    if (session.status !== "authenticated" || polling.status !== "ready" || polling.payment.status !== "succeeded" || polling.payment.amount?.currency !== "JPY") return;
+    void reportPurchaseComplete({
+      userId: session.session.user?.id ?? null,
+      email: session.session.user?.email,
+      revenue: polling.payment.amount.amount,
+      paymentId: polling.payment.id,
+    });
+  }, [polling, session]);
 
   useEffect(() => {
     const subject = session.status === "authenticated" ? session.session.user?.id : null;

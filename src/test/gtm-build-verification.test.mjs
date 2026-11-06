@@ -4,9 +4,15 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import ts from "typescript";
+import { createRequire } from "node:module";
 import { afterEach, describe, expect, it } from "vitest";
 import { expectedState, observe, validateSource, verifyRelease } from "../../scripts/verify-gtm-build.mjs";
+import { verifyClientChunks } from "../../scripts/verify-gtm-client.mjs";
 
+const require = createRequire(import.meta.url);
+const { minify, loadBindings } = require("next/dist/build/swc");
+await loadBindings();
 const roots = [];
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
 function temporary() {
@@ -16,15 +22,20 @@ function temporary() {
 }
 afterEach(() => roots.splice(0).forEach(root => rmSync(root, { recursive: true, force: true })));
 
-// Reduced compiler-shaped fixtures; the task also verifies two actual Next builds.
-function fixture(id = "GTM-TEST0001") {
+// Compile the actual reviewed helper and SMS component, never a parallel event implementation.
+async function fixture(id = "GTM-TEST0001") {
   const root = temporary();
   for (const dir of [".next/server/app", ".next/static/chunks", ".next/server/chunks"]) mkdirSync(join(root, dir), { recursive: true });
   writeFileSync(join(root, ".next/BUILD_ID"), "synthetic-build\n");
   writeFileSync(join(root, ".next/required-server-files.json"), JSON.stringify({ config: { env: { NEXT_PUBLIC_GTM_ID: id } } }));
   const gate = `let o=/^GTM-[A-Z0-9]{4,12}$/;function u(){let e=${JSON.stringify(id)}.trim()??"";return o.test(e)?e:null}`;
-  const report = `function(e){try{if(!u()||!e)return;let t="oripoke:cv:registration_complete:"+e;try{if("1"===window.localStorage.getItem(t))return}catch{}if(!function(e){try{if(!u())return!1;let t=window;if(void 0===t.dataLayer&&(t.dataLayer=[]),!Array.isArray(t.dataLayer))return!1;return t.dataLayer.push({event:e.event}),!0}catch{return!1}}({event:"registration_complete"}))return;try{window.localStorage.setItem(t,"1")}catch{}}catch{}}`;
-  writeFileSync(join(root, ".next/static/chunks/sms.js"), `${gate};async function ed(){let r=!N?.verified&&!Y;try{let e=await _({challenge_id:t.id,code:U});r&&e.verified&&${report}(ee)}catch(e){throw e}}`);
+  for (const [index, file, name] of [[1, "src/lib/analytics/gtm.ts", "analytics"], [2, "src/components/account/sms-verification.tsx", "sms"], [3, "src/components/payment/payment-thanks.tsx", "purchase"]]) {
+    const source = readFileSync(file, "utf8").replaceAll("process.env.NEXT_PUBLIC_GTM_ID", JSON.stringify(id));
+    const javascript = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText;
+    const compiled = await minify(javascript, { compress: true, mangle: false });
+    const wrapper = `(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["fixture",${index},bridge=>{const exports={};const require=name=>bridge.i(name==="@/lib/analytics/gtm"?1:99);${compiled.code};bridge.s(Object.entries(exports).flatMap(([name,value])=>[name,0,value]));}]);`;
+    writeFileSync(join(root, `.next/static/chunks/${name}.js`), wrapper);
+  }
   writeFileSync(join(root, ".next/server/chunks/layout.js"), `${gate};"google-tag-manager";`);
   const loader = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s);j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i;f.parentNode.insertBefore(j,f)})(window,document,'script','dataLayer','${id}');`;
   const payload = id ? JSON.stringify({ id: "google-tag-manager", strategy: "afterInteractive", children: loader }) : "";
@@ -45,7 +56,8 @@ async function release(root, id = "GTM-TEST0001") {
 function replace(root, file, before, after) {
   const path = join(root, file);
   const content = readFileSync(path, "utf8");
-  expect(content).toContain(before);
+  if (typeof before === "string") expect(content).toContain(before);
+  else expect(content).toMatch(before);
   writeFileSync(path, content.replaceAll(before, after));
 }
 
@@ -54,8 +66,8 @@ describe("GTM artifact byte authority", () => {
     expect(() => expectedState(value)).toThrow();
   });
 
-  it.each(["GTM-TEST0001", "disabled"])("executes loader, iframe, SMS gates and poisoned runtime ENV: %s", async id => {
-    const root = fixture(id === "disabled" ? "" : id);
+  it.each(["GTM-TEST0001", "disabled"])("executes loader, iframe, SMS/payment gates and poisoned runtime ENV: %s", async id => {
+    const root = await fixture(id === "disabled" ? "" : id);
     await release(root, id);
     expect(await verifyRelease(root, id)).toMatchObject(expectedState(id));
     const result = spawnSync(process.execPath, ["scripts/verify-gtm-build.mjs", "verify", root, id], {
@@ -63,32 +75,70 @@ describe("GTM artifact byte authority", () => {
     });
     expect(result.stderr).toBe("");
     expect(result.status).toBe(0);
-  });
+  }, 30_000); // Both expanded compiled surfaces, including a fresh independent CLI.
 
   it.each([
     [".next/server/app/contact.html", "GTM-TEST0001", "GTM-OTHER001"],
     [".next/server/app/contact.html", "ns.html?id=", "wrong.html?id="],
-    [".next/static/chunks/sms.js", '!N?.verified&&!Y', '!N?.verified'],
-    [".next/static/chunks/sms.js", '{event:e.event}', '{event:e.event,email:"synthetic@example.test"}'],
-    [".next/static/chunks/sms.js", 'if(!u()||!e)return;', 'if(!e)return;'],
-    [".next/static/chunks/sms.js", '"GTM-TEST0001".trim()', 'process.env.NEXT_PUBLIC_GTM_ID.trim()'],
+    [".next/static/chunks/sms.js", '!status?.verified&&!changingPhone', '!status?.verified'],
+    [".next/static/chunks/analytics.js", 'event:event.event', 'event:event.event,email:"synthetic@example.test"'],
+    [".next/static/chunks/analytics.js", '"GTM-TEST0001".trim()', 'process.env.NEXT_PUBLIC_GTM_ID.trim()'],
     [".next/server/chunks/layout.js", '"GTM-TEST0001".trim()', '"GTM-OTHER001".trim()'],
   ])("rejects altered built behavior: %s / %s", async (file, before, after) => {
-    const root = fixture();
+    const root = await fixture();
     await release(root);
     replace(root, file, before, after);
+    await expect(observe(root, "GTM-TEST0001")).rejects.toThrow();
     await expect(verifyRelease(root, "GTM-TEST0001")).rejects.toThrow();
   });
 
+  it.each([
+    ['user_email:event.user_email', 'user_email:"synthetic@example.test"'],
+    ['.normalize("NFKC")', '.normalize("NFC")'],
+    ['.toLowerCase()', '.toUpperCase()'],
+    ['padStart(2,"0")', 'padStart(2,"A")'],
+  ])("rejects unsafe compiled email behavior before recording observations: %s", async (before, after) => {
+    const root = await fixture();
+    replace(root, ".next/static/chunks/analytics.js", before, after);
+    await expect(observe(root, "GTM-TEST0001")).rejects.toThrow();
+  });
+
+  it.each([
+    ["purchase", '"succeeded"!==polling.payment.status', '"processing"!==polling.payment.status'],
+    ["purchase", 'userId:session.session.user?.id??null', 'userId:"00000000-0000-4000-8000-000000000099"'],
+    ["purchase", 'revenue:polling.payment.amount.amount', 'revenue:polling.payment.grant.total_points'],
+    ["purchase", 'paymentId:polling.payment.id', 'paymentId:pid'],
+    ["analytics", 'purchaseInFlight.has(paymentId)||purchaseSent.has(paymentId)', 'false'],
+    ["analytics", 'purchaseSent.has(paymentId)', 'false'],
+    ["analytics", 'if("1"===window.localStorage.getItem(key))return', 'if(false)return'],
+    ["analytics", 'target.dataLayer.push({', 'target.dataLayer.push({event:"purchase_complete"}),target.dataLayer.push({'],
+  ])("rejects unsafe compiled purchase composition %s / %s", async (file, before, after) => {
+    const root = await fixture();
+    replace(root, `.next/static/chunks/${file}.js`, before, after);
+    await expect(observe(root, "GTM-TEST0001")).rejects.toThrow();
+  }, 30_000);
+
+  it("rejects removed analytics gates in an actually disabled compiled build", async () => {
+    const root = await fixture("");
+    replace(root, ".next/static/chunks/analytics.js", "!gtmContainerId()", "false");
+    await expect(observe(root, "disabled")).rejects.toThrow();
+  }, 30_000);
+
+  it("executes invalid compiled GTM as disabled and rejects its invalid artifact config", async () => {
+    const root = await fixture("invalid");
+    await verifyClientChunks(["analytics", "sms", "purchase"].map(name => ({ path: `.next/static/chunks/${name}.js`, code: readFileSync(join(root, `.next/static/chunks/${name}.js`), "utf8") })), expectedState("disabled"));
+    await expect(observe(root, "disabled")).rejects.toThrow("compiled config GTM mismatch");
+  }, 30_000);
+
   it("rejects tags injected into a disabled build", async () => {
-    const root = fixture("");
+    const root = await fixture("");
     await release(root, "disabled");
     writeFileSync(join(root, ".next/server/app/contact.html"), '<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TEST0001"></iframe>');
     await expect(verifyRelease(root, "disabled")).rejects.toThrow();
   });
 
   it.each(["gtm_id", "gtm_enabled", "build_id", "gtm_observation_sha256"])("rejects missing/mismatched manifest %s", async key => {
-    const root = fixture();
+    const root = await fixture();
     await release(root);
     const path = join(root, "artifact-manifest.json");
     const original = JSON.parse(readFileSync(path, "utf8"));
@@ -99,7 +149,7 @@ describe("GTM artifact byte authority", () => {
   });
 
   it("recomputes observations after package, extract and independent copy; refuses tampering", async () => {
-    const root = fixture();
+    const root = await fixture();
     await release(root);
     const archive = join(temporary(), "isolated.tar.gz");
     execFileSync("tar", ["-czf", archive, "-C", root, "."]);
@@ -116,7 +166,7 @@ describe("GTM artifact byte authority", () => {
     }
   });
 
-  it("accepts only the reviewed PR186 application composition", () => {
+  it("accepts only the reviewed registration attributes composition", () => {
     validateSource(".");
     const root = temporary();
     expect(() => validateSource(root)).toThrow();

@@ -1520,3 +1520,150 @@ The following alpha50-only authority records are historical and superseded by th
 ---
 
 Issue #224. Focused provenance/workflow222 PASS, targeted ESLint PASS, immutable artifact verification PASS, policy and secret scan PASS. Initial policy check rejected a new blank line at EOF; corrected whitespace only. No dependency/package/lock/Vendor/application path changed; pnpm offline frozen install reused477 packages with0 downloads. CI and final-head review remain separate PR records.
+
+## GTM-REG-20261106 — registration UUID and SHA-256 email
+
+Human approval 2026-11-06 / specification v1.1. R3 / Strict Change / Activation
+none. One Change, branch `feat/gtm-registration-attributes`, one Draft PR only.
+Issue none; dedicated Worktree isolates the occupied primary checkout. Base and
+rechecked remote main: `7c8085c22754464164e1694706c14ac6f9bed9ba`.
+No source/migration lock: no observed collision or migration allocation.
+
+Session UUID is preserved; email is NFKC, trimmed, lowercase, UTF-8, Web Crypto
+SHA-256, lowercase hex64. One allowlisted push follows hashing, without awaiting
+analytics in SMS. Missing UUID suppresses the event; missing/empty email or crypto
+failure omits user_email. In-flight Set suppresses overlapping calls; the existing
+compact per-member marker is saved only after push succeeds. No new persistent
+UUID/email/hash storage. Storage denial remains best effort; no global or atomic
+cross-tab uniqueness claim. Failure, redisplay and phone-change conditions remain.
+
+Reviewed analytics storage digests cover only the same three reviewed paths;
+Auth/LINE boundary scope is unchanged. Build Source digests renewed after review.
+Compiled verifier executes extracted real SMS/helper bytes, deferred Web Crypto
+and failure, poisoning runtime ENV and checking exact payloads. Tests compile the
+actual Source rather than a parallel helper implementation; unsafe compiled
+payload/normalization/gate mutations must fail before observations are recorded.
+Existing manifest, Build ID, packaged-byte/checksum and single-container gates
+remain. Existing `GTM-5DQRPNN2` is unchanged; only synthetic GTM-TEST0001 is used
+for local enabled verification. OLD Test remains GTM OFF with no ENV mutation.
+
+Local artifact/policy/security and all domain/Auth/LINE boundary checks PASS.
+Two completed real Next16.4.2 builds (unset GTM and synthetic enabled GTM) and
+their compiled observations PASS. Two earlier Build attempts failed TypeScript
+on optional values; fixed without weakening checks (four local Build attempts).
+Local-only package/extract/independent-copy verification with poisoned runtime ENV
+PASS; archive SHA256
+`06ae264e3902a6ed4d0dc4e91ad395eab6a021f619695b8f2a17c94b67fc2507`.
+Initial focused test failures concerned old payload/compiler expectations; updated
+tests retain negative cases. Duplicate local test runs were interrupted for host
+memory pressure; the full suite runs with one worker. Final suite/lint, Required
+CI and fresh immutable-head machine-readable review results are PR records.
+
+One PR contains Source, verification, tests and operations documentation. Formal
+Production Workflow still executes main build-authority verification: this PR's
+script must reach main under later Human approval before a future approved
+Production Source can use it. No two-stage split is currently required for Draft
+preparation. No official Production Build/Dispatch, Authority update, Merge,
+Ready transition, Preview/OLD Test/NEW Production activation or GTM publication.
+Preview/Browser acceptance is not executed or claimed; local VM and React UI
+tests are separate evidence. Human retains affected-flow Preview acceptance,
+privacy-policy/external-transmission disclosure, agency sharing/configuration,
+tag publication and future Merge/Build/Runtime approval.
+
+API/OpenAPI/Client/Testkit/vendor/database/auth business rules/point/payment/draw/
+shipping/infrastructure and immutable Artifact/Stable Tags are out of scope and
+unchanged. Migrations created/applied: 0/0. Runtime Activations: 0. Rollback before
+merge is abandoning the Draft; later source rollback requires a reviewed revert.
+
+Final focused suite: 5 files / 196 tests PASS. Whole suite: 86 files PASS,
+1 file FAIL; 1965 tests PASS / 2 existing draw-result-fulfillment UI tests timed
+out at their unchanged 5000ms limit during host load. The unchanged file is
+retried independently with the same timeout; result is recorded in the PR.
+Final repository-wide lint PASS; the earlier two unused verifier binding warnings
+were corrected. No timeout, assertion, Required Check or Security policy changed.
+Unchanged draw-result-fulfillment file retry: 21/21 PASS at the original 5000ms
+limit. Thus every local test passed, with the initial whole-suite timeout failures
+retained as separate evidence. No unrelated Source fix was needed.
+
+## GTM-REG-20261106 v1.3 — purchase completion, same Draft PR #226
+
+Human v1.3 addition 2026-11-06. R3 / Strict Change / Activation none / Issue none.
+Continue `feat/gtm-registration-attributes` and its existing isolated Worktree.
+Starting task head `b7d2b374c388f31fe18ce3ef4b7bb5b5df4de072`; remote main remains
+`7c8085c22754464164e1694706c14ac6f9bed9ba`. Both remote refs rechecked before push.
+Other Worktrees were read-only audited for overlapping edits: no active overlap
+observed. An old empty Worktree reports wholesale missing files and is untouched.
+No new Issue, Worktree, Task Policy, Source Lock or migration allocation needed.
+
+PaymentThanks adds one non-blocking effect gated by authenticated session, existing
+Polling ready, Payment.status succeeded and JPY. UUID and positive safe integer
+validation rejects malformed identities/amounts. Revenue is amount.amount, never
+coin grants or balances; transaction_id is the fetched Payment.id, never URL pid.
+No new API, owner lookup, payment retry or financial decision. Existing Polling,
+wallet refresh, provider handling and authorization remain unchanged.
+
+Registration behavior remains; both events share one normalization/hash function.
+Event-specific runtime allowlists prevent purchase attributes on registration.
+Missing/failed email hashing omits the email key. Purchase in-flight and sent Sets
+suppress overlap and repeated display even with refused storage. The existing
+compact marker pattern is used per Payment UUID, written only after successful
+push. Failed pushes remain retryable. No raw UUID/email/email hash is persisted;
+storage denial, clearing, other browsers/devices and non-atomic cross-tab behavior
+are documented limitations. No claim that hashed email is anonymous.
+
+Reviewed storage bytes renewed only for the same existing helper/test exemption
+paths; no new storage exemption or Auth/LINE policy expansion. Source digests add
+PaymentThanks, the unchanged polling hook and the new explicit client verifier.
+The verifier registers actual emitted Turbopack factories, runs the real compiled
+SMS form callback and PaymentThanks effects with React/I/O mocks, and uses real
+Web Crypto with deferred completion/failure. It verifies all emitted analytics/UI
+variants, runtime ENV poisoning, payloads, statuses, persisted/memory suppression,
+reload, multiple payments, failed pushes, wallet continuation and tampering.
+Fixtures compile actual Source, not a parallel analytics implementation. Exact-byte
+behavioral cache reuses only previously completed checks for identical bytes and
+expected state; observations/manifest/checksums are always recomputed. VM code
+execution limits stay 1000ms per operation. The expanded compiled matrix plus
+independent CLI tests use a bounded 30-second case budget; app/business timers,
+assertions, security controls and Required Checks are not weakened.
+
+Focused seven-file suite 306 PASS; an additional invalid compiled GTM test PASS
+(the other 36 cases were intentionally not rerun in that targeted invocation).
+Repository lint, real Build TypeScript, artifact/policy/secrets and every
+Auth/LINE/domain boundary check PASS. Two local Next16.4.2 builds: unset GTM and
+synthetic GTM-TEST0001, both PASS; both actual compiled observations PASS.
+The real GTM container is never loaded by tests. Initial verifier failures exposed
+compiler-shape/mock-realm and insufficient negative fixture issues; those were
+corrected and the negative assertions retained. Final CI and exact-head review
+are recorded in the updated Draft PR; old-head evidence is historical only.
+
+Human v1.2/v1.3 explicitly keeps OLD Test and Preview GTM OFF with no ENV setting,
+no Browser event acceptance or Runtime changes. This supersedes the earlier GTM
+Preview-measurement handoff, not general security or Production approvals.
+Source/autotests/compiled Build are acceptance evidence. Real dataLayer checking
+is a future post-Production Human task. This task does not authorize Source Merge,
+Ready, formal Artifact Dispatch/Build, Source/Manifest Authority changes, tag
+publication or any Runtime activation. Production verification remains main
+build-authority; later approved main/source/build authority must be coherent.
+One existing PR suffices; no technical two-stage split is needed for this Draft.
+
+Changed runtime Source only in analytics helper and PaymentThanks; no API/DB/
+Migration/Client/Testkit/vendor/lockfile/auth or payment business logic/provider/
+infrastructure changes. Existing Artifacts/Stable Tags unchanged. Migrations 0/0;
+Runtime activations 0. Human owns disclosures, agency configuration/publication,
+post-Production checks and all future Merge/Build/Runtime approval. Rollback before
+merge is abandoning the Draft; a later Source rollback is a reviewed revert.
+Independent local-only packaging, extraction and checksum-matched copy validation
+PASS with poisoned runtime ENV. Archive SHA256
+`1a83f493baa2b593b3252aba91d9ec1d653cda3e26adffd5228d9c50482e1be4`.
+No formal Artifact was built, dispatched, uploaded or overwritten.
+
+First v1.3 CI head 58d2bce: policy/quality/security/shadow PASS; integration FAIL
+with 2019 tests PASS / 1 FAIL, so Build and clean-directory validation were skipped.
+The new failed-push UI test did not await the real asynchronous digest/push before
+teardown, permitting a late event to enter the following negative case. Corrected
+the test to witness and await the actual throwing push; no assertion removed and
+no app/runtime code changed. The subsequent final head receives all new Required
+Checks and fresh review. No manual CI rerun; failed-head evidence stays historical.
+Corrected Payment status UI file: 57/57 PASS; targeted lint and exact Source
+validation PASS. Runtime source bytes and compiled-verification bytes are identical
+to the two already validated local builds; no additional local Build needed.

@@ -26,6 +26,15 @@ function validate(value?: string) {
 }
 
 describe("production artifact canonical audit toolchain", () => {
+  it("retains main build-authority verification and the single approved container", () => {
+    expect(workflow).toContain('build-authority/scripts/verify-gtm-build.mjs');
+    expect(workflow.match(/NEXT_PUBLIC_GTM_ID: GTM-5DQRPNN2/g)).toHaveLength(1);
+    expect(workflow).not.toContain('GTM-M6QJSWLQ');
+    const verifier = readFileSync("scripts/verify-gtm-build.mjs", "utf8");
+    expect(verifier).toContain('"src/components/payment/payment-thanks.tsx"');
+    expect(verifier).toContain('"src/components/payment/use-payment-polling.ts"');
+    expect(verifier).toContain('await verifyClientChunks(clientChunks, state)');
+  });
   it("pins both toolchains and Next without changing the manifest toolchain", () => {
     expect(workflow).toContain("PNPM_VERSION: 10.12.1");
     expect(workflow).toContain("PNPM_AUDIT_VERSION: 11.25.0");

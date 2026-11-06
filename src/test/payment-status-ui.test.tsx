@@ -1,3 +1,4 @@
+import { createHash, webcrypto } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beginPaymentAttempt, finishPaymentAttempt, readPaymentAttempt } from "@/components/payment/payment-attempt";
@@ -290,5 +291,100 @@ describe("SITE-040 / SITE-047 Payment status UI", () => {
     expect(source).not.toContain("window.location");
     expect(source).not.toContain("/points/purchase/thanks");
     expect(source).not.toContain('status: "redirecting"');
+  });
+});
+
+type AnalyticsWindow = Window & { dataLayer?: unknown[] };
+const analyticsWindow = window as AnalyticsWindow;
+let conversionSequence = 0;
+function conversionPayment(status: Payment["status"] = "succeeded"): Payment {
+  conversionSequence++;
+  return { ...payment(status), id: `00000000-0000-4000-a000-${String(conversionSequence).padStart(12, "0")}` };
+}
+describe("GTM purchase completion from canonical Payment polling", () => {
+  beforeEach(() => { vi.stubEnv("NEXT_PUBLIC_GTM_ID", "GTM-TEST0001"); vi.stubGlobal("crypto", { subtle: { digest: vi.fn(webcrypto.subtle.digest.bind(webcrypto.subtle)) } }); delete analyticsWindow.dataLayer; refreshWallet.mockClear(); });
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); vi.useRealTimers(); delete analyticsWindow.dataLayer; });
+
+  it.each(["credit_card", "netridecash", "paidy"] as const)("reports exact paid JPY / canonical id for %s and suppresses revisit", async method => {
+    const value = { ...conversionPayment(), method: method as Payment["method"] };
+    const adapter = client(value);
+    const view = renderThanks(adapter, value.id);
+    await screen.findByRole("heading", { name: "購入完了しました" });
+    await waitFor(() => expect(analyticsWindow.dataLayer).toEqual([{ event: "purchase_complete", user_id: PUBLIC_AUTH_FIXTURE.authenticated_session.user!.id, user_email: createHash("sha256").update(PUBLIC_AUTH_FIXTURE.authenticated_session.user!.email!.normalize("NFKC").trim().toLowerCase()).digest("hex"), revenue: 12345, transaction_id: value.id }]));
+    expect(JSON.stringify(analyticsWindow.dataLayer)).not.toContain("@");
+    expect(refreshWallet).toHaveBeenCalledOnce();
+    view.unmount(); renderThanks(adapter, value.id);
+    await screen.findByRole("heading", { name: "購入完了しました" });
+    expect(analyticsWindow.dataLayer).toHaveLength(1);
+  });
+
+  it("does not block success, wallet refresh or history while hashing is pending or rejected", async () => {
+    let reject!: (reason: Error) => void;
+    vi.stubGlobal("crypto", { subtle: { digest: () => new Promise((_, fail) => { reject = fail; }) } });
+    const value = conversionPayment(); renderThanks(client(value), value.id);
+    await screen.findByRole("heading", { name: "購入完了しました" });
+    await waitFor(() => expect(refreshWallet).toHaveBeenCalledOnce());
+    expect(screen.getByRole("link", { name: "購入履歴" })).toHaveAttribute("href", "/mypage/purchases");
+    expect(analyticsWindow.dataLayer).toBeUndefined();
+    reject(new Error("synthetic crypto failure"));
+    await waitFor(() => expect(analyticsWindow.dataLayer).toEqual([{ event: "purchase_complete", user_id: PUBLIC_AUTH_FIXTURE.authenticated_session.user!.id, revenue: 12345, transaction_id: value.id }]));
+  });
+
+  it("contains a failed push without a UI error or payment retry", async () => {
+    const layer: unknown[] = [];
+    const push = vi.spyOn(layer, "push").mockImplementation(() => { throw new Error("synthetic push failure"); });
+    Object.defineProperty(window, "dataLayer", { configurable: true, value: layer });
+    const value = conversionPayment(); const adapter = client(value); renderThanks(adapter, value.id);
+    await screen.findByRole("heading", { name: "購入完了しました" });
+    await waitFor(() => expect(refreshWallet).toHaveBeenCalledOnce());
+    // Wait for the actual failed push so pending Web Crypto cannot leak into the next test.
+    await waitFor(() => expect(push).toHaveBeenCalledOnce());
+    expect(layer).toHaveLength(0);
+    expect(adapter.getPayment).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it.each(["created", "requires_action", "processing", "failed", "canceled", "expired"] as const)("never reports canonical %s", async status => {
+    const value = conversionPayment(status); const adapter = client(value); renderThanks(adapter, value.id);
+    await waitFor(() => expect(adapter.getPayment).toHaveBeenCalledOnce());
+    expect(analyticsWindow.dataLayer).toBeUndefined(); expect(refreshWallet).not.toHaveBeenCalled();
+    expect(crypto.subtle.digest).not.toHaveBeenCalled();
+  });
+
+  it("reports once when processing becomes succeeded", async () => {
+    vi.useFakeTimers(); const value = conversionPayment("processing"); const adapter = client(value);
+    await act(async () => { renderThanks(adapter, value.id); });
+    expect(analyticsWindow.dataLayer).toBeUndefined();
+    vi.mocked(adapter.getPayment).mockResolvedValue({ data: { ...value, status: "succeeded" }, metadata });
+    vi.stubGlobal("crypto", { subtle: { digest: async () => new Uint8Array(32).buffer } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    expect(analyticsWindow.dataLayer).toHaveLength(1); expect(refreshWallet).toHaveBeenCalledOnce();
+    await act(async () => { await vi.advanceTimersByTimeAsync(30000); });
+    expect(analyticsWindow.dataLayer).toHaveLength(1);
+  });
+
+  it("does not report a delayed payment whose success is unconfirmed", async () => {
+    vi.useFakeTimers(); const value = conversionPayment("processing");
+    await act(async () => { renderThanks(client(value), value.id); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(30000); });
+    expect(screen.getByRole("heading", { name: "決済処理中" })).toBeInTheDocument();
+    expect(analyticsWindow.dataLayer).toBeUndefined(); expect(crypto.subtle.digest).not.toHaveBeenCalled();
+  });
+
+  it.each(["invalid", "forbidden", "error", "loading", "wrong-id", "wrong-currency", "wrong-amount"])("does not report %s responses", async mode => {
+    const value = conversionPayment();
+    const adapter = mode === "forbidden" ? client(new ApiProblemError({ code: "FORBIDDEN", request_id: "fixture", retryable: false, status: 403, title: "Forbidden", type: "about:blank" })) : client(mode === "error" ? new Error("fixture") : { ...value, ...(mode === "wrong-id" ? { id: "00000000-0000-4000-b000-000000000001" } : {}), amount: { amount: mode === "wrong-amount" ? 1.5 : 12345, currency: mode === "wrong-currency" ? "USD" : "JPY" } } as Payment);
+    if (mode === "loading") vi.mocked(adapter.getPayment).mockReturnValue(new Promise(() => {}));
+    renderThanks(adapter, mode === "invalid" ? null : value.id);
+    if (mode !== "invalid") await waitFor(() => expect(adapter.getPayment).toHaveBeenCalledOnce());
+    expect(analyticsWindow.dataLayer).toBeUndefined();
+    expect(crypto.subtle.digest).not.toHaveBeenCalled();
+  });
+
+  it("keeps GTM OFF without crypto work", async () => {
+    vi.stubEnv("NEXT_PUBLIC_GTM_ID", ""); const digest = vi.fn(); vi.stubGlobal("crypto", { subtle: { digest } });
+    const value = conversionPayment(); renderThanks(client(value), value.id);
+    await screen.findByRole("heading", { name: "購入完了しました" });
+    expect(analyticsWindow.dataLayer).toBeUndefined(); expect(digest).not.toHaveBeenCalled();
   });
 });
