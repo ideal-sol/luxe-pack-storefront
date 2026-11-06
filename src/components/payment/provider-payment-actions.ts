@@ -15,6 +15,11 @@ const object = (value: unknown): value is Record<string, unknown> => typeof valu
 const text = (value: unknown): value is string => typeof value === "string" && value.length > 0;
 const positive = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) > 0;
 const only = (value: Record<string, unknown>, keys: readonly string[]) => Object.keys(value).every(key => keys.includes(key));
+const calendarDate = (value: unknown): value is string => {
+  if (typeof value !== "string" || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value) || value.startsWith("0000")) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+};
 const fail = (): never => { throw new Error(PAYMENT_UI_UNAVAILABLE); };
 
 export function validateInlineForm(value: UnivapayInlineForm) {
@@ -88,9 +93,18 @@ export function validatePaidyAction(action: unknown, payment: UiPayment): PaidyC
       p.buyer.name1 !== undefined && !text(p.buyer.name1) || !object(p.buyer_data) || !object(p.order)) return fail();
   const b = p.buyer_data;
   const required = ["age", "ltv", "order_count", "order_count_last3months", "order_amount_last3months", "number_of_points"];
-  if (!text(b.user_id) || !only(b, ["user_id", ...required, "last_order_amount", "last_order_at"]) ||
+  if (!text(b.user_id) || !only(b, ["user_id", ...required, "last_order_amount", "last_order_at", "account_registration_date", "delivery_locn_type", "days_since_first_transaction", "previous_payment_methods", "order_item_categories"]) ||
       required.some(key => !Number.isSafeInteger(b[key]) || Number(b[key]) < 0) ||
       ["last_order_amount", "last_order_at"].some(key => b[key] !== undefined && (!Number.isSafeInteger(b[key]) || Number(b[key]) < 0))) return fail();
+  // PR662 Public contract; validate locally while the formal Client stays alpha.50.
+  if (!calendarDate(b.account_registration_date) || !object(b.previous_payment_methods)) return fail();
+  const methods = b.previous_payment_methods;
+  if (!only(methods, ["credit_card_used", "convenience_store_prepayment_used", "bank_transfer_used"]) ||
+      typeof methods.credit_card_used !== "boolean" ||
+      ["convenience_store_prepayment_used", "bank_transfer_used"].some(key => key in methods && typeof methods[key] !== "boolean") ||
+      "delivery_locn_type" in b && !text(b.delivery_locn_type) ||
+      "days_since_first_transaction" in b && (!Number.isSafeInteger(b.days_since_first_transaction) || Number(b.days_since_first_transaction) < 0) ||
+      "order_item_categories" in b && (!Array.isArray(b.order_item_categories) || b.order_item_categories.length === 0 || !b.order_item_categories.every(text))) return fail();
   const o = p.order;
   if (!only(o, ["items", "order_ref", "shipping", "tax"]) || o.order_ref !== payment.id || o.shipping !== 0 || o.tax !== 0 ||
       !Array.isArray(o.items) || o.items.length !== 1) return fail();
