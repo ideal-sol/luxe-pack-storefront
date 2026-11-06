@@ -1741,3 +1741,8 @@ Authority coordination Issue197 is reused by the installed wrapper; no new Issue
   or reviewed Source revert before activation, with no financial history mutation.
 - Draft branch/worktree remain for Human review. No Ready, merge, branch cleanup,
   main switch/synchronization, OLD Test or Production operation is authorized.
+- Draft PR228 first automatic CI on `21224ac` passed policy/quality/security but
+  integration had2081 PASS/2 FAIL: the new synthetic fixture was missing from
+  the explicit source inventory. Added only its inventory row, retaining exact
+  inventory equality and all assertions. Focused readiness validation and a
+  normal follow-up Push renew all head-dependent CI/review; manual reruns0.

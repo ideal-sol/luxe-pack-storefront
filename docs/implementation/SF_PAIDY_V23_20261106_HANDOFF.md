@@ -74,6 +74,10 @@ tests. Reviewed their complete changes: no additional browser storage, sensitive
 values or permission expansion. Renewed only those exact hashes; no exemptions,
 storage behavior, boundary rules or assertions were weakened. The negative
 mutation tests must pass again with the renewed hashes.
+First automatic CI: policy/quality/security PASS, integration2081 PASS/2 FAIL
+because the new synthetic fixture needed a row in the exact Source Inventory.
+Added that row without changing rules/assertions; final-head CI is renewed by
+normal Push. No manual CI rerun; no build ran in that initial failed integration.
 
 Browser/visual/E2E, Preview Runtime Acceptance with formal v2.3 Artifact,
 real provider calls/authorization/Capture/Webhook and Production: NOT RUN.
