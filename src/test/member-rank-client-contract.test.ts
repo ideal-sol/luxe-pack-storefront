@@ -22,7 +22,7 @@ describe("pinned member rank Public API client", () => {
     expect(rank.point_basis).toBe(rank.enabled ? "cumulative" : null);
     expect(rank.period).toBeNull();
     if (rank.enabled) expect(rank.breakdown.total).toBe(rank.rank_points);
-    assertBrowserRequestBoundary(mock.requests[0]!, { client_version: "2.0.0-alpha.50", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(mock.requests[0]!, { client_version: "2.0.0-alpha.51", site_version: "0.1.0" });
     expect(mock.requests[0]).toMatchObject({ method: "GET", credentials: "include" });
     mock.assertExhausted();
   });

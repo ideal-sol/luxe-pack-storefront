@@ -1,3 +1,4 @@
+import { paidyV23BuyerData } from "./fixtures/paidy-v23";
 import { StrictMode, forwardRef, useEffect, useImperativeHandle } from "react";
 import { act, fireEvent, render, screen, waitFor, type RenderResult } from "@testing-library/react";
 import { PUBLIC_AUTH_FIXTURE, PUBLIC_POINT_PRODUCT_FIXTURES, PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES, PUBLIC_POINT_BALANCE_FIXTURES } from "@oripa/storefront-testkit";
@@ -53,7 +54,7 @@ const formAction = { type: "form_post", url: "https://secure.tc-site.com/access"
 const paidyAction = { type: "paidy_checkout", script_url: "https://apps.paidy.com/", public_key: "pk_fixture",
   payload: { amount: product.price.amount, currency: "JPY", store_name: "Fixture", description: "コイン購入",
     buyer: { email: "member@example.test", phone: "09000000000" },
-    buyer_data: { user_id: subject, age: 10, ltv: 0, order_count: 0, order_count_last3months: 0, order_amount_last3months: 0, number_of_points: 0 },
+    buyer_data: { ...paidyV23BuyerData, user_id: subject },
     order: { order_ref: "payment-fixture", shipping: 0, tax: 0, items: [{ id: product.id, title: "コイン", quantity: 1, unit_price: product.price.amount }] } } };
 
 function fixturePayment(method: string, action?: unknown): UiPayment {
@@ -315,12 +316,30 @@ it("confirms an authorized Paidy callback once and never treats the callback as 
   const s = setup([options[2]]); await s.mount(); await buy();
   await waitFor(() => expect(s.sdk.openPaidy).toHaveBeenCalledOnce());
   expect(vi.mocked(s.sdk.openPaidy).mock.calls[0]![0]).toEqual(paidyAction);
+  let confirm!: () => void;
+  vi.mocked(s.gateway.confirmPaidyAuthorization).mockReturnValue(new Promise(resolve => {
+    confirm = () => resolve({ data: fixturePayment("paidy") });
+  }));
   s.callback({ status: "authorized", id: "pay_fixture", buyer: "private response" });
   s.callback({ status: "authorized", id: "pay_fixture" });
   await waitFor(() => expect(s.gateway.confirmPaidyAuthorization).toHaveBeenCalledOnce());
   expect(s.gateway.confirmPaidyAuthorization).toHaveBeenCalledWith("payment-fixture", { paidy_payment_id: "pay_fixture" }, expect.objectContaining({ idempotency_key: expect.any(String) }));
+  expect(navigation.replace).not.toHaveBeenCalled();
+  await act(async () => confirm());
   await waitFor(() => expect(navigation.replace).toHaveBeenCalledWith("/points/purchase/thanks?pid=payment-fixture"));
   expect(JSON.stringify(vi.mocked(s.gateway.recordPaymentClientEvent).mock.calls)).not.toContain("private response");
+});
+
+it("ignores Paidy authorization after session teardown", async () => {
+  const s = setup([options[2]]); const view = await s.mount(); await buy();
+  await waitFor(() => expect(s.sdk.openPaidy).toHaveBeenCalledOnce());
+  const signal = vi.mocked(s.sdk.openPaidy).mock.calls[0]![2];
+  view.unmount();
+  expect(signal.aborted).toBe(true);
+  s.callback({ status: "authorized", id: "pay_fixture" });
+  expect(s.gateway.confirmPaidyAuthorization).not.toHaveBeenCalled();
+  expect(s.gateway.getPayment).not.toHaveBeenCalled();
+  expect(navigation.replace).not.toHaveBeenCalled();
 });
 
 it.each(["rejected", "closed"])("returns Paidy %s to method selection without a financial mutation", async status => {

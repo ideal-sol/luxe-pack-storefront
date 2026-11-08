@@ -71,6 +71,14 @@ describe("exact alpha.50 Production provenance", () => {
   it("accepts formally approved alpha.50 pins without granting Activation GO", () => {
     expect(validateProvenance(root).contract_version).toBe("2.0.0-alpha.50");
   });
+  it("rejects current alpha.51 development pins under unchanged Production alpha.50 authority", () => {
+    const development = JSON.parse(readFileSync("package.json", "utf8"));
+    expect(development.dependencies["@oripa/storefront-client"]).toContain("PAIDY-ALPHA51-20261106/oripa-storefront-client-2.0.0-alpha.51.tgz");
+    writeFileSync(join(root, "package.json"), JSON.stringify(development));
+    expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
+    expect(approvedSource.contract_version).toBe("2.0.0-alpha.50");
+    expect(approvedSource.activation_authorized).toBe(false);
+  });
   it("rejects superseded alpha.46 source pins under approved alpha.50 authority", () => {
     mutateJson("package.json", (value) => {
       value.dependencies["@oripa/storefront-client"] = "file:vendor/oripa/SHIPPINGMIN-20261023/oripa-storefront-client-2.0.0-alpha.46.tgz";

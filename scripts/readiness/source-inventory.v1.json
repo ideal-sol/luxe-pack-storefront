@@ -241,6 +241,7 @@
   "src/test/exchange-only-presentation.test.tsx",
   "src/test/first-buy-contract.test.tsx",
   "src/test/first-buy-layout.test.tsx",
+  "src/test/fixtures/paidy-v23.ts",
   "src/test/fixtures/production-alpha39/package.json",
   "src/test/fixtures/production-alpha39/pnpm-lock.yaml",
   "src/test/fixtures/production-alpha40/package.json",
@@ -304,5 +305,6 @@
   "src/test/sms-verification-ui.test.tsx",
   "src/test/states.test.tsx",
   "src/test/univapay-stuck.test.tsx",
+  "src/test/vendored-artifacts.test.mjs",
   "src/test/visual-convergence.test.ts"
 ]

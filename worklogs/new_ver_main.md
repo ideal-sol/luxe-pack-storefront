@@ -1703,3 +1703,111 @@ Focused provenance: 130/130 PASS. Artifact and secret checks PASS. Initial polic
 check found a trailing blank line in this new Worklog entry; corrected before
 commit and rechecked. No test assertion or security control changed. Existing
 Authority coordination Issue197 is reused by the installed wrapper; no new Issue.
+
+## 2026-11-06 — SF-PAIDY-V23-20261106
+
+- Human authorization: Source implementation and Draft PR only. R3 / Strict
+  Change / Application Runtime Activation: deferred. Issue none; no Task Policy
+  or Source Lock required. One isolated branch/worktree protects occupied work.
+- Base `06b669e3e8356ba25a0236631bdb9b27064fe00d`, branch
+  `feat/SF-PAIDY-V23-20261106`. Final HEAD/Tree and live CI/review evidence are
+  recorded in the Draft PR after commit, avoiding self-referential hashes.
+- Read Storefront AGENTS/governance/security/CI, existing payment handoffs,
+  action/SDK/lifecycle/selection code and tests. Read Platform PR662, squash
+  `417b5558d6dc439605c57685c6972c6300b2842b` Public contract and live main schema.
+  No Platform files changed; its existing unrelated work is preserved.
+- Strict buyer_data validation adds five v2.3 fields, calendar-date validation,
+  exact nested boolean keys and optional omission. Existing amount/order/item,
+  buyer/history/balance checks remain. No SDK/lifecycle/client I/O change.
+- Paidy/NetRideCash new-purchase hiding is unchanged. No new address form,
+  Capture/retry, settlement or grant authority; no other provider behavior change.
+- Live ledger confirms formal Client/Testkit alpha.50 and candidate null.
+  Artifact Manifest/checksums/vendor, generated types and package/lock pins are
+  unchanged. No alpha.51 publication/adoption or release-ledger operation.
+- Focused actions/SDK/UI: 129 PASS. Additional payment regressions: 196 PASS /
+  4 FAIL initially, all four due to expected stale whole-file storage-review
+  hashes. Reviewed both edited synthetic tests (no storage changes), renewed only
+  their hashes and reran the eight negative Boundary tests. Lint/typecheck,
+  Artifact, policy and Payment Boundary PASS. Subsequent Auth/LINE/security and
+  final-head Required5 outcomes are recorded in the PR.
+- Browser/visual/E2E, formal v2.3 Preview Runtime Acceptance, real Paidy calls,
+  real Capture/Webhook: NOT RUN. Formal alpha.51 adoption and later acceptance
+  need separate Human approval. Source tests do not substitute for Runtime GO.
+- Migration created/applied0; Runtime/DB/ENV/Secret/Worker/Scheduler changes0;
+  local Build0, manual CI rerun0. Normal Required CI retains its full suite and
+  clean-directory builds. No new deployment/package/publication workflow.
+- Exact scope, exclusions, provider replies, Artifact evidence and rollback are
+  in `docs/implementation/SF_PAIDY_V23_20261106_HANDOFF.md`. Rollback is withdrawal
+  or reviewed Source revert before activation, with no financial history mutation.
+- Draft branch/worktree remain for Human review. No Ready, merge, branch cleanup,
+  main switch/synchronization, OLD Test or Production operation is authorized.
+- Draft PR228 first automatic CI on `21224ac` passed policy/quality/security but
+  integration had2081 PASS/2 FAIL: the new synthetic fixture was missing from
+  the explicit source inventory. Added only its inventory row, retaining exact
+  inventory equality and all assertions. Focused readiness validation and a
+  normal follow-up Push renew all head-dependent CI/review; manual reruns0.
+
+## 2026-11-08 — SF-PAIDY-V23-20261106 / formal alpha.51 adoption
+
+- Latest Human decision authorizes updating existing Draft PR228 through Source
+  verification, Required5 and final-head Strict review only. R3 / Strict Change /
+  Application Runtime Activation: deferred. Issue none. Reused branch
+  `feat/SF-PAIDY-V23-20261106` and its isolated worktree; base/live main
+  `06b669e3e8356ba25a0236631bdb9b27064fe00d`, previous PR HEAD
+  `9f8e2f908e496b45569b54d2027d693dbf567bdd`. Existing primary detached HEAD
+  and both configuration edits are byte-identical; other worktrees untouched.
+- Platform is READ-ONLY. Live formal Ledger at PR671 squash
+  `0ecc2d208240aa8a3401d186a57a52fa7734d636` confirms latest immutable alpha.51,
+  candidate null, and all30 prior immutable entries unchanged. Publisher source
+  is PR670 squash `705d03caab389c0f9600b3e85420532aa6d46439`.
+- Exact-ID canonical download/readback: run42352571854 attempt1 / Artifact
+  13566710138, all six Human-pinned SHA-256 values match. Five published files
+  copied unchanged into `vendor/oripa/PAIDY-ALPHA51-20261106`, with full digest
+  evidence in PROVENANCE.md. No Client/Testkit generation, pack, publication,
+  or Platform mutation. All228 historical Vendor files remain byte-identical.
+- Bundle/Client/Testkit alpha.51; Public/Admin/Webhook alpha.47; Site Schema
+  alpha.23 referenced unchanged; contract-breaking / breaking_change=true.
+  Package/lock/override use exact TGZ paths. Offline install with scripts disabled
+  PASS. Lock comparison proves the only delta is the two internal package pins,
+  their published integrity values and Testkit's Client edge. External packages,
+  versions, integrity values and dependency graph are unchanged.
+- Artifact validator now binds formal alpha.51 while retaining historical
+  digest/contract protections. Public comparison rejects unrelated changes.
+  Negative tests cover altered files, unknown files and mixed versions. Initial
+  focused run: 268 PASS / 3 FAIL, all three from a stale predecessor provenance
+  ID in the updated validator; corrected to the official alpha.51 IDs and reran
+  the affected tests. Assertions and Security/Artifact gates remain strict.
+- Formal Testkit Paidy fixture is tested unchanged for a first buyer; existing
+  helper extends it for optional fields/UI identifiers. Existing SDK, document
+  lifecycle, CSRF, Idempotency, callback/session handling and Laravel financial
+  authority unchanged. Paidy/NetRideCash remain hidden for new purchases.
+- Actions/SDK/UI130 PASS; Production Provenance131 PASS. The additional negative
+  test proves alpha.51 development pins cannot satisfy existing alpha.50 Runtime
+  approval. `docs/production-approved-source.json`, Production validator and
+  Workflow Authority are unchanged. Runtime activation is not authorized.
+- Lint/typecheck, Artifact, policy, all nine boundaries and secret scan PASS.
+  Further focused contract/payment/session/readiness/security regressions:
+  747/747 PASS across22 files, including all10 Artifact cases and Boundary
+  negative mutations. Final-head Required5 results are recorded in PR228 after
+  HEAD is fixed. Normal
+  CI retains full tests and clean-directory builds; no extra local Build or
+  manual CI rerun. Added the new Artifact test to exact Source Inventory.
+  Fully reviewed the action test before renewing its single storage-review hash;
+  no new storage, broader exemptions or relaxed boundary rules.
+- Canonical App operations use a temporary exact-path policy, with existing
+  PR228 solely as the legacy wrapper capability binding. No new Issue/PR or
+  wrapper/protection changes. Final HEAD/Tree, changed paths, live checks and
+  machine-readable Strict evidence are recorded in PR228, avoiding recursive
+  commit hashes. Draft branch/worktree remain for Human review.
+- Browser/Preview/OLD Test Runtime Acceptance: NOT RUN (Human確認予定), per the
+  latest explicit Human decision. Human performs logged-in acceptance after
+  separately approved Source merge and OLD Test reflection. Codex login, real
+  Paidy calls/Capture and Production verification are NOT RUN.
+- Platform Composer12 advisories remain unresolved: High4/Moderate5/Low3,
+  Critical0. Runtime Security Posture remains HOLD; adoption is not remediation
+  or security acceptance. Future Runtime work needs its separate Human decision.
+- Ready/Merge/OLD Test/Production/Runtime operations0; Migration created/applied0;
+  DB/ENV/Secret/Worker/Scheduler changes0; local additional Build0; manual CI
+  rerun0. Separate Human GO is required for each later activation step and Paidy
+  visibility. Rollback: withdraw Draft or reviewed Source revert, without
+  changing financial history or immutable artifacts.

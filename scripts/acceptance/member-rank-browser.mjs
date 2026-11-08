@@ -30,7 +30,7 @@ try {
         const url = new URL(route.request().url());
         if (url.origin !== origin) return route.abort();
         if (!url.pathname.startsWith("/api/v2/")) return route.continue();
-        assert.equal(route.request().headers()["x-oripa-client-version"], "2.0.0-alpha.50");
+        assert.equal(route.request().headers()["x-oripa-client-version"], "2.0.0-alpha.51");
         const path = url.pathname.slice("/api/v2".length);
         let body = { data: [], items: [], next_cursor: null };
         if (path === "/auth/session") body = scenario === "anonymous" ? { authenticated: false, user: null } : fixtures.PUBLIC_AUTH_FIXTURE.authenticated_session;
