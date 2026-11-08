@@ -1811,3 +1811,36 @@ Authority coordination Issue197 is reused by the installed wrapper; no new Issue
   rerun0. Separate Human GO is required for each later activation step and Paidy
   visibility. Rollback: withdraw Draft or reviewed Source revert, without
   changing financial history or immutable artifacts.
+
+## 2026-11-08 — SF-PAIDY-SELECTION-20261108
+
+- R3 / Strict Change / Application Runtime Activation: deferred. Issue none.
+  Human authorizes a new Draft PR only; Ready/Merge require separate approval.
+- Live Remote main/base b0b38bee37bf9068888067f241af17964584cd92 confirmed.
+  Dedicated branch/worktree protects the primary detached HEAD and its existing
+  next-env.d.ts/next.config.ts edits. No other worktree or Platform modification.
+- Production source change is one filter: exclude NetRideCash only, allowing
+  API-returned Paidy in its original position with its availability/label/flow.
+  Existing selector, URL guards, SDK, financial and session authority reused.
+- Updated real-policy selection tests cover absent/unavailable Paidy, URL bypass
+  rejection, radio selection/Checkout launch, order, card fallback and hidden
+  NetRideCash. Existing callback and provider regressions remain required.
+  Initial test expected document navigation before the SDK claimed ownership;
+  actual existing behavior is in-page selection. Corrected the test to assert
+  selected radio and Checkout launch without changing document lifecycle.
+- Reviewed complete UI test diff and renewed its one storage-review digest; no
+  added storage operation, exception expansion or relaxed boundary/assertion.
+- Formal alpha.51 Artifact/package/lock/digests and Production alpha.50 Authority
+  are unchanged. Focused results, Required5, exact HEAD/Tree and fresh Strict
+  evidence are recorded in the Draft PR after HEAD is fixed. No recursive commit.
+- Browser/OLD Test Acceptance NOT RUN (Human after separate merge/OLD Test GO).
+  Runtime Security Posture HOLD: Platform Composer12 High4/Moderate5/Low3 remain.
+  No real Paidy payment/Capture/Webhook, Runtime, ENV/Secret, Migration, DB or
+  Worker/Scheduler changes. Local Build0/manual CI rerun0.
+- Handoff: docs/implementation/SF_PAIDY_SELECTION_20261108_HANDOFF.md. Draft
+  branch/worktree retained. Canonical wrapper temporary policy uses existing
+  related PR228 solely as legacy capability binding; no new Issue.
+- Final focused UI36 and Boundary negative8 PASS; unchanged actions/SDK97 PASS;
+  purchase/Polling/status/Session/Boundary regression154 PASS. A transient test
+  edit removed a view binding; restored exactly, then UI/Boundary rerun PASS.
+  Artifact and final lint/typecheck/policy/security results recorded in PR.

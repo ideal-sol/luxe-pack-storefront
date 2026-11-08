@@ -391,38 +391,66 @@ it("does not request saved cards or offer registration when API saved_cards_enab
   expect(screen.queryByText(/カードを追加する|登録カード|カードを保存/)).not.toBeInTheDocument();
 });
 
-it.each(["paidy", "netridecash"])("hides both providers and ignores URL selection of %s for new purchases", async method => {
+it("renders API Paidy in order, selects it and launches existing Checkout", async () => {
+  policyScope.providerRegression = false;
+  const s = setup(); await s.mount();
+  expect(screen.getAllByRole("radio").map(r => r.getAttribute("value"))).toEqual(["credit_card", "paidy"]);
+  expect(screen.queryByText(options[1].label)).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("radio", { name: options[2].label }));
+  expect(screen.getByRole("radio", { name: options[2].label })).toBeChecked();
+  await buy();
+  await waitFor(() => expect(s.sdk.openPaidy).toHaveBeenCalledOnce());
+  expect(s.gateway.startPayment).toHaveBeenCalledWith({ payment_method: "paidy", point_product_id: product.id }, expect.anything());
+  expect(vi.mocked(s.sdk.openPaidy).mock.calls[0]![0]).toEqual(paidyAction);
+  expect(s.gateway.confirmPaidyAuthorization).not.toHaveBeenCalled();
+});
+it("preserves API order and labels with Paidy first", async () => {
+  policyScope.providerRegression = false;
+  const s = setup([options[2], options[0]]); await s.mount();
+  expect(screen.getAllByRole("radio").map(r => r.getAttribute("value"))).toEqual(["paidy", "credit_card"]);
+  expect(screen.getByRole("radio", { name: options[2].label })).toBeChecked();
+});
+it.each(["paidy", "netridecash"])("does not invent missing Paidy or expose NetRideCash via %s URL", async method => {
   policyScope.providerRegression = false;
   policyScope.requested = "?payment_method=" + method;
-  const s = setup(); await s.mount();
-  expect(await screen.findByRole("radio", { name: "クレジットカード" })).toBeInTheDocument();
-  expect(screen.queryByRole("radio", { name: options[1].label })).not.toBeInTheDocument();
-  expect(screen.queryByRole("radio", { name: options[2].label })).not.toBeInTheDocument();
-  expect(screen.queryByText(/NetRideCash|ペイディ/)).not.toBeInTheDocument();
+  const s = setup(options.slice(0, 2)); await s.mount();
+  expect(screen.getAllByRole("radio")).toHaveLength(1);
+  expect(screen.queryByText(options[2].label)).not.toBeInTheDocument();
+  expect(screen.queryByText(options[1].label)).not.toBeInTheDocument();
   await buy();
-  await waitFor(() => expect(s.gateway.startPayment).toHaveBeenCalledOnce());
   expect(s.gateway.startPayment).toHaveBeenCalledWith({ payment_method: "credit_card", point_product_id: product.id }, expect.anything());
   expect(s.sdk.openPaidy).not.toHaveBeenCalled();
 });
-it.each(["paidy", "netridecash"])("has no purchase action when only hidden providers are available (%s URL)", async method => {
+it.each(["paidy", "netridecash"])("cannot select or buy unavailable Paidy via %s URL", async method => {
   policyScope.providerRegression = false;
   policyScope.requested = "?payment_method=" + method;
-  const s = setup(options.slice(1)); await s.mount();
-  expect(await screen.findByText("現在ご利用いただけるお支払い方法はありません。")).toBeInTheDocument();
+  const s = setup([{ ...options[2], available: false, unavailable_reason: "provider_unavailable" }, options[1]]);
+  await s.mount();
+  const paidy = screen.getByRole("radio", { name: options[2].label });
+  expect(paidy).toBeDisabled(); expect(paidy).not.toBeChecked();
+  fireEvent.click(paidy);
+  const button = screen.getByRole("button", { name: "購入する" });
+  expect(button).toBeDisabled(); fireEvent.click(button);
+  expect(s.gateway.startPayment).not.toHaveBeenCalled();
+  expect(s.sdk.openPaidy).not.toHaveBeenCalled();
+  expect(screen.queryByText(options[1].label)).not.toBeInTheDocument();
+});
+it("falls back to the available card when URL-requested Paidy is unavailable", async () => {
+  policyScope.providerRegression = false; policyScope.requested = "?payment_method=paidy";
+  const s = setup([{ ...options[2], available: false, unavailable_reason: "provider_unavailable" }, options[0]]);
+  await s.mount(); await buy();
+  expect(screen.getByRole("radio", { name: options[2].label })).toBeDisabled();
+  expect(s.gateway.startPayment).toHaveBeenCalledWith({ payment_method: "credit_card", point_product_id: product.id }, expect.anything());
+  expect(s.sdk.openPaidy).not.toHaveBeenCalled();
+});
+it("has no purchase action when API returns only hidden NetRideCash", async () => {
+  policyScope.providerRegression = false; policyScope.requested = "?payment_method=netridecash";
+  const s = setup([options[1]]); await s.mount();
+  expect(screen.getByText("現在ご利用いただけるお支払い方法はありません。")).toBeInTheDocument();
   expect(screen.queryByRole("radio")).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "購入する" })).not.toBeInTheDocument();
   expect(s.gateway.startPayment).not.toHaveBeenCalled();
   expect(s.legacy.startPayment).not.toHaveBeenCalled();
-});
-it("cannot fall back to a hidden provider when the visible method is unavailable", async () => {
-  policyScope.providerRegression = false;
-  const s = setup([{ ...options[0], available: false, unavailable_reason: "provider_unavailable" }, ...options.slice(1)]);
-  await s.mount();
-  const card = await screen.findByRole("radio", { name: "クレジットカード" });
-  expect(card).toBeDisabled();
-  expect(screen.getAllByRole("radio")).toHaveLength(1);
-  expect(screen.getByRole("button", { name: "購入する" })).toBeDisabled();
-  expect(s.gateway.startPayment).not.toHaveBeenCalled();
 });
 
 it("ignores a stale method response after both product and session change", async () => {
