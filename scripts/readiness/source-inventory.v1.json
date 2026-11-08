@@ -305,5 +305,6 @@
   "src/test/sms-verification-ui.test.tsx",
   "src/test/states.test.tsx",
   "src/test/univapay-stuck.test.tsx",
+  "src/test/vendored-artifacts.test.mjs",
   "src/test/visual-convergence.test.ts"
 ]

@@ -27,9 +27,9 @@ The existing action validator accepts and checks the five additional fields:
 Optional absence is accepted. Unknown fields and malformed values fail closed.
 Existing user/age/ltv/history/balance, amount, order and item checks remain.
 The validated original action/payload is returned without copying, calculations
-or additions. No generated Client types or packages are regenerated or replaced;
-the existing alpha.50 type projection remains sufficient for SDK forwarding.
-Synthetic Storefront-only fixtures model the Public v2.3 contract.
+or additions. The formally published alpha.51 Client/Testkit are now adopted
+without regeneration or repacking. The official Testkit first-purchase fixture
+is tested unchanged; optional-field and UI scenarios extend that same fixture.
 
 Official Script/configure/launch, document ownership, callback claiming, session
 abort, idempotency, CSRF and canonical payment status flows are unchanged.
@@ -46,20 +46,39 @@ selection. No flags, ENV, labels, order or logos change. Existing history remain
 UnivaPay, fincode/3DS, plans, status/Polling, refund/chargeback, Auth, SMS, rank,
 Draw and other business behavior are out of scope.
 
-## Formal Artifact hold
+## Formal alpha.51 Source adoption (2026-11-08)
 
-Live Platform Release Ledger blob `97ba6fa3aba2037ecb6fdef439d5e807bb962193`
-reports latest immutable Client/Testkit `2.0.0-alpha.50`, candidate null.
-The adopted `vendor/oripa/EXCHANGEONLY-ALPHA50-20261104` manifest SHA-256 is
-`bbf4284afc47d912a13b039b7a3168fc09ae58ace682c005ef46d852e0b9c44a`;
-Public/Admin alpha.46, Webhook alpha.45, Site Schema alpha.23 are retained.
-Manifest/TGZ/OpenAPI/checksums, package.json and lockfile remain byte-identical.
-Source readiness does not mean formal v2.3 Client/Testkit adoption or Runtime
-acceptance. No alpha.51 publication, ledger update or unofficial package adoption.
+The latest Human instruction supersedes the original Artifact-adoption hold.
+Source [PR670](https://github.com/ideal-sol/oripa/pull/670), squash
+`705d03caab389c0f9600b3e85420532aa6d46439`; Ledger
+[PR671](https://github.com/ideal-sol/oripa/pull/671), squash
+`0ecc2d208240aa8a3401d186a57a52fa7734d636`.
+Live protected Platform main and its formal ledger match that Ledger SHA:
+latest immutable alpha.51, candidate null, all 30 predecessor records preserved.
+Exact-ID download/readback of Artifact `13566710138`, publication
+[run42352571854](https://github.com/ideal-sol/oripa/actions/runs/42352571854),
+attempt1, verified all six digests against the Human instruction and ledger.
+The five official files are copied unchanged to
+`vendor/oripa/PAIDY-ALPHA51-20261106`; see its [PROVENANCE](../../vendor/oripa/PAIDY-ALPHA51-20261106/PROVENANCE.md)
+for the complete hashes. Client/Testkit/bundle alpha.51, Public/Admin/Webhook
+alpha.47, referenced Site Schema alpha.23; contract-breaking, breaking_change=true.
+Only the two approved Paidy fields become required. Full Public comparison
+rejects any change outside the five published buyer-data fields/document version.
+
+Package, lock and Client override use exact official TGZ paths. External package
+versions/integrities/graph remain unchanged. All historical Vendor bytes,
+including alpha.50, are preserved. Artifact negative tests reject modified
+Manifest/TGZ/OpenAPI/SHA256SUMS, unknown files and mixed package/lock versions.
+
+Production Source/Artifact/Workflow Authority remains the existing alpha.50:
+`docs/production-approved-source.json` and the strict Production Provenance
+validator are unchanged. An additional negative test proves development
+alpha.51 pins cannot satisfy that alpha.50 Production approval. No new Runtime
+approval follows from Source adoption. Platform remains READ-ONLY.
 
 ## Validation and remaining work
 
-Focused actions/SDK/UI: 129 PASS. Includes all five fields, optional omission,
+Original alpha.50 Source actions/SDK/UI: 129 PASS (historical). Includes all five fields, optional omission,
 calendar/leap validation, required/optional booleans, unknown keys, original
 payload identity, authorized/rejected/closed/unknown callbacks, duplicate callback,
 session teardown and real new-purchase hiding policy. The UI regression scope
@@ -79,13 +98,26 @@ because the new synthetic fixture needed a row in the exact Source Inventory.
 Added that row without changing rules/assertions; final-head CI is renewed by
 normal Push. No manual CI rerun; no build ran in that initial failed integration.
 
-Browser/visual/E2E, Preview Runtime Acceptance with formal v2.3 Artifact,
-real provider calls/authorization/Capture/Webhook and Production: NOT RUN.
-No successful Runtime or Browser acceptance is claimed from jsdom Source tests.
-After formal alpha.51 publication and separate Human approval, verify its release
-authority/digests, adopt exact coherent Client/Testkit, rerun contract/payment
-checks and obtain Browser/Preview acceptance. Real connectivity and a separate
-Human GO are required before new Paidy purchase visibility or Production use.
+Current adoption verification uses the formal alpha.51 fixture and HTTP version
+header, all affected contract tests, Paidy SDK/UI, other-payment/Polling/session
+regressions, Artifact/Provenance/Boundary/security/source-inventory checks and
+lint/typecheck. Actions/SDK/UI130, Production Provenance131 and additional focused
+regressions747 PASS; Artifact/policy/all nine boundaries/secret/lint/typecheck
+PASS. Final-head CI/review are recorded in PR228 and the Worklog.
+The edited action test was fully reviewed before renewing
+its one storage-review digest: no new storage access or relaxed boundary.
+
+Browser/visual/E2E, Preview/OLD Test Runtime Acceptance: NOT RUN (Human確認予定).
+The latest explicit Human instruction schedules logged-in Browser Acceptance
+after a separately authorized Source merge and OLD Test reflection. No Preview
+environment or Codex login is needed for this Draft. Real provider calls,
+authorization/Capture/Webhook and Production: NOT RUN. jsdom tests are Source
+evidence only. Separate Human GO remains required for merge, OLD Test, Production
+and Paidy visibility, with Human OLD Test acceptance before Production activation.
+
+Platform Composer advisories remain unresolved: 12 (High4/Moderate5/Low3;
+Critical0). Runtime Security Posture remains HOLD. This adoption does not resolve
+or approve them; future Runtime work requires a separate security decision.
 
 Migration creation/application, DB, Runtime, ENV, Secret, Worker/Scheduler and
 Publication changes: 0. No financial/infrastructure changes. Rollback before

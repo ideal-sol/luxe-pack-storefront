@@ -1,5 +1,9 @@
-// Synthetic PR662 Public OpenAPI data, not an unpublished generated Artifact.
+import { PAYMENT_FOUNDATION_FIXTURES } from "@oripa/storefront-testkit";
+import type { PaidyCheckoutAction } from "@/lib/platform/payment-ui-gateway";
+
+// Official alpha.51 fixture, extended only for optional-field and UI scenarios.
 export const paidyV23BuyerData = {
+  ...PAYMENT_FOUNDATION_FIXTURES.paidy_checkout.payload.buyer_data,
   user_id: "00000000-0000-4000-8000-000000000001", age: 10,
   account_registration_date: "2026-10-27", delivery_locn_type: "other",
   days_since_first_transaction: 0,
@@ -8,11 +12,11 @@ export const paidyV23BuyerData = {
   order_count_last3months: 0, order_amount_last3months: 0, number_of_points: 0,
 };
 export function paidyV23Action() {
+  const action: PaidyCheckoutAction = structuredClone(PAYMENT_FOUNDATION_FIXTURES.paidy_checkout);
   return {
-    type: "paidy_checkout", script_url: "https://apps.paidy.com/", public_key: "pk_fixture",
+    ...action, public_key: "pk_fixture",
     payload: {
-      amount: 1000, currency: "JPY", store_name: "Fixture", description: "コイン購入",
-      buyer: { email: "member@example.test", phone: "09000000000" },
+      ...action.payload, store_name: "Fixture",
       buyer_data: structuredClone(paidyV23BuyerData),
       order: { order_ref: "00000000-0000-4000-8000-000000000002", shipping: 0, tax: 0,
         items: [{ id: "00000000-0000-4000-8000-000000000003", title: "コイン", quantity: 1, unit_price: 1000 }] },

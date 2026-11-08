@@ -96,7 +96,7 @@ export function validatePaidyAction(action: unknown, payment: UiPayment): PaidyC
   if (!text(b.user_id) || !only(b, ["user_id", ...required, "last_order_amount", "last_order_at", "account_registration_date", "delivery_locn_type", "days_since_first_transaction", "previous_payment_methods", "order_item_categories"]) ||
       required.some(key => !Number.isSafeInteger(b[key]) || Number(b[key]) < 0) ||
       ["last_order_amount", "last_order_at"].some(key => b[key] !== undefined && (!Number.isSafeInteger(b[key]) || Number(b[key]) < 0))) return fail();
-  // PR662 Public contract; validate locally while the formal Client stays alpha.50.
+  // Published Public alpha.47 / Client alpha.51 contract; keep runtime payload validation.
   if (!calendarDate(b.account_registration_date) || !object(b.previous_payment_methods)) return fail();
   const methods = b.previous_payment_methods;
   if (!only(methods, ["credit_card_used", "convenience_store_prepayment_used", "bank_transfer_used"]) ||

@@ -2,6 +2,18 @@ import { dispatchProviderAction, safePaymentRedirect, validateFormPost, validate
 import { beginPaymentAttempt, finishPaymentAttempt, identifyPaymentAttempt, readPaymentAttempt } from "@/components/payment/payment-attempt";
 import type { UiPayment, UnivapayInlineForm } from "@/lib/platform/payment-ui-gateway";
 import { paidyV23Action } from "./fixtures/paidy-v23";
+import { PAYMENT_FOUNDATION_FIXTURES } from "@oripa/storefront-testkit";
+
+it("accepts the unmodified formal alpha.51 first-purchase fixture", () => {
+  const action = structuredClone(PAYMENT_FOUNDATION_FIXTURES.paidy_checkout);
+  const result = dispatchProviderAction({ id: action.payload.order.order_ref, method: "paidy",
+    amount: { amount: action.payload.amount, currency: "JPY" }, next_action: action } as UiPayment, "paidy_checkout");
+  expect(result.type).toBe("paidy_checkout");
+  if (result.type !== "paidy_checkout") throw new Error("wrong action");
+  expect(result.action.payload).toBe(action.payload);
+  expect(action.payload.buyer_data).not.toHaveProperty("last_order_at");
+  expect(action.payload.buyer_data).not.toHaveProperty("last_order_amount");
+});
 
 function dispatchPaidy(action = paidyV23Action()) {
   return dispatchProviderAction({ id: action.payload.order.order_ref, method: "paidy", amount: { amount: 1000, currency: "JPY" }, next_action: action } as UiPayment, "paidy_checkout");
