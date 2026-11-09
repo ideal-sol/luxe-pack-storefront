@@ -1844,3 +1844,39 @@ Authority coordination Issue197 is reused by the installed wrapper; no new Issue
   purchase/Polling/status/Session/Boundary regression154 PASS. A transient test
   edit removed a view binding; restored exactly, then UI/Boundary rerun PASS.
   Artifact and final lint/typecheck/policy/security results recorded in PR.
+
+
+# PDYSFAUTH-20261109 — Paidy alpha.51 Production Authority Draft
+
+R3 / Strict Change / Activation deferred. Human authorizes Draft only, no Ready/Merge.
+Platform PR676 merged=true via Canonical App at 0f1100c37bc2ae3b719af390e6ba8cf40999d8d4; reviewed/merged Tree
+b999bee26cfa2d5db9349a777ac71ab1990deb26; direct content diff0; same-head Required5
+and refreshed Strict review PASS, no CI rerun or Build for Platform merge.
+Storefront PR229 Source 3d62c5ce85beddc9623393912e9e4906a4f96357, Tree a62aaffb34fc18c3a6765e849f85d88cc7f2e2a7.
+Platform Runtime 4a03489c2e5cdde97c75b6330e5fd65167230833 / PR674 remains separate from
+Contract publisher 705d03caab389c0f9600b3e85420532aa6d46439 and Authority merge.
+Formal alpha.51 Artifact13566710138 / Run42352571854 / Manifest
+2ab973443a4db6306a516944502da0ba2c3427167611c674c58be0ec6f7de502 reused. Vendor, packages and lockfile already match PR229;
+no regeneration or republication. Existing Provenance byte-digest pinning is updated
+to authentic alpha.51 PROVENANCE/SHA256SUMS; all negative guards retained.
+Vendor historical security/acceptance prose is immutable historical evidence;
+PR672 security fixes and Human-reported OLD Test acceptance are current authorities.
+
+Future formal Artifact requires this Authority's separate Human-approved merge,
+exact Source and Contract identities, existing Security/Reviewed Tree/Required CI,
+GTM/ARM64/CDN/output checks and separate Build GO. This Draft grants none of them.
+No Production connection, ENV/Secret, Runtime, Worker/Timer or real provider action.
+Paidy LIVE, public initially OFF (enabled methods excludes paidy), Worker OFF;
+UnivaPay LIVE, Admin/Agency images, GTM and existing Workers/five Timers preserved.
+Member-rank Worker excluded; new Migration0, Production migration0. Human sets
+keys/token. Webhook HTTP200/durable receipt remains unverified; route/token/log
+secrecy/receipt preflight precedes separate public-enable GO. No replay/Capture
+resend/regrant. Webhook setting V2_PAIDY_WEBHOOK_PATH_TOKEN; no secret values stored.
+
+Dedicated Worktree preserves other changes. Focused local validation, final-head
+Required CI and fresh Strict review are recorded in PR. No local application Build,
+formal Artifact Dispatch or Runtime operation; normal required CI validation is
+accounted separately. No Browser/E2E/live webhook PASS claimed. Rollback: close Draft;
+after separate merge approval, reviewed Authority revert and prior Runtime artifacts.
+
+Local validation: Provenance/Artifact workflow227 tests PASS; immutable artifact check, secret scan and changed-code ESLint PASS. Initial policy whitespace-only failure corrected; final policy result and Required5/fresh schema1.0 Site-wrapper review recorded in Draft PR. Issue230 records cross-repository approval and satisfies existing transport requirement. Final-head review technical MERGE recommendation never grants Draft Ready/Merge or Runtime permission.
