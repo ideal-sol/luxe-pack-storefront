@@ -7,6 +7,7 @@ import {
   PUBLIC_LINE_FRIEND_STATE_PROBLEM_FIXTURES,
 } from "@oripa/storefront-testkit";
 import { vi } from "vitest";
+import { StrictMode } from "react";
 import { ExternalIdentityClientProvider } from "@/components/account/external-identity-client-provider";
 import { LineAccountLink } from "@/components/account/line-account-link";
 import { SessionProvider } from "@/components/auth/session-provider";
@@ -83,6 +84,112 @@ function renderLine(
 }
 
 describe("LINE account link UI", () => {
+  function stateClient(state: LineFriendState, overrides: Partial<ExternalIdentityAdapter> = {}) {
+    return identityClient({
+      getLineFriendState: vi.fn().mockResolvedValue(response(state)),
+      listExternalIdentities: vi.fn().mockResolvedValue(response(state.linked ? PUBLIC_EXTERNAL_IDENTITY_FIXTURE.linked : { items: [] })),
+      ...overrides,
+    });
+  }
+
+  it.each([
+    [false, false, true, false, "LINEと連携して公式アカウントを友だち追加すると、条件を満たした方に750コインをプレゼントします。"],
+    [true, false, true, false, "公式アカウントを友だち追加すると、条件を満たした方に750コインをプレゼントします。"],
+    [true, true, true, false, "LINE連携・友だち追加が完了しています。条件を満たした方はLINE特典を受け取れます。"],
+    [true, true, true, true, "友だち追加特典は受け取り済みです"],
+    [true, false, false, true, "友だち追加特典は受け取り済みです"],
+    [true, true, false, false, null],
+    [true, false, false, false, null],
+    [false, false, false, false, null],
+  ] as const)("uses Platform reward presentation (linked %s / friend %s / enabled %s / granted %s)", async (linked, friend_confirmed, enabled, granted, message) => {
+    const state: LineFriendState = {
+      ...PUBLIC_LINE_FRIEND_STATE_FIXTURES.unlinked,
+      linked, friend_confirmed,
+      reward: { enabled, granted, point_amount: enabled ? 750 : null },
+    };
+    renderLine(stateClient(state));
+    await screen.findByRole("heading", { name: state.status.label });
+    if (message) expect(screen.getByText(message)).toBeInTheDocument();
+    expect(screen.getByText(friend_confirmed ? "確認済み" : "未確認")).toBeInTheDocument();
+    if (granted || !enabled) expect(document.body).not.toHaveTextContent(/750|500|コインをプレゼント/);
+    expect(document.body).not.toHaveTextContent("現在のLINE連携・友だち追加済みです");
+  });
+
+  it.each([
+    [PUBLIC_LINE_FRIEND_STATE_FIXTURES.friend_add_required, true],
+    [{ ...PUBLIC_LINE_FRIEND_STATE_FIXTURES.confirmed, reward: { enabled: true, granted: false, point_amount: 500 }, secondary_action: PUBLIC_LINE_FRIEND_STATE_FIXTURES.friend_add_required.secondary_action }, true],
+    [PUBLIC_LINE_FRIEND_STATE_FIXTURES.confirmed, false],
+    [{ ...PUBLIC_LINE_FRIEND_STATE_FIXTURES.confirmed, reward: { enabled: false, granted: false, point_amount: null } }, false],
+    [{ ...PUBLIC_LINE_FRIEND_STATE_FIXTURES.friend_add_required, secondary_action: null }, false],
+    [PUBLIC_LINE_FRIEND_STATE_FIXTURES.unlinked, false],
+  ] as const)("uses secondary_action as the sole recheck authority (%#)", async (state, visible) => {
+    renderLine(stateClient(state));
+    await screen.findByRole("heading", { name: state.status.label });
+    expect(Boolean(screen.queryByRole("button", { name: "友だち追加を確認する" }))).toBe(visible);
+  });
+
+  it("starts canonical reauthentication once, redirects and reads fresh state on return", async () => {
+    let resolveStart!: (value: ReturnType<typeof response<typeof PUBLIC_EXTERNAL_IDENTITY_FIXTURE.line_start>>) => void;
+    const pending = new Promise<ReturnType<typeof response<typeof PUBLIC_EXTERNAL_IDENTITY_FIXTURE.line_start>>>((resolve) => { resolveStart = resolve; });
+    const startLineReauthentication = vi.fn(() => pending);
+    const externalClient = stateClient(PUBLIC_LINE_FRIEND_STATE_FIXTURES.friend_add_required, { startLineReauthentication });
+    const view = renderLine(externalClient);
+    const button = await screen.findByRole("button", { name: "友だち追加を確認する" });
+    fireEvent.click(button); fireEvent.click(button);
+    expect(startLineReauthentication).toHaveBeenCalledTimes(1);
+    expect(startLineReauthentication).toHaveBeenCalledWith({ return_path: "/mypage/line" }, {});
+    expect(button).toBeDisabled();
+    resolveStart(response(PUBLIC_EXTERNAL_IDENTITY_FIXTURE.line_start));
+    await waitFor(() => expect(view.navigate).toHaveBeenCalledWith(PUBLIC_EXTERNAL_IDENTITY_FIXTURE.line_start.authorization_url));
+    expect(externalClient.startLineIdentityLink).not.toHaveBeenCalled();
+    view.unmount();
+    vi.mocked(externalClient.getLineFriendState).mockResolvedValue(response(PUBLIC_LINE_FRIEND_STATE_FIXTURES.confirmed));
+    renderLine(externalClient);
+    expect(await screen.findByText("友だち追加特典は受け取り済みです")).toBeInTheDocument();
+    expect(externalClient.getLineFriendState).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole("button", { name: "友だち追加を確認する" })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["friendship_check_failed", "友だち追加状態を確認できませんでした。もう一度お試しください。"],
+    ["reward_apply_failed", "LINE特典を反映できませんでした。もう一度お試しください。"],
+    ["line_auth_failed", "LINE認証を完了できませんでした。もう一度お試しください。"],
+  ] as const)("renders %s once without losing the linked session", async (callback_result, message) => {
+    const externalClient = stateClient({ ...PUBLIC_LINE_FRIEND_STATE_FIXTURES.confirmed, callback_result });
+    const sessionClient = authClient();
+    const view = render(<StrictMode><SessionProvider client={sessionClient}><ExternalIdentityClientProvider client={externalClient}><LineAccountLink /></ExternalIdentityClientProvider></SessionProvider></StrictMode>);
+    expect(await screen.findAllByText(message)).toHaveLength(1);
+    expect(screen.getByText("連携済み")).toBeInTheDocument();
+    expect(externalClient.getLineFriendState).toHaveBeenCalledTimes(1);
+    expect(sessionClient.logout).not.toHaveBeenCalled();
+    view.unmount();
+    vi.mocked(externalClient.getLineFriendState).mockResolvedValue(response(PUBLIC_LINE_FRIEND_STATE_FIXTURES.confirmed));
+    renderLine(externalClient, sessionClient);
+    await screen.findByText("連携済み");
+    expect(screen.queryByText(message)).not.toBeInTheDocument();
+  });
+
+  it.each(["javascript:alert(1)", "http://access.line.me/authorize", "//access.line.me/authorize", "https://user:pass@access.line.me/authorize"])("rejects unsafe reauthentication URL %s and allows retry", async (authorization_url) => {
+    const startLineReauthentication = vi.fn().mockResolvedValue(response({ ...PUBLIC_EXTERNAL_IDENTITY_FIXTURE.line_start, authorization_url }));
+    const { navigate } = renderLine(stateClient({ ...PUBLIC_LINE_FRIEND_STATE_FIXTURES.friend_add_required, callback_result: null }, { startLineReauthentication }));
+    fireEvent.click(await screen.findByRole("button", { name: "友だち追加を確認する" }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "友だち追加を確認する" })).toBeEnabled();
+    expect(screen.getByText("連携済み")).toBeInTheDocument();
+  });
+
+  it("preserves the session and enables retry on a reauthentication error", async () => {
+    const sessionClient = authClient();
+    const startLineReauthentication = vi.fn().mockRejectedValue(new ApiProblemError(PUBLIC_LINE_FRIEND_STATE_PROBLEM_FIXTURES.session_expired));
+    const { navigate } = renderLine(stateClient({ ...PUBLIC_LINE_FRIEND_STATE_FIXTURES.friend_add_required, callback_result: null }, { startLineReauthentication }), sessionClient);
+    fireEvent.click(await screen.findByRole("button", { name: "友だち追加を確認する" }));
+    await screen.findByRole("alert");
+    expect(navigate).not.toHaveBeenCalled();
+    expect(sessionClient.logout).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "友だち追加を確認する" })).toBeEnabled();
+  });
+
   it("renders the unlinked state and starts only the canonical LINE link transaction", async () => {
     const startLineIdentityLink = vi.fn().mockResolvedValue(response(PUBLIC_EXTERNAL_IDENTITY_FIXTURE.line_start));
     const externalClient = identityClient({ startLineIdentityLink });
@@ -104,7 +211,7 @@ describe("LINE account link UI", () => {
       listExternalIdentities: vi.fn().mockResolvedValue(response(PUBLIC_EXTERNAL_IDENTITY_FIXTURE.linked)),
     }));
     expect(await screen.findByRole("heading", { name: PUBLIC_LINE_FRIEND_STATE_FIXTURES.friend_add_required.status.label })).toBeInTheDocument();
-    expect(screen.getByText("現在のLINE連携・友だち追加済みです")).toBeInTheDocument();
+    expect(screen.queryByText("現在のLINE連携・友だち追加済みです")).not.toBeInTheDocument();
     expect(screen.getByText("連携日時")).toBeInTheDocument();
     expect(screen.getByText("連携済み")).toBeInTheDocument();
     expect(screen.getByText("未確認")).toBeInTheDocument();
@@ -216,10 +323,10 @@ describe("LINE account link UI", () => {
     expect(await screen.findByText("ログインしてください")).toBeInTheDocument();
   });
 
-  it("keeps the direct route and session boundary outside the My Page menu", async () => {
+  it("keeps the direct route and adds a fixed My Page menu entry", async () => {
     renderLine();
     expect(await screen.findByRole("link", { name: "← マイページへ戻る" })).toHaveAttribute("href", "/mypage");
-    expect(myPageAccountNavigation.map((item) => item.href)).not.toContain(lineAccountRoute);
+    expect(myPageAccountNavigation).toContainEqual({ href: lineAccountRoute, label: "LINE連携", description: "LINE連携・友だち追加・特典を確認する" });
     expect(accountNavigation).toContainEqual({ href: lineAccountRoute, label: "LINE連携" });
     expect(lineAccountRoute).toBe("/mypage/line");
     expect(publicRoutes).toContain(lineAccountRoute);

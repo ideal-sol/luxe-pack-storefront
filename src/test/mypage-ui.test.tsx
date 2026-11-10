@@ -141,7 +141,7 @@ describe("my page top", () => {
     expect(screen.getByRole("link", { name: /SMS認証/ })).toHaveAttribute("href", smsVerificationRoute);
     expect(screen.getByRole("link", { name: /メールアドレス変更/ })).toHaveAttribute("href", "/mypage/email");
     expect(screen.getByRole("link", { name: /パスワード変更/ })).toHaveAttribute("href", "/mypage/password");
-    expect(screen.queryByRole("link", { name: /LINE連携/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /LINE連携・友だち追加・特典を確認する/ })).toHaveAttribute("href", lineAccountRoute);
     expect(screen.getByRole("link", { name: /お知らせ/ })).toHaveAttribute("href", "/notices");
     expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("href", contactHref);
     expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("target", "_blank");
@@ -199,12 +199,13 @@ describe("my page top", () => {
       "/mypage/sms-verification",
       "/mypage/email",
       "/mypage/password",
+      "/mypage/line",
     ]);
     expect(links[0]).toHaveTextContent("お届け先登録");
     expect(links[1]).toHaveTextContent("SMS認証");
     expect(links[2]).toHaveTextContent("メールアドレス変更");
     expect(links[3]).toHaveTextContent("パスワード変更");
-    expect(account).not.toHaveTextContent("LINE連携");
+    expect(links[4]).toHaveTextContent("LINE連携・友だち追加・特典を確認する");
     expect(screen.getAllByRole("link")).toHaveLength(
       myPageShortcutNavigation.length + myPageAccountNavigation.length + 1 + createMyPageSupportNavigation(contactHref).length,
     );

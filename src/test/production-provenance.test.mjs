@@ -71,10 +71,10 @@ describe("exact alpha.51 Production provenance", () => {
   it("accepts formally approved alpha.51 pins without granting Activation GO", () => {
     expect(validateProvenance(root).contract_version).toBe("2.0.0-alpha.51");
   });
-  it("accepts exact PR229 dependency pins and rejects predecessor alpha.50", () => {
+  it("rejects unapproved alpha.52 development pins and predecessor alpha.50", () => {
     const current = JSON.parse(readFileSync("package.json", "utf8"));
     writeFileSync(join(root, "package.json"), JSON.stringify(current));
-    expect(validateProvenance(root).contract_version).toBe("2.0.0-alpha.51");
+    expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
     current.dependencies["@oripa/storefront-client"] = "file:vendor/oripa/EXCHANGEONLY-ALPHA50-20261104/oripa-storefront-client-2.0.0-alpha.50.tgz";
     writeFileSync(join(root, "package.json"), JSON.stringify(current));
     expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
