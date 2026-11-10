@@ -34,6 +34,9 @@ Only `secondary_action.code=start_friendship_recheck` enables the recheck button
 Both starts reject unsafe URLs and prevent duplicate submissions. Callback notices
 are read through the Client, including effect replay protection for one-time reads.
 The UI never handles OAuth callback credentials or grants points.
+The read cache and ready presentation are bound to the current Session snapshot;
+refreshing Session cannot redisplay an already consumed callback result while a
+fresh read is pending. The regression test covers that loading interval as well.
 
 Human specifications 1–13 are maintained within the Storefront scope; decision 14
 and LPlus O2–O7 remain excluded. No new login / unlink UI, provider payment logic,
@@ -44,8 +47,8 @@ Platform, Admin, database, migration or ENV implementation is included.
 - Official live Artifact / Ledger readback and `pnpm artifact:check`: PASS.
 - Policy, LINE identity boundary and secret checks: PASS.
 - Full Lint and final Typecheck: PASS; scoped Lint repeated after the final LINE edit.
-- Focused tests: 17 files / 450 distinct cases PASS, reusing valid completed results.
-  Includes LINE UI (31), friend-state contract, MyPage, member rank, payment Client,
+- Focused tests: 17 files / 451 distinct cases PASS, reusing valid completed results.
+  Includes LINE UI (32), friend-state contract, MyPage, member rank, payment Client,
   Paidy v2.3 provider actions, updated Client boundaries, vendor tamper rejection,
   and retained Production provenance.
 - Initial MyPage test retained the old hidden-menu expectation; updated and passed.

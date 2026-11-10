@@ -1893,7 +1893,7 @@ Local validation: Provenance/Artifact workflow227 tests PASS; immutable artifact
   Platform reward copy, secondary-action reauthentication, safe redirects,
   duplicate submission prevention and one-time callback notice reads.
   No Frontend eligibility / accounting authority. Decision 14 remains deferred.
-- Focused 17 files / 450 distinct cases PASS; Artifact, Policy, LINE boundary,
+- Focused 17 files / 451 distinct cases PASS; Artifact, Policy, LINE boundary,
   secret checks, Lint and final Typecheck PASS. Fixed the old hidden-menu test
   expectation and supplied the existing Client's required options argument.
   Successful results reused; no local application Build or manual CI rerun.
@@ -1903,3 +1903,7 @@ Local validation: Provenance/Artifact workflow227 tests PASS; immutable artifact
   Later OLD Test includes Platform LINE and Admin PR #663: API and Admin Build /
   reflection / screen checks required. No Platform Source, ENV, DB or Runtime changes.
 - Delivery ends at Draft PR; Ready / Merge / Activation are not authorized.
+- Final review corrected the read-cache lifetime across Session refresh and added
+  a regression case proving stale callback notices stay hidden until fresh data.
+  Affected LINE tests / Lint / Typecheck rerun; a new automatic CI run is required
+  on the resulting head. No manual CI rerun or added application Build.

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { useSession } from "@/components/auth/session-provider";
+import { useSession, type SessionState } from "@/components/auth/session-provider";
 import { CatalogLoading, CatalogMessage } from "@/components/catalog/catalog-message";
 import { LoginRequiredState } from "@/components/common/state-panel";
 import {
@@ -24,6 +24,7 @@ type IdentityState =
       readonly friendState: LineFriendState;
       readonly identities: readonly ExternalIdentity[];
       readonly sessionUserId: string;
+      readonly session: SessionState;
     };
 
 const dateTime = new Intl.DateTimeFormat("ja-JP", {
@@ -82,6 +83,7 @@ export function LineAccountLink({
   const loadRequest = useRef<{
     client: ExternalIdentityAdapter;
     sessionUserId: string;
+    session: SessionState;
     requestKey: number;
     promise: ReturnType<typeof loadLineState>;
   } | null>(null);
@@ -89,11 +91,14 @@ export function LineAccountLink({
   const sessionUserId = session.status === "authenticated" ? session.session.user?.id ?? null : null;
 
   useEffect(() => {
-    if (!client || !sessionUserId) return;
+    if (!client || !sessionUserId) {
+      loadRequest.current = null;
+      return;
+    }
     let active = true;
     // Reuse the in-flight read across effect replay so a one-time callback notice is not consumed twice.
-    if (loadRequest.current?.client !== client || loadRequest.current.sessionUserId !== sessionUserId || loadRequest.current.requestKey !== requestKey) {
-      loadRequest.current = { client, sessionUserId, requestKey, promise: loadLineState(client) };
+    if (loadRequest.current?.client !== client || loadRequest.current.session !== session || loadRequest.current.requestKey !== requestKey) {
+      loadRequest.current = { client, sessionUserId, session, requestKey, promise: loadLineState(client) };
     }
     void loadRequest.current.promise
       .then(([identities, friendState]) => {
@@ -102,6 +107,7 @@ export function LineAccountLink({
             friendState: friendState.data,
             identities: identities.data.items,
             sessionUserId,
+            session,
             status: "ready",
           });
         }
@@ -110,7 +116,7 @@ export function LineAccountLink({
         if (active) setIdentityState({ problem: presentExternalIdentityProblem(error), status: "error" });
       });
     return () => { active = false; };
-  }, [client, requestKey, sessionUserId]);
+  }, [client, requestKey, session, sessionUserId]);
 
   async function startLink(recheck = false) {
     if (!client || startPending.current) return;
@@ -145,7 +151,7 @@ export function LineAccountLink({
   if (
     identityState.status === "idle"
     || identityState.status === "loading"
-    || identityState.status === "ready" && identityState.sessionUserId !== sessionUserId
+    || identityState.status === "ready" && (identityState.sessionUserId !== sessionUserId || identityState.session !== session)
   ) {
     return <CatalogLoading label="LINE連携状態を確認中" />;
   }

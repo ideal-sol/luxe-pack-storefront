@@ -10,7 +10,7 @@ import { vi } from "vitest";
 import { StrictMode } from "react";
 import { ExternalIdentityClientProvider } from "@/components/account/external-identity-client-provider";
 import { LineAccountLink } from "@/components/account/line-account-link";
-import { SessionProvider } from "@/components/auth/session-provider";
+import { SessionProvider, useSession } from "@/components/auth/session-provider";
 import type {
   AuthClientAdapter,
   AuthSession,
@@ -83,6 +83,11 @@ function renderLine(
   };
 }
 
+function RefreshSessionButton() {
+  const { refreshSession } = useSession();
+  return <button onClick={() => void refreshSession()} type="button">Session再取得</button>;
+}
+
 describe("LINE account link UI", () => {
   function stateClient(state: LineFriendState, overrides: Partial<ExternalIdentityAdapter> = {}) {
     return identityClient({
@@ -91,6 +96,28 @@ describe("LINE account link UI", () => {
       ...overrides,
     });
   }
+
+  it("reads fresh presentation after Session refresh instead of reusing a consumed callback", async () => {
+    const externalClient = stateClient({ ...PUBLIC_LINE_FRIEND_STATE_FIXTURES.confirmed, callback_result: "reward_apply_failed" });
+    const sessionClient = authClient();
+    render(<SessionProvider client={sessionClient}><ExternalIdentityClientProvider client={externalClient}><RefreshSessionButton /><LineAccountLink /></ExternalIdentityClientProvider></SessionProvider>);
+    const message = "LINE特典を反映できませんでした。もう一度お試しください。";
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    let resolveFriendState!: (value: ReturnType<typeof response<LineFriendState>>) => void;
+    vi.mocked(externalClient.getLineFriendState).mockImplementationOnce(() => new Promise(resolve => { resolveFriendState = resolve; }));
+    let resolveSession!: (value: ReturnType<typeof response<AuthSession>>) => void;
+    vi.mocked(sessionClient.getCurrentSession).mockImplementationOnce(() => new Promise(resolve => { resolveSession = resolve; }));
+    fireEvent.click(screen.getByRole("button", { name: "Session再取得" }));
+    await screen.findByText("LINE連携状態を確認中");
+    resolveSession(response(PUBLIC_AUTH_FIXTURE.authenticated_session));
+    await waitFor(() => expect(externalClient.getLineFriendState).toHaveBeenCalledTimes(2));
+    expect(screen.queryByText(message)).not.toBeInTheDocument();
+    expect(screen.getByText("LINE連携状態を確認中")).toBeInTheDocument();
+    resolveFriendState(response(PUBLIC_LINE_FRIEND_STATE_FIXTURES.confirmed));
+    await screen.findByText("連携済み");
+    await waitFor(() => expect(screen.queryByText(message)).not.toBeInTheDocument());
+    expect(sessionClient.logout).not.toHaveBeenCalled();
+  });
 
   it.each([
     [false, false, true, false, "LINEと連携して公式アカウントを友だち追加すると、条件を満たした方に750コインをプレゼントします。"],
