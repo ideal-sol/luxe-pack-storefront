@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useSession } from "@/components/auth/session-provider";
+import { useEffect, useRef, useState } from "react";
+import { useSession, type SessionState } from "@/components/auth/session-provider";
 import { CatalogLoading, CatalogMessage } from "@/components/catalog/catalog-message";
 import { LoginRequiredState } from "@/components/common/state-panel";
 import {
   presentExternalIdentityProblem,
   type ExternalIdentity,
+  type ExternalIdentityAdapter,
   type ExternalIdentityProblemPresentation,
   type LineFriendState,
 } from "@/lib/platform";
@@ -23,6 +24,7 @@ type IdentityState =
       readonly friendState: LineFriendState;
       readonly identities: readonly ExternalIdentity[];
       readonly sessionUserId: string;
+      readonly session: SessionState;
     };
 
 const dateTime = new Intl.DateTimeFormat("ja-JP", {
@@ -38,10 +40,33 @@ function formatDateTime(value: string) {
 function safeExternalHref(value: string | null) {
   if (!value) return null;
   try {
-    return new URL(value).protocol === "https:" ? value : null;
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password ? value : null;
   } catch {
     return null;
   }
+}
+
+const callbackMessages = {
+  friendship_check_failed: "友だち追加状態を確認できませんでした。もう一度お試しください。",
+  reward_apply_failed: "LINE特典を反映できませんでした。もう一度お試しください。",
+  line_auth_failed: "LINE認証を完了できませんでした。もう一度お試しください。",
+} as const;
+
+function rewardMessage(state: LineFriendState) {
+  const reward = state.reward;
+  if (!reward) return null;
+  if (reward.granted) return "友だち追加特典は受け取り済みです";
+  if (!reward.enabled) return null;
+  if (state.linked && state.friend_confirmed) {
+    return "LINE連携・友だち追加が完了しています。条件を満たした方はLINE特典を受け取れます。";
+  }
+  if (reward.point_amount === null) return null;
+  return `${state.linked ? "" : "LINEと連携して"}公式アカウントを友だち追加すると、条件を満たした方に${reward.point_amount}コインをプレゼントします。`;
+}
+
+function loadLineState(client: ExternalIdentityAdapter) {
+  return Promise.all([client.listExternalIdentities(), client.getLineFriendState()]);
 }
 
 export function LineAccountLink({
@@ -54,19 +79,35 @@ export function LineAccountLink({
   const [requestKey, setRequestKey] = useState(0);
   const [identityState, setIdentityState] = useState<IdentityState>({ status: "idle" });
   const [starting, setStarting] = useState(false);
+  const startPending = useRef(false);
+  const loadRequest = useRef<{
+    client: ExternalIdentityAdapter;
+    sessionUserId: string;
+    session: SessionState;
+    requestKey: number;
+    promise: ReturnType<typeof loadLineState>;
+  } | null>(null);
   const [actionProblem, setActionProblem] = useState<ExternalIdentityProblemPresentation | null>(null);
   const sessionUserId = session.status === "authenticated" ? session.session.user?.id ?? null : null;
 
   useEffect(() => {
-    if (!client || !sessionUserId) return;
+    if (!client || !sessionUserId) {
+      loadRequest.current = null;
+      return;
+    }
     let active = true;
-    void Promise.all([client.listExternalIdentities(), client.getLineFriendState()])
+    // Reuse the in-flight read across effect replay so a one-time callback notice is not consumed twice.
+    if (loadRequest.current?.client !== client || loadRequest.current.session !== session || loadRequest.current.requestKey !== requestKey) {
+      loadRequest.current = { client, sessionUserId, session, requestKey, promise: loadLineState(client) };
+    }
+    void loadRequest.current.promise
       .then(([identities, friendState]) => {
         if (active) {
           setIdentityState({
             friendState: friendState.data,
             identities: identities.data.items,
             sessionUserId,
+            session,
             status: "ready",
           });
         }
@@ -75,18 +116,24 @@ export function LineAccountLink({
         if (active) setIdentityState({ problem: presentExternalIdentityProblem(error), status: "error" });
       });
     return () => { active = false; };
-  }, [client, requestKey, sessionUserId]);
+  }, [client, requestKey, session, sessionUserId]);
 
-  async function startLink() {
-    if (!client || starting) return;
+  async function startLink(recheck = false) {
+    if (!client || startPending.current) return;
+    startPending.current = true;
     setStarting(true);
     setActionProblem(null);
     try {
-      const { data } = await client.startLineIdentityLink({ return_path: lineAccountRoute }, {});
-      navigate(data.authorization_url);
+      const { data } = recheck
+        ? await client.startLineReauthentication({ return_path: lineAccountRoute }, {})
+        : await client.startLineIdentityLink({ return_path: lineAccountRoute }, {});
+      const authorizationUrl = safeExternalHref(data.authorization_url);
+      if (!authorizationUrl) throw new Error("Invalid authorization URL");
+      navigate(authorizationUrl);
     } catch (error) {
       setActionProblem(presentExternalIdentityProblem(error));
       setStarting(false);
+      startPending.current = false;
     }
   }
 
@@ -104,7 +151,7 @@ export function LineAccountLink({
   if (
     identityState.status === "idle"
     || identityState.status === "loading"
-    || identityState.status === "ready" && identityState.sessionUserId !== sessionUserId
+    || identityState.status === "ready" && (identityState.sessionUserId !== sessionUserId || identityState.session !== session)
   ) {
     return <CatalogLoading label="LINE連携状態を確認中" />;
   }
@@ -141,6 +188,8 @@ export function LineAccountLink({
   }
 
   const actionCode: string = friendState.primary_action.code;
+  const rewardCopy = rewardMessage(friendState);
+  const callbackMessage = friendState.callback_result ? callbackMessages[friendState.callback_result] : null;
   const actionLabel = friendState.primary_action.label;
   const externalHref = actionCode === "open_friend_add_url"
     ? safeExternalHref(friendState.primary_action.href)
@@ -160,7 +209,7 @@ export function LineAccountLink({
         <div className="line-account__copy">
           <p>LINE FRIEND STATE</p>
           <h2 id="line-account-heading">{friendState.status.label}</h2>
-          <span>現在のLINE連携・友だち追加済みです</span>
+          {rewardCopy && <span>{rewardCopy}</span>}
         </div>
         <div className="line-account__details">
           <dl aria-label="LINE Friend State">
@@ -184,7 +233,7 @@ export function LineAccountLink({
             )}
           </dl>
           {actionCode === "start_identity_link" && actionLabel && (
-            <button className="button button--dark line-account__link" disabled={starting} onClick={startLink} type="button">
+            <button className="button button--dark line-account__link" disabled={starting} onClick={() => startLink()} type="button">
               {starting ? "LINEへ移動中…" : actionLabel}
             </button>
           )}
@@ -193,9 +242,15 @@ export function LineAccountLink({
               {actionLabel}
             </a>
           )}
+          {friendState.secondary_action?.code === "start_friendship_recheck" && (
+            <button className="button button--dark line-account__link" disabled={starting} onClick={() => startLink(true)} type="button">
+              {starting ? "LINEへ移動中…" : "友だち追加を確認する"}
+            </button>
+          )}
         </div>
       </section>
 
+      {callbackMessage && <p className="line-account__problem" role="alert">{callbackMessage}</p>}
       {actionProblem && <p className="line-account__problem" role="alert">{actionProblem.message}</p>}
     </div>
   );
