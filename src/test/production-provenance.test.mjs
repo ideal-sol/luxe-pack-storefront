@@ -54,10 +54,10 @@ describe("exact alpha.52 Production provenance", () => {
     expect(approvedSource.source_sha).not.toBe("7dc355d3174bdf8a4731741eea7aa4a80752b724");
     expect(approvedSource.source_sha).not.toBe("9702793ec7fdad4332e634b230dc6661ff176655");
     expect(approvedSource.authority.startsWith("Human-approved exact Runtime Source:")).toBe(true);
-    expect(approvedSource.authority).toContain("Storefront Authority merge requires separate explicit Human approval");
+    expect(approvedSource.authority).toContain("Human approves Authority merge and formal Artifact preparation through the existing Canonical paths");
     expect(approvedSource.authority).not.toContain("Formal Human Source GO is NOT ISSUED");
     expect(approvedSource.authority).not.toContain("Draft candidate exact Runtime Source:");
-    expect(approvedSource.platform_authority_merge_sha).toBe(null);
+    expect(approvedSource.platform_authority_merge_sha).toBe("81c8147095d4b79bc2d47bf58938b01809db4b58");
     expect(approvedSource.authority).not.toContain("PR #186 GTM is excluded");
   });
 
@@ -137,7 +137,7 @@ describe("exact alpha.52 Production provenance", () => {
       contract_manifest_sha256: "72bd3b18fb36bac68b948e4f936a7b64fce03cc1de95df1b3eedc826e54cee54",
       client_pin: "2.0.0-alpha.52", testkit_pin: "2.0.0-alpha.52", public_openapi_pin: "2.0.0-alpha.48",
       platform_runtime_source_sha: "b66e9a817d53dc77c2b327c3ccdd19790e204d57",
-      platform_authority_merge_sha: null,
+      platform_authority_merge_sha: "81c8147095d4b79bc2d47bf58938b01809db4b58",
       contract_archive_sha256: "c08147d9dacc5c78c4edd7f548c3ad66fca9affbed432b47cb216609150cb4dd",
       platform_source_sha: "8d56c5e1d450e4bc9ee07c1c97886aad054c02ee",
       client_sha256: "1f436091bc3c2a7dbb284a1275d61a053bb372d7134ef425f14427691c330341",
@@ -146,14 +146,14 @@ describe("exact alpha.52 Production provenance", () => {
     });
   });
 
-  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40", "2.0.0-alpha.41", "2.0.0-alpha.42", "2.0.0-alpha.43", "2.0.0-alpha.44", "2.0.0-alpha.45", "2.0.0-alpha.46", "2.0.0-alpha.48", "2.0.0-alpha.48", "2.0.0-alpha.49"])("rejects %s source pins", (version) => {
+  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40", "2.0.0-alpha.41", "2.0.0-alpha.42", "2.0.0-alpha.43", "2.0.0-alpha.44", "2.0.0-alpha.45", "2.0.0-alpha.46", "2.0.0-alpha.47", "2.0.0-alpha.48", "2.0.0-alpha.49"])("rejects %s source pins", (version) => {
     mutateJson("package.json", (value) => {
       value.dependencies["@oripa/storefront-client"] = `file:vendor/oripa/LINE-ALPHA52-20261110/oripa-storefront-client-${version}.tgz`;
     });
     expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
   });
 
-  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40", "2.0.0-alpha.41", "2.0.0-alpha.42", "2.0.0-alpha.43", "2.0.0-alpha.44", "2.0.0-alpha.45", "2.0.0-alpha.46", "2.0.0-alpha.48", "2.0.0-alpha.48", "2.0.0-alpha.49"])("rejects %s manifest contract", (version) => {
+  it.each(["2.0.0-alpha.36", "2.0.0-alpha.37", "2.0.0-alpha.38", "2.0.0-alpha.39", "2.0.0-alpha.40", "2.0.0-alpha.41", "2.0.0-alpha.42", "2.0.0-alpha.43", "2.0.0-alpha.44", "2.0.0-alpha.45", "2.0.0-alpha.46", "2.0.0-alpha.47", "2.0.0-alpha.48", "2.0.0-alpha.49"])("rejects %s manifest contract", (version) => {
     mutateManifest((manifest) => { manifest.bundle.version = version; });
     expect(() => validateProvenance(root, authority)).toThrow("source and manifest contract mismatch");
   });
@@ -192,7 +192,7 @@ describe("exact alpha.52 Production provenance", () => {
     expect(() => validateProvenance(root, authority)).toThrow("Platform runtime authority mismatch");
   });
 
-  it.each([undefined, "5ade57a7d40830a2cf137552f242a2001724b295", "3eee947ba34a6af55a1c396dbb14bb4032d14127"])("rejects missing, obsolete or reviewed-head Platform authority %s", (value) => {
+  it.each([null, undefined, "5ade57a7d40830a2cf137552f242a2001724b295", "3eee947ba34a6af55a1c396dbb14bb4032d14127"])("rejects missing, obsolete or reviewed-head Platform authority %s", (value) => {
     authority.platform_authority_merge_sha = value;
     expect(() => validateProvenance(root, authority)).toThrow("Platform runtime authority mismatch");
   });

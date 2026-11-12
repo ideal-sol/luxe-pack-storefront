@@ -3,7 +3,7 @@
   "repository": "ideal-sol/luxe-pack-storefront",
   "source_sha": "48a6db137645500b4f1f06033e41ee29eba56b0e",
   "source_pr": 233,
-  "authority": "Human-approved exact Runtime Source: LINE-only Draft preparation pins PR #233 48a6db137645500b4f1f06033e41ee29eba56b0e, Tree 7189a9499db2b923e68b5a46e3a84720949d5886. TOP100 PR #235 excluded; never substitute control main. Storefront Authority merge requires separate explicit Human approval. Platform Runtime Source b66e9a817d53dc77c2b327c3ccdd19790e204d57 / PR #682 includes LINE #665 and expiry #679. Platform Authority merge SHA remains null until the new approved Authority merges; formal dispatch fails closed pending exact binding. Reuse official alpha.52 Artifact 13742019147 without repack or publication. Preserve existing runtime settings, including existing public GTM-5DQRPNN2 integration; no LINE reward enablement or configuration changes. Admin #663 and Agency activation excluded. Limited configuration compatibility checks passed without application Source changes; operational evidence stays private. Preparation grants no Ready/Merge, formal Build, Migration or Runtime change. Existing Canonical validation and separately approved exact bindings remain mandatory.",
+  "authority": "Human-approved exact Runtime Source: LINE-only approved preparation pins PR #233 48a6db137645500b4f1f06033e41ee29eba56b0e, Tree 7189a9499db2b923e68b5a46e3a84720949d5886. TOP100 PR #235 excluded; never substitute control main. Human approves Authority merge and formal Artifact preparation through the existing Canonical paths; Runtime Activation remains unauthorized. Platform Runtime Source b66e9a817d53dc77c2b327c3ccdd19790e204d57 / PR #682 includes LINE #665 and expiry #679. Platform Authority PR #684 formally merged at 81c8147095d4b79bc2d47bf58938b01809db4b58; reviewed tree equals merge tree and content diff is zero. Reuse official alpha.52 Artifact 13742019147 without repack or publication. Preserve existing runtime settings, including existing public GTM-5DQRPNN2 integration; no LINE reward enablement or configuration changes. Admin #663 and Agency activation excluded. Limited configuration compatibility checks passed without application Source changes; operational evidence stays private. Preparation permits Canonical Authority Ready/Merge and formal Build after both Authority merges, but grants no Migration or Runtime change. Existing Canonical validation and separately approved exact bindings remain mandatory.",
   "activation_authorized": false,
   "contract_version": "2.0.0-alpha.52",
   "artifact_id": "13742019147",
@@ -14,7 +14,7 @@
   "testkit_sha256": "c154643dc017a861a451baf0f7c3ec223aa5be21ecf54109bad925b2fa8e5f5d",
   "public_openapi_sha256": "74101c0195be55d8ad63be342e009814d958d4160eb3d1bd75686965765b8c9a",
   "platform_runtime_source_sha": "b66e9a817d53dc77c2b327c3ccdd19790e204d57",
-  "platform_authority_merge_sha": null,
+  "platform_authority_merge_sha": "81c8147095d4b79bc2d47bf58938b01809db4b58",
   "public_openapi_version": "2.0.0-alpha.48",
   "contract_archive_sha256": "c08147d9dacc5c78c4edd7f548c3ad66fca9affbed432b47cb216609150cb4dd"
 }
