@@ -1907,3 +1907,12 @@ Local validation: Provenance/Artifact workflow227 tests PASS; immutable artifact
   a regression case proving stale callback notices stay hidden until fresh data.
   Affected LINE tests / Lint / Typecheck rerun; a new automatic CI run is required
   on the resulting head. No manual CI rerun or added application Build.
+
+## 2026-11-12 — SF-TOP100-20261112
+
+- R2 / Standard Change / Application Runtime Activation: deferred. Issue #234.
+- TOPおすすめ順も既存gachaSortFetchLimit=100を使用。関連Assertion10か所・コメントを整合。
+- 並び順・カテゴリー・タグ、無料／ログインボーナス、Platform API／Contract／DB／ENVは変更なし。
+- Focused public-catalog UI 33件、変更箇所Lint、Policy、catalog boundary PASS。
+- Required CIと固定HEAD Self-reviewはDraft PRに記録。追加ローカルBuild・手動CI再実行なし。
+- 専用Branch／Worktreeで実施。他作業の変更は保持し、Draft PRで停止。Merge／Runtimeは別途指示待ち。

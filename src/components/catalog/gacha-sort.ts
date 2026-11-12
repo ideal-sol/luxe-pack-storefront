@@ -15,7 +15,7 @@ export const gachaSortOptions = [
 
 export type GachaSortKey = (typeof gachaSortOptions)[number]["key"];
 
-/** おすすめ順以外は、並べ替えの母数をそろえるため Public API の上限件数まで取得する。 */
+/** おすすめ順を含め、並べ替えの母数をそろえるため Public API の上限100件まで取得する。 */
 export const gachaSortFetchLimit = 100;
 
 export function sortGachas(gachas: readonly GachaSummary[], key: GachaSortKey): readonly GachaSummary[] {

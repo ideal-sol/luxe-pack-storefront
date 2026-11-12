@@ -160,7 +160,7 @@ describe("public catalog UI", () => {
     expect(replace).toHaveBeenCalledWith(`/gachas?category=${summary.category.slug}`);
   });
 
-  it("starts home filters unselected and requests the unchanged six-item lineup", async () => {
+  it("starts home filters unselected and requests the 100-item lineup", async () => {
     const client = publicClient();
     renderPublic(<PublicHome />, client);
     const categories = await screen.findByRole("navigation", { name: "ガチャカテゴリー" });
@@ -171,7 +171,7 @@ describe("public catalog UI", () => {
     expect(within(categories).queryByRole("button", { name: "すべて" })).not.toBeInTheDocument();
     expect(within(tags).getByRole("button", { name: `#${summary.tags[0]!.name}` })).toBeInTheDocument();
     expect(client.listGachaTags).toHaveBeenCalledOnce();
-    expect(client.listGachas).toHaveBeenCalledWith({ limit: 6 });
+    expect(client.listGachas).toHaveBeenCalledWith({ limit: 100 });
   });
 
   it("filters home by tag alone without navigating or deriving results locally", async () => {
@@ -180,7 +180,7 @@ describe("public catalog UI", () => {
     renderPublic(<PublicHome />, client);
     const tag = summary.tags[0]!;
     fireEvent.click(await screen.findByRole("button", { name: `#${tag.name}` }));
-    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 6, tag: tag.slug }));
+    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 100, tag: tag.slug }));
     expect(screen.getByRole("button", { name: summary.category.name })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("button", { name: `#${tag.name}` })).toHaveAttribute("aria-pressed", "true");
     expect(await screen.findByRole("link", { name: summary.title })).toBeInTheDocument();
@@ -197,13 +197,13 @@ describe("public catalog UI", () => {
     });
     renderPublic(<PublicHome />, client);
     fireEvent.click(await screen.findByRole("button", { name: summary.category.name }));
-    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 6, category: summary.category.slug }));
+    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 100, category: summary.category.slug }));
     fireEvent.click(screen.getByRole("button", { name: `#${summary.tags[0]!.name}` }));
-    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 6, category: summary.category.slug, tag: summary.tags[0]!.slug }));
+    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 100, category: summary.category.slug, tag: summary.tags[0]!.slug }));
     fireEvent.click(screen.getByRole("button", { name: secondCategory.name }));
-    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 6, category: secondCategory.slug, tag: summary.tags[0]!.slug }));
+    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 100, category: secondCategory.slug, tag: summary.tags[0]!.slug }));
     fireEvent.click(screen.getByRole("button", { name: `#${secondTag.name}` }));
-    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 6, category: secondCategory.slug, tag: secondTag.slug }));
+    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 100, category: secondCategory.slug, tag: secondTag.slug }));
     expect(screen.getByRole("button", { name: summary.category.name })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("button", { name: secondCategory.name })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: `#${summary.tags[0]!.name}` })).toHaveAttribute("aria-pressed", "false");
@@ -253,7 +253,7 @@ describe("public catalog UI", () => {
     expect(screen.getByRole("button", { name: `#${summary.tags[0]!.name}` })).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(screen.getByRole("button", { name: "再読み込み" }));
     await screen.findByText("ラインナップを準備中です");
-    expect(listGachas).toHaveBeenLastCalledWith({ limit: 6, tag: summary.tags[0]!.slug });
+    expect(listGachas).toHaveBeenLastCalledWith({ limit: 100, tag: summary.tags[0]!.slug });
     expect(screen.queryByRole("link", { name: summary.title })).not.toBeInTheDocument();
   });
 
@@ -403,7 +403,7 @@ describe("public catalog UI", () => {
     view.unmount();
   });
 
-  it("sorts the home lineup with the design toolbar and fetches the full set for non-default orders", async () => {
+  it("sorts the home lineup with the design toolbar and fetches up to 100 items for all orders", async () => {
     const cheap = { ...summary, id: "cheap", slug: "cheap", title: "安い企画", price_points: 50, total_count: 900, remaining_count: 800 };
     const pricey = { ...summary, id: "pricey", slug: "pricey", title: "高い企画", price_points: 9000, total_count: 100, remaining_count: 10 };
     const listGachas = vi.fn().mockResolvedValue(response({ data: [cheap, pricey], meta: { has_more: false, next_cursor: null, page_size: 2 } }));
@@ -411,7 +411,7 @@ describe("public catalog UI", () => {
     const view = renderPublic(<PublicHome />, client);
     const sort = await screen.findByRole("group", { name: "並べ替え" });
     expect(within(sort).getByRole("button", { name: "おすすめ順" })).toHaveAttribute("aria-pressed", "true");
-    expect(listGachas).toHaveBeenLastCalledWith({ limit: 6 });
+    expect(listGachas).toHaveBeenLastCalledWith({ limit: 100 });
     await screen.findByRole("link", { name: "安い企画" });
     const titles = () => Array.from(view.container.querySelectorAll(".gacha-grid--home h3")).map((heading) => heading.textContent);
     expect(titles()).toEqual(["安い企画", "高い企画"]);
@@ -430,11 +430,11 @@ describe("public catalog UI", () => {
     renderPublic(<PublicHome />, client);
     const tag = summary.tags[0]!;
     fireEvent.click(await screen.findByRole("button", { name: `#${tag.name}` }));
-    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 6, tag: tag.slug }));
+    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 100, tag: tag.slug }));
     const all = screen.getByRole("button", { name: "すべて" });
     expect(all).toHaveAttribute("aria-pressed", "false");
     fireEvent.click(all);
-    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 6 }));
+    await waitFor(() => expect(client.listGachas).toHaveBeenLastCalledWith({ limit: 100 }));
     expect(screen.getByRole("button", { name: "すべて" })).toHaveAttribute("aria-pressed", "true");
   });
 });
