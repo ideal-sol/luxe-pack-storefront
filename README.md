@@ -11,7 +11,7 @@ pnpm dev
 pnpm validate
 ```
 
-Required runtime versions are Node `22.22.3` and pnpm `10.12.1`.
+Required runtime versions are Node `22.23.5` and pnpm `10.12.1`.
 
 Set `NEXT_PUBLIC_APP_NAME=OripaZ` in the existing environment used to start
 development and to build the Storefront. Header and Footer use this public name
@@ -123,3 +123,38 @@ The existing artifact manifest records the effective value as `app_name`, alongs
 and re-download verification compare both public inputs with the manifest, and the
 handoff summary records `NEXT_PUBLIC_APP_NAME`. Artifact creation does not activate
 Production; activation requires a separate Human-authorized operation.
+# OLD Test Node security maintenance
+
+Node is pinned to 22.23.5; pnpm 10.12.1, Next.js 16.4.2 and the formal
+alpha.52 vendor packages remain unchanged. This Source update does not replace
+the shared host Node or authorize any Runtime activation.
+
+After Source Merge and OLD Test Source Authority approval, reuse the existing
+OLD Test Build helper for one new GTM-OFF Build. Put the verified official
+linux-x64 distribution in a root-owned, version-specific OLD Test toolchain
+directory. Verify its archive against the signed SHASUMS with the official
+Node release keyring before extraction. Never rewrite historical manifests.
+
+Use the dedicated binary's absolute path and prepend its directory to the
+isolated Build PATH (including pnpm child processes). Before Build, run:
+
+```sh
+/absolute/versioned/node scripts/verify-old-test-node.mjs /absolute/versioned/node
+```
+
+After Build, pass the new private manifest as the third argument. Its
+`node_version` must be `v22.23.5`, dependency versions must match and GTM must
+remain disabled. The existing Canonical verifier still validates Source, Tree,
+Build ID, file digests and formal alpha.52 provenance; this check supplements it.
+
+Prepare systemd ExecStart using that same absolute binary (not an `env node`
+lookup). Bind the executable's SHA256 and resolved path into the private exact
+preparation evidence. Before activation, verify the release user's execution
+permissions and the systemd command. After activation, compare `/proc/PID/exe`
+and the running executable version with that evidence. Source, manifest and
+runtime must all agree. Retain the old unit, executable and complete Build for
+Canonical rollback. Never use the old 22.22.3 Build as a newly built artifact.
+
+Public CI/production-artifact/readiness pins change for future jobs after
+merge. Existing Production Source Authorities, Artifacts, manifests and running
+services are unchanged and require their own explicit release authorization.

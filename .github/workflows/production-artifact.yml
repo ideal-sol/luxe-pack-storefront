@@ -42,7 +42,7 @@ env:
   NEXT_PUBLIC_SITE_URL: ${{ inputs.site_url }}
   NEXT_PUBLIC_ASSET_PUBLIC_BASE_URL: ${{ inputs.asset_public_base_url }}
   NEXT_PUBLIC_STATIC_ASSET_BASE_URL: ${{ inputs.static_asset_base_url }}
-  NODE_VERSION: 22.22.3
+  NODE_VERSION: 22.23.5
   PNPM_VERSION: 10.12.1
   PNPM_AUDIT_VERSION: 11.25.0
 
