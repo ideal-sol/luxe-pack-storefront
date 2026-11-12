@@ -92,8 +92,8 @@ export function PublicHome() {
     if (!client) return;
     let active = true;
     void client.listGachas({
-      // おすすめ順は従来どおり6件の抜粋。並べ替え時は母数をそろえるため上限件数まで取得する。
-      limit: sort === "recommended" ? 6 : gachaSortFetchLimit,
+      // おすすめ順も、並べ替えの母数をそろえるため上限100件まで取得する。
+      limit: gachaSortFetchLimit,
       ...(category ? { category } : {}),
       ...(tag ? { tag } : {}),
     }).then(({ data }) => {
