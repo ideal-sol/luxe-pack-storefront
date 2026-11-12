@@ -1916,3 +1916,8 @@ Local validation: Provenance/Artifact workflow227 tests PASS; immutable artifact
 - Focused public-catalog UI 33件、変更箇所Lint、Policy、catalog boundary PASS。
 - Required CIと固定HEAD Self-reviewはDraft PRに記録。追加ローカルBuild・手動CI再実行なし。
 - 専用Branch／Worktreeで実施。他作業の変更は保持し、Draft PRで停止。Merge／Runtimeは別途指示待ち。
+# SFLINEPROD-20261112 — LINE-only Production Draft preparation
+
+- Issue none; R3 / Strict Change / Application Runtime Activation deferred. Dedicated branch/worktree at base5bcbca05a00dff3dddeff59dde00661bbbd5d627; Runtime pins earlier PR233 48a6db137645500b4f1f06033e41ee29eba56b0e / Tree7189a9499db2b923e68b5a46e3a84720949d5886. TOP100 PR235 is excluded from the build checkout. Admin663/Agency Runtime excluded. No UI changes.
+- Update existing Production provenance to immutable alpha.52 Artifact13742019147 and exact checksums; vendor/package/lockfile unchanged. Platform Runtime b66e9a817d53dc77c2b327c3ccdd19790e204d57. New Platform Authority has not merged: merge binding is null and formal authorize CLI fails closed. Fill actual reviewed Platform merge SHA after separate GO; never use OLD Test or old Paidy Authority as substitute.
+- Preserve Paidy LIVE/public ON, Worker/Timer, UnivaPay LIVE, member-rank resident Worker, five existing timers/F2-B, SMS/Mail, GTM and saved LINE settings. Draft preparation only; Ready/Merge/Build/Runtime/ENV/Migration/ALB0. Existing tests adapted to genuine alpha.52 provenance format; initial4 stale-evidence failures retained, corrected without relaxing digest checks. Focused tests, exact-head CI and HOLD self-review recorded on PR. Proxy/mod_remoteip and executable Cutover binding remain preparation blockers; no READY claim.
