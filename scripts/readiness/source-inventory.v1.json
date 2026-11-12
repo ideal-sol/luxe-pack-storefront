@@ -262,6 +262,7 @@
   "src/test/member-rank-client-contract.test.ts",
   "src/test/member-rank-ui.test.tsx",
   "src/test/mypage-ui.test.tsx",
+  "src/test/old-test-node.test.mjs",
   "src/test/oripoke-theme.test.tsx",
   "src/test/payment-client-contract.test.ts",
   "src/test/payment-fincode-ui.test.tsx",
