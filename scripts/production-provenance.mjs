@@ -75,6 +75,10 @@ export function validateProvenance(root, authority = approvedSource) {
   "Public OpenAPI digest mismatch");
   requireValue(authority.manifest_sha256 === "72bd3b18fb36bac68b948e4f936a7b64fce03cc1de95df1b3eedc826e54cee54",
     "unapproved formal manifest digest");
+  requireValue(packageJson.engines?.node === "22.23.5"
+    && packageJson.engines?.pnpm === "10.12.1"
+    && packageJson.packageManager === "pnpm@10.12.1"
+    && packageJson.dependencies?.next === "16.4.2", "Runtime toolchain pin mismatch");
   return {
     source_sha: authority.source_sha,
     contract_version: authority.contract_version,
