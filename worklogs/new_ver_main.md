@@ -1916,3 +1916,14 @@ Local validation: Provenance/Artifact workflow227 tests PASS; immutable artifact
 - Focused public-catalog UI 33件、変更箇所Lint、Policy、catalog boundary PASS。
 - Required CIと固定HEAD Self-reviewはDraft PRに記録。追加ローカルBuild・手動CI再実行なし。
 - 専用Branch／Worktreeで実施。他作業の変更は保持し、Draft PRで停止。Merge／Runtimeは別途指示待ち。
+# SFLINEPROD-20261112 — LINE-only Authority Draft preparation
+
+- Issue none; R3 / Strict Change / Activation deferred. Dedicated branch/worktree; base5bcbca05a00dff3dddeff59dde00661bbbd5d627. Fixed Runtime PR233 48a6db137645500b4f1f06033e41ee29eba56b0e / Tree7189a9499db2b923e68b5a46e3a84720949d5886 excludes TOP100 PR235. No UI changes.
+- Existing provenance updated to immutable alpha.52 Artifact13742019147 with exact checksums; vendor/package/lockfile unchanged. Platform Runtime b66e9a817d53dc77c2b327c3ccdd19790e204d57; future Authority merge binding null and formal dispatch closed until approved binding.
+- Focused133 tests, artifact/policy/lint/whitespace PASS; exact-head CI and Draft review recorded on PR. Preserve existing settings; operational evidence stays private. No Ready/Merge/formal Build/Runtime or completion claim.
+
+## SFLINEPROD-20261112 — Formal Platform Authority binding
+
+- Human authorized Canonical Authority merges and formal Artifact preparation; Runtime Activation remains deferred and unauthorized. Platform #684 merged as 81c8147095d4b79bc2d47bf58938b01809db4b58; reviewed/merge Tree005abaf7180e62bd190954d7af66f21c5c3ec73f match, content diff=0.
+- Bind the actual merge SHA in the existing Authority and provenance validator; reject null and stale bindings. Restore distinct alpha.47/48 negative coverage. Fixed PR233 Runtime Source, alpha.52 Artifact13742019147 and all package/lock/vendor files stay unchanged; TOP100 excluded from Runtime.
+- Final-head validation, Required CI and Strict Self-review are recorded in PR #236. Canonical Site Ready/Merge remains on hold pending the established operator path; no alternative merge, production change or premature formal Build.
