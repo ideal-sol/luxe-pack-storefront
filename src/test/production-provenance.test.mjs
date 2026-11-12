@@ -19,7 +19,9 @@ beforeEach(() => {
   const client = "file:vendor/oripa/LINE-ALPHA52-20261110/oripa-storefront-client-2.0.0-alpha.52.tgz";
   const testkit = "file:vendor/oripa/LINE-ALPHA52-20261110/oripa-storefront-testkit-2.0.0-alpha.52.tgz";
   writeFileSync(join(root, "package.json"), JSON.stringify({
-    dependencies: { "@oripa/storefront-client": client },
+    engines: { node: "22.23.5", pnpm: "10.12.1" },
+    packageManager: "pnpm@10.12.1",
+    dependencies: { next: "16.4.2", "@oripa/storefront-client": client },
     devDependencies: { "@oripa/storefront-testkit": testkit },
   }));
   writeFileSync(join(root, "pnpm-lock.yaml"), [
@@ -44,11 +46,23 @@ function mutateManifest(mutation) {
 }
 
 describe("exact alpha.52 Production provenance", () => {
-  it("pins the Human-approved PR233 LINE Runtime Source independently of Workflow/main without Activation GO", () => {
-    expect(approvedSource.source_sha).toBe("48a6db137645500b4f1f06033e41ee29eba56b0e");
-    expect(approvedSource.source_pr).toBe(233);
+  it.each(["node", "pnpm"])("rejects a stale %s toolchain pin", (field) => {
+    mutateJson("package.json", (value) => { value.engines[field] = "0.0.0"; });
+    expect(() => validateProvenance(root, authority)).toThrow("Runtime toolchain pin mismatch");
+  });
+
+  it("rejects a stale Next or package manager pin", () => {
+    mutateJson("package.json", (value) => { value.dependencies.next = "16.4.1"; });
+    expect(() => validateProvenance(root, authority)).toThrow("Runtime toolchain pin mismatch");
+    mutateJson("package.json", (value) => { value.dependencies.next = "16.4.2"; value.packageManager = "pnpm@10.12.0"; });
+    expect(() => validateProvenance(root, authority)).toThrow("Runtime toolchain pin mismatch");
+  });
+
+  it("pins the Human-approved PR239 LINE + TOP100 + Node 22.23.5 Runtime Source independently of Workflow/main without Activation GO", () => {
+    expect(approvedSource.source_sha).toBe("160b0d3058cb8113faadb487563a682529212879");
+    expect(approvedSource.source_pr).toBe(239);
     expect(approvedSource.source_sha).not.toBe("1e3ba92780825a12485f651ea79025ad47f1321b");
-    expect(approvedSource.authority).toContain("7189a9499db2b923e68b5a46e3a84720949d5886");
+    expect(approvedSource.authority).toContain("c7dc70ad2065da02e694a00370254b0c2bdf4fe4");
     expect(approvedSource.authority).toContain("GTM-5DQRPNN2");
     expect(approvedSource.activation_authorized).toBe(false);
     expect(approvedSource.source_sha).not.toBe("7dc355d3174bdf8a4731741eea7aa4a80752b724");
@@ -132,7 +146,7 @@ describe("exact alpha.52 Production provenance", () => {
 
   it("accepts approved source pins, immutable artifact identity and every digest", () => {
     expect(validateProvenance(root)).toMatchObject({
-      source_sha: "48a6db137645500b4f1f06033e41ee29eba56b0e",
+      source_sha: "160b0d3058cb8113faadb487563a682529212879",
       contract_version: "2.0.0-alpha.52", contract_artifact_id: "13742019147",
       contract_manifest_sha256: "72bd3b18fb36bac68b948e4f936a7b64fce03cc1de95df1b3eedc826e54cee54",
       client_pin: "2.0.0-alpha.52", testkit_pin: "2.0.0-alpha.52", public_openapi_pin: "2.0.0-alpha.48",
