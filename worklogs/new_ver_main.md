@@ -1927,3 +1927,14 @@ Local validation: Provenance/Artifact workflow227 tests PASS; immutable artifact
 - Human authorized Canonical Authority merges and formal Artifact preparation; Runtime Activation remains deferred and unauthorized. Platform #684 merged as 81c8147095d4b79bc2d47bf58938b01809db4b58; reviewed/merge Tree005abaf7180e62bd190954d7af66f21c5c3ec73f match, content diff=0.
 - Bind the actual merge SHA in the existing Authority and provenance validator; reject null and stale bindings. Restore distinct alpha.47/48 negative coverage. Fixed PR233 Runtime Source, alpha.52 Artifact13742019147 and all package/lock/vendor files stay unchanged; TOP100 excluded from Runtime.
 - Final-head validation, Required CI and Strict Self-review are recorded in PR #236. Canonical Site Ready/Merge remains on hold pending the established operator path; no alternative merge, production change or premature formal Build.
+
+
+## OLDTEST-NODE22-SECURITY — Storefront dedicated Node 22.23.5
+
+- Risk R3; Lane Strict Change; Application Runtime Activation deferred. Dedicated isolated branch/worktree. Draft only; separate Human Merge/Build/Exact Runtime GO required.
+- Update active Node pins to22.23.5 in nvmrc, engines and three workflows. pnpm10.12.1, Next16.4.2, alpha.52 vendor, dependencies/Lock and TOP100/LINE behavior unchanged. Production Authority and historical fixtures/manifests untouched.
+- Add read-only dedicated executable/native-module/manifest compatibility check; document exact systemd binary and immutable versioned toolchain. Existing Canonical Source/Tree/GTM/Artifact gates remain mandatory.
+- Official linux-x64 distribution: signed SHASUMS verified with official Node release keyring; archive SHA256 verified; isolated Node22.23.5 runs on Amazon Linux2023/glibc2.34. SWC load and Sharp image operation PASS. No shared host Node replacement.
+- Focused263 existing tests plus9 new negative/identity tests PASS under Node22.23.5. pnpm10.12.1 and dependency versions retained. Required CI and final-head Strict review are attached to Draft PR. No manual CI rerun, formal Runtime Build, restart, operational DB/provider or Production operation.
+- New OLD Test Build required after merged Source/Authority; old22.22.3 Build remains recovery evidence. Before Runtime GO bind dedicated binary path/hash, new manifest, exact Candidate/Envelope and protected services. Runtime validation deferred.
+- Automatic CI identified the new test missing from the exact current Source inventory. Registered that path only; inventory and security assertions unchanged. Focused classifier/ledger347 tests PASS. No historical fixture rewrite or manual CI rerun.

@@ -38,7 +38,7 @@ describe("production artifact canonical audit toolchain", () => {
   it("pins both toolchains and Next without changing the manifest toolchain", () => {
     expect(workflow).toContain("PNPM_VERSION: 10.12.1");
     expect(workflow).toContain("PNPM_AUDIT_VERSION: 11.25.0");
-    expect(workflow).toContain("NODE_VERSION: 22.22.3");
+    expect(workflow).toContain("NODE_VERSION: 22.23.5");
     expect(workflow.match(/16\.4\.2/g)).toHaveLength(3);
     expect(workflow).not.toContain("16.3.8");
     expect(workflow).not.toContain("16.3.3");
