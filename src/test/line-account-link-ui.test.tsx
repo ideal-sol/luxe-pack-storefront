@@ -350,10 +350,10 @@ describe("LINE account link UI", () => {
     expect(await screen.findByText("ログインしてください")).toBeInTheDocument();
   });
 
-  it("keeps the direct route while hiding the My Page menu entry", async () => {
+  it("keeps the direct route and restores the My Page menu entry", async () => {
     renderLine();
     expect(await screen.findByRole("link", { name: "← マイページへ戻る" })).toHaveAttribute("href", "/mypage");
-    expect(myPageAccountNavigation.map((item) => item.href)).not.toContain(lineAccountRoute);
+    expect(myPageAccountNavigation).toContainEqual({ href: lineAccountRoute, label: "LINE連携", description: "LINE連携・友だち追加・特典を確認する" });
     expect(accountNavigation).toContainEqual({ href: lineAccountRoute, label: "LINE連携" });
     expect(lineAccountRoute).toBe("/mypage/line");
     expect(publicRoutes).toContain(lineAccountRoute);
