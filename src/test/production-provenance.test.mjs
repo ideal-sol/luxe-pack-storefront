@@ -58,11 +58,11 @@ describe("exact alpha.52 Production provenance", () => {
     expect(() => validateProvenance(root, authority)).toThrow("Runtime toolchain pin mismatch");
   });
 
-  it("pins the Human-approved PR239 LINE + TOP100 + Node 22.23.5 Runtime Source independently of Workflow/main without Activation GO", () => {
-    expect(approvedSource.source_sha).toBe("160b0d3058cb8113faadb487563a682529212879");
-    expect(approvedSource.source_pr).toBe(239);
+  it("pins the Human-approved PR243 LINE navigation hide Runtime Source independently of Workflow/main without Activation GO", () => {
+    expect(approvedSource.source_sha).toBe("66204aa6500c48a81de4bb05beda6b72a6a9641a");
+    expect(approvedSource.source_pr).toBe(243);
     expect(approvedSource.source_sha).not.toBe("1e3ba92780825a12485f651ea79025ad47f1321b");
-    expect(approvedSource.authority).toContain("c7dc70ad2065da02e694a00370254b0c2bdf4fe4");
+    expect(approvedSource.authority).toContain("1c5b378428dd8e334c68447581e38ef3248805e6");
     expect(approvedSource.authority).toContain("GTM-5DQRPNN2");
     expect(approvedSource.activation_authorized).toBe(false);
     expect(approvedSource.source_sha).not.toBe("7dc355d3174bdf8a4731741eea7aa4a80752b724");
@@ -146,7 +146,7 @@ describe("exact alpha.52 Production provenance", () => {
 
   it("accepts approved source pins, immutable artifact identity and every digest", () => {
     expect(validateProvenance(root)).toMatchObject({
-      source_sha: "160b0d3058cb8113faadb487563a682529212879",
+      source_sha: "66204aa6500c48a81de4bb05beda6b72a6a9641a",
       contract_version: "2.0.0-alpha.52", contract_artifact_id: "13742019147",
       contract_manifest_sha256: "72bd3b18fb36bac68b948e4f936a7b64fce03cc1de95df1b3eedc826e54cee54",
       client_pin: "2.0.0-alpha.52", testkit_pin: "2.0.0-alpha.52", public_openapi_pin: "2.0.0-alpha.48",
