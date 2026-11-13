@@ -110,6 +110,7 @@ export const myPageAccountNavigation = [
   { ...accountNavigation[6], description: "電話番号をSMSで認証・変更する" },
   { ...accountNavigation[7], description: "ログインに使用するメールアドレスを変更する" },
   { ...accountNavigation[8], description: "ログインに使用するパスワードを変更する" },
+  { ...accountNavigation[9], description: "LINE連携・友だち追加・特典を確認する" },
 ] as const;
 
 export function createMyPageSupportNavigation(contactHref?: string) {

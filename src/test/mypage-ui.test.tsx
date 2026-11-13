@@ -141,7 +141,7 @@ describe("my page top", () => {
     expect(screen.getByRole("link", { name: /SMS認証/ })).toHaveAttribute("href", smsVerificationRoute);
     expect(screen.getByRole("link", { name: /メールアドレス変更/ })).toHaveAttribute("href", "/mypage/email");
     expect(screen.getByRole("link", { name: /パスワード変更/ })).toHaveAttribute("href", "/mypage/password");
-    expect(screen.queryByRole("link", { name: /LINE連携/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /LINE連携・友だち追加・特典を確認する/ })).toHaveAttribute("href", lineAccountRoute);
     expect(screen.getByRole("link", { name: /お知らせ/ })).toHaveAttribute("href", "/notices");
     expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("href", contactHref);
     expect(screen.getByRole("link", { name: /お問い合わせ/ })).toHaveAttribute("target", "_blank");
@@ -188,7 +188,7 @@ describe("my page top", () => {
   it.each([
     ["mobile", 375],
     ["desktop", 1440],
-  ])("keeps the Account layout without the LINE entry at the %s viewport", async (_viewport, width) => {
+  ])("keeps the Account layout with the LINE entry at the %s viewport", async (_viewport, width) => {
     Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
     window.dispatchEvent(new Event("resize"));
     renderMyPage(client());
@@ -199,13 +199,14 @@ describe("my page top", () => {
       "/mypage/sms-verification",
       "/mypage/email",
       "/mypage/password",
+      "/mypage/line",
     ]);
     expect(links[0]).toHaveTextContent("お届け先登録");
     expect(links[1]).toHaveTextContent("SMS認証");
     expect(links[2]).toHaveTextContent("メールアドレス変更");
     expect(links[3]).toHaveTextContent("パスワード変更");
-    expect(screen.queryByRole("link", { name: /LINE連携/ })).not.toBeInTheDocument();
-    expect(document.querySelector('a[href="/mypage/line"]')).toBeNull();
+    expect(links[4]).toHaveTextContent("LINE連携・友だち追加・特典を確認する");
+    expect(screen.getByRole("link", { name: /LINE連携・友だち追加・特典を確認する/ })).toHaveAttribute("href", lineAccountRoute);
     expect(screen.getAllByRole("link")).toHaveLength(
       myPageShortcutNavigation.length + myPageAccountNavigation.length + 1 + createMyPageSupportNavigation(contactHref).length,
     );
@@ -213,7 +214,7 @@ describe("my page top", () => {
     expect(screen.getByText(/保有しているコインと、受け取り前のカードはすべて失われます/)).toBeInTheDocument();
   });
 
-  it("retains the LINE direct-route navigation contract outside the My Page menu", () => {
+  it("retains the LINE direct-route and indexed navigation contracts", () => {
     expect(accountNavigation[9]).toEqual({ href: "/mypage/line", label: "LINE連携" });
     expect(accountNavigation[10]).toEqual({ href: "/mypage/member-rank", label: "会員ランク" });
     expect(lineAccountRoute).toBe("/mypage/line");
