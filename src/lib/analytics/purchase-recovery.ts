@@ -40,7 +40,8 @@ export async function rememberPurchase(payment: Payment, pid: string | null, use
   await updatePendingPurchases(rows => {
     const existing = rows.find(row => row.paymentId === payment.id);
     const remaining = rows.filter(row => row.paymentId !== payment.id);
-    return save ? [...remaining, existing ?? { paymentId: payment.id, userId, savedAt: Date.now() }] : remaining;
+    // Another tab may finish reporting while this update waits for the queue lock.
+    return save && !purchaseAlreadySent(payment.id) ? [...remaining, existing ?? { paymentId: payment.id, userId, savedAt: Date.now() }] : remaining;
   }, isActive, userId);
 }
 

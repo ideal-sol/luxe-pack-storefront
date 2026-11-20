@@ -176,4 +176,13 @@ describe("purchase queue and session boundaries", () => {
     const get = vi.fn(async () => { expect(held).toBe(false); return { data: a, metadata: { status: 200, idempotency_replayed: false } }; });
     await tabA.recoverPurchases({ getPayment: get }, user, null, active); expect(get).toHaveBeenCalledOnce();
   });
+  it("does not re-add a sent payment after waiting for the queue lock", async () => {
+    const p = payment(undefined, "succeeded");
+    vi.stubGlobal("navigator", { locks: { request: async (name: string, _options: unknown, action: (lock: object) => unknown) => {
+      if (name === PENDING_PURCHASE_KEY) await reportPurchaseComplete({ userId: user, revenue: 1000, paymentId: p.id });
+      return action({});
+    } } });
+    await rememberPurchase(p, p.id, user, "in_progress");
+    expect(layer()).toHaveLength(1); expect(rows()).toEqual([]);
+  });
 });

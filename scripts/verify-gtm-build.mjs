@@ -11,7 +11,7 @@ const observationPath = ".next/gtm-build-observation.json";
 const sourceDigests = {
   "src/lib/platform/payment-problem.ts": "e914a34882eeebb026d6df722e132278abeff397888ca6cee1ca174e2ee24195",
   "src/components/analytics/purchase-conversion-recovery.tsx": "04068ab2159c15cc5f10e76751ce463c761cc716cfa71394db1e4086fb528a96",
-  "src/lib/analytics/purchase-recovery.ts": "78e4adda210edbd18e0ef657cd416a1bc232358898c86845c2ede5eb4163a64a",
+  "src/lib/analytics/purchase-recovery.ts": "880f591f3b10294722d5e2f82d1ff4c11df9ddc9b95a844b187c49167a703b4f",
   "scripts/verify-gtm-client.mjs": "f66241700bd8ab22d2a93ef7047f4d6d768916de3bf22df61c7da0776b1008d0",
   "src/components/payment/payment-thanks.tsx": "2f31eae7c7a7b075b881a80ca326e78cb2d4456c43d46183cf8fb047ea7b8fad",
   "src/components/payment/use-payment-polling.ts": "e0698560048bb1600e78923b3a9658890573ad61e0e674af6fc5a24ad389d3f9",
