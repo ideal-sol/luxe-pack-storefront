@@ -39,7 +39,7 @@ describe("production artifact canonical audit toolchain", () => {
     expect(workflow).toContain("PNPM_VERSION: 10.12.1");
     expect(workflow).toContain("PNPM_AUDIT_VERSION: 11.25.0");
     expect(workflow).toContain("NODE_VERSION: 22.23.5");
-    expect(workflow.match(/16\.4\.2/g)).toHaveLength(3);
+    expect(workflow.match(/16\.4\.5/g)).toHaveLength(3);
     expect(workflow).not.toContain("16.3.8");
     expect(workflow).not.toContain("16.3.3");
     expect(workflow).not.toContain("16.3.6");
@@ -60,20 +60,20 @@ describe("production artifact canonical audit toolchain", () => {
   });
 
   it.each([
-    ["Set up exact pnpm and frozen dependencies", 'test "$(node -p "require(\'./node_modules/next/package.json\').version")" = "16.4.2"'],
-    ["Package filesystem release", 'test "$next_version" = "16.4.2"'],
-    ["Verify re-download and ARM64 runtime", 'test "$(node -p "require(\'./artifact-manifest.json\').next_version")" = "16.4.2"'],
+    ["Set up exact pnpm and frozen dependencies", 'test "$(node -p "require(\'./node_modules/next/package.json\').version")" = "16.4.5"'],
+    ["Package filesystem release", 'test "$next_version" = "16.4.5"'],
+    ["Verify re-download and ARM64 runtime", 'test "$(node -p "require(\'./artifact-manifest.json\').next_version")" = "16.4.5"'],
   ])("keeps the exact Next version check fail-closed at %s", (name, command) => {
     const step = workflow.split(`- name: ${name}`)[1]?.split("      - name:")[0];
     expect(step).toContain(command);
-    for (const actual of ["16.4.2", "16.3.8", "16.4.20", ""]) {
+    for (const actual of ["16.4.5", "16.4.2", "16.4.6", "16.3.8", "16.4.20", ""]) {
       // Run only this assertion with synthetic version reads: no Build/package/Dispatch.
       const result = spawnSync("bash", ["-s"], {
         encoding: "utf8",
         env: { ...process.env, FIXTURE_NEXT_VERSION: actual },
         input: `set -euo pipefail\nnode() { printf '%s\\n' "$FIXTURE_NEXT_VERSION"; }\nnext_version="$FIXTURE_NEXT_VERSION"\n${command}\n`,
       });
-      expect(result.status === 0).toBe(actual === "16.4.2");
+      expect(result.status === 0).toBe(actual === "16.4.5");
     }
   });
 

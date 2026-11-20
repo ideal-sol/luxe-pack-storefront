@@ -38,7 +38,7 @@
   "dependencies": {
     "@fincode/js": "1.1.0",
     "@oripa/storefront-client": "file:vendor/oripa/LINE-ALPHA52-20261110/oripa-storefront-client-2.0.0-alpha.52.tgz",
-    "next": "16.4.2",
+    "next": "16.4.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "sanitize-html": "2.18.1"

@@ -78,7 +78,7 @@ export function validateProvenance(root, authority = approvedSource) {
   requireValue(packageJson.engines?.node === "22.23.5"
     && packageJson.engines?.pnpm === "10.12.1"
     && packageJson.packageManager === "pnpm@10.12.1"
-    && packageJson.dependencies?.next === "16.4.2", "Runtime toolchain pin mismatch");
+    && packageJson.dependencies?.next === "16.4.5", "Runtime toolchain pin mismatch");
   return {
     source_sha: authority.source_sha,
     contract_version: authority.contract_version,
