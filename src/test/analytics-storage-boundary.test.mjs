@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const reviewedStorage = readFileSync("scripts/reviewed-analytics-storage.mjs", "utf8");
-const approvedPaths = ["src/lib/analytics/gtm.ts", "src/test/analytics-gtm.test.tsx", "src/test/sms-verification-ui.test.tsx"];
+const approvedPaths = ["src/lib/analytics/gtm.ts", "src/lib/analytics/purchase-recovery.ts", "src/test/purchase-reliability.test.tsx", "src/test/analytics-gtm.test.tsx", "src/test/sms-verification-ui.test.tsx"];
 const approved = Object.fromEntries(approvedPaths.map(path => [path, readFileSync(path, "utf8")]));
 
 function check(checker, files) {

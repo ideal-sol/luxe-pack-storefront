@@ -9,7 +9,7 @@ export function verifyRuntime({ executable, actualExecutable, nodeVersion, packa
     throw new Error("node_version_mismatch");
   }
   if (packageJson.packageManager !== "pnpm@10.12.1" || packageJson.engines.pnpm !== "10.12.1"
-      || versions.next !== "16.4.2" || versions.client !== "2.0.0-alpha.52" || versions.testkit !== "2.0.0-alpha.52") {
+      || versions.next !== "16.4.5" || versions.client !== "2.0.0-alpha.52" || versions.testkit !== "2.0.0-alpha.52") {
     throw new Error("dependency_version_mismatch");
   }
   if (manifest && (manifest.target !== "old-test" || manifest.node_version !== nodeVersion

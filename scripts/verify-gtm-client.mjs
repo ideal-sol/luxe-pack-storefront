@@ -10,7 +10,7 @@ const execute = (code, context) => vm.runInContext(code, context, { timeout: 100
 
 // Register actual Turbopack factories without loading the Next runtime, DOM, tags,
 // network or dependencies. Only React hooks and external I/O are mocked below.
-function runtime(chunks, selected, mode, mail, runtimeId, storageDenied = false, storage = new Map()) {
+function runtime(chunks, selected, mode, mail, runtimeId, storageDenied = false, storage = new Map(), locks) {
   const modules = new Map();
   const registered = [];
   const events = [], effects = [], states = [], refs = [];
@@ -28,7 +28,10 @@ function runtime(chunks, selected, mode, mail, runtimeId, storageDenied = false,
     localStorage: { get() { touched++; if (storageDenied) throw new Error("synthetic storage denial"); return { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value) }; } },
   });
   const context = vm.createContext({
-    window, TextEncoder, process: { env: { NEXT_PUBLIC_GTM_ID: runtimeId } },
+    // Time is external I/O. Register inert callbacks for an inlined polling hook;
+    // deadline/interval behavior is covered by focused fake-clock hook tests.
+    setTimeout: () => 1, clearTimeout: () => {},
+    window, TextEncoder, navigator: { locks }, process: { env: { NEXT_PUBLIC_GTM_ID: runtimeId } },
     crypto: { subtle: { digest: (algorithm, bytes) => {
       digestCalls++;
       assert.equal(algorithm, "SHA-256");
@@ -68,7 +71,7 @@ function runtime(chunks, selected, mode, mail, runtimeId, storageDenied = false,
     jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }),
     useState: initial => {
       const index = stateIndex++;
-      if (!(index in states)) states[index] = surface === "sms" ? [sms, mode === "redisplay" ? "verified" : "otp", uuid, false, false, "09000000000", "000000", "", null, null, null, 0, 0, mode === "phone-change"][index] : index === 2 ? { client, pid: "url-correlation-only", state: polling, revision: 0 } : initial;
+      if (!(index in states)) states[index] = surface === "sms" ? [sms, mode === "redisplay" ? "verified" : "otp", uuid, false, false, "09000000000", "000000", "", null, null, null, 0, 0, mode === "phone-change"][index] : index === 2 ? { client, pid: paymentId, state: polling, revision: 0 } : initial;
       return [states[index], value => { states[index] = typeof value === "function" ? value(states[index]) : value; }];
     },
     useRef: initial => { const index = refIndex++; return refs[index] ??= { current: initial }; },
@@ -110,12 +113,34 @@ function runtime(chunks, selected, mode, mail, runtimeId, storageDenied = false,
     }
     assert.fail(`compiled ${name} export missing`);
   }
+  function exported(name) {
+    const candidates = new Map();
+    for (const [id, factory] of modules) {
+      if (!isAnalytics(factory)) continue;
+      const exports = load(id);
+      const value = exports[name];
+      if (typeof value === "function") return value;
+      // Turbopack shortens internal export names in actual production chunks.
+      // Identify only the narrow, reviewed function roles, without replacing code.
+      for (const candidate of Object.values(exports)) {
+        if (typeof candidate !== "function") continue;
+        const source = candidate.toString();
+        const matches = name === "reportPurchaseComplete" ? source.includes("transaction_id") && source.includes('"in_progress"')
+          : name === "recoverPurchases" ? source.includes(".getPayment(")
+          : name === "rememberPurchase" ? source.includes('"aborted"') && source.includes(".status") && !source.includes(".getPayment(") : false;
+        if (matches) candidates.set(source, candidate);
+      }
+    }
+    if (candidates.size === 1) return [...candidates.values()][0];
+    assert.fail(`compiled analytics export missing: ${name}`);
+  }
   function render(name) {
     surface = name === "SmsVerification" ? "sms" : "payment";
     stateIndex = 0; refIndex = 0; effects.length = 0;
-    context.__component = component(name);
+    context.__component = component(name); context.__pid = payment.id;
+    if (surface === "payment" && states[2]) states[2].pid = payment.id;
     // Deliberately different from Payment.id: URL input cannot be the event ID.
-    return execute('__component({pid:"url-correlation-only",preRegistration:true})', context);
+    return execute('__component({pid:__pid,preRegistration:true})', context);
   }
   function form(node) {
     if (!node || typeof node !== "object") return null;
@@ -125,6 +150,9 @@ function runtime(chunks, selected, mode, mail, runtimeId, storageDenied = false,
   }
   return {
     events, storage, session, polling, payment, window,
+    report(input) { return exported("reportPurchaseComplete")({ userId: uuid, revenue: 1500, paymentId, ...input }); },
+    remember(value = payment, result) { return exported("rememberPurchase")(value, value.id, uuid, result); },
+    recover(value = payment, isActive = () => true) { return exported("recoverPurchases")({ getPayment: async () => ({ data: value }) }, uuid, null, isActive); },
     get touched() { return touched; }, get digestCalls() { return digestCalls; }, get wallet() { return wallet; },
     async sms() {
       const submit = form(render("SmsVerification"));
@@ -144,10 +172,20 @@ function assertPayload(run, event, mail, count = 1, id = paymentId) {
   if (mail !== "missing" && mail !== "failure") expected.user_email = emailHash;
   if (event === "purchase_complete") { expected.revenue = 1500; expected.transaction_id = id; }
   assert.equal(JSON.stringify(run.events[count - 1]), JSON.stringify(expected), "unapproved event payload / raw email / wrong identity or revenue");
-  assert(!JSON.stringify([...run.storage]).includes(uuid), "raw UUID persisted");
   assert(!JSON.stringify([...run.storage]).includes(emailHash), "email hash persisted");
   assert(!JSON.stringify([...run.storage]).includes("@"), "raw email persisted");
   for (const [key, value] of run.storage) {
+    if (key === "oripoke:cv:purchase_pending:v1") {
+      const rows = JSON.parse(value);
+      assert(Array.isArray(rows) && rows.length <= 5);
+      for (const row of rows) {
+        assert.deepEqual(Object.keys(row).sort(), ["paymentId", "savedAt", "userId"]);
+        assert.equal(row.userId, uuid);
+        assert(Number.isSafeInteger(row.savedAt));
+      }
+      continue;
+    }
+    assert(!value.includes(uuid), "raw UUID in sent marker");
     assert.match(key, /^oripoke:cv:(?:registration_complete|purchase_complete):[a-z0-9]+$/);
     assert.equal(value, "1");
   }
@@ -220,11 +258,39 @@ export async function verifyClientChunks(chunks, state) {
       const retry = runtime(chunks, variant, "succeeded", "normal", runtimeId);
       Object.defineProperty(retry.window, "dataLayer", { configurable: true, value: Object.freeze([]) });
       retry.purchase(); await retry.settle();
-      assert.equal(retry.storage.size, 0, "failed push marked sent");
+      assert(![...retry.storage.keys()].some(key => key.startsWith("oripoke:cv:purchase_complete:")), "failed push marked sent");
       Object.defineProperty(retry.window, "dataLayer", { configurable: true, get: () => retry.events });
       retry.purchase(); await retry.settle();
       assertPayload(retry, "purchase_complete", "normal", state.gtm_enabled ? 1 : 0);
     }
   }
+  // Execute the emitted recovery helper, not a second source implementation.
+  for (const mode of ["succeeded", "processing", "failed", "konbini", "virtual_account", "wrong-id", "logout"]) {
+    const run = runtime(chunks, null, "processing", "missing", "invalid");
+    await run.remember();
+    run.payment.status = mode === "processing" ? "processing" : mode === "failed" ? "failed" : "succeeded";
+    if (["konbini", "virtual_account"].includes(mode)) run.payment.method = mode;
+    const response = mode === "wrong-id" ? { ...run.payment, id: "00000000-0000-4000-9000-000000000099" } : run.payment;
+    await run.recover(response, () => mode !== "logout");
+    assertPayload(run, "purchase_complete", "missing", state.gtm_enabled && mode === "succeeded" ? 1 : 0);
+    if (state.gtm_enabled) {
+      const pending = JSON.parse(run.storage.get("oripoke:cv:purchase_pending:v1") ?? "[]");
+      assert.equal(pending.length, ["processing", "logout"].includes(mode) ? 1 : 0, `compiled recovery queue ${mode}`);
+    } else assert.equal(run.touched, 0, "disabled compiled recovery touched browser I/O");
+  }
+  const held = new Set();
+  const locks = { async request(name, options, action) {
+    if (options.ifAvailable && held.has(name)) return action(null);
+    held.add(name); try { return await action({}); } finally { held.delete(name); }
+  } };
+  const storage = new Map();
+  const a = runtime(chunks, null, "succeeded", "missing", "invalid", false, storage, locks);
+  const b = runtime(chunks, null, "succeeded", "missing", "invalid", false, storage, locks);
+  const results = await Promise.all([a.report(), b.report()]);
+  assert.equal(a.events.length + b.events.length, state.gtm_enabled ? 1 : 0, "compiled cross-tab exclusion");
+  if (state.gtm_enabled) {
+    assert(results.includes("pushed") && results.includes("in_progress"));
+    assert.equal(await b.report(), "already_sent");
+  } else assert(results.every(result => result === "not_applicable"));
   verifiedBytes.add(fingerprint);
 }

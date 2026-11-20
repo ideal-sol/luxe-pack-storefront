@@ -21,7 +21,7 @@ beforeEach(() => {
   writeFileSync(join(root, "package.json"), JSON.stringify({
     engines: { node: "22.23.5", pnpm: "10.12.1" },
     packageManager: "pnpm@10.12.1",
-    dependencies: { next: "16.4.2", "@oripa/storefront-client": client },
+    dependencies: { next: "16.4.5", "@oripa/storefront-client": client },
     devDependencies: { "@oripa/storefront-testkit": testkit },
   }));
   writeFileSync(join(root, "pnpm-lock.yaml"), [
@@ -51,10 +51,15 @@ describe("exact alpha.52 Production provenance", () => {
     expect(() => validateProvenance(root, authority)).toThrow("Runtime toolchain pin mismatch");
   });
 
+  it.each(["16.4.2", "16.4.6", "^16.4.5"])("rejects non-exact approved Next pin %s", next => {
+    mutateJson("package.json", value => { value.dependencies.next = next; });
+    expect(() => validateProvenance(root, authority)).toThrow("Runtime toolchain pin mismatch");
+  });
+
   it("rejects a stale Next or package manager pin", () => {
     mutateJson("package.json", (value) => { value.dependencies.next = "16.4.1"; });
     expect(() => validateProvenance(root, authority)).toThrow("Runtime toolchain pin mismatch");
-    mutateJson("package.json", (value) => { value.dependencies.next = "16.4.2"; value.packageManager = "pnpm@10.12.0"; });
+    mutateJson("package.json", (value) => { value.dependencies.next = "16.4.5"; value.packageManager = "pnpm@10.12.0"; });
     expect(() => validateProvenance(root, authority)).toThrow("Runtime toolchain pin mismatch");
   });
 

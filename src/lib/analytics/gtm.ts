@@ -79,7 +79,7 @@ export async function reportRegistrationComplete(userKey: string | null, email?:
   }
 }
 
-async function hashEmail(email?: string | null): Promise<string | undefined> {
+export async function hashEmail(email?: string | null): Promise<string | undefined> {
   try {
     const normalized = email?.normalize("NFKC").trim().toLowerCase();
     if (!normalized) return undefined;
@@ -98,32 +98,51 @@ function validPurchase(userId: unknown, revenue: unknown, paymentId: unknown): b
 }
 
 /** Platformが成功を確認したPaymentのみ呼び出す。保存拒否時も同一表示中は抑止。 */
-export async function reportPurchaseComplete({ userId, email, revenue, paymentId }: {
+export type PurchaseReportResult = "pushed" | "already_sent" | "in_progress" | "failed" | "not_applicable" | "aborted";
+
+export function purchaseAlreadySent(paymentId: string): boolean {
+  if (purchaseSent.has(paymentId)) return true;
+  try { return window.localStorage.getItem("oripoke:cv:purchase_complete:" + compactKey(paymentId)) === "1"; }
+  catch { return false; }
+}
+
+/** Shared exclusion mechanism; delivery guarantees remain specific to each event. */
+export async function withConversionLock<T>(name: string, action: () => Promise<T>, unavailable: T, ifAvailable = true): Promise<T> {
+  const locks = typeof navigator !== "undefined" ? navigator.locks : undefined;
+  if (!locks) return action();
+  return locks.request(name, { ifAvailable }, lock => lock ? action() : unavailable);
+}
+
+export async function reportPurchaseComplete({ userId, email, revenue, paymentId, isActive = () => true }: {
   readonly userId: string | null;
   readonly email?: string | null | undefined;
   readonly revenue: number;
   readonly paymentId: string;
-}): Promise<void> {
+  readonly isActive?: () => boolean;
+}): Promise<PurchaseReportResult> {
   let reserved = false;
   try {
-    if (!gtmContainerId() || typeof window === "undefined" || !validPurchase(userId, revenue, paymentId)) return;
-    if (purchaseInFlight.has(paymentId) || purchaseSent.has(paymentId)) return;
+    if (!gtmContainerId() || typeof window === "undefined" || !validPurchase(userId, revenue, paymentId)) return "not_applicable";
+    if (purchaseAlreadySent(paymentId)) return "already_sent";
+    if (purchaseInFlight.has(paymentId)) return "in_progress";
     purchaseInFlight.add(paymentId);
     reserved = true;
-    const key = "oripoke:cv:purchase_complete:" + compactKey(paymentId);
-    try {
-      if (window.localStorage.getItem(key) === "1") return;
-    } catch { /* 保存拒否時はメモリ上の抑止を使う。 */ }
-    const userEmail = await hashEmail(email);
-    if (!pushDataLayerEvent({ event: "purchase_complete", user_id: userId!, user_email: userEmail, revenue, transaction_id: paymentId })) return;
-    purchaseSent.add(paymentId);
-    try { window.localStorage.setItem(key, "1"); }
-    catch { /* push済み。計測失敗を画面や決済へ伝播させない。 */ }
-  } catch { /* 計測の失敗で決済処理を再実行しない。 */ }
+    return await withConversionLock<PurchaseReportResult>("oripoke:cv:purchase:" + compactKey(paymentId), async () => {
+      if (!isActive()) return "aborted";
+      if (purchaseAlreadySent(paymentId)) return "already_sent";
+      const userEmail = await hashEmail(email);
+      if (!isActive()) return "aborted";
+      if (!pushDataLayerEvent({ event: "purchase_complete", user_id: userId!, user_email: userEmail, revenue, transaction_id: paymentId })) return "failed";
+      purchaseSent.add(paymentId);
+      try { window.localStorage.setItem("oripoke:cv:purchase_complete:" + compactKey(paymentId), "1"); }
+      catch { /* push済み。保存失敗を決済へ伝播させない。 */ }
+      return "pushed";
+    }, "in_progress");
+  } catch { return "failed"; }
   finally { if (reserved) purchaseInFlight.delete(paymentId); }
 }
 
-function compactKey(value: string): string {
+export function compactKey(value: string): string {
   let hash = 2166136261;
   for (let index = 0; index < value.length; index += 1) {
     hash ^= value.charCodeAt(index);
