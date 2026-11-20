@@ -2050,3 +2050,122 @@ Local validation: Provenance/Artifact workflow227 tests PASS; immutable artifact
 - Local focused regression initially534/536 PASS with an old escaped version assertion and a local compiled-fixture timeout failing. Corrected the stale exact-version assertion; did not weaken assertions or increase timeouts. Affected workflow/compiled authority tests rerun alone131/131 PASS. Other affected focused suites passed; lint/typecheck PASS. Final-head full CI plus actual OFF/isolated synthetic-ON compiled observations and fresh review are recorded in PR250. No claim that the initial failed run passed.
 - Future release still needs an explicitly approved new application Source binding after Source merge; the retained PR247 Production Authority/Artifact is historical and is not silently upgraded. Current provenance intentionally fails closed for a16.4.2 candidate. Formal Production ARM64 Artifact publication and OLD Test/NEW Runtime acceptance remain separate authorized phases; Browser Acceptance is not executed here.
 - Platform/LINE work remains parked, migrations reserved/created/applied0/0/0, runtime/ENV/GTM-console changes0, Source Merge0, formal Build/Dispatch0. Existing Source and Runtime authorities are not moved or relabeled. Detailed final SHA/check/build hashes and fresh review follow in the PR without another Source-only evidence commit.
+
+
+## SF250-PRODAUTH — Production Authority limited Draft
+
+Change ID: SF250-PRODAUTH
+Issue: #251
+Risk: R3
+Lane: Strict Change
+Application Runtime Activation: none
+Base SHA: a61adb65fee1fa64ca218945d6d2c90cb2c56adb
+Branch: chore/SF250-PRODAUTH
+Worktree mode: dedicated isolation; occupied Source and Platform worktrees untouched
+
+SF250-PRODAUTH prepares only the Production Authority Draft. No Ready, Merge,
+formal Build/dispatch, Stage, Cutover, Runtime, helper or Production connection.
+The installed Canonical App transport requires an Issue binding; that Issue
+tracks the separate Human Authority/Build GO and does not expand permission.
+
+Fixed application Source PR250: squash a61adb65fee1fa64ca218945d6d2c90cb2c56adb,
+reviewed HEAD32f7dcfc9077b7cb69820070fb27bbdb34dfd34e,
+Tree098e75388b3ae70ad9b414615ae1d3ca8e2e749a; tree equality/content diff0.
+Next16.4.5 / Node22.23.5 / pnpm10.12.1. No application Source edits.
+
+### 30 / 300 second compatibility decision
+
+PASS for the approved v1.4 client-policy delta against the current running API;
+the immutable alpha.52 OpenAPI still records the historical 30-second policy.
+This is an explicit supersession record, not a claim that its bytes say300.
+The latest SF250-PRODAUTH Human instruction confirms v1.4 approval and explicitly
+permits resolving the discrepancy by existing Human decision/specification
+priority. PR250 H1/H2 and its merged Worklog implement that decision. Under the
+latest explicit Human decision priority in AGENTS.md and canonical V2 authority,
+v1.4 supersedes this client automatic-wait policy for this exact Source only.
+
+Formal vendor/oripa/LINE-ALPHA52-20261110/public.openapi.json getPayment has
+x-oripa-polling recommended_interval_seconds=2 and
+maximum_automatic_wait_seconds=30. These describe client scheduling, not HTTP
+request timeout, Payment ID lifetime or a server prohibition on later reads.
+It is safe authenticated-read/no-store; GET returns canonical Payment state,
+does not force provider refresh/create Payment/grant points. At running API
+42cac7fd8e176b8686fedffc7673734036bf670e, apps/api/routes/api.php uses
+v2.browser:user + v2.realm:user; V2PaymentController::show validates UUID and
+calls V2FincodePaymentService::show -> present, constrained by current user ID.
+There is no elapsed30s/read-count expiry in that read path. The API bootstrap,
+route/middleware/provider sources show no numeric authenticated-read throttle
+for this endpoint. This does not prove live ingress capacity or configuration.
+No runtime inspection or load test is performed.
+
+v1.4 changes scheduling only: immediate read,2s before30s,5s thereafter, no new
+logical getPayment at/after300s; only an already-started current-run ID-matched
+succeeded result may be accepted late. Terminal states stop; konbini and
+virtual_account stop automatic thanks polling and are excluded from recovery.
+HTTP method/path, userSession/realm/ownership, Payment UUID, response schema and
+status enum remain unchanged. 401/403/invalid handling is not relaxed. No HTTP
+or generated Client/Testkit change is required to represent these same reads.
+
+Approximately70 logical reads is a single uninterrupted polling-run estimate,
+not a global/user/tab limit or an exact HTTP-attempt maximum. Schedules wait for
+the prior request; latency, errors and Retry-After reduce scheduled iterations.
+The immutable alpha.52 transport (publisher8d56c5e1) permits2 internal retries
+for safe GET/HEAD on transport/timeouts and502/503/504,100/200ms+jitter<=50ms:
+up to3 HTTP attempts per logical read (roughly210 for70 logical calls). It does
+not internally retry429. The thanks scheduler preserves Retry-After precedence;
+recovery retains and stops on429. Internal retries of an in-flight logical read
+may continue after300s;300s limits new application-level calls, not each wire
+attempt. Other tabs/recovery can add reads. No endpoint numeric request budget
+or server30s lifetime is contradicted in the pinned contract/implementation.
+No throughput, live ingress acceptance or provider-delay guarantee is claimed.
+The unchanged Client retry contract and backoff still apply. If a separately
+observed live rate constraint contradicts this analysis, HOLD for Platform
+clarification; do not weaken429/security or silently republish Contract.
+
+### Platform and immutable Contract bindings
+
+Update platform_runtime_source_sha to current running API42cac7fd8e176b8686fedffc7673734036bf670e
+and platform_authority_merge_sha to PR707 bfb84acd214eb148585d2b4212a0199ec254d34c.
+Runtime status is Human-supplied; merged PR707 independently binds that Source.
+Do not substitute staged PHP8.4.28 Source0254792e8dc0baafbef45c6f2ca861ee91cfa191
+or PR716 Authority3442dfb875630ed2009896657092032db12a6de4. Reject both and old
+Runtime/Authority bindings in tests. Retain platform_source_sha8d56c5e1d450e4bc9ee07c1c97886aad054c02ee
+as Contract publisher/history. alpha.52 Artifact13742019147, manifest/archive,
+OpenAPI public alpha.48, Client/Testkit SHA256, vendor/package/lock unchanged.
+JSON changes exactly source_sha/source_pr/authority and the2 runtime bindings;
+provenance executable changes only2 expected SHA literals, with guards retained.
+
+### Validation and later formal Build
+
+Reuse PR250 Required5/5 Run44697991208, final2195 tests/clean archive/lint/typecheck,
+Production108 dependencies all-severity0 (Full Low2/Moderate9, High/Critical0),
+compiled synthetic ON/OFF and37 compiled/mutation cases. These validate the
+fixed application/build input bytes; they are not this Draft final-head checks
+or OLD Test acceptance. Run focused Authority negative tests locally and normal
+Required CI on this Draft once. Do not repeat local full application tests or
+Builds. Final-head CI/review results and IDs follow in PR evidence.
+
+Formal .github/workflows/production-artifact.yml remains byte-identical toPR250:
+native ubuntu-24.04-arm, Next16.4.5 and existing build-time GTM-5DQRPNN2 ON,
+registration_complete/purchase_complete compiled observation, Build ID equality,
+Source/Tree provenance, package digest, smoke and exact-ID re-download retained.
+No actual GTM container/event is sent; OLD Test GTM OFF remains.
+After separate Authority Merge GO and Build GO, use merged protected-main
+Workflow SHA as control authority, exact source_sha=a61adb65fee1fa64ca218945d6d2c90cb2c56adb,
+and the existing approved app_name/site_url/CDN inputs (confirm current values
+from approved handoff; never copy OLD Test). Dispatch the existing workflow once;
+verify ARM64, manifest/source/tree/toolchain/GTM/build-ID/checksums/security,
+record run/artifact ID/digest and exact-ID download before handing off. This
+Draft HEAD is not dispatch authority and no Build is authorized now.
+
+OLD Test Technical PASS and Human browser acceptance are pending prerequisites
+for later Production Cutover; neither is inferred. Future single-port/systemd
+restart with no ALB maintenance has known brief outage and old-chunk-fetch risks
+reserved to later Human GO. Cutover helper unchanged/unexecuted; PHP staged
+image and API rollback assets untouched. No Runtime/API/DB/auth/points/payment/
+draw/infrastructure behavior change; migrations created0/applied0. No provider
+E2E, load test, Browser or live GTM verification. Rollback now: abandon Draft;
+after separately authorized merge, reviewed Authority revert. Branch/worktree
+retained for Human review; no merge/squash actor. Formal Build0/Runtime0.
+
+Local validation: focused production-provenance + Production Workflow242/242 PASS; affected ESLint, Artifact, policy, secrets, GTM Source verifier and whitespace PASS. Exact-source validation PASS: five JSON fields only, executable two SHA literals only; reviewed/squash Tree equality and diff0; current API getPayment path plus PaymentDetail/OpaqueId equal immutable alpha.52 JSON. Initial identity script lacked the reviewed commit locally; fetched PR250 head and reran PASS, no source correction. Final-head Required CI/review results recorded in PR without further source commits. Local application Build0, formal Build0, Runtime0.

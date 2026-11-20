@@ -63,20 +63,20 @@ describe("exact alpha.52 Production provenance", () => {
     expect(() => validateProvenance(root, authority)).toThrow("Runtime toolchain pin mismatch");
   });
 
-  it("pins the Human-approved PR247 LINE navigation restoration Runtime Source independently of Workflow/main without Activation GO", () => {
-    expect(approvedSource.source_sha).toBe("21bae8393325d69d12aee3a816c0f3946b510084");
-    expect(approvedSource.source_pr).toBe(247);
+  it("pins the Human-approved PR250 payment CV v1.4 and Next security Runtime Source independently of Workflow/main without Activation GO", () => {
+    expect(approvedSource.source_sha).toBe("a61adb65fee1fa64ca218945d6d2c90cb2c56adb");
+    expect(approvedSource.source_pr).toBe(250);
     expect(approvedSource.source_sha).not.toBe("1e3ba92780825a12485f651ea79025ad47f1321b");
-    expect(approvedSource.authority).toContain("8c6fa1dd69d5a7cf2c0a433fe8d134855e267453");
+    expect(approvedSource.authority).toContain("098e75388b3ae70ad9b414615ae1d3ca8e2e749a");
     expect(approvedSource.authority).toContain("GTM-5DQRPNN2");
     expect(approvedSource.activation_authorized).toBe(false);
     expect(approvedSource.source_sha).not.toBe("7dc355d3174bdf8a4731741eea7aa4a80752b724");
     expect(approvedSource.source_sha).not.toBe("9702793ec7fdad4332e634b230dc6661ff176655");
     expect(approvedSource.authority.startsWith("Human-approved exact Runtime Source:")).toBe(true);
-    expect(approvedSource.authority).toContain("Human approves Authority merge and formal Artifact preparation through the existing Canonical paths");
+    expect(approvedSource.authority).toContain("Authority Ready/Merge and formal Production Build/Dispatch/Stage/Cutover require separate Human GO");
     expect(approvedSource.authority).not.toContain("Formal Human Source GO is NOT ISSUED");
     expect(approvedSource.authority).not.toContain("Draft candidate exact Runtime Source:");
-    expect(approvedSource.platform_authority_merge_sha).toBe("ccd8468de1d8375fae5df30b92eca81305938c3a");
+    expect(approvedSource.platform_authority_merge_sha).toBe("bfb84acd214eb148585d2b4212a0199ec254d34c");
     expect(approvedSource.authority).not.toContain("PR #186 GTM is excluded");
   });
 
@@ -151,12 +151,12 @@ describe("exact alpha.52 Production provenance", () => {
 
   it("accepts approved source pins, immutable artifact identity and every digest", () => {
     expect(validateProvenance(root)).toMatchObject({
-      source_sha: "21bae8393325d69d12aee3a816c0f3946b510084",
+      source_sha: "a61adb65fee1fa64ca218945d6d2c90cb2c56adb",
       contract_version: "2.0.0-alpha.52", contract_artifact_id: "13742019147",
       contract_manifest_sha256: "72bd3b18fb36bac68b948e4f936a7b64fce03cc1de95df1b3eedc826e54cee54",
       client_pin: "2.0.0-alpha.52", testkit_pin: "2.0.0-alpha.52", public_openapi_pin: "2.0.0-alpha.48",
-      platform_runtime_source_sha: "9235350523accdb2c3d41dca869d7d44f0863ba5",
-      platform_authority_merge_sha: "ccd8468de1d8375fae5df30b92eca81305938c3a",
+      platform_runtime_source_sha: "42cac7fd8e176b8686fedffc7673734036bf670e",
+      platform_authority_merge_sha: "bfb84acd214eb148585d2b4212a0199ec254d34c",
       contract_archive_sha256: "c08147d9dacc5c78c4edd7f548c3ad66fca9affbed432b47cb216609150cb4dd",
       platform_source_sha: "8d56c5e1d450e4bc9ee07c1c97886aad054c02ee",
       client_sha256: "1f436091bc3c2a7dbb284a1275d61a053bb372d7134ef425f14427691c330341",
@@ -189,6 +189,10 @@ describe("exact alpha.52 Production provenance", () => {
     ["platform_authority_merge_sha", "8eadec09a187e3f220dc09d36e9a14b98511931b"],
     ["platform_runtime_source_sha", "b5c28015ef94cb80f6702a61b1237cacd91d9863"],
     ["platform_authority_merge_sha", "8f9f9a8c9181361a6cbc540b54ddc476ad7fc9d1"],
+    ["platform_runtime_source_sha", "9235350523accdb2c3d41dca869d7d44f0863ba5"],
+    ["platform_authority_merge_sha", "ccd8468de1d8375fae5df30b92eca81305938c3a"],
+    ["platform_runtime_source_sha", "0254792e8dc0baafbef45c6f2ca861ee91cfa191"],
+    ["platform_authority_merge_sha", "3442dfb875630ed2009896657092032db12a6de4"],
     ["platform_authority_merge_sha", "PENDING_HUMAN_SOURCE_GO"],
     ["platform_authority_merge_sha", "0372d25ea61a4e6f15485568819f8f1029443b73"],
     ["platform_authority_merge_sha", "8d56c5e1d450e4bc9ee07c1c97886aad054c02ee"],
@@ -455,7 +459,7 @@ describe("Production source authority", () => {
     expect(consulted).toBe(false);
   });
 
-  it.each(["1e3ba92780825a12485f651ea79025ad47f1321b", "main", "abc", "A".repeat(40), "0".repeat(40), "f".repeat(40),
+  it.each(["21bae8393325d69d12aee3a816c0f3946b510084", "32f7dcfc9077b7cb69820070fb27bbdb34dfd34e", "1e3ba92780825a12485f651ea79025ad47f1321b", "main", "abc", "A".repeat(40), "0".repeat(40), "f".repeat(40),
     "dcde7c91926d725a69b305e7bd9cc9b48d5d4fe6",
     "00e10604ee262470a96f4c392d2c3b4f2511e98a", "cc398cc4d943f4a426fa9540cc6258edf9bc5208",
     "7dc355d3174bdf8a4731741eea7aa4a80752b724", "9702793ec7fdad4332e634b230dc6661ff176655",
