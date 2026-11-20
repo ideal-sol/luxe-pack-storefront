@@ -9,13 +9,16 @@ import { verifyClientChunks } from "./verify-gtm-client.mjs";
 
 const observationPath = ".next/gtm-build-observation.json";
 const sourceDigests = {
-  "scripts/verify-gtm-client.mjs": "bca48a957a4619e8809378889e3191881cf6f3379fbdf37cce8e37a425e58fc3",
-  "src/components/payment/payment-thanks.tsx": "30e67d5e8379c8f6c8ed013debd1b8a8db7688da82d386997801cf9267a8ca9c",
-  "src/components/payment/use-payment-polling.ts": "a88f2e5ac1a032dffdbad53001dfeb85bf89de042eb3ae459286ebf569d634ea",
-  "src/lib/analytics/gtm.ts": "4954f8c5118a6a3cfec98295b4dad5fa726cb4f94682d75ae07d23df65b00fc2",
+  "src/lib/platform/payment-problem.ts": "e914a34882eeebb026d6df722e132278abeff397888ca6cee1ca174e2ee24195",
+  "src/components/analytics/purchase-conversion-recovery.tsx": "04068ab2159c15cc5f10e76751ce463c761cc716cfa71394db1e4086fb528a96",
+  "src/lib/analytics/purchase-recovery.ts": "78e4adda210edbd18e0ef657cd416a1bc232358898c86845c2ede5eb4163a64a",
+  "scripts/verify-gtm-client.mjs": "4c565183ab8a77e5614cfec87cc7e72946f32ab25f9b84613012434910ca41a9",
+  "src/components/payment/payment-thanks.tsx": "2f31eae7c7a7b075b881a80ca326e78cb2d4456c43d46183cf8fb047ea7b8fad",
+  "src/components/payment/use-payment-polling.ts": "e0698560048bb1600e78923b3a9658890573ad61e0e674af6fc5a24ad389d3f9",
+  "src/lib/analytics/gtm.ts": "5b289d86b77d3b000ad032a961a3f92a7e396c82d87b14e36fd0f01bb4c7e47c",
   "src/components/analytics/google-tag-manager.tsx": "012e0bea04cbca46f943cd4f6146c90d0f2f359c7b1c16386e3f3ace979dc337",
   "src/components/account/sms-verification.tsx": "cd3389248bc07927b7c5ed02ebdb86e8f95142d20d93cbb83cb2f2b0b3cf48b8",
-  "src/app/layout.tsx": "f4e56f7a0695bd5a0773065be3a8989edcd3226836d1dbb268557263c837ca68",
+  "src/app/layout.tsx": "3c899a5d401cabf4f4fac85666de99501ff9b9405ad897094ee377c06233649b",
   "next.config.ts": "d8440b8f51f07c4e4670ce361c05a7e4b259ba58660d5f39e286a8ba7796a9b5",
 };
 

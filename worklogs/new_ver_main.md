@@ -1973,3 +1973,64 @@ Local validation: Provenance/Artifact workflow227 tests PASS; immutable artifact
 - Bind exact Source/PR247/HEAD/Tree; align Platform Runtime Source to Callback PR688 9235350523accdb2c3d41dca869d7d44f0863ba5 and formal Platform Authority PR689 ccd8468de1d8375fae5df30b92eca81305938c3a, verified against merged PRs and that Authority manifest. Runtime completion/browser acceptance is Human-provided; no live Runtime probe by this task. Contract publisher remains 8d56c5e1d450e4bc9ee07c1c97886aad054c02ee, distinct from Runtime identity.
 - Exact five Authority fields updated; verifier changes only two expected SHA literals, with every Gate predicate unchanged. Existing provenance tests align current pins and add two obsolete Platform identity rejection cases. Focused139/139, affected ESLint, Artifact validation and independent Authority/Gate parity checks PASS. Final policy/secret/whitespace, Required CI and fresh Strict review recorded on PR.
 - alpha.52/Artifact13742019147, Client/Testkit/Manifest/digests, Node22.23.5/pnpm10.12.1/Next16.4.2, TOP100/GTM, LINE500points/180days behavior and activation_authorized=false preserved. No product/Workflow/Platform/financial/DB/ENV/infrastructure or local main changes. Migrations0/0; local/formal Build0, manual CI rerun0, Runtime Activation0; browser/E2E/Runtime acceptance not executed. Authority merge remains Human-only GO; its actual merge SHA will be Workflow SHA, distinct from Runtime Source21bae839. Rollback via reviewed Authority revert; retain branch/worktree pending approval.
+
+
+## CV-PURCHASE-RELIABILITY-20261120 — v1.4 Source Draft
+
+- Human prioritizes payment CV v1.4 first. Issue none; R3; Lane Strict Change;
+  Application Runtime Activation none. Base fce8686c0599c47758757a9d7ccb987eeea11841.
+  One isolated Source checkout/branch and one Draft PR. Ready/Merge/OLD Test/
+  Production/real GTM activation remain prohibited pending separate Human GO.
+- H1/H2: independent 30s extension and 300s deadline timers; extended boolean
+  on polling state, 2s then 5s scheduling, Retry-After lower bound, no new GET
+  scheduled at/after deadline, current-run ID-matched late success accepted.
+  Stop/cleanup clears every timer. Only transport/5xx transient reads retry.
+  Extended polite live region shows the specified copy and purchase-history link.
+- H3/H4 and D1–D6 implemented without changing payment mutation authority:
+  six report outcomes including aborted; existing payload/registration event and
+  historical sent-marker keys retained. A per-payment Web Lock covers sent-check,
+  email hashing, push and marker. No Web Locks: tab-local/marker fallback;
+  storage denial: tab-local only; other devices/storage clearing: no guarantee.
+- Pending key oripoke:cv:purchase_pending:v1 contains paymentId/userId/savedAt
+  only, max5, 24h. Every queue mutation uses its shared Web Lock and rereads
+  current storage after acquisition. No network/report wait under queue lock.
+  RECOVERABLE_METHODS excludes konbini/virtual_account at save and recovery;
+  thanks-page succeeded reporting for both remains. Failed/in-progress successful
+  reports are retained for recovery; pushed/already_sent/not_applicable removed;
+  aborted leaves records unchanged. Per-method TTL policy remains extensible.
+- PurchaseConversionRecovery is inside SessionProvider/Suspense, once per
+  document on the first authenticated non-thanks path, including SPA departure
+  from thanks. Permanent run invalidation on logout/session loss/user switch;
+  validity guards after GET, immediately before push, after queue lock before
+  mutation and before the next GET. Read errors delete only for404
+  PAYMENT_NOT_FOUND;401/403/other404/429/transport/5xx retain and stop.
+  Existing callGlobalFetch/SESSION_ACCESS_REJECTED behavior is unchanged.
+- PR139 inspected at aa3b62b637933fe1b29563e1c8926251c3734486. Preserve current
+  first-buy stylesheet/StorefrontShell preview flag and all existing layout
+  children; recovery is additive. No parallel branch/worktree edited.
+- Source Digest pins, narrow reviewed analytics storage pins, exact packaged
+  source inventory, compiled helper/component verifier and mutation tests updated.
+  No broad storage exemption, Security/Auth/LINE Identity relaxation or CI edit.
+- Spec11 source fact confirmed: browser provider SDK submit normally returns
+  unknown; reportUnivapayCharge is called only for reported plus a valid UUID.
+  No provider fix, production-cause claim or provider code change in this Change.
+- Local focused polling/reporting/thanks/recovery:173 tests PASS. Focused build/
+  storage/readiness/payment-boundary regression:364 tests PASS before final added
+  coverage; final-head CI and exact compiled ON/OFF validation recorded in PR.
+  An early exploratory full run failed on stale digest/expectation/inventory and
+  local timeout failures; it is not final-head PASS evidence. No assertions or
+  timeout thresholds weakened. Final validation results belong to PR evidence.
+- Not run: real-browser GTM acceptance, real payment/provider E2E, OLD Test/
+  Preview deployment, Production, migrations, Platform/Contract publication.
+  Backend/Contract/Auth/points/payment start/confirm/locks/payment-attempt,
+  UnivaPay/PaIdy mutation logic and infrastructure are out of scope and unchanged.
+- Human next steps after Source review: separate Merge and Runtime GO, browser
+  acceptance for 30s/5min/late success/SPA recovery/multiple tabs/excluded methods;
+  confirm URL-independent purchase_complete trigger and downstream transaction_id
+  dedup separately. Existing OLD Test/Preview GTM stays OFF until explicit GO.
+  Rollback before activation: no runtime action; later revert Source through PR
+  and rebuild under normal authority, retain prior runtime pending approval.
+- Platform/LINE-FRIEND-CV-20261120 edits remain in their separate uncommitted
+  Source checkout for later resumption; no new Migration reserved/created,
+  allocation lock acquired only after prior owner's normal handoff then released
+  when Human prioritized payment. Formal LINE Contract adoption remains HOLD.

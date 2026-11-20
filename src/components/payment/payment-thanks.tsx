@@ -14,6 +14,7 @@ import { paymentMethodLabel } from "./payment-history-presentation";
 import { usePaymentReturnEvent } from "./use-payment-return-event";
 import { finishPaymentAttempt, readPaymentAttempt, rememberFailedInlinePayment, isFailedInlinePayment } from "./payment-attempt";
 import { reportPurchaseComplete } from "@/lib/analytics/gtm";
+import { rememberPurchase } from "@/lib/analytics/purchase-recovery";
 
 function formatAmount(payment: Payment) {
   return new Intl.NumberFormat("ja-JP", {
@@ -147,14 +148,19 @@ export function PaymentThanks({ pid }: { readonly pid: string | null }) {
   const univapay = correlatedInline && verified?.method === "credit_card";
 
   useEffect(() => {
-    if (session.status !== "authenticated" || polling.status !== "ready" || polling.payment.status !== "succeeded" || polling.payment.amount?.currency !== "JPY") return;
-    void reportPurchaseComplete({
-      userId: session.session.user?.id ?? null,
-      email: session.session.user?.email,
-      revenue: polling.payment.amount.amount,
-      paymentId: polling.payment.id,
-    });
-  }, [polling, session]);
+    if (session.status !== "authenticated" || !session.session.user?.id || (polling.status !== "ready" && polling.status !== "delayed") || polling.payment.id !== pid) return;
+    const payment = polling.payment;
+    const user = session.session.user;
+    let active = true;
+    const run = async () => {
+      if (polling.status === "ready" && payment.status === "succeeded" && payment.amount.currency === "JPY") {
+        const result = await reportPurchaseComplete({ userId: user.id, email: user.email, revenue: payment.amount.amount, paymentId: payment.id, isActive: () => active });
+        await rememberPurchase(payment, pid, user.id, result, () => active);
+      } else await rememberPurchase(payment, pid, user.id, undefined, () => active);
+    };
+    void run();
+    return () => { active = false; };
+  }, [pid, polling, session]);
 
   useEffect(() => {
     const subject = session.status === "authenticated" ? session.session.user?.id : null;
@@ -180,6 +186,14 @@ export function PaymentThanks({ pid }: { readonly pid: string | null }) {
   if (session.status === "unauthenticated" || session.status === "session-expired") return <LoginRequiredState />;
   if (session.status === "configuration-unavailable" || !client) return <ErrorScreen />;
   if (session.status === "error") return <ErrorScreen />;
+  if (polling.extended && (polling.status === "loading" || (polling.status === "ready" && !["succeeded", "failed", "canceled", "expired"].includes(polling.payment.status) && polling.payment.method !== "konbini" && polling.payment.method !== "virtual_account"))) {
+    return <section aria-live="polite" className="payment-result payment-result--processing">
+      <h1>決済処理中です</h1>
+      <p>完了すると自動で表示が切り替わります。この画面を離れても、購入は完了します。</p>
+      <Link href="/mypage/purchases">購入履歴</Link>
+      {univapay ? <button type="button" disabled>決済状況を再確認する</button> : null}
+    </section>;
+  }
   if (polling.status === "loading") return <CatalogLoading label="決済状況を確認中" />;
   if (polling.status === "invalid" || polling.status === "error") return <ErrorScreen />;
   if (univapay && verified && !["succeeded", "failed", "canceled", "expired"].includes(verified.status)) {

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { PurchaseConversionRecovery } from "@/components/analytics/purchase-conversion-recovery";
 import { AdvertisingCapture } from "@/components/advertising/advertising-capture";
 import type { Metadata, Viewport } from "next";
 import { StorefrontShell } from "@/components/layout/storefront-shell";
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Suspense fallback={null}><AdvertisingCapture /></Suspense>
         <ToastProvider>
           <SessionProvider>
+            <Suspense fallback={null}><PurchaseConversionRecovery /></Suspense>
             <PublicClientProvider>
               <MotionEffects />
               <StorefrontShell firstBuyLayoutEnabled={process.env.STOREFRONT_FIRST_BUY_LAYOUT_PREVIEW === "1"}>{children}</StorefrontShell>

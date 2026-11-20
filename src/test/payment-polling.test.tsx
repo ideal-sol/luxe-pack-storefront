@@ -54,7 +54,7 @@ describe("SITE-040 Payment polling", () => {
     await flush();
     expect(getPayment).toHaveBeenCalledOnce();
     expect(screen.getByText("created")).toHaveAttribute("data-state", "ready");
-    await act(async () => { await vi.advanceTimersByTimeAsync(PAYMENT_POLLING_POLICY.intervalMs - 1); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(PAYMENT_POLLING_POLICY.initialIntervalMs - 1); });
     expect(getPayment).toHaveBeenCalledOnce();
     await act(async () => { await vi.advanceTimersByTimeAsync(1); });
     expect(getPayment).toHaveBeenCalledTimes(2);
@@ -72,7 +72,7 @@ describe("SITE-040 Payment polling", () => {
     expect(screen.getByText(status)).toBeInTheDocument();
   });
 
-  it("stops automatically at 30 seconds and never resumes", async () => {
+  it("stops automatically at five minutes and never resumes", async () => {
     const getPayment = vi.fn().mockResolvedValue({ data: payment("processing"), metadata });
     render(<Harness adapter={client(getPayment)} />);
     await flush();
@@ -131,14 +131,14 @@ describe("SITE-040 Payment polling", () => {
     }
   });
 
-  it.each(["netridecash", "paidy"])("polls Source-only %s fixture until Backend confirms or 30 seconds elapse", async method => {
+  it.each(["netridecash", "paidy"])("polls %s until Backend confirms or five minutes elapse", async method => {
     // Provisional UI fixture; not a claim that alpha.46 declares this method.
     const getPayment = vi.fn().mockResolvedValue({ data: { ...payment("processing"), method }, metadata });
     render(<Harness adapter={client(getPayment)} />);
     await flush();
     await act(async () => { await vi.advanceTimersByTimeAsync(2_000); });
     expect(getPayment).toHaveBeenCalledTimes(2);
-    await act(async () => { await vi.advanceTimersByTimeAsync(28_000); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(PAYMENT_POLLING_POLICY.maximumWaitMs - 2_000); });
     expect(screen.getByText("processing")).toHaveAttribute("data-state", "delayed");
   });
 

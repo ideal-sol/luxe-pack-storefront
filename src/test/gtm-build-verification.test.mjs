@@ -29,11 +29,11 @@ async function fixture(id = "GTM-TEST0001") {
   writeFileSync(join(root, ".next/BUILD_ID"), "synthetic-build\n");
   writeFileSync(join(root, ".next/required-server-files.json"), JSON.stringify({ config: { env: { NEXT_PUBLIC_GTM_ID: id } } }));
   const gate = `let o=/^GTM-[A-Z0-9]{4,12}$/;function u(){let e=${JSON.stringify(id)}.trim()??"";return o.test(e)?e:null}`;
-  for (const [index, file, name] of [[1, "src/lib/analytics/gtm.ts", "analytics"], [2, "src/components/account/sms-verification.tsx", "sms"], [3, "src/components/payment/payment-thanks.tsx", "purchase"]]) {
+  for (const [index, file, name] of [[1, "src/lib/analytics/gtm.ts", "analytics"], [2, "src/components/account/sms-verification.tsx", "sms"], [3, "src/components/payment/payment-thanks.tsx", "purchase"], [4, "src/lib/analytics/purchase-recovery.ts", "recovery"]]) {
     const source = readFileSync(file, "utf8").replaceAll("process.env.NEXT_PUBLIC_GTM_ID", JSON.stringify(id));
     const javascript = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText;
     const compiled = await minify(javascript, { compress: true, mangle: false });
-    const wrapper = `(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["fixture",${index},bridge=>{const exports={};const require=name=>bridge.i(name==="@/lib/analytics/gtm"?1:99);${compiled.code};bridge.s(Object.entries(exports).flatMap(([name,value])=>[name,0,value]));}]);`;
+    const wrapper = `(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["fixture",${index},bridge=>{const exports={};const require=name=>bridge.i(name==="@/lib/analytics/gtm"||name==="./gtm"?1:name==="@/lib/analytics/purchase-recovery"?4:99);${compiled.code};bridge.s(Object.entries(exports).flatMap(([name,value])=>[name,0,value]));}]);`;
     writeFileSync(join(root, `.next/static/chunks/${name}.js`), wrapper);
   }
   writeFileSync(join(root, ".next/server/chunks/layout.js"), `${gate};"google-tag-manager";`);
@@ -104,13 +104,13 @@ describe("GTM artifact byte authority", () => {
   });
 
   it.each([
-    ["purchase", '"succeeded"!==polling.payment.status', '"processing"!==polling.payment.status'],
-    ["purchase", 'userId:session.session.user?.id??null', 'userId:"00000000-0000-4000-8000-000000000099"'],
-    ["purchase", 'revenue:polling.payment.amount.amount', 'revenue:polling.payment.grant.total_points'],
-    ["purchase", 'paymentId:polling.payment.id', 'paymentId:pid'],
-    ["analytics", 'purchaseInFlight.has(paymentId)||purchaseSent.has(paymentId)', 'false'],
+    ["purchase", '"succeeded"===payment.status', '"processing"===payment.status'],
+    ["purchase", 'userId:user.id', 'userId:"00000000-0000-4000-8000-000000000099"'],
+    ["purchase", 'revenue:payment.amount.amount', 'revenue:payment.grant.total_points'],
+    ["purchase", 'paymentId:payment.id', 'paymentId:"invalid-url-input"'],
+    ["analytics", 'purchaseInFlight.has(paymentId)', 'false'],
     ["analytics", 'purchaseSent.has(paymentId)', 'false'],
-    ["analytics", 'if("1"===window.localStorage.getItem(key))return', 'if(false)return'],
+    ["analytics", '"1"===window.localStorage.getItem("oripoke:cv:purchase_complete:"+compactKey(paymentId))', 'false'],
     ["analytics", 'target.dataLayer.push({', 'target.dataLayer.push({event:"purchase_complete"}),target.dataLayer.push({'],
   ])("rejects unsafe compiled purchase composition %s / %s", async (file, before, after) => {
     const root = await fixture();
@@ -126,7 +126,7 @@ describe("GTM artifact byte authority", () => {
 
   it("executes invalid compiled GTM as disabled and rejects its invalid artifact config", async () => {
     const root = await fixture("invalid");
-    await verifyClientChunks(["analytics", "sms", "purchase"].map(name => ({ path: `.next/static/chunks/${name}.js`, code: readFileSync(join(root, `.next/static/chunks/${name}.js`), "utf8") })), expectedState("disabled"));
+    await verifyClientChunks(["analytics", "sms", "purchase", "recovery"].map(name => ({ path: `.next/static/chunks/${name}.js`, code: readFileSync(join(root, `.next/static/chunks/${name}.js`), "utf8") })), expectedState("disabled"));
     await expect(observe(root, "disabled")).rejects.toThrow("compiled config GTM mismatch");
   }, 30_000);
 

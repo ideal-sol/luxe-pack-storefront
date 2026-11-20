@@ -103,7 +103,7 @@ describe("UnivaPay confirmed-owner result screen", () => {
   it("retains checking after the bound and permits only a single in-flight GET recheck", async () => {
     vi.useFakeTimers(); const adapter = client(payment("processing"));
     await act(async () => renderThanks(adapter));
-    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(300_000); });
     expect(screen.getByRole("heading", { name: "決済確認中" })).toBeInTheDocument();
     let resolve!: (value: { data: Payment; metadata: typeof metadata }) => void;
     vi.mocked(adapter.getPayment).mockReturnValue(new Promise(r => { resolve = r; }));
@@ -359,14 +359,29 @@ describe("GTM purchase completion from canonical Payment polling", () => {
     vi.stubGlobal("crypto", { subtle: { digest: async () => new Uint8Array(32).buffer } });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
     expect(analyticsWindow.dataLayer).toHaveLength(1); expect(refreshWallet).toHaveBeenCalledOnce();
-    await act(async () => { await vi.advanceTimersByTimeAsync(30000); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(300000); });
     expect(analyticsWindow.dataLayer).toHaveLength(1);
+  });
+
+  it("shows the extended live region, keeps checking, then reports delayed settlement once", async () => {
+    vi.useFakeTimers(); const value = conversionPayment("processing"); const adapter = client(value);
+    await act(async () => { renderThanks(adapter, value.id); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    expect(screen.getByRole("heading", { name: "決済処理中です" }).closest("section")).toHaveAttribute("aria-live", "polite");
+    expect(screen.getByText("完了すると自動で表示が切り替わります。この画面を離れても、購入は完了します。")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "購入履歴" })).toHaveAttribute("href", "/mypage/purchases");
+    await act(async () => { await vi.advanceTimersByTimeAsync(85_000); });
+    vi.mocked(adapter.getPayment).mockResolvedValue({ data: { ...value, status: "succeeded" }, metadata });
+    await act(async () => { await vi.advanceTimersByTimeAsync(5_000); }); vi.useRealTimers();
+    expect(screen.getByRole("heading", { name: "購入完了しました" })).toBeInTheDocument();
+    await waitFor(() => expect(analyticsWindow.dataLayer).toHaveLength(1));
+    expect(refreshWallet).toHaveBeenCalledOnce();
   });
 
   it("does not report a delayed payment whose success is unconfirmed", async () => {
     vi.useFakeTimers(); const value = conversionPayment("processing");
     await act(async () => { renderThanks(client(value), value.id); });
-    await act(async () => { await vi.advanceTimersByTimeAsync(30000); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(300000); });
     expect(screen.getByRole("heading", { name: "決済処理中" })).toBeInTheDocument();
     expect(analyticsWindow.dataLayer).toBeUndefined(); expect(crypto.subtle.digest).not.toHaveBeenCalled();
   });

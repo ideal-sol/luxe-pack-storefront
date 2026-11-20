@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { isTransientPaymentRead } from "@/lib/platform/payment-problem";
 import {
   isInvalidPaymentRead,
   paymentRetryAfterSeconds,
@@ -8,8 +9,12 @@ import {
   type PaymentClientAdapter,
 } from "@/lib/platform";
 
-const POLLING_INTERVAL_MS = 2_000;
-const MAXIMUM_WAIT_MS = 30_000;
+export const PAYMENT_POLLING_POLICY = {
+  initialIntervalMs: 2_000,
+  extendedIntervalMs: 5_000,
+  extendAfterMs: 30_000,
+  maximumWaitMs: 300_000,
+} as const;
 const terminalStatuses = new Set(["succeeded", "failed", "canceled", "expired"]);
 
 export type PaymentPollingState = (
@@ -17,7 +22,7 @@ export type PaymentPollingState = (
   | { readonly status: "ready"; readonly payment: Payment }
   | { readonly status: "delayed"; readonly payment: Payment }
   | { readonly status: "invalid" }
-  | { readonly status: "error" }) & { readonly refreshing?: boolean };
+  | { readonly status: "error" }) & { readonly refreshing?: boolean; readonly extended?: boolean };
 
 interface CorrelatedPollingResult {
   readonly client: PaymentClientAdapter;
@@ -37,62 +42,70 @@ export function usePaymentPolling(client: PaymentClientAdapter | null, pid: stri
   useEffect(() => {
     if (!client || !pid || !validPid(pid)) return;
     let active = true;
-    let timer: ReturnType<typeof setTimeout> | null = null;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let stopped = false;
+    let expired = false;
     let latest: Payment | null = retainOnError && lastVerified.current?.client === client && lastVerified.current.pid === pid && lastVerified.current.payment.method === "credit_card" ? lastVerified.current.payment : null;
     const startedAt = Date.now();
+    const elapsed = () => Date.now() - startedAt;
     const publish = (state: PaymentPollingState) => setResult({ client, pid, state, revision });
+    const clearTimers = () => { clearTimeout(timer); clearTimeout(extension); clearTimeout(deadline); };
+    const stop = (state: PaymentPollingState) => { stopped = true; clearTimers(); publish(state); };
 
     const stopDelayed = () => {
-      if (!active) return;
+      if (!active || stopped) return;
+      expired = true;
+      clearTimers();
       if (latest) publish({ payment: latest, status: "delayed" });
       else publish({ status: "error" });
     };
 
-    const schedule = (delayMs: number) => {
-      const remaining = MAXIMUM_WAIT_MS - (Date.now() - startedAt);
-      if (remaining <= 0) {
-        stopDelayed();
-        return;
-      }
-      if (delayMs > remaining) {
-        timer = setTimeout(stopDelayed, remaining);
-        return;
-      }
+    const schedule = (retryAfter = 0) => {
+      if (stopped || expired) return;
+      const interval = elapsed() < PAYMENT_POLLING_POLICY.extendAfterMs ? PAYMENT_POLLING_POLICY.initialIntervalMs : PAYMENT_POLLING_POLICY.extendedIntervalMs;
+      const delayMs = Math.max(interval, retryAfter * 1_000);
+      if (elapsed() + delayMs >= PAYMENT_POLLING_POLICY.maximumWaitMs) return;
       timer = setTimeout(() => { void read(); }, delayMs);
     };
 
     const read = async () => {
+      if (!active || stopped || expired || elapsed() >= PAYMENT_POLLING_POLICY.maximumWaitMs) return;
       try {
         const { data: payment } = await client.getPayment(pid);
-        if (!active) return;
-        if (payment.id !== pid) { lastVerified.current = null; publish({ status: "invalid" }); return; }
+        if (!active || stopped) return;
+        if (payment.id !== pid) { lastVerified.current = null; stop({ status: "invalid" }); return; }
+        if (expired && payment.status !== "succeeded") return;
         latest = payment;
         lastVerified.current = { client, pid, payment };
-        publish({ payment, status: "ready" });
-        if (terminalStatuses.has(payment.status)) return;
-        if (payment.method === "konbini" || payment.method === "virtual_account") return;
-        schedule(POLLING_INTERVAL_MS);
+        const state: PaymentPollingState = { payment, status: "ready", extended: elapsed() >= PAYMENT_POLLING_POLICY.extendAfterMs };
+        if (terminalStatuses.has(payment.status) || payment.method === "konbini" || payment.method === "virtual_account") { stop(state); return; }
+        publish(state);
+        schedule();
       } catch (error) {
-        if (!active) return;
+        if (!active || stopped || expired) return;
         if (isInvalidPaymentRead(error)) {
           lastVerified.current = null;
-          publish({ status: "invalid" });
+          stop({ status: "invalid" });
           return;
         }
         const retryAfter = paymentRetryAfterSeconds(error);
         if (retryAfter !== undefined) {
-          schedule(Math.max(POLLING_INTERVAL_MS, retryAfter * 1_000));
+          schedule(retryAfter);
           return;
         }
-        if (retainOnError && latest?.method === "credit_card") publish({ status: "delayed", payment: latest });
-        else publish({ status: "error" });
+        if (isTransientPaymentRead(error)) { schedule(); return; }
+        stop(retainOnError && latest?.method === "credit_card" ? { status: "delayed", payment: latest } : { status: "error" });
       }
     };
 
+    const extension = setTimeout(() => {
+      if (active && !stopped && !expired) publish(latest ? { status: "ready", payment: latest, extended: true } : { status: "loading", extended: true });
+    }, PAYMENT_POLLING_POLICY.extendAfterMs);
+    const deadline = setTimeout(stopDelayed, PAYMENT_POLLING_POLICY.maximumWaitMs);
     void read();
     return () => {
       active = false;
-      if (timer) clearTimeout(timer);
+      clearTimers();
     };
   }, [client, pid, retainOnError, revision]);
 
@@ -101,8 +114,3 @@ export function usePaymentPolling(client: PaymentClientAdapter | null, pid: stri
   if (result.revision !== revision) return retainOnError && (result.state.status === "ready" || result.state.status === "delayed") ? { ...result.state, refreshing: true } : { status: "loading" };
   return result.state;
 }
-
-export const PAYMENT_POLLING_POLICY = {
-  intervalMs: POLLING_INTERVAL_MS,
-  maximumWaitMs: MAXIMUM_WAIT_MS,
-} as const;

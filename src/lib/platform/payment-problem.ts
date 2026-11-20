@@ -28,6 +28,14 @@ export function isInvalidPaymentRead(error: unknown) {
   return error instanceof ApiProblemError && [401, 403, 404].includes(error.status);
 }
 
+export function isTransientPaymentRead(error: unknown) {
+  return error instanceof StorefrontTransportError || (error instanceof ApiProblemError && error.status >= 500);
+}
+
+export function isMissingRecoveryPayment(error: unknown) {
+  return error instanceof ApiProblemError && error.status === 404 && error.code === "PAYMENT_NOT_FOUND";
+}
+
 export function isUncertainCardRegistrationProblem(error: unknown) {
   return error instanceof StorefrontTransportError ||
     isCardRegistrationProblemError(error, "CARD_REGISTRATION_UNAVAILABLE") ||
