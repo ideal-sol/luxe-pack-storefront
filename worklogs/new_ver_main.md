@@ -2034,3 +2034,9 @@ Local validation: Provenance/Artifact workflow227 tests PASS; immutable artifact
   Source checkout for later resumption; no new Migration reserved/created,
   allocation lock acquired only after prior owner's normal handoff then released
   when Human prioritized payment. Formal LINE Contract adoption remains HOLD.
+
+### Exact compiled verification and Security HOLD
+
+- Actual Turbopack output inlines the polling hook and shortens internal exports. The verifier now mocks external timer registration and resolves exactly one reviewed function role when export names are shortened. It executes the emitted recovery helper and cross-tab reporting; source hook timing remains covered by fake-clock tests. All37 build-authority/mutation tests PASS; actual emitted OFF/isolated synthetic-ON observations PASS. No real GTM/network loaded.
+- Required Security fails with unchanged Next16.4.2 production dependencies: seven Moderate advisories, patched upstream in16.4.5. Existing all-severity-zero Production policy remains enforced. Next/package/lockfile/Production Artifact/runtime version pins are unchanged: remediation spans separate Build Authority and is HOLD outside this payment-priority Source Change. Official reference: https://github.com/vercel/next.js/releases/tag/v16.4.5 . No vulnerability waiver or gate bypass.
+- First local OFF Build exited1 after successful compilation/page generation due the upstream security reminder. Subsequent isolated ON validation Build exited0 with the warning retained; neither overrides Required Security or authorizes activation. Final-head Build/check results, immutable observations and fresh Draft-only review are recorded in PR250.

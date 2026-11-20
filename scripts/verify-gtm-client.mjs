@@ -28,6 +28,9 @@ function runtime(chunks, selected, mode, mail, runtimeId, storageDenied = false,
     localStorage: { get() { touched++; if (storageDenied) throw new Error("synthetic storage denial"); return { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value) }; } },
   });
   const context = vm.createContext({
+    // Time is external I/O. Register inert callbacks for an inlined polling hook;
+    // deadline/interval behavior is covered by focused fake-clock hook tests.
+    setTimeout: () => 1, clearTimeout: () => {},
     window, TextEncoder, navigator: { locks }, process: { env: { NEXT_PUBLIC_GTM_ID: runtimeId } },
     crypto: { subtle: { digest: (algorithm, bytes) => {
       digestCalls++;
@@ -111,11 +114,24 @@ function runtime(chunks, selected, mode, mail, runtimeId, storageDenied = false,
     assert.fail(`compiled ${name} export missing`);
   }
   function exported(name) {
+    const candidates = new Map();
     for (const [id, factory] of modules) {
       if (!isAnalytics(factory)) continue;
-      const value = load(id)[name];
+      const exports = load(id);
+      const value = exports[name];
       if (typeof value === "function") return value;
+      // Turbopack shortens internal export names in actual production chunks.
+      // Identify only the narrow, reviewed function roles, without replacing code.
+      for (const candidate of Object.values(exports)) {
+        if (typeof candidate !== "function") continue;
+        const source = candidate.toString();
+        const matches = name === "reportPurchaseComplete" ? source.includes("transaction_id") && source.includes('"in_progress"')
+          : name === "recoverPurchases" ? source.includes(".getPayment(")
+          : name === "rememberPurchase" ? source.includes('"aborted"') && source.includes(".status") && !source.includes(".getPayment(") : false;
+        if (matches) candidates.set(source, candidate);
+      }
     }
+    if (candidates.size === 1) return [...candidates.values()][0];
     assert.fail(`compiled analytics export missing: ${name}`);
   }
   function render(name) {

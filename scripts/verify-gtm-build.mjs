@@ -12,7 +12,7 @@ const sourceDigests = {
   "src/lib/platform/payment-problem.ts": "e914a34882eeebb026d6df722e132278abeff397888ca6cee1ca174e2ee24195",
   "src/components/analytics/purchase-conversion-recovery.tsx": "04068ab2159c15cc5f10e76751ce463c761cc716cfa71394db1e4086fb528a96",
   "src/lib/analytics/purchase-recovery.ts": "78e4adda210edbd18e0ef657cd416a1bc232358898c86845c2ede5eb4163a64a",
-  "scripts/verify-gtm-client.mjs": "4c565183ab8a77e5614cfec87cc7e72946f32ab25f9b84613012434910ca41a9",
+  "scripts/verify-gtm-client.mjs": "f66241700bd8ab22d2a93ef7047f4d6d768916de3bf22df61c7da0776b1008d0",
   "src/components/payment/payment-thanks.tsx": "2f31eae7c7a7b075b881a80ca326e78cb2d4456c43d46183cf8fb047ea7b8fad",
   "src/components/payment/use-payment-polling.ts": "e0698560048bb1600e78923b3a9658890573ad61e0e674af6fc5a24ad389d3f9",
   "src/lib/analytics/gtm.ts": "5b289d86b77d3b000ad032a961a3f92a7e396c82d87b14e36fd0f01bb4c7e47c",
