@@ -1,3 +1,17 @@
+## PAIDY-20261124 — 正式 alpha.53 採用
+
+- R3 / Strict Change / Application Runtime Activation deferred。Issue #253 と既存 Draft PR #254 を使用。
+- Platform PR #721 の Squash `35a3d916659056e4a989b79e8cf9381ac784603c` に対し、Run 45326759914 の正式 Artifact 14890066930 を独立 Readback で検証。外側 SHA-256 `b158ddd2e285ebe79cd31042f35bf4fe98a104113e452132b2b63a01685e53b9`。Public OpenAPI alpha.49、Client／Testkit alpha.53、参照 Site Schema alpha.23。公式5ファイルを同一バイトで固定し、公開済み alpha.52 の証跡を保持。
+- Checkout の終了処理は既存 Draft のソースを使用。新契約の1操作と旧契約との差分を契約検証で照合し、関連テストの版と digest を更新。Production Authority は既存 alpha.52 の範囲で維持する。
+- Draft 維持。OLD Test は API-only の Technical PASS 後に、別途承認された Storefront 切替を行う。
+
+## PAIDY-ABANDON-RELEASE-20261124 — Paidy Checkout 取消 Draft
+
+- R3 / Strict Change / Application Runtime Activation deferred。Issue #253 で正式 Artifact 採用を追跡。Base `bd6c9b3365f8a4fe4887baeba298f73331c90253`、branch `fix/PAIDY-20261124`。既存チェックアウトの編集を保護するため専用 worktree を使用。GitHub App 上の Task ID は `PAIDY-20261124`。
+- Paidy の `closed`／`rejected` は既存のイベントを記録し、正式 Client の `abandonPaidyCheckout` を冪等キー付きで呼び出す。応答待ちは最長5秒。応答・エラー・時間切れの後に既存の解放処理に進み、再読み込みしたページはサーバーの最新の商品一覧を使う。審査案内と承認フローは既存の処理を使う。
+- DOM テストで API 応答と画面解放の順、200 で状態が変わらない場合、失敗、時間切れ時の両方の購入資格、審査案内、承認時のリクエストを確認。正式 Artifact の公開・照合後に Client／Testkit `2.0.0-alpha.53` を固定ピンへ採用する。Draft の通信テストはローカルの候補 Client を用いる。
+- OLD Test の Human Browser Acceptance は後続。DB、インフラ、Production の変更なし。ロールバックはソースの revert。
+
 ## SITE-CLOSURE-DESIGN-PAYHIDE-20261028 — formal alpha48 connection continuation (2026-10-28)
 
 - Final review hardened unknown-code mapping against inherited object property names; added two negative contract tests. This source correction invalidates prior head evidence and requires final-head CI/self-review. Initial continuation CI policy/security/quality passed; final results remain in the PR evidence.

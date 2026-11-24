@@ -57,6 +57,7 @@ export function createPaymentClientAdapter(transport: StorefrontTransport): Paym
     getPayment: client.getPayment,
     reportUnivapayCharge: client.reportUnivapayCharge,
     confirmPaidyAuthorization: client.confirmPaidyAuthorization,
+    abandonPaidyCheckout: client.abandonPaidyCheckout,
     recordPaymentClientEvent: client.recordPaymentClientEvent,
   };
   return {

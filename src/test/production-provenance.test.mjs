@@ -91,7 +91,7 @@ describe("exact alpha.52 Production provenance", () => {
     expect(validateProvenance(root).contract_version).toBe("2.0.0-alpha.52");
   });
   it("rejects predecessor alpha.51 and alpha.50 pins", () => {
-    const current = JSON.parse(readFileSync("package.json", "utf8"));
+    const current = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
     current.dependencies["@oripa/storefront-client"] = "file:vendor/oripa/PAIDY-ALPHA51-20261106/oripa-storefront-client-2.0.0-alpha.51.tgz";
     writeFileSync(join(root, "package.json"), JSON.stringify(current));
     expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
@@ -99,6 +99,12 @@ describe("exact alpha.52 Production provenance", () => {
     writeFileSync(join(root, "package.json"), JSON.stringify(current));
     expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
     expect(approvedSource.activation_authorized).toBe(false);
+  });
+
+  it("rejects the alpha.53 OLD Test candidate under the existing Production authority", () => {
+    const source = JSON.parse(readFileSync("package.json", "utf8"));
+    writeFileSync(join(root, "package.json"), JSON.stringify(source));
+    expect(() => validateProvenance(root)).toThrow("source dependency pin mismatch");
   });
   it("rejects superseded alpha.46 source pins under approved alpha.52 authority", () => {
     mutateJson("package.json", (value) => {
