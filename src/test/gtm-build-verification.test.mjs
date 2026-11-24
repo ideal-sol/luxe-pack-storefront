@@ -29,11 +29,11 @@ async function fixture(id = "GTM-TEST0001") {
   writeFileSync(join(root, ".next/BUILD_ID"), "synthetic-build\n");
   writeFileSync(join(root, ".next/required-server-files.json"), JSON.stringify({ config: { env: { NEXT_PUBLIC_GTM_ID: id } } }));
   const gate = `let o=/^GTM-[A-Z0-9]{4,12}$/;function u(){let e=${JSON.stringify(id)}.trim()??"";return o.test(e)?e:null}`;
-  for (const [index, file, name] of [[1, "src/lib/analytics/gtm.ts", "analytics"], [2, "src/components/account/sms-verification.tsx", "sms"], [3, "src/components/payment/payment-thanks.tsx", "purchase"], [4, "src/lib/analytics/purchase-recovery.ts", "recovery"]]) {
+  for (const [index, file, name] of [[1, "src/lib/analytics/gtm.ts", "analytics"], [2, "src/components/account/sms-verification.tsx", "sms"], [3, "src/components/payment/payment-thanks.tsx", "purchase"], [4, "src/lib/analytics/purchase-recovery.ts", "recovery"], [5, "src/lib/analytics/line-friend-conversion.ts", "line"], [6, "src/components/analytics/line-friend-conversion-delivery.tsx", "line-component"]]) {
     const source = readFileSync(file, "utf8").replaceAll("process.env.NEXT_PUBLIC_GTM_ID", JSON.stringify(id));
     const javascript = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText;
     const compiled = await minify(javascript, { compress: true, mangle: false });
-    const wrapper = `(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["fixture",${index},bridge=>{const exports={};const require=name=>bridge.i(name==="@/lib/analytics/gtm"||name==="./gtm"?1:name==="@/lib/analytics/purchase-recovery"?4:99);${compiled.code};bridge.s(Object.entries(exports).flatMap(([name,value])=>[name,0,value]));}]);`;
+    const wrapper = `(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["fixture",${index},bridge=>{const exports={};const require=name=>bridge.i(name==="@/lib/analytics/gtm"||name==="./gtm"?1:name==="@/lib/analytics/purchase-recovery"?4:name==="@/lib/analytics/line-friend-conversion"?5:99);${compiled.code};bridge.s(Object.entries(exports).flatMap(([name,value])=>[name,0,value]));}]);`;
     writeFileSync(join(root, `.next/static/chunks/${name}.js`), wrapper);
   }
   writeFileSync(join(root, ".next/server/chunks/layout.js"), `${gate};"google-tag-manager";`);
@@ -124,9 +124,23 @@ describe("GTM artifact byte authority", () => {
     await expect(observe(root, "disabled")).rejects.toThrow();
   }, 30_000);
 
+  it.each([
+    ['performance.now()>=deadline', 'false'],
+    ['claim.expiresInSeconds-30', 'claim.expiresInSeconds-0'],
+    ['session.isActive()', 'true'],
+    ['started||', 'false||'],
+    ['return recover(api,id,key,existing,active)', 'return'],
+    ['save(key,renewed)', 'void 0'],
+    ['!(0,gtm_1.pushDataLayerEvent)({event:"line_friend_added",user_id:session.userId,user_email:email})', '((0,gtm_1.pushDataLayerEvent)({event:"line_friend_added",user_id:session.userId,user_email:email}),false)'],
+  ])("rejects unsafe compiled LINE behavior: %s", async (before, after) => {
+    const root = await fixture();
+    replace(root, ".next/static/chunks/line.js", before, after);
+    await expect(observe(root, "GTM-TEST0001")).rejects.toThrow();
+  }, 30_000);
+
   it("executes invalid compiled GTM as disabled and rejects its invalid artifact config", async () => {
     const root = await fixture("invalid");
-    await verifyClientChunks(["analytics", "sms", "purchase", "recovery"].map(name => ({ path: `.next/static/chunks/${name}.js`, code: readFileSync(join(root, `.next/static/chunks/${name}.js`), "utf8") })), expectedState("disabled"));
+    await verifyClientChunks(["analytics", "sms", "purchase", "recovery", "line", "line-component"].map(name => ({ path: `.next/static/chunks/${name}.js`, code: readFileSync(join(root, `.next/static/chunks/${name}.js`), "utf8") })), expectedState("disabled"));
     await expect(observe(root, "disabled")).rejects.toThrow("compiled config GTM mismatch");
   }, 30_000);
 
