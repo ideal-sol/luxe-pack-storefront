@@ -1,3 +1,10 @@
+## PAIDY-20261124 — 正式 alpha.53 採用
+
+- R3 / Strict Change / Application Runtime Activation deferred。Issue #253 と既存 Draft PR #254 を使用。
+- Platform PR #721 の Squash `35a3d916659056e4a989b79e8cf9381ac784603c` に対し、Run 45326759914 の正式 Artifact 14890066930 を独立 Readback で検証。外側 SHA-256 `b158ddd2e285ebe79cd31042f35bf4fe98a104113e452132b2b63a01685e53b9`。Public OpenAPI alpha.49、Client／Testkit alpha.53、参照 Site Schema alpha.23。公式5ファイルを同一バイトで固定し、公開済み alpha.52 の証跡を保持。
+- Checkout の終了処理は既存 Draft のソースを使用。新契約の1操作と旧契約との差分を契約検証で照合し、関連テストの版と digest を更新。Production Authority は既存 alpha.52 の範囲で維持する。
+- Draft 維持。OLD Test は API-only の Technical PASS 後に、別途承認された Storefront 切替を行う。
+
 ## PAIDY-ABANDON-RELEASE-20261124 — Paidy Checkout 取消 Draft
 
 - R3 / Strict Change / Application Runtime Activation deferred。Issue #253 で正式 Artifact 採用を追跡。Base `bd6c9b3365f8a4fe4887baeba298f73331c90253`、branch `fix/PAIDY-20261124`。既存チェックアウトの編集を保護するため専用 worktree を使用。GitHub App 上の Task ID は `PAIDY-20261124`。
