@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash, webcrypto } from "node:crypto";
 import vm from "node:vm";
+import { verifyLineClientChunks } from "./verify-gtm-line-client.mjs";
 
 const uuid = "00000000-0000-4000-8000-000000000001";
 const paymentId = "00000000-0000-4000-9000-000000000001";
@@ -292,5 +293,6 @@ export async function verifyClientChunks(chunks, state) {
     assert(results.includes("pushed") && results.includes("in_progress"));
     assert.equal(await b.report(), "already_sent");
   } else assert(results.every(result => result === "not_applicable"));
+  await verifyLineClientChunks(chunks, state);
   verifiedBytes.add(fingerprint);
 }

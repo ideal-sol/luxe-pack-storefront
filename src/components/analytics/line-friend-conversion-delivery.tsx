@@ -3,10 +3,12 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { useSession } from "@/components/auth/session-provider";
 import { createLineFriendConversionRun, type LineFriendConversionApi } from "@/lib/analytics/line-friend-conversion";
+import { gtmContainerId } from "@/lib/analytics/gtm";
+import { createBrowserConversionClient } from "@/lib/platform/conversion-client";
 
 const run = createLineFriendConversionRun();
 
-export function LineFriendConversionDelivery({ api }: { api: LineFriendConversionApi }) {
+export function LineFriendConversionDelivery({ api }: { api?: LineFriendConversionApi } = {}) {
   const { state, smsAccess } = useSession();
   const user = state.status === "authenticated" ? state.session.user : null;
   const attempt = useRef<{ userId: string; active: boolean } | null>(null);
@@ -17,10 +19,13 @@ export function LineFriendConversionDelivery({ api }: { api: LineFriendConversio
   }, [smsAccess, user]);
 
   useEffect(() => {
-    if (!user?.id || smsAccess !== "verified") return;
+    if (!gtmContainerId() || !user?.id || smsAccess !== "verified") return;
     const current = attempt.current ?? { userId: user.id, active: true };
     attempt.current = current;
-    void run(api, {
+    let client: LineFriendConversionApi;
+    try { client = api ?? createBrowserConversionClient(); }
+    catch { return; }
+    void run(client, {
       userId: user.id,
       email: user.email ?? null,
       smsVerified: true,

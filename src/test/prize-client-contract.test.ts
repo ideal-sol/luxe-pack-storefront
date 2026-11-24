@@ -60,9 +60,9 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
     expect(harness.mock.requests).toHaveLength(1);
     expect(harness.mock.requests[0]).toMatchObject({ method: "GET", credentials: "include" });
     expect(harness.mock.requests[0]?.headers["x-xsrf-token"]).toBeUndefined();
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.53", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.54", site_version: "0.1.0" });
     // no-store is the formal endpoint cache policy; mock reads are not Runtime proof.
-    const contract = JSON.parse(readFileSync("vendor/oripa/PAIDY-20261124/public.openapi.json", "utf8"));
+    const contract = JSON.parse(readFileSync("vendor/oripa/LINE-FRIEND-CV-20261120/public.openapi.json", "utf8"));
     expect(contract.paths["/me/shipping-policy"].get).toMatchObject({
       "x-sms-verification": "required", "x-cache-policy": "no-store", security: [{ userSession: [] }],
     });
@@ -117,13 +117,13 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
   it("pins the canonical immutable versions and retains existing contracts", () => {
     for (const [packageName, version] of Object.entries({
       "site-schema": "2.0.0-alpha.23",
-      "storefront-client": "2.0.0-alpha.53",
-      "storefront-testkit": "2.0.0-alpha.53",
+      "storefront-client": "2.0.0-alpha.54",
+      "storefront-testkit": "2.0.0-alpha.54",
     })) {
       const packageJson = JSON.parse(readFileSync(`node_modules/@oripa/${packageName}/package.json`, "utf8"));
       expect(packageJson.version).toBe(version);
     }
-    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("73892b2b3a99564d7a84a73c52a30590706afc1167ba0ad79823d51d38aeebf7");
+    expect(PUBLIC_CONTRACT_FIXTURE.bundle_sha256).toBe("e78444e7671b3bc5a21d0702a298965ec43c3bfc9690941081f599c048b739ac");
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toEqual(expect.arrayContaining([
       "getUserSession",
       "loginUser",
@@ -192,7 +192,7 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
     });
     expect(data.items[0]?.allowed_actions).toEqual(fixture.allowed_actions);
     expect(data.next_cursor).toBe("next-page");
-    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.53", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[0]!, { client_version: "2.0.0-alpha.54", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 
@@ -233,7 +233,7 @@ describe("MIG-062Z retained prize fulfillment contract", () => {
     expect(harness.mock.requests[1]?.credentials).toBe("include");
     expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBe(key);
     expect(harness.mock.requests[1]?.headers["x-xsrf-token"]).toBe(csrf);
-    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.53", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(harness.mock.requests[1]!, { client_version: "2.0.0-alpha.54", site_version: "0.1.0" });
     harness.mock.assertExhausted();
   });
 

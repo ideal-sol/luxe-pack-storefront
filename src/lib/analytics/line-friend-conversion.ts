@@ -1,6 +1,7 @@
 import { gtmContainerId, hashEmail, pushDataLayerEvent, withConversionLock } from "./gtm";
+import type { PublicComponents } from "@oripa/storefront-client";
 
-type ConversionRecord = { id: string; event: "line_friend_added" };
+type ConversionRecord = Pick<PublicComponents["schemas"]["ConversionEvent"], "id" | "event">;
 type Claim = { token: string; expiresInSeconds: number }
   | "held" | "already_delivered" | "not_deliverable" | "not_found";
 

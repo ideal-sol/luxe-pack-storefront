@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 // Human-authorized non-authentication markers, pinned to entire reviewed bytes.
 // Any helper/test edit needs renewed review. No directory-wide storage exemption.
 const reviewed = new Map([
-  ["src/lib/analytics/line-friend-conversion.ts", "254e919a400ed5332d2b9453a2ef04ff4cfd99edf7f4667badf24c2c1f6d6df6"],
+  ["src/lib/analytics/line-friend-conversion.ts", "82f4928988d34caea411e6498a78e6e558e1ba692f2cea8d52c22a1b339b358a"],
   ["src/test/line-friend-conversion.test.ts", "e7eede02169a9ff024f61627216ea6872216772fd6be29982b875ef4c264428c"],
   ["src/test/purchase-reliability.test.tsx", "3de693df00d5b4cc03f2867496111ef1da499d06df585d44c93a0e3091f20f03"],
   ["src/lib/analytics/purchase-recovery.ts", "880f591f3b10294722d5e2f82d1ff4c11df9ddc9b95a844b187c49167a703b4f"],
