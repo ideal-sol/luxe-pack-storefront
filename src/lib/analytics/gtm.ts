@@ -8,7 +8,7 @@ const GTM_ID_PATTERN = /^GTM-[A-Z0-9]{4,12}$/;
 const REGISTRATION_COMPLETE_KEY_PREFIX = "oripoke:cv:registration_complete:";
 
 type DataLayerEvent = {
-  readonly event: "registration_complete" | "purchase_complete";
+  readonly event: "registration_complete" | "purchase_complete" | "line_friend_added";
   readonly user_id?: string;
   readonly user_email?: string | undefined;
   readonly revenue?: number;
@@ -28,14 +28,18 @@ export function gtmContainerId(): string | null {
 export function pushDataLayerEvent(event: DataLayerEvent): boolean {
   try {
     if (!gtmContainerId() || typeof window === "undefined") return false;
-    if (!event.user_id || !["registration_complete", "purchase_complete"].includes(event.event)) return false;
+    if (!["registration_complete", "purchase_complete", "line_friend_added"].includes(event.event)) return false;
+    const userId = event.event === "line_friend_added"
+      ? (typeof event.user_id === "string" && UUID_PATTERN.test(event.user_id) ? event.user_id : undefined)
+      : event.user_id;
+    if (!userId && event.event !== "line_friend_added") return false;
     if (event.event === "purchase_complete" && !validPurchase(event.user_id, event.revenue, event.transaction_id)) return false;
     const target = window as DataLayerWindow;
     if (target.dataLayer === undefined) target.dataLayer = [];
     if (!Array.isArray(target.dataLayer)) return false;
     target.dataLayer.push({
       event: event.event,
-      ...(event.user_id ? { user_id: event.user_id } : {}),
+      ...(userId ? { user_id: userId } : {}),
       ...(/^[a-f0-9]{64}$/.test(event.user_email ?? "") ? { user_email: event.user_email } : {}),
       ...(event.event === "purchase_complete" ? { revenue: event.revenue, transaction_id: event.transaction_id } : {}),
     });

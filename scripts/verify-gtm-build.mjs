@@ -9,13 +9,15 @@ import { verifyClientChunks } from "./verify-gtm-client.mjs";
 
 const observationPath = ".next/gtm-build-observation.json";
 const sourceDigests = {
+  "src/components/analytics/line-friend-conversion-delivery.tsx": "fe9e28a1ab6b0a40a87d68787c75298edd8e113787f759a2521ee90a053760b4",
+  "src/lib/analytics/line-friend-conversion.ts": "254e919a400ed5332d2b9453a2ef04ff4cfd99edf7f4667badf24c2c1f6d6df6",
   "src/lib/platform/payment-problem.ts": "e914a34882eeebb026d6df722e132278abeff397888ca6cee1ca174e2ee24195",
   "src/components/analytics/purchase-conversion-recovery.tsx": "04068ab2159c15cc5f10e76751ce463c761cc716cfa71394db1e4086fb528a96",
   "src/lib/analytics/purchase-recovery.ts": "880f591f3b10294722d5e2f82d1ff4c11df9ddc9b95a844b187c49167a703b4f",
   "scripts/verify-gtm-client.mjs": "f66241700bd8ab22d2a93ef7047f4d6d768916de3bf22df61c7da0776b1008d0",
   "src/components/payment/payment-thanks.tsx": "2f31eae7c7a7b075b881a80ca326e78cb2d4456c43d46183cf8fb047ea7b8fad",
   "src/components/payment/use-payment-polling.ts": "e0698560048bb1600e78923b3a9658890573ad61e0e674af6fc5a24ad389d3f9",
-  "src/lib/analytics/gtm.ts": "5b289d86b77d3b000ad032a961a3f92a7e396c82d87b14e36fd0f01bb4c7e47c",
+  "src/lib/analytics/gtm.ts": "77d559e4bc169068db32d2f89ac3e92edcb3899363502d922245639c9eb3ddc7",
   "src/components/analytics/google-tag-manager.tsx": "012e0bea04cbca46f943cd4f6146c90d0f2f359c7b1c16386e3f3ace979dc337",
   "src/components/account/sms-verification.tsx": "cd3389248bc07927b7c5ed02ebdb86e8f95142d20d93cbb83cb2f2b0b3cf48b8",
   "src/app/layout.tsx": "3c899a5d401cabf4f4fac85666de99501ff9b9405ad897094ee377c06233649b",
