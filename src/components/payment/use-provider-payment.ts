@@ -9,12 +9,14 @@ import {
 } from "@/lib/platform/payment-ui-gateway";
 import { beginPaymentAttempt, finishPaymentAttempt, identifyPaymentAttempt, readPaymentAttempt, PAYMENT_STATUS_CHECK_EVENT } from "./payment-attempt";
 import { dispatchProviderAction, paymentThanksRoute, postProviderForm, validateInlineForm } from "./provider-payment-actions";
+import { boundedProviderOperation } from "./provider-document";
 import type { InlineSession, PaymentProviderSdk } from "./provider-payment-sdk";
 import { UNIVAPAY_STATUS_PENDING, univapayEventMessages, type UnivapayEvent } from "./univapay-events";
 
 type FlowState = { busy: boolean; locked: boolean; error: string | null; message: string | null };
 const idle: FlowState = { busy: false, locked: false, error: null, message: null };
 export const PAIDY_REJECTED_MESSAGE = "あと払い（ペイディ）をご利用いただけませんでした。別のお支払い方法をお選びください";
+const PAIDY_ABANDONMENT_TIMEOUT_MS = 5000;
 
 export function useProviderPayment({ gateway, sdk, option, productId, subject, eligible }: {
   gateway: PaymentUiGateway | null; sdk: PaymentProviderSdk; option: PaymentMethodOption | undefined;
@@ -222,7 +224,12 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
             const status = typeof r.status === "string" ? r.status.toLowerCase() : "unknown";
             if (status === "closed" || status === "rejected") {
               void recordUiEvent(gateway, payment.id, { type: "paidy_checkout_result", detail: { result: status } });
-              release(status === "rejected" ? PAIDY_REJECTED_MESSAGE : null);
+              const operation = Promise.resolve().then(() => gateway.abandonPaidyCheckout(payment.id, { result: status }, {
+                idempotency_key: createPaymentIdempotencyKey(), signal: controller.signal, timeout_ms: PAIDY_ABANDONMENT_TIMEOUT_MS,
+              }));
+              void boundedProviderOperation(operation, controller.signal, PAIDY_ABANDONMENT_TIMEOUT_MS)
+                .catch(() => undefined) // Reload reads current eligibility after both success and failure.
+                .then(() => { if (active()) release(status === "rejected" ? PAIDY_REJECTED_MESSAGE : null); });
               return;
             }
             pending();

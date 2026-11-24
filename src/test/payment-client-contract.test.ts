@@ -121,6 +121,24 @@ describe("alpha.52 canonical Payment browser client", () => {
     harness.mock.assertExhausted();
   });
 
+  it("posts Paidy checkout abandonment with CSRF and idempotency and retains the returned current status", async () => {
+    const harness = createPaymentClientTestHarness(csrf);
+    enqueueCsrf(harness);
+    harness.mock.enqueueJson(
+      { method: "POST", url: `${origin}/payments/${payment.id}/paidy-checkout-abandonments` },
+      { body: { ...payment, method: "paidy", status: "requires_action" } },
+    );
+    const input = { result: "closed" } as const;
+    await expect(harness.client.uiGateway!.abandonPaidyCheckout(payment.id, input, {
+      idempotency_key: "synthetic-abandonment-key", timeout_ms: 5000,
+    })).resolves.toMatchObject({ data: { status: "requires_action" } });
+    expect(harness.mock.requests).toHaveLength(2);
+    expect(harness.mock.requests[1]?.body).toBe(JSON.stringify(input));
+    expect(harness.mock.requests[1]?.headers["x-xsrf-token"]).toBe(csrf);
+    expect(harness.mock.requests[1]?.headers["idempotency-key"]).toBe("synthetic-abandonment-key");
+    harness.mock.assertExhausted();
+  });
+
   it("reads bootstrap, Payment, and authoritative registration capacity without mutation", async () => {
     const harness = createPaymentClientTestHarness();
     harness.mock.enqueueJson({ method: "GET", url: `${origin}/me/payment-card-ui-bootstrap` }, { body: PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES.sandbox });

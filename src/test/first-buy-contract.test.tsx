@@ -58,7 +58,7 @@ describe("first-user canonical product presentation", () => {
   });
   it("initially selects the limited first-user tab, products and countdown strip for active Backend state", async () => {
     connected.client.listPointProducts.mockResolvedValue({ data: collection() });
-    render(<PointPurchasePage />);
+    await act(async () => { render(<PointPurchasePage />); });
     expect(await screen.findByRole("tab", { name: "初回ユーザー（24時間限定）" })).toHaveAttribute("aria-selected", "true");
     const panel = screen.getByRole("tabpanel");
     expect(within(panel).getAllByRole("article")).toHaveLength(3);
