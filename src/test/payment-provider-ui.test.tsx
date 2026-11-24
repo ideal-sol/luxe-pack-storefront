@@ -7,6 +7,7 @@ import { PointClientProvider } from "@/components/points/point-client-provider";
 import { PaymentClientProvider } from "@/components/payment/payment-client-provider";
 import { PaymentMethodLoader } from "@/components/payment/payment-method-loader";
 import { PointPurchaseDetail } from "@/components/points/point-purchase-detail";
+import { PointPurchasePage } from "@/components/points/point-purchase-page";
 import type { AuthClientAdapter, PaymentClientAdapter, PointClientAdapter } from "@/lib/platform";
 import type { PaymentMethodOption, PaymentUiGateway, UiPayment } from "@/lib/platform/payment-ui-gateway";
 import type { InlineSession, PaymentProviderSdk } from "@/components/payment/provider-payment-sdk";
@@ -72,6 +73,7 @@ function setup(methods: PaymentMethodOption[] = options) {
     recordPaymentClientEvent: vi.fn().mockResolvedValue({ data: undefined }),
     reportUnivapayCharge: vi.fn().mockResolvedValue({ data: fixturePayment("credit_card") }),
     confirmPaidyAuthorization: vi.fn().mockResolvedValue({ data: fixturePayment("paidy") }),
+    abandonPaidyCheckout: vi.fn().mockResolvedValue({ data: { ...fixturePayment("paidy"), status: "canceled" } }),
   };
   const session: InlineSession = { update: vi.fn().mockResolvedValue(undefined), submit: vi.fn().mockResolvedValue({ result: "unknown" }), validate: vi.fn().mockResolvedValue(true), dispose: vi.fn() };
   let validity: (valid: boolean) => void = () => undefined;
@@ -83,8 +85,8 @@ function setup(methods: PaymentMethodOption[] = options) {
   };
   const auth = { getCurrentSession: vi.fn().mockResolvedValue({ data: PUBLIC_AUTH_FIXTURE.authenticated_session, metadata }), getSmsVerificationStatus: vi.fn().mockResolvedValue({ data: { verified: true }, metadata }) } as unknown as AuthClientAdapter;
   const points = { getWallet: vi.fn().mockResolvedValue({ data: PUBLIC_POINT_BALANCE_FIXTURES.positive, metadata }), listPointProducts: vi.fn().mockResolvedValue({ data: { ...PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible, data: [product] }, metadata }) } as unknown as PointClientAdapter;
-  const tree = (result = false) => <StrictMode><SessionProvider client={auth}><PointClientProvider client={points}><PaymentClientProvider client={legacy} providerSdk={sdk} uiGateway={gateway}>{result ? <PaymentThanks pid="payment-fixture" /> : <PointPurchaseDetail productId={product.id} />}</PaymentClientProvider></PointClientProvider></SessionProvider></StrictMode>;
-  const mount = async (result = false) => {
+  const tree = (result: boolean | "products") => <StrictMode><SessionProvider client={auth}><PointClientProvider client={points}><PaymentClientProvider client={legacy} providerSdk={sdk} uiGateway={gateway}>{result === "products" ? <PointPurchasePage /> : result ? <PaymentThanks pid="payment-fixture" /> : <PointPurchaseDetail productId={product.id} />}</PaymentClientProvider></PointClientProvider></SessionProvider></StrictMode>;
+  const mount = async (result: boolean | "products" = false) => {
     let view!: RenderResult;
     // Resolve the immediate Session/Point/Method fixtures inside React's async
     // act boundary before asserting UI; do not race them against a wall clock.
@@ -324,6 +326,7 @@ it("confirms an authorized Paidy callback once and never treats the callback as 
   s.callback({ status: "authorized", id: "pay_fixture" });
   await waitFor(() => expect(s.gateway.confirmPaidyAuthorization).toHaveBeenCalledOnce());
   expect(s.gateway.confirmPaidyAuthorization).toHaveBeenCalledWith("payment-fixture", { paidy_payment_id: "pay_fixture" }, expect.objectContaining({ idempotency_key: expect.any(String) }));
+  expect(s.gateway.abandonPaidyCheckout).not.toHaveBeenCalled();
   expect(navigation.replace).not.toHaveBeenCalled();
   await act(async () => confirm());
   await waitFor(() => expect(navigation.replace).toHaveBeenCalledWith("/points/purchase/thanks?pid=payment-fixture"));
@@ -342,15 +345,71 @@ it("ignores Paidy authorization after session teardown", async () => {
   expect(navigation.replace).not.toHaveBeenCalled();
 });
 
-it.each(["rejected", "closed"])("returns Paidy %s to method selection without a financial mutation", async status => {
-  const s = setup([options[2]]); await s.mount(); await buy();
+it.each([
+  { result: "closed", outcome: "response", status: "canceled", eligible: true },
+  { result: "rejected", outcome: "response", status: "failed", eligible: true },
+  { result: "closed", outcome: "response", status: "requires_action", eligible: false },
+  { result: "closed", outcome: "failure", status: "requires_action", eligible: false },
+  { result: "closed", outcome: "timeout", status: "canceled", eligible: true },
+  { result: "closed", outcome: "timeout", status: "requires_action", eligible: false },
+] as const)("reloads after Paidy $result ($outcome, server state $status)", async ({ result, outcome, status, eligible }) => {
+  const s = setup([options[2]]);
+  const dispose = vi.fn((destination?: string) => navigation.replace(destination ?? window.location.href));
+  let callback!: (value: unknown) => void;
+  vi.mocked(s.sdk.openPaidy).mockImplementation(async (_action, handler) => {
+    callback = handler;
+    return { dispose };
+  });
+  let resolve!: () => void;
+  let reject!: () => void;
+  vi.mocked(s.gateway.abandonPaidyCheckout).mockReturnValue(new Promise((done, fail) => {
+    resolve = () => done({ data: { ...fixturePayment("paidy"), status } });
+    reject = () => fail(new Error("synthetic transport error"));
+  }));
+  const view = await s.mount();
+  await buy();
   await waitFor(() => expect(s.sdk.openPaidy).toHaveBeenCalledOnce());
-  s.callback({ status });
-  await waitFor(() => expect(screen.getByRole("button", { name: "購入する" })).toBeEnabled());
-  expect(s.gateway.confirmPaidyAuthorization).not.toHaveBeenCalled(); expect(navigation.replace).not.toHaveBeenCalled();
-  if (status === "rejected") expect(screen.getByRole("alert")).toHaveTextContent("あと払い（ペイディ）をご利用いただけませんでした");
-  fireEvent.click(screen.getByRole("button", { name: "購入する" }));
-  await waitFor(() => expect(s.gateway.startPayment).toHaveBeenCalledTimes(2));
+  vi.useFakeTimers();
+  try {
+    await act(async () => { callback({ status: result }); callback({ status: result }); });
+    expect(s.gateway.abandonPaidyCheckout).toHaveBeenCalledExactlyOnceWith("payment-fixture", { result }, expect.objectContaining({
+      idempotency_key: expect.any(String), timeout_ms: 5000,
+    }));
+    expect(s.gateway.recordPaymentClientEvent).toHaveBeenCalledWith("payment-fixture", {
+      type: "paidy_checkout_result", detail: { result },
+    }, expect.anything());
+    expect(s.gateway.confirmPaidyAuthorization).not.toHaveBeenCalled();
+    expect(dispose).not.toHaveBeenCalled();
+    expect(navigation.replace).not.toHaveBeenCalled();
+    if (outcome === "timeout") {
+      await act(async () => vi.advanceTimersByTimeAsync(4999));
+      expect(dispose).not.toHaveBeenCalled();
+      await act(async () => vi.advanceTimersByTimeAsync(1));
+    } else {
+      await act(async () => outcome === "response" ? resolve() : reject());
+    }
+    expect(dispose).toHaveBeenCalledOnce();
+    expect(navigation.replace).toHaveBeenCalledExactlyOnceWith(result === "rejected"
+      ? "https://shop.example.test/?payment_notice=paidy_rejected" : "https://shop.example.test/");
+    if (result === "rejected") expect(screen.getByRole("alert")).toHaveTextContent("あと払い（ペイディ）をご利用いただけませんでした");
+  } finally {
+    vi.useRealTimers();
+  }
+
+  // Simulate the fresh document, with the catalog response independent of the mutation response.
+  view.unmount();
+  const catalog = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_eligible;
+  const first = catalog.data[1]!;
+  vi.mocked(s.points.listPointProducts).mockClear();
+  vi.mocked(s.points.listPointProducts).mockResolvedValue({
+    data: eligible ? catalog : PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_after_first_purchase, metadata,
+  });
+  await s.mount("products");
+  expect(s.points.listPointProducts).toHaveBeenCalled();
+  expect(await screen.findByRole("tab", { name: eligible ? "初回ユーザー（24時間限定）" : "すべてのユーザー" }))
+    .toHaveAttribute("aria-selected", "true");
+  const firstProductLink = screen.queryAllByRole("link").find(link => link.getAttribute("href") === `/points/purchase/${first.id}`);
+  expect(Boolean(firstProductLink)).toBe(eligible);
 });
 
 it.each([{ status: "unknown" }, { status: "authorized", id: "bad-id" }])("queries canonical status for unknown Paidy response %j", async response => {

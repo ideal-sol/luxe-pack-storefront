@@ -24,6 +24,7 @@ export type UiPayment = Omit<Payment, "method" | "next_action"> & {
 };
 
 export type PaymentClientEvent = Schemas["PaymentClientEvent"];
+export type PaidyCheckoutAbandonment = Schemas["PaymentPaidyCheckoutAbandonmentRequest"];
 
 type Response<T> = Promise<{ data: T }>;
 type MutationOptions = { idempotency_key: string; signal?: AbortSignal; timeout_ms?: number };
@@ -34,6 +35,7 @@ export interface PaymentUiGateway {
   getPayment(paymentId: string): Response<UiPayment>;
   reportUnivapayCharge(paymentId: string, input: { charge_id: string }, options?: { signal?: AbortSignal; timeout_ms?: number }): Response<UiPayment>;
   confirmPaidyAuthorization(paymentId: string, input: { paidy_payment_id: string }, options: MutationOptions): Response<UiPayment>;
+  abandonPaidyCheckout(paymentId: string, input: PaidyCheckoutAbandonment, options: MutationOptions): Response<UiPayment>;
   recordPaymentClientEvent(paymentId: string, input: PaymentClientEvent, options: { signal?: AbortSignal; timeout_ms?: number }): Response<void>;
 }
 
