@@ -2203,3 +2203,45 @@ Local validation: focused production-provenance + Production Workflow242/242 PAS
 - Focused validation: 451 Contract/Artifact/LINE/purchase/provenance/compiled-GTM cases PASS after correcting four old checksum expectations (only affected four files rerun,55 PASS); readiness/storage282 PASS. Typecheck, ESLint, Artifact, Policy, Auth, LINE Identity, Secret and whitespace PASS. Test-fixture correction also supplied canonical Problem request_id/retryable and the actual X-XSRF-TOKEN header; no production behavior change resulted.
 - Final exact-head isolated GTM OFF / synthetic ON application builds, Required CI and fresh Strict review are recorded in PR255 after Source freeze. Reuse prior backend concurrency/locking/reward and exact-head Platform CI evidence; do not rerun full backend or local full Storefront suite. Browser Acceptance NOT_RUN; OLD Test/Preview GTM stays OFF. Operational Migration/DB/Runtime/ENV/T/GTM changes0; Production Application dispatch0.
 - Rollback before Source merge: retain Draft or revert this Source-only adoption in review. Runtime activation and Production authority require separate Human approval and environment acceptance; no rollback or change to currently active artifacts is performed here.
+
+## NEWPROD-20261125-STOREFRONT — Option B Authority Draft
+
+R3 / Strict Change / Application Runtime Activation deferred. Dedicated local branch
+`docs/NEWPROD-20261125-STOREFRONT` based on protected main at PR #255 squash
+`ad7413116c11f85578e749f100f27ed54b7fc345`, including PR #254. Issue #256 tracks
+the Draft and separate Human decisions and binds the canonical App operations.
+Reviewed HEAD `598400c4759bf4a73edb31ebb407d2c28d541737` and squash both have
+tree `53f621febb5fe0669d730960ed730a3a49afe7db`, direct content diff zero.
+Reuse [five required checks](https://github.com/ideal-sol/luxe-pack-storefront/actions/runs/45418417639)
+and [source review and compiled GTM evidence](https://github.com/ideal-sol/luxe-pack-storefront/pull/255#issuecomment-7135185596).
+The source review covers Paidy retention and compiled LINE, purchase and registration CV with GTM OFF and synthetic ON.
+
+The proposed Authority and its exact-match provenance checks bind Platform runtime PR #724
+(`3de56a1f145aab4b29641960cc1886c212750cee`) and the existing alpha.54 bundle.
+Public OpenAPI alpha.50 has 97 operations. The publication ID, run, publisher and outer digest
+match GitHub Artifact 14926246450, [run 45406520533](https://github.com/ideal-sol/oripa/actions/runs/45406520533).
+Manifest, Client, Testkit, OpenAPI, SHA256SUMS, package and lockfile pins verified.
+OLD Test Storefront receipt SHA256 `fa889e79cac625c72c452ca383f867a79ec1f1489240ae8cc15e271a208465b7`
+records PR #255 Technical PASS and GTM OFF. The subsequent Human report completes
+OLD Test browser acceptance for Paidy, LINE linking, friend confirmation, benefit
+grants and scheduled publication of standard gacha. This supersedes the receipt's
+browser acceptance status at the time of the technical check. Live Production GTM
+event firing remains an acceptance item after Production rollout because OLD Test
+ran with GTM OFF.
+
+[Platform Authority PR #728](https://github.com/ideal-sol/oripa/pull/728) squashed at
+`531ac9f3ba642cc59fc761fe6479dcd5293dbeda`. Its published manifest binds
+PR #724 and the official Contract above. The SHA is pinned in the Storefront Authority,
+validator and test expectations. Focused provenance and workflow tests passed 246/246,
+including the four tests previously held by the unresolved SHA. Artifact, policy, secret
+and whitespace checks passed. Required CI and fresh Strict review are recorded on the
+Draft PR for its final HEAD. Activation authorization is false.
+
+Production retains the existing ARM64 workflow and approved Production app, site, API and CDN
+inputs, Next 16.4.5, Node 22.23.5, pnpm 10.12.1 and GTM-5DQRPNN2 ON. After separate merge and
+build approvals, use the Storefront Authority merge as workflow SHA and PR #255 squash as runtime
+input. Verify compiled conversions, Build ID, source/tree, security, native smoke, manifest and
+exact-ID artifact readback before handoff. Preserve PR #250 rollback artifact 14616693698
+(run 44711421196). Before merge withdraw the draft. After merge use a reviewed Authority revert.
+Runtime rollback requires operator verification of the retained release, API compatibility and
+separate GO. Migrations created/applied 0/0.
