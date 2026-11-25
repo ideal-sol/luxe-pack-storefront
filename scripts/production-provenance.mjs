@@ -28,10 +28,10 @@ export function validateProvenance(root, authority = approvedSource) {
   const clientPin = packageJson.dependencies?.["@oripa/storefront-client"];
   const testkitPin = packageJson.devDependencies?.["@oripa/storefront-testkit"];
   const directory = dirname(authority.manifest_path);
-  requireValue(directory === "vendor/oripa/LINE-ALPHA52-20261110", "stale provenance authority");
-  requireValue(authority.contract_version === "2.0.0-alpha.52", "unapproved contract version");
-  requireValue(authority.platform_runtime_source_sha === "42cac7fd8e176b8686fedffc7673734036bf670e"
-    && authority.platform_authority_merge_sha === "bfb84acd214eb148585d2b4212a0199ec254d34c",
+  requireValue(directory === "vendor/oripa/LINE-FRIEND-CV-20261120", "stale provenance authority");
+  requireValue(authority.contract_version === "2.0.0-alpha.54", "unapproved contract version");
+  requireValue(authority.platform_runtime_source_sha === "3de56a1f145aab4b29641960cc1886c212750cee"
+    && authority.platform_authority_merge_sha === "531ac9f3ba642cc59fc761fe6479dcd5293dbeda",
   "Platform runtime authority mismatch");
   const manifestPath = join(root, directory, "artifact-manifest.json");
   requireValue(digest(manifestPath) === authority.manifest_sha256, "manifest digest mismatch");
@@ -39,16 +39,16 @@ export function validateProvenance(root, authority = approvedSource) {
   requireValue(manifest.bundle?.version === authority.contract_version && manifest.bundle?.immutable === true,
     "source and manifest contract mismatch");
   requireValue(manifest.source_commit === authority.platform_source_sha, "Platform source mismatch");
-  // Pin the genuine alpha.52 evidence bytes: its format differs from predecessor bundles.
+  // Pin the genuine alpha.54 evidence bytes: its format differs from predecessor bundles.
   // This rejects missing, duplicate, conflicting and legacy declarations without
   // rewriting Vendor evidence or accepting a permissive regex fallback.
-  requireValue(authority.artifact_id === "13742019147", "Artifact ID mismatch");
-  requireValue(authority.contract_archive_sha256 === "c08147d9dacc5c78c4edd7f548c3ad66fca9affbed432b47cb216609150cb4dd",
+  requireValue(authority.artifact_id === "14926246450", "Artifact ID mismatch");
+  requireValue(authority.contract_archive_sha256 === "5c198214e0ebf989a68280897c832a06f27ecaaaf09ee18c4d07300314f6fb7a",
     "Contract archive authority mismatch");
-  requireValue(digest(join(root, directory, "PROVENANCE.md")) === "6c1fafbf214d65a028bc8a919d3dc242882529b0675f219a60b4ae2dfb7a1f88",
-    "Formal alpha.52 provenance digest mismatch");
+  requireValue(digest(join(root, directory, "PROVENANCE.md")) === "6ce33bd0f922d963fb2b135f0ec04ded18ff36ee10f22fa813d722359513b24d",
+    "Formal alpha.54 provenance digest mismatch");
   requireValue(digest(join(root, directory, "SHA256SUMS")) ===
-    "f5574339a423a75eeaacd73bd702071217dd89438a16fad4ec01f2611e4bdef0", "SHA256SUMS digest mismatch");
+    "b214c82d2aef8516e4e12dee6fe7f0e921694da2e7d84d0e63e8abcde80dc7ef", "SHA256SUMS digest mismatch");
   const lockfile = readFileSync(join(root, "pnpm-lock.yaml"), "utf8");
   for (const [name, pin, expectedDigest] of [
     ["@oripa/storefront-client", clientPin, authority.client_sha256],
@@ -68,17 +68,18 @@ export function validateProvenance(root, authority = approvedSource) {
   const testkit = manifest.packages.find((entry) => entry.name === "@oripa/storefront-testkit");
   requireValue(testkit.storefront_client_version === authority.contract_version, "Client/Testkit mismatch");
   requireValue(manifest.public_openapi?.file === "public.openapi.json"
-    && authority.public_openapi_version === "2.0.0-alpha.48"
+    && authority.public_openapi_version === "2.0.0-alpha.50"
     && manifest.public_openapi.version === authority.public_openapi_version
     && manifest.public_openapi.sha256 === authority.public_openapi_sha256
     && digest(join(root, directory, "public.openapi.json")) === authority.public_openapi_sha256,
   "Public OpenAPI digest mismatch");
-  requireValue(authority.manifest_sha256 === "72bd3b18fb36bac68b948e4f936a7b64fce03cc1de95df1b3eedc826e54cee54",
+  requireValue(authority.manifest_sha256 === "a7cf5e66d5e9ca883a35a90fc7c99716cc63a8d9d0198449dab67a1f9d36f3ab",
     "unapproved formal manifest digest");
   requireValue(packageJson.engines?.node === "22.23.5"
     && packageJson.engines?.pnpm === "10.12.1"
     && packageJson.packageManager === "pnpm@10.12.1"
     && packageJson.dependencies?.next === "16.4.5", "Runtime toolchain pin mismatch");
+  requireValue(fullSha.test(authority.platform_authority_merge_sha), "Platform Authority merge binding pending");
   return {
     source_sha: authority.source_sha,
     contract_version: authority.contract_version,
