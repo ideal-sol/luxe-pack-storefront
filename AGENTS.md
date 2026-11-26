@@ -4,6 +4,8 @@
 
 - Engineering Safety is Strict and Git Ceremony is Lite. The canonical policy is
   `docs/engineering-governance.md`.
+- Before starting a NEW Production release, read the latest production state
+  handoff and the [Canonical Release Runbook on Platform `main`](https://github.com/ideal-sol/oripa/blob/main/docs/operations/deployment/new-production-canonical-release-runbook.md).
 - The default change model is one Change, one branch, and one pull request.
 - An Issue, dedicated Worktree, Task Policy, exact `allowed_paths`, or Source
   Integration Lock is optional and is used only when the change's tracking,
