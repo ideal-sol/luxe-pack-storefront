@@ -4,6 +4,7 @@ export interface PaymentAttempt {
   productId: string;
   idempotencyKey: string;
   paymentId: string | null;
+  stripe?: { method: "credit_card"; cancelKey: string };
 }
 const prefix = "luxe-pack:payment-attempt:v1:";
 const opaque = (value: unknown): value is string => typeof value === "string" && value.length > 0 && value.length <= 128 && !/[\s/\\\0]/.test(value);
@@ -17,7 +18,12 @@ export function readPaymentAttempt(subject: string): PaymentAttempt | null {
   const attempt: unknown = JSON.parse(value);
   if (!attempt || typeof attempt !== "object" || Array.isArray(attempt)) throw new Error("Payment correlation unavailable");
   const a = attempt as Record<string, unknown>;
-  if (Object.keys(a).sort().join(",") !== "idempotencyKey,paymentId,productId" || !opaque(a.productId) || !opaque(a.idempotencyKey) ||
+  const stripe = a.stripe;
+  const keys = Object.keys(a).sort().join(",");
+  if (keys !== "idempotencyKey,paymentId,productId" && keys !== "idempotencyKey,paymentId,productId,stripe" ||
+      stripe !== undefined && (!stripe || typeof stripe !== "object" || Array.isArray(stripe) ||
+        Object.keys(stripe).sort().join(",") !== "cancelKey,method" || !("method" in stripe) || stripe.method !== "credit_card" ||
+        !("cancelKey" in stripe) || !opaque(stripe.cancelKey)) || !opaque(a.productId) || !opaque(a.idempotencyKey) ||
       a.paymentId !== null && !opaque(a.paymentId)) throw new Error("Payment correlation unavailable");
   return a as unknown as PaymentAttempt;
 }
@@ -30,6 +36,12 @@ export function identifyPaymentAttempt(subject: string, key: string, paymentId: 
   const attempt = readPaymentAttempt(subject);
   if (attempt?.idempotencyKey !== key || !opaque(paymentId)) throw new Error("Payment correlation unavailable");
   window.sessionStorage.setItem(storageKey(subject), JSON.stringify({ ...attempt, paymentId }));
+}
+export function markStripePaymentAttempt(subject: string, key: string, cancelKey: string) {
+  const attempt = readPaymentAttempt(subject);
+  if (!attempt || attempt.idempotencyKey !== key || !opaque(cancelKey)) throw new Error("Payment correlation unavailable");
+  if (!attempt.stripe) window.sessionStorage.setItem(storageKey(subject), JSON.stringify({ ...attempt, stripe: { method: "credit_card", cancelKey } }));
+  return readPaymentAttempt(subject)!;
 }
 export function finishPaymentAttempt(subject: string, key: string) {
   if (readPaymentAttempt(subject)?.idempotencyKey === key) window.sessionStorage.removeItem(storageKey(subject));

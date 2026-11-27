@@ -569,6 +569,7 @@ it("loads on intersection once while a continuation is pending and disconnects",
     const target = screen.getByRole("button", { name: "さらに表示" });
     const rect = target.getBoundingClientRect();
     const entry: IntersectionObserverEntry = { target, time: 0, isIntersecting: true, intersectionRatio: 1, boundingClientRect: rect, intersectionRect: rect, rootBounds: null };
+    await waitFor(() => expect(intersect).toBeTypeOf("function"));
     act(() => { intersect([entry], {} as IntersectionObserver); intersect([entry], {} as IntersectionObserver); });
     expect(loadGroup).toHaveBeenCalledTimes(2);
     view.unmount();

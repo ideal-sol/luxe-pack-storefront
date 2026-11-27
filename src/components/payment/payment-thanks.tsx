@@ -126,7 +126,7 @@ function UnpaidGuide({ payment }: { readonly payment: Payment }) {
 export function PaymentThanks({ pid }: { readonly pid: string | null }) {
   usePaymentReturnEvent(pid);
   const { state: session } = useSession();
-  const { client } = usePaymentClient();
+  const { client, uiGateway } = usePaymentClient();
   const { refreshWallet } = usePointClient();
   const refreshedPaymentId = useRef<string | null>(null);
   const authenticatedClient = session.status === "authenticated" ? client : null;
@@ -136,7 +136,9 @@ export function PaymentThanks({ pid }: { readonly pid: string | null }) {
     let active = true;
     void Promise.resolve().then(() => {
       try {
-        if (active && subject && pid && (readPaymentAttempt(subject)?.paymentId === pid || isFailedInlinePayment(subject, pid))) setInlineContext({ subject, pid });
+        if (!active || !subject || !pid) return;
+        const attempt = readPaymentAttempt(subject);
+        if (attempt?.paymentId === pid && !attempt.stripe || isFailedInlinePayment(subject, pid)) setInlineContext({ subject, pid });
       } catch { /* No trusted provider context. */ }
     });
     return () => { active = false; };
@@ -145,7 +147,16 @@ export function PaymentThanks({ pid }: { readonly pid: string | null }) {
   const [revision, setRevision] = useState(0);
   const polling = usePaymentPolling(authenticatedClient, pid, correlatedInline, revision);
   const verified = polling.status === "ready" || polling.status === "delayed" ? polling.payment : null;
-  const univapay = correlatedInline && verified?.method === "credit_card";
+  const univapay = correlatedInline && verified?.method === "credit_card" && verified.provider_sync !== true && verified.next_action?.type !== "stripe_checkout";
+  const syncRequired = verified?.id === pid && verified?.provider_sync === true &&
+    !["succeeded", "failed", "canceled", "expired"].includes(verified.status);
+  useEffect(() => {
+    if (!authenticatedClient || !pid || !uiGateway || !syncRequired) return;
+    const controller = new AbortController();
+    const sync = () => { void uiGateway.syncStripePayment(pid, { timeout_ms: 5000, signal: controller.signal }).catch(() => undefined); };
+    const timers = [0, 5000, 15000, 30000, 60000].map(delay => window.setTimeout(sync, delay));
+    return () => { controller.abort(); timers.forEach(window.clearTimeout); };
+  }, [authenticatedClient, pid, syncRequired, uiGateway]);
 
   useEffect(() => {
     if (session.status !== "authenticated" || !session.session.user?.id || (polling.status !== "ready" && polling.status !== "delayed") || polling.payment.id !== pid) return;

@@ -17,7 +17,7 @@ const sourceDigests = {
   "src/components/analytics/purchase-conversion-recovery.tsx": "04068ab2159c15cc5f10e76751ce463c761cc716cfa71394db1e4086fb528a96",
   "src/lib/analytics/purchase-recovery.ts": "880f591f3b10294722d5e2f82d1ff4c11df9ddc9b95a844b187c49167a703b4f",
   "scripts/verify-gtm-client.mjs": "6847ff88cb2d418417e99f8472adf366eb6724574e3ab98546a7ddb072575bfb",
-  "src/components/payment/payment-thanks.tsx": "2f31eae7c7a7b075b881a80ca326e78cb2d4456c43d46183cf8fb047ea7b8fad",
+  "src/components/payment/payment-thanks.tsx": "8c66fa06f12b19863899115459cd54c6170df4477aff3c2496e9778bc12fe40c",
   "src/components/payment/use-payment-polling.ts": "e0698560048bb1600e78923b3a9658890573ad61e0e674af6fc5a24ad389d3f9",
   "src/lib/analytics/gtm.ts": "77d559e4bc169068db32d2f89ac3e92edcb3899363502d922245639c9eb3ddc7",
   "src/components/analytics/google-tag-manager.tsx": "012e0bea04cbca46f943cd4f6146c90d0f2f359c7b1c16386e3f3ace979dc337",

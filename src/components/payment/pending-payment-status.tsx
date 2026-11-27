@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { PAYMENT_STATUS_CHECK_EVENT, readPaymentAttempt } from "./payment-attempt";
-import { paymentThanksRoute } from "./provider-payment-actions";
+import { isStripePayment, paymentThanksRoute } from "./provider-payment-actions";
+import type { StripeEntry } from "./stripe-purchase";
 import { usePaymentClient } from "./payment-client-provider";
 
 // Outside the method loader: existing status stays reachable when new starts
 // are disabled or a pending first-purchase product becomes ineligible.
-export function PendingPaymentStatus({ subject, productId }: { subject: string; productId: string }) {
+export function PendingPaymentStatus({ subject, productId, recoverStripe }: { subject: string; productId: string; recoverStripe?: StripeEntry["recover"] }) {
   const { uiGateway } = usePaymentClient();
   const [known, setKnown] = useState<{ subject: string; productId: string; paymentId: string; verified: boolean } | null>(null);
   const redirected = useRef<string | null>(null);
@@ -28,12 +29,13 @@ export function PendingPaymentStatus({ subject, productId }: { subject: string; 
     if (!uiGateway) return;
     const check = () => { try {
       const attempt = readPaymentAttempt(subject);
-      if (attempt?.productId !== productId || !attempt.paymentId) return;
+      if (attempt?.productId !== productId || !attempt.paymentId || attempt.stripe) return;
       const paymentId = attempt.paymentId;
       setKnown(previous => previous?.subject === subject && previous.productId === productId && previous.paymentId === paymentId
         ? previous : { subject, productId, paymentId, verified: false });
       void uiGateway.getPayment(paymentId).then(({ data }) => {
         if (active && data.id === paymentId && data.method === "credit_card" && data.point_product_id === productId) {
+          if (isStripePayment(data) && recoverStripe) { recoverStripe(data, attempt); return; }
           setKnown({ subject, productId, paymentId, verified: true });
         } else if (active) {
           setKnown(null);
@@ -48,7 +50,7 @@ export function PendingPaymentStatus({ subject, productId }: { subject: string; 
     };
     window.addEventListener(PAYMENT_STATUS_CHECK_EVENT, onCheck);
     return () => { active = false; window.removeEventListener(PAYMENT_STATUS_CHECK_EVENT, onCheck); };
-  }, [productId, subject, uiGateway]);
+  }, [productId, recoverStripe, subject, uiGateway]);
   if (!known || known.subject !== subject || known.productId !== productId) return null;
   return <p role="status">開始済みのお支払いがあります。購入し直さず、<Link href={paymentThanksRoute(known.paymentId)}>開始済みの決済状況を確認する</Link>からご確認ください。</p>;
 }

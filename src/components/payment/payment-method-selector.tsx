@@ -54,7 +54,7 @@ export function PaymentMethodSelector({
         {options.map((method) => {
           const checked = selectedMethod === method.method;
           const display = presentation[method.method];
-          const reason = !method.available || !supportedPaymentMethod(method) ? method.unavailable_reason === "amount_too_large"
+          const reason = !method.available || !supportedPaymentMethod(method) ? method.unavailable_reason === "email_unverified" ? "メール認証を完了してください" : ["amount_too_large", "amount_too_small"].includes(method.unavailable_reason ?? "")
             ? "この商品はこのお支払い方法ではご購入いただけません" : "現在ご利用いただけません" : null;
           return (
             <div className={`payment-method-row${checked ? " payment-method-row--selected" : ""}`} key={method.method}>

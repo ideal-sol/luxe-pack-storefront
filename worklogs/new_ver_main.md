@@ -2245,3 +2245,29 @@ exact-ID artifact readback before handoff. Preserve PR #250 rollback artifact 14
 (run 44711421196). Before merge withdraw the draft. After merge use a reviewed Authority revert.
 Runtime rollback requires operator verification of the retained release, API compatibility and
 separate GO. Migrations created/applied 0/0.
+
+## STRIPE-CARD-20261125 Storefront① クレジットカード決済
+
+Risk R3、Strict Change、Application Runtime Activation deferred。Base `29d384bf46aeaeb86ac96936e8efbcc379ca4903`。[追跡Issue #260](https://github.com/ideal-sol/luxe-pack-storefront/issues/260)
+
+正式Artifact `15185489903` の5ファイルを照合し、ClientとTestkitを `2.0.0-alpha.55` に固定。Public alpha.51は既存97件を含む100件、Admin・Webhookはalpha.48、参照Site Schemaはalpha.23。正式なSource、Manifest、SHA256SUMSと各SHA-256は[採用記録](../vendor/oripa/STRIPE-CARD-20261125/PROVENANCE.md)に記載。[台帳PR #746](https://github.com/ideal-sol/oripa/pull/746)
+
+カード選択後の明示操作で決済を作成し、Stripeの入力時だけPayment Elementを読み込む。Checkoutの確定は必要時だけ3DSに遷移し、Link・Apple Pay・Google Payは非表示。購入画面の外側で会員・商品・既存のpayment-attemptを照合するため、提供元変更後や初回限定商品が一覧から消えた場合も再確認できる。保存は相関用のID・手段・冪等キーだけ。入力再開前に取消保留と期限を確認する。
+
+手動取消・同期はCSRF管理付きClientで最大5秒。Human承認の離脱時取消だけ、画面表示中にCSRFを準備し、同一オリジンのPlatformに認証Cookie、CSRF、Client/Site版、共通の取消キーを付けてkeepalive送信する。確定・3DS中は送信を抑止し、bfcache復元時は決済を再照会する。取消が不確かな間は試行を保持し、購入可否をPlatformから再取得する。サンクスページの同期と既存のpurchase_completeを分離した。
+
+採用に必要な固定一覧では、旧Artifactの完全性検証を維持し、alpha.55、Stripeの3操作、新しいソース・テストパスを追加した。対象の決済4テストファイル103件を確認し、追加した実購入画面の入口とStripe終了時の分類も個別確認。Artifact・ローカルpolicy・決済境界・secretチェックが通過。実Stripeキー・実機3DS・端末別の受入は①＋⑦のOLD Test反映後のHuman確認対象。Runtime Activationは0件。
+
+初回CIで決済ストレージ・GTM購入完了画面の固定ハッシュおよび新規テストの境界違反を検出。決済相関情報とテストは合成データのみで検証し、GTMの購入完了イベントの条件・送信内容を差分で照合した。Human承認済みの期待値更新として、同じ3ファイルのSHA-256を更新。新規テストは正式ClientのCSRF定数と既存の会員別payment-attempt APIで検証する。認証・LINE・決済の境界チェックと既存の違反検出ロジックを維持。[初回CI](https://github.com/ideal-sol/luxe-pack-storefront/actions/runs/45980686940) · [Draft PR #261](https://github.com/ideal-sol/luxe-pack-storefront/pull/261)
+
+2回目の自動CIでは決済・GTMを含む2,284件が通過し、既存の景品一覧テスト1件がObserver登録前にコールバックを呼んで失敗した。Storefront Governanceの小規模CI阻害修正として、登録完了を確認するアサーション1件を追加。二重読込防止・切断の検証と景品実装を維持した。ローカルの決済離脱・境界・GTM 77件中75件通過、GTM合成ビルドの2件は規定30秒でタイムアウト。同2件はCIで通過した。[CI記録](https://github.com/ideal-sol/luxe-pack-storefront/actions/runs/45981890260)
+
+### Storefront PR #261 ChatGPTレビュー修正
+
+レビュー対象 `3e037e338293317ef06d9357793afbf4b9a9b66b`。Strict Change、Activation deferred。
+
+- SF-R1。別商品では元の会員別payment-attemptを読み、既存GETで決済ID・商品・手段・通貨を照合する。終端確認後に元のキーで終了し、商品一覧・初回限定表示の再取得を通知する。未終了・不一致・照会失敗時は購入枠を保持し、ID未取得時は元の商品で同じキーと手段を使って復旧する。
+- SF-R2。期限を過ぎた `requires_action`・`provider_sync=true`・`next_action=null` で既存の同期APIを呼び、応答の決済と終端状態を照合する。取消保留中は入力を停止する。
+- SF-R3。確定中のbfcache復元ではGETで再確認し、未終了ならSDK確定と離脱抑止を維持する。端末側の遅延した完了通知よりサーバーが確認した終端状態を優先する。
+
+商品間移動と取消から次の決済開始まで、期限切れ時の応答、確定・復元・再離脱の競合を合成テストで検証。既存のalpha.55 Artifactと固定ハッシュを使い、API・保存形式・既存の決済会社・GTMの変更は0件。実機3DS・実端末のbfcache受入は別途。
