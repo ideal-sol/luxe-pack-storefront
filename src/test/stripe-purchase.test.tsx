@@ -1,7 +1,7 @@
 import { StrictMode, type ReactNode } from "react";
-import { ApiProblemError } from "@oripa/storefront-client";
+import { ApiProblemError, USER_XSRF_COOKIE, XSRF_TOKEN_HEADER } from "@oripa/storefront-client";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beginPaymentAttempt, readPaymentAttempt } from "@/components/payment/payment-attempt";
+import { beginPaymentAttempt, finishPaymentAttempt, readPaymentAttempt } from "@/components/payment/payment-attempt";
 import { validateStripeAction } from "@/components/payment/provider-payment-actions";
 import { StripePurchase } from "@/components/payment/stripe-purchase";
 import { StripeCardElement } from "@/components/payment/stripe-card-element";
@@ -49,14 +49,15 @@ function restore() { const event = new Event("pageshow"); Object.defineProperty(
 
 beforeEach(() => {
   vi.resetAllMocks();
-  sessionStorage.clear();
+  const previous = readPaymentAttempt(subject);
+  if (previous) finishPaymentAttempt(subject, previous.idempotencyKey);
   vi.stubEnv("NEXT_PUBLIC_PLATFORM_API_BASE_URL", "/platform");
   const browser = window;
   vi.stubGlobal("window", new Proxy(browser, { get(target, key) {
     if (key === "location") return { origin, href: origin + "/points/purchase/" + productId, replace };
     return Reflect.get(target, key);
   } }));
-  vi.spyOn(document, "cookie", "get").mockReturnValue("__Host-oripa_user_xsrf=" + "a".repeat(64));
+  vi.spyOn(document, "cookie", "get").mockReturnValue(`${USER_XSRF_COOKIE}=${"a".repeat(64)}`);
   send.mockResolvedValue({ ok: true });
   vi.stubGlobal("fetch", send);
   api.startPayment.mockResolvedValue(response());
@@ -167,14 +168,14 @@ it.each(["pagehide", "unmount", "method change"])("sends one prepared keepalive 
   window.dispatchEvent(new Event("visibilitychange"));
   expect(send).not.toHaveBeenCalled();
   // Another screen's correlation does not remove the displayed screen's obligation.
-  sessionStorage.clear();
+  finishPaymentAttempt(subject, "existing-start-key");
   if (mode === "unmount") ui.unmount();
   else if (mode === "pagehide") { hide(); hide(); }
   else fireEvent.click(button("別の支払い方法を選ぶ"));
   await waitFor(() => expect(send).toHaveBeenCalledTimes(1));
   expect(send).toHaveBeenCalledWith(origin+"/platform/payments/"+pid+"/stripe-checkout-cancellations", expect.objectContaining({
     method: "POST", keepalive: true, credentials: "include", body: JSON.stringify({ trigger: "leave" }),
-    headers: expect.objectContaining({ "Idempotency-Key": cancelKey, "X-XSRF-TOKEN": "a".repeat(64), "X-Oripa-Client-Version": "2.0.0-alpha.55", "X-Oripa-Site-Version": "0.1.0" }),
+    headers: expect.objectContaining({ "Idempotency-Key": cancelKey, [XSRF_TOKEN_HEADER]: "a".repeat(64), "X-Oripa-Client-Version": "2.0.0-alpha.55", "X-Oripa-Site-Version": "0.1.0" }),
   }));
 });
 

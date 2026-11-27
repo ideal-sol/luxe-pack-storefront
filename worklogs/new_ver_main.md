@@ -2257,3 +2257,5 @@ Risk R3、Strict Change、Application Runtime Activation deferred。Base `29d384
 手動取消・同期はCSRF管理付きClientで最大5秒。Human承認の離脱時取消だけ、画面表示中にCSRFを準備し、同一オリジンのPlatformに認証Cookie、CSRF、Client/Site版、共通の取消キーを付けてkeepalive送信する。確定・3DS中は送信を抑止し、bfcache復元時は決済を再照会する。取消が不確かな間は試行を保持し、購入可否をPlatformから再取得する。サンクスページの同期と既存のpurchase_completeを分離した。
 
 採用に必要な固定一覧では、旧Artifactの完全性検証を維持し、alpha.55、Stripeの3操作、新しいソース・テストパスを追加した。対象の決済4テストファイル103件を確認し、追加した実購入画面の入口とStripe終了時の分類も個別確認。Artifact・ローカルpolicy・決済境界・secretチェックが通過。実Stripeキー・実機3DS・端末別の受入は①＋⑦のOLD Test反映後のHuman確認対象。Runtime Activationは0件。
+
+初回CIで決済ストレージ・GTM購入完了画面の固定ハッシュおよび新規テストの境界違反を検出。決済相関情報とテストは合成データのみで検証し、GTMの購入完了イベントの条件・送信内容を差分で照合した。Human承認済みの期待値更新として、同じ3ファイルのSHA-256を更新。新規テストは正式ClientのCSRF定数と既存の会員別payment-attempt APIで検証する。認証・LINE・決済の境界チェックと既存の違反検出ロジックを維持。[初回CI](https://github.com/ideal-sol/luxe-pack-storefront/actions/runs/45980686940) · [Draft PR #261](https://github.com/ideal-sol/luxe-pack-storefront/pull/261)
