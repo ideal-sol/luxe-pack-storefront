@@ -7,7 +7,7 @@ settings:
 overrides:
   vite: 8.2.4
   '@oripa/site-schema@2.0.0-alpha.23': file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
-  '@oripa/storefront-client@2.0.0-alpha.55': file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-client-2.0.0-alpha.55.tgz
+  '@oripa/storefront-client@2.0.0-alpha.56': file:vendor/oripa/PAYMENT-PENDING-NOTICE-20261125/oripa-storefront-client-2.0.0-alpha.56.tgz
   fast-uri@<3.1.7: 3.1.7
   undici@>=8.0.0 <8.12.2: 8.12.2
   nanoid@<3.3.18: 3.3.18
@@ -26,8 +26,8 @@ importers:
         specifier: 1.1.0
         version: 1.1.0
       '@oripa/storefront-client':
-        specifier: file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-client-2.0.0-alpha.55.tgz
-        version: file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-client-2.0.0-alpha.55.tgz
+        specifier: file:vendor/oripa/PAYMENT-PENDING-NOTICE-20261125/oripa-storefront-client-2.0.0-alpha.56.tgz
+        version: file:vendor/oripa/PAYMENT-PENDING-NOTICE-20261125/oripa-storefront-client-2.0.0-alpha.56.tgz
       '@stripe/react-stripe-js':
         specifier: 7.1.0
         version: 7.1.0(@stripe/stripe-js@10.4.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -51,8 +51,8 @@ importers:
         specifier: file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
         version: file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
       '@oripa/storefront-testkit':
-        specifier: file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-testkit-2.0.0-alpha.55.tgz
-        version: file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-testkit-2.0.0-alpha.55.tgz
+        specifier: file:vendor/oripa/PAYMENT-PENDING-NOTICE-20261125/oripa-storefront-testkit-2.0.0-alpha.56.tgz
+        version: file:vendor/oripa/PAYMENT-PENDING-NOTICE-20261125/oripa-storefront-testkit-2.0.0-alpha.56.tgz
       '@tailwindcss/postcss':
         specifier: 4.3.3
         version: 4.3.3
@@ -556,14 +556,14 @@ packages:
     version: 2.0.0-alpha.23
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-client@file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-client-2.0.0-alpha.55.tgz':
-    resolution: {integrity: sha512-KAnWve0SmCrl2D7FUfbj6EEL4p7GmcJQNRqcM6WyInAQ6TEeKZPDiKRaPVNDtmjpuiTERyJUDcKOHccQSdL8Jw==, tarball: file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-client-2.0.0-alpha.55.tgz}
-    version: 2.0.0-alpha.55
+  '@oripa/storefront-client@file:vendor/oripa/PAYMENT-PENDING-NOTICE-20261125/oripa-storefront-client-2.0.0-alpha.56.tgz':
+    resolution: {integrity: sha512-z1PY8IXujeyS0ehQfiuEH6EfDStQMw93F66Kz6tVOd80gVgQwyGJJZWqy3YF4WRa6XKBDAXI5iB+SDiZLXKRTQ==, tarball: file:vendor/oripa/PAYMENT-PENDING-NOTICE-20261125/oripa-storefront-client-2.0.0-alpha.56.tgz}
+    version: 2.0.0-alpha.56
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-testkit-2.0.0-alpha.55.tgz':
-    resolution: {integrity: sha512-GWS++2LTEIIo+T+5Ipb7lMIkLECRlJgr9NcFh9vMd9K7Cd4Z93L7qlmYOG88AVmK7B/6g+Qg2aP4KvQUzM7Cpg==, tarball: file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-testkit-2.0.0-alpha.55.tgz}
-    version: 2.0.0-alpha.55
+  '@oripa/storefront-testkit@file:vendor/oripa/PAYMENT-PENDING-NOTICE-20261125/oripa-storefront-testkit-2.0.0-alpha.56.tgz':
+    resolution: {integrity: sha512-5aL9wmOK3u7SGla/K4QxVmNHr94Ee1AV1E2iBe9qQVIA4ynLC8MAfFgFX3UzApxr8o4XmNVd00z13Agr6xNj4A==, tarball: file:vendor/oripa/PAYMENT-PENDING-NOTICE-20261125/oripa-storefront-testkit-2.0.0-alpha.56.tgz}
+    version: 2.0.0-alpha.56
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
   '@oxc-project/types@0.154.0':
@@ -3154,12 +3154,12 @@ snapshots:
       ajv: 8.20.0
       semver: 7.8.5
 
-  '@oripa/storefront-client@file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-client-2.0.0-alpha.55.tgz': {}
+  '@oripa/storefront-client@file:vendor/oripa/PAYMENT-PENDING-NOTICE-20261125/oripa-storefront-client-2.0.0-alpha.56.tgz': {}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-testkit-2.0.0-alpha.55.tgz':
+  '@oripa/storefront-testkit@file:vendor/oripa/PAYMENT-PENDING-NOTICE-20261125/oripa-storefront-testkit-2.0.0-alpha.56.tgz':
     dependencies:
       '@oripa/site-schema': file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
-      '@oripa/storefront-client': file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-client-2.0.0-alpha.55.tgz
+      '@oripa/storefront-client': file:vendor/oripa/PAYMENT-PENDING-NOTICE-20261125/oripa-storefront-client-2.0.0-alpha.56.tgz
 
   '@oxc-project/types@0.154.0': {}
 

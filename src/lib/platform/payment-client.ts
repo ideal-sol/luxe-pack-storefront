@@ -57,6 +57,7 @@ export function createPaymentClientAdapter(transport: StorefrontTransport): Paym
     getPayment: client.getPayment,
     syncStripePayment: client.syncStripePayment,
     resumeStripeCheckout: client.resumeStripeCheckout,
+    cancelPayment: client.cancelPayment,
     cancelStripeCheckout: client.cancelStripeCheckout,
     reportUnivapayCharge: client.reportUnivapayCharge,
     confirmPaidyAuthorization: client.confirmPaidyAuthorization,

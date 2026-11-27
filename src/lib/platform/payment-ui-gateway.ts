@@ -35,6 +35,7 @@ export interface PaymentUiGateway {
   getPayment(paymentId: string): Response<UiPayment>;
   syncStripePayment(id: string, options?: { signal?: AbortSignal; timeout_ms?: number }): Response<UiPayment>;
   resumeStripeCheckout(id: string, options: MutationOptions): Response<UiPayment>;
+  cancelPayment(id: string, options: MutationOptions): Response<UiPayment>;
   cancelStripeCheckout(id: string, trigger: "user", options: MutationOptions): Response<UiPayment>;
   reportUnivapayCharge(paymentId: string, input: { charge_id: string }, options?: { signal?: AbortSignal; timeout_ms?: number }): Response<UiPayment>;
   confirmPaidyAuthorization(paymentId: string, input: { paidy_payment_id: string }, options: MutationOptions): Response<UiPayment>;

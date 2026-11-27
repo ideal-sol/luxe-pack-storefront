@@ -3,6 +3,8 @@ import { ApiProblemError, USER_XSRF_COOKIE, XSRF_TOKEN_HEADER } from "@oripa/sto
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beginPaymentAttempt, finishPaymentAttempt, readPaymentAttempt } from "@/components/payment/payment-attempt";
 import { validateStripeAction } from "@/components/payment/provider-payment-actions";
+import { BlockingPaymentNotice } from "@/components/payment/blocking-payment-notice";
+import { PUBLIC_POINT_PRODUCT_FIXTURES } from "@oripa/storefront-testkit";
 import { StripePurchase } from "@/components/payment/stripe-purchase";
 import { StripeCardElement } from "@/components/payment/stripe-card-element";
 import type { UiPayment } from "@/lib/platform/payment-ui-gateway";
@@ -25,6 +27,7 @@ const origin = "https://shop.example.test";
 const returnUrl = origin + "/points/purchase/thanks?pid=" + pid;
 const cancelKey = "original-cancel-key";
 const replace = vi.fn();
+const assign = vi.fn();
 const send = vi.fn();
 function action() {
   return { type: "stripe_checkout", client_secret: ["cs", "test", "fixture", "secret", "value"].join("_"),
@@ -55,7 +58,7 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_PLATFORM_API_BASE_URL", "/platform");
   const browser = window;
   vi.stubGlobal("window", new Proxy(browser, { get(target, key) {
-    if (key === "location") return { origin, href: origin + "/points/purchase/" + productId, replace };
+    if (key === "location") return { origin, href: origin + "/points/purchase/" + productId, replace, assign };
     return Reflect.get(target, key);
   } }));
   vi.spyOn(document, "cookie", "get").mockReturnValue(`${USER_XSRF_COOKIE}=${"a".repeat(64)}`);
@@ -176,7 +179,7 @@ it.each(["pagehide", "unmount", "method change"])("sends one prepared keepalive 
   await waitFor(() => expect(send).toHaveBeenCalledTimes(1));
   expect(send).toHaveBeenCalledWith(origin+"/platform/payments/"+pid+"/stripe-checkout-cancellations", expect.objectContaining({
     method: "POST", keepalive: true, credentials: "include", body: JSON.stringify({ trigger: "leave" }),
-    headers: expect.objectContaining({ "Idempotency-Key": cancelKey, [XSRF_TOKEN_HEADER]: "a".repeat(64), "X-Oripa-Client-Version": "2.0.0-alpha.55", "X-Oripa-Site-Version": "0.1.0" }),
+    headers: expect.objectContaining({ "Idempotency-Key": cancelKey, [XSRF_TOKEN_HEADER]: "a".repeat(64), "X-Oripa-Client-Version": "2.0.0-alpha.56", "X-Oripa-Site-Version": "0.1.0" }),
   }));
 });
 
@@ -393,4 +396,18 @@ it("SF-R3 honors a confirmed cancellation before a slower bfcache GET finishes",
   expect(screen.queryByText("カード入力欄")).toBeNull();
   expect(replace).not.toHaveBeenCalled();
   expect(send).not.toHaveBeenCalled();
+});
+
+it("opens the existing Stripe element from another device using the owned payment's original product", async () => {
+  const sample = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_pending.first_user_offer.blocking_payments[0];
+  const row = { ...sample, id: pid, blocks_point_product_ids: ["current-version"] };
+  api.getPayment.mockResolvedValue(response({ status: "created", next_action: null }));
+  const view = render(<BlockingPaymentNotice subject={subject} payments={[row]} />);
+  await act(async () => { fireEvent.click(button("お支払いを続ける")); });
+  expect(assign).toHaveBeenCalledWith("/points/purchase/" + productId);
+  view.unmount();
+  mount();
+  await input();
+  expect(api.resumeStripeCheckout).toHaveBeenCalledExactlyOnceWith(pid, expect.objectContaining({ idempotency_key: expect.any(String) }));
+  expect(api.startPayment).not.toHaveBeenCalled();
 });

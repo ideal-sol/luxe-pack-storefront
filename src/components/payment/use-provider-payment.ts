@@ -18,9 +18,9 @@ const idle: FlowState = { busy: false, locked: false, error: null, message: null
 export const PAIDY_REJECTED_MESSAGE = "あと払い（ペイディ）をご利用いただけませんでした。別のお支払い方法をお選びください";
 const PAIDY_ABANDONMENT_TIMEOUT_MS = 5000;
 
-export function useProviderPayment({ gateway, sdk, option, productId, subject, eligible }: {
+export function useProviderPayment({ gateway, sdk, option, productId, subject, eligible, onPaidyScreen }: {
   gateway: PaymentUiGateway | null; sdk: PaymentProviderSdk; option: PaymentMethodOption | undefined;
-  productId: string; subject: string; eligible: boolean;
+  productId: string; subject: string; eligible: boolean; onPaidyScreen: (id: string | null) => void;
 }) {
   const [state, setState] = useState<FlowState>(idle);
   const [valid, setValid] = useState(false);
@@ -108,8 +108,9 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
       session?.dispose();
       inline.current = null;
       checkout.current?.dispose(); checkout.current = null;
+      onPaidyScreen(null);
     };
-  }, [gateway, option, productId, sdk, subject]);
+  }, [gateway, option, productId, sdk, subject, onPaidyScreen]);
 
   const checkValidity = useCallback(async () => {
     const controller = lifecycle.current;
@@ -215,11 +216,13 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
           return;
         }
         case "paidy_checkout": {
+          onPaidyScreen(payment.id);
           void recordUiEvent(gateway, payment.id, { type: "paidy_checkout_opened" });
           const confirmKey = createPaymentIdempotencyKey();
           const instance = await sdk.openPaidy(action.action, response => {
             if (!active() || callbackClaimed) return;
             callbackClaimed = true;
+            onPaidyScreen(null);
             const r = response && typeof response === "object" ? response as Record<string, unknown> : {};
             const status = typeof r.status === "string" ? r.status.toLowerCase() : "unknown";
             if (status === "closed" || status === "rejected") {
@@ -257,6 +260,7 @@ export function useProviderPayment({ gateway, sdk, option, productId, subject, e
       }
     } catch (reason) {
       if (!active()) return;
+      if (method === "paidy") onPaidyScreen(null);
       if (begun && !created && reason instanceof ApiProblemError && reason.status >= 400 && reason.status < 500 && ![408, 409, 429].includes(reason.status)) {
         release(PAYMENT_UI_UNAVAILABLE);
       } else {

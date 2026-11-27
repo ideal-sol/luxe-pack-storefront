@@ -67,6 +67,7 @@ function fixturePayment(method: string, action?: unknown): UiPayment {
 function setup(methods: PaymentMethodOption[] = options) {
   const legacy = { startPayment: vi.fn(), listCards: vi.fn(), getPaymentCardUiBootstrap: vi.fn().mockResolvedValue({ data: PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES.sandbox, metadata }), getPayment: vi.fn() } as unknown as PaymentClientAdapter;
   const gateway: PaymentUiGateway = {
+    cancelPayment: vi.fn(),
     syncStripePayment: vi.fn(), resumeStripeCheckout: vi.fn(), cancelStripeCheckout: vi.fn(),
     listPaymentMethods: vi.fn().mockResolvedValue({ data: { data: methods } }),
     startPayment: vi.fn().mockImplementation(input => Promise.resolve({ data: fixturePayment(input.payment_method) })),
@@ -579,4 +580,25 @@ it("ignores a stale method response after both product and session change", asyn
   expect(await screen.findByText("あと払い（ペイディ）")).toBeInTheDocument();
   await act(async () => resolve({ data: { data: [options[1]] } }));
   expect(screen.queryByText(options[1].label)).not.toBeInTheDocument();
+});
+
+it.each(["products", "detail"] as const)("shows owned blockers from the %s source when every first purchase is disabled", async placement => {
+  const harness = setup();
+  const fixture = PUBLIC_POINT_PRODUCT_FIXTURES.authenticated_pending;
+  const sample = fixture.first_user_offer.blocking_payments[0];
+  const pointProduct = {
+    ...product, eligible: false, ineligible_reason: "first_purchase_pending" as const,
+    cta: { ...product.cta, state: "disabled" as const, reason: "first_purchase_pending" as const },
+    blocking_payments: [{ ...sample, blocks_point_product_ids: [product.id], point_product_name: "商品別の決済" }],
+  };
+  const data = { data: [pointProduct], first_user_offer: {
+    ...fixture.first_user_offer, blocking_payments_truncated: true,
+    blocking_payments: [{ ...sample, blocks_point_product_ids: ["another"], point_product_name: "一覧用の決済" }],
+  } };
+  vi.mocked(harness.points.listPointProducts).mockResolvedValue({ data, metadata });
+  await harness.mount(placement === "products" ? "products" : false);
+  expect(screen.getByText(placement === "products" ? /一覧用の決済／/ : /商品別の決済／/)).toBeVisible();
+  expect(screen.queryByText(placement === "products" ? /商品別の決済／/ : /一覧用の決済／/)).toBeNull();
+  expect(!!screen.queryByText(/ほかにも途中の決済/)).toBe(placement === "products");
+  expect(harness.gateway.startPayment).not.toHaveBeenCalled();
 });

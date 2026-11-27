@@ -19,6 +19,7 @@ import {
 } from "@/components/payment/card-registration-resume";
 import { PaymentMethodSelector } from "@/components/payment/payment-method-selector";
 import { PaymentMethodLoader } from "@/components/payment/payment-method-loader";
+import { BlockingPaymentNotice } from "@/components/payment/blocking-payment-notice";
 import { StripePurchase, type StripeEntry } from "@/components/payment/stripe-purchase";
 import { PaymentProcessingOverlay } from "@/components/payment/payment-processing-overlay";
 import { PendingPaymentStatus } from "@/components/payment/pending-payment-status";
@@ -87,6 +88,7 @@ function PurchaseSummary({ product }: { readonly product: PointProduct }) {
 }
 
 function PurchaseForm({
+  onPaidyScreen,
   stripe,
   product,
   registrationId,
@@ -99,6 +101,7 @@ function PurchaseForm({
   readonly registrationId: string | null;
   readonly registrationProcessing: boolean;
   readonly onRegistrationStopped: () => void;
+  readonly onPaidyScreen: (id: string | null) => void;
   readonly stripe: StripeEntry;
   readonly options: readonly PaymentMethodOption[];
   readonly subject: string;
@@ -115,7 +118,7 @@ function PurchaseForm({
   const providerMethod = isProviderMethod(selectedOption);
   const cardPolicy = options.find(o => o.method === "credit_card");
   const savedCardsEnabled = cardPolicy?.flow === "card_component" && cardPolicy.saved_cards_enabled;
-  const { busy: providerBusy, locked: providerLocked, error: providerError, message: providerMessage, statusPaymentId, attachTarget, valid: inlineValid, mounted: inlineMounted, providerValidates, checkValidity, submit: submitProvider } = useProviderPayment({ gateway: uiGateway, sdk: providerSdk, option: providerMethod && selectedOption?.flow !== "stripe_payment_element" ? selectedOption : undefined,
+  const { busy: providerBusy, locked: providerLocked, error: providerError, message: providerMessage, statusPaymentId, attachTarget, valid: inlineValid, mounted: inlineMounted, providerValidates, checkValidity, submit: submitProvider } = useProviderPayment({ onPaidyScreen, gateway: uiGateway, sdk: providerSdk, option: providerMethod && selectedOption?.flow !== "stripe_payment_element" ? selectedOption : undefined,
     productId: product.id, subject, eligible: product.is_available && product.eligible && product.cta.state === "enabled" });
   const submitStartingRef = useRef(false);
   const alive = useRef(false);
@@ -576,6 +579,7 @@ function ProductDetail({
   readonly subject: string;
 }) {
   const { client } = usePaymentClient();
+  const [paidyScreen, setPaidyScreen] = useState<string | null>(null);
   // Return context signals work in progress, never canonical registration success.
   const [stoppedRegistrationId, setStoppedRegistrationId] = useState<string | null>(null);
   const registrationProcessing = authenticated && Boolean(client && registrationId) && stoppedRegistrationId !== registrationId;
@@ -586,9 +590,11 @@ function ProductDetail({
       {!registrationProcessing ? <header className="point-purchase-detail__header"><p>COIN PURCHASE DETAIL</p><h1>{presentCoinTerminology(product.title)}</h1></header> : null}
       {client ? <PaymentReturnAlert client={client} pid={pid} productId={product.id} /> : null}
       {!registrationProcessing ? <PurchaseSummary product={product} /> : null}
+      {authenticated && <BlockingPaymentNotice subject={subject} activeId={paidyScreen}
+        payments={product.ineligible_reason === "first_purchase_pending" ? product.blocking_payments : undefined} />}
       {authenticated ? <PendingPaymentStatus subject={subject} productId={product.id} recoverStripe={stripe.recover} /> : null}
       {authenticated ? <PaymentMethodLoader productId={product.id} subject={subject}>{(options) =>
-        <PurchaseForm stripe={stripe} options={options} product={product} registrationId={registrationId} registrationProcessing={registrationProcessing} onRegistrationStopped={onRegistrationStopped} subject={subject} />
+        <PurchaseForm onPaidyScreen={setPaidyScreen} stripe={stripe} options={options} product={product} registrationId={registrationId} registrationProcessing={registrationProcessing} onRegistrationStopped={onRegistrationStopped} subject={subject} />
       }</PaymentMethodLoader> : <LoginRequiredState />}
       {!registrationProcessing ? <section aria-labelledby="point-purchase-conditions-title" className="point-purchase-detail__conditions">
         <header><p>PRODUCT INFORMATION</p><h2 id="point-purchase-conditions-title">商品情報</h2></header>
