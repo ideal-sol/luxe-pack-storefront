@@ -2271,3 +2271,13 @@ Risk R3、Strict Change、Application Runtime Activation deferred。Base `29d384
 - SF-R3。確定中のbfcache復元ではGETで再確認し、未終了ならSDK確定と離脱抑止を維持する。端末側の遅延した完了通知よりサーバーが確認した終端状態を優先する。
 
 商品間移動と取消から次の決済開始まで、期限切れ時の応答、確定・復元・再離脱の競合を合成テストで検証。既存のalpha.55 Artifactと固定ハッシュを使い、API・保存形式・既存の決済会社・GTMの変更は0件。実機3DS・実端末のbfcache受入は別途。
+
+## PAYMENT-PENDING-NOTICE-20261125 Storefront⑦ 途中決済の案内と取消
+
+Issue #262 · R3 / Strict Change / Activation deferred。Base `7241d91d796d60befe4c52a98a330ce58e033eaf`。
+
+[Platform #747](https://github.com/ideal-sol/oripa/pull/747) のSource `536a02e8f600c1ee68696245f9133558601973f8`、Artifact ID `15210212345`、[公開とreadback](https://github.com/ideal-sol/oripa/actions/runs/46023659050)、[台帳 #748](https://github.com/ideal-sol/oripa/pull/748) のSquash `5c7256dbffb5d4c5ee9c359df4233b40a605afec`。Bundle・Client・Testkit alpha.56、Public alpha.52（101操作）、Admin・Webhook alpha.48、参照Site Schema alpha.23。
+
+コイン購入一覧は購入可能な初回限定商品が0件でも一覧用の案内を表示し、詳細は商品の決済配列を使います。開始時刻と解放予定は日本時間で表示します。Stripeは所有決済のGETと元の商品IDを照合して①の入力画面に接続し、ペイディは取消に対応します。保存済みの別決済は保持します。共通取消には正式ClientのCSRF処理と5秒制限を適用し、再送では同じキーを使用します。購入枠の解放はPlatformの判定に従います。
+
+正式Artifact固定値、取込済みファイル、既存の検証項目と新しいソース一覧を照合。対象の決済UIとClientの合計123件（重複を除く）、TypeScript、決済境界を確認。離脱取消・3DS・bfcache・GTMは既存経路を利用します。ブラウザ実機と実決済は後続のHuman受入で確認します。後続の本番反映対象は①＋⑦＋Platform PR #745のPAM修正です。

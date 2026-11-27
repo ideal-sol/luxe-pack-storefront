@@ -1,5 +1,6 @@
 "use client";
 
+import { BlockingPaymentNotice } from "@/components/payment/blocking-payment-notice";
 import Link from "next/link";
 import { FirstBuyHero, FirstBuyStrip, FirstBuyCoinCard } from "./first-buy-offer";
 import { useFirstBuyCountdown } from "./use-first-buy-offer";
@@ -36,6 +37,7 @@ export const pointProductSaleStateLabels: Readonly<Record<PointProductSaleState,
 export const pointProductIneligibleReasonLabels: Readonly<Record<Exclude<PointProductIneligibleReason, null>, string>> = {
   authentication_required: "購入するにはログインが必要です。",
   audience_not_eligible: "この商品の対象条件を満たしていません。",
+  first_purchase_pending: "この決済が終わるまで、初回限定の商品は購入できません。",
   first_purchase_required: "この初回ユーザー商品は現在購入できません。",
   sale_ended: "この商品の販売は終了しました。",
   sale_not_started: "この商品の販売はまだ開始されていません。",
@@ -287,6 +289,10 @@ export function PointPurchasePage() {
     <div className="point-purchase">
       <PointBalanceSummary wallet={wallet} />
       <PointRateNotice />
+      {displayState.status === "ready" && session.status === "authenticated" && smsAccess === "verified" && session.session.user &&
+        <BlockingPaymentNotice key={session.session.user.id} subject={session.session.user.id}
+          payments={displayState.collection.first_user_offer?.blocking_payments}
+          truncated={displayState.collection.first_user_offer?.blocking_payments_truncated} />}
       {offer && <FirstBuyHero offer={offer} />}
       <section aria-labelledby="point-category-title" className="point-category-section">
         <header><p>PRODUCT CATEGORY</p><h2 id="point-category-title">商品カテゴリー</h2></header>

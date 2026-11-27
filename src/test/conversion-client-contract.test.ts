@@ -17,7 +17,7 @@ function harness(mutation = false) {
 }
 
 it("uses the three official operations and generated response schemas", async () => {
-  expect(PUBLIC_CONTRACT_FIXTURE.operation_count).toBe(100);
+  expect(PUBLIC_CONTRACT_FIXTURE.operation_count).toBe(101);
   for (const operation of ["getPendingConversionEvents", "claimConversionEvent", "deliverConversionEvent"]) {
     expect(PUBLIC_CONTRACT_FIXTURE.operation_ids).toContain(operation);
   }
@@ -25,7 +25,7 @@ it("uses the three official operations and generated response schemas", async ()
   const response: PublicComponents["schemas"]["PendingConversionEvents"] = { data: [{ id, event: "line_friend_added", occurred_at: "2026-11-24T00:00:00Z" }] };
   mock.enqueueJson({ method: "GET", url: `${origin}/me/conversion-events/pending` }, { body: response, status: 200 });
   expect(await client.pending()).toEqual(response.data);
-  assertBrowserRequestBoundary(mock.requests[0]!, { client_version: "2.0.0-alpha.55", site_version: "0.1.0" });
+  assertBrowserRequestBoundary(mock.requests[0]!, { client_version: "2.0.0-alpha.56", site_version: "0.1.0" });
   mock.assertExhausted();
 });
 
@@ -38,7 +38,7 @@ it("claims and confirms through the official CSRF transport, without retrying mu
   expect(await client.delivered(id, token)).toBe("delivered");
   expect(mock.requests).toHaveLength(3);
   for (const request of mock.requests.slice(1)) {
-    assertBrowserRequestBoundary(request, { client_version: "2.0.0-alpha.55", site_version: "0.1.0" });
+    assertBrowserRequestBoundary(request, { client_version: "2.0.0-alpha.56", site_version: "0.1.0" });
     expect(request.headers["x-xsrf-token"]).toBe("d".repeat(64));
   }
   expect(mock.requests[2]!.body).toEqual(JSON.stringify({ claim_token: token }));

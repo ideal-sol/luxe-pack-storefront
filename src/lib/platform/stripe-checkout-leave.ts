@@ -28,7 +28,7 @@ export async function prepareStripeLeave(paymentId: string, cancelKey: string) {
       method: "POST", credentials: "include", keepalive: true, redirect: "error", cache: "no-store",
       headers: {
         Accept: "application/json", "Content-Type": "application/json",
-        "X-Oripa-Client-Version": "2.0.0-alpha.55", "X-Oripa-Site-Version": configuration.siteVersion,
+        "X-Oripa-Client-Version": "2.0.0-alpha.56", "X-Oripa-Site-Version": configuration.siteVersion,
         [XSRF_TOKEN_HEADER]: token, "Idempotency-Key": cancelKey,
       },
       body: JSON.stringify({ trigger: "leave" }),
