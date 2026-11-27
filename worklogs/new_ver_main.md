@@ -2261,3 +2261,13 @@ Risk R3、Strict Change、Application Runtime Activation deferred。Base `29d384
 初回CIで決済ストレージ・GTM購入完了画面の固定ハッシュおよび新規テストの境界違反を検出。決済相関情報とテストは合成データのみで検証し、GTMの購入完了イベントの条件・送信内容を差分で照合した。Human承認済みの期待値更新として、同じ3ファイルのSHA-256を更新。新規テストは正式ClientのCSRF定数と既存の会員別payment-attempt APIで検証する。認証・LINE・決済の境界チェックと既存の違反検出ロジックを維持。[初回CI](https://github.com/ideal-sol/luxe-pack-storefront/actions/runs/45980686940) · [Draft PR #261](https://github.com/ideal-sol/luxe-pack-storefront/pull/261)
 
 2回目の自動CIでは決済・GTMを含む2,284件が通過し、既存の景品一覧テスト1件がObserver登録前にコールバックを呼んで失敗した。Storefront Governanceの小規模CI阻害修正として、登録完了を確認するアサーション1件を追加。二重読込防止・切断の検証と景品実装を維持した。ローカルの決済離脱・境界・GTM 77件中75件通過、GTM合成ビルドの2件は規定30秒でタイムアウト。同2件はCIで通過した。[CI記録](https://github.com/ideal-sol/luxe-pack-storefront/actions/runs/45981890260)
+
+### Storefront PR #261 ChatGPTレビュー修正
+
+レビュー対象 `3e037e338293317ef06d9357793afbf4b9a9b66b`。Strict Change、Activation deferred。
+
+- SF-R1。別商品では元の会員別payment-attemptを読み、既存GETで決済ID・商品・手段・通貨を照合する。終端確認後に元のキーで終了し、商品一覧・初回限定表示の再取得を通知する。未終了・不一致・照会失敗時は購入枠を保持し、ID未取得時は元の商品で同じキーと手段を使って復旧する。
+- SF-R2。期限を過ぎた `requires_action`・`provider_sync=true`・`next_action=null` で既存の同期APIを呼び、応答の決済と終端状態を照合する。取消保留中は入力を停止する。
+- SF-R3。確定中のbfcache復元ではGETで再確認し、未終了ならSDK確定と離脱抑止を維持する。端末側の遅延した完了通知よりサーバーが確認した終端状態を優先する。
+
+商品間移動と取消から次の決済開始まで、期限切れ時の応答、確定・復元・再離脱の競合を合成テストで検証。既存のalpha.55 Artifactと固定ハッシュを使い、API・保存形式・既存の決済会社・GTMの変更は0件。実機3DS・実端末のbfcache受入は別途。

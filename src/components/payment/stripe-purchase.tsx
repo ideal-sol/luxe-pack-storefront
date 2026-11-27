@@ -1,6 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { pointPurchaseDetailRoute } from "@/lib/routes/navigation";
 import { ApiProblemError } from "@oripa/storefront-client";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPaymentIdempotencyKey } from "@/lib/platform";
@@ -22,11 +24,19 @@ const rateLimited = "短時間に決済の開始が続いたため、カード�
 const refreshOffers = () => window.dispatchEvent(new Event(STRIPE_OFFER_REFRESH));
 const terminal = (status: string) => ["succeeded", "failed", "canceled", "expired"].includes(status);
 
+function checkoutAction(payment: UiPayment) {
+  return payment.status === "requires_action" && payment.next_action ? validateStripeAction(payment) : null;
+}
+
+function paymentExpired(payment: UiPayment) {
+  return payment.provider_sync === true && !!payment.expires_at && Date.parse(payment.expires_at) <= Date.now();
+}
+
 export function StripePurchase({ subject, productId, children }: {
   subject: string | null; productId: string; children: (entry: StripeEntry) => ReactNode;
 }) {
   const { uiGateway } = usePaymentClient();
-  const [active, setActive] = useState<PaymentAttempt | null>(null);
+  const [active, setActive] = useState<PaymentAttempt | null>();
   const [error, setError] = useState("");
   useEffect(() => {
     let alive = true;
@@ -34,7 +44,7 @@ export function StripePurchase({ subject, productId, children }: {
       if (!alive || !subject) return;
       try {
         const attempt = readPaymentAttempt(subject);
-        if (attempt?.stripe && attempt.productId === productId) setActive(attempt);
+        setActive(attempt?.stripe ? attempt : null);
       } catch { setError(PAYMENT_UI_PENDING); }
     });
     return () => { alive = false; };
@@ -55,14 +65,17 @@ export function StripePurchase({ subject, productId, children }: {
       setActive(attempt);
     } catch { setError(PAYMENT_UI_PENDING); }
   }
-  if (active && active.productId === productId && subject && uiGateway) {
-    return <StripeAttempt key={active.idempotencyKey} initial={active} subject={subject} gateway={uiGateway} done={done} />;
+  if (subject && active === undefined) return <p role="status">{error || "決済状態を確認しています。"}</p>;
+  if (active && subject) {
+    if (!uiGateway) return <p role="status">{PAYMENT_UI_PENDING}</p>;
+    return <StripeAttempt key={active.idempotencyKey} initial={active} otherProduct={active.productId !== productId}
+      subject={subject} gateway={uiGateway} done={done} />;
   }
   return <>{error && <p role="alert">{error}</p>}{children({ start, recover })}</>;
 }
 
-function StripeAttempt({ initial, subject, gateway, done }: {
-  initial: PaymentAttempt; subject: string; gateway: PaymentUiGateway; done: (error?: string) => void;
+function StripeAttempt({ initial, otherProduct, subject, gateway, done }: {
+  initial: PaymentAttempt; otherProduct: boolean; subject: string; gateway: PaymentUiGateway; done: (error?: string) => void;
 }) {
   const [view, setView] = useState<View>({ kind: "loading" });
   const [busy, setBusy] = useState(false);
@@ -70,7 +83,7 @@ function StripeAttempt({ initial, subject, gateway, done }: {
   const attempt = useRef(initial);
   const sequence = useRef(0);
   const mounted = useRef(false);
-  const confirming = useRef(false);
+  const confirmation = useRef<"idle" | "pending" | "restored">("idle");
   const dispatched = useRef(false);
   const leave = useRef<(() => void) | null>(null);
   const manual = useRef(false);
@@ -78,7 +91,7 @@ function StripeAttempt({ initial, subject, gateway, done }: {
   const invalidateReads = useCallback(() => { ++sequence.current; }, []);
   const navigate = (id: string) => window.location.replace(paymentThanksRoute(id));
   const sendLeave = useCallback(() => {
-    if (!leave.current || dispatched.current || confirming.current || manual.current) return;
+    if (!leave.current || dispatched.current || confirmation.current !== "idle" || manual.current) return;
     dispatched.current = true;
     leave.current();
   }, []);
@@ -90,26 +103,30 @@ function StripeAttempt({ initial, subject, gateway, done }: {
     const owned = (p: UiPayment) => p.method === "credit_card" && p.point_product_id === a.productId &&
       p.amount.currency === "JPY" && (!attempt.current.paymentId || p.id === attempt.current.paymentId);
     let verifiedStripe = false;
-    const settled = (payment: UiPayment) => {
+    const settled = (payment: UiPayment, synchronized = false) => {
       if (!owned(payment)) throw new Error();
       if (terminal(payment.status)) {
-        if (payment.status === "succeeded" && intent !== "recover") navigate(payment.id);
+        const wasConfirming = confirmation.current !== "idle";
+        confirmation.current = "idle";
+        if (!otherProduct && payment.status === "succeeded" && (intent !== "recover" || synchronized || wasConfirming)) navigate(payment.id);
         else { finishPaymentAttempt(subject, a.idempotencyKey); done(); }
         return true;
       }
+      if (otherProduct) { setView({ kind: "unknown" }); return true; }
       if (!isStripePayment(payment)) { setView({ kind: "uncertain" }); return true; }
       verifiedStripe = true;
       if (payment.cancellation_pending) { setView({ kind: "pending" }); return true; }
-      if (payment.status === "processing") { navigate(payment.id); return true; }
+      if (payment.status === "processing") { confirmation.current = "idle"; navigate(payment.id); return true; }
       return false;
     };
     leave.current = null;
-    if (intent === "recover") setView({ kind: "loading" });
+    if (intent === "recover" && confirmation.current === "idle") setView({ kind: "loading" });
     try {
       let payment: UiPayment;
       if (known) payment = known;
       else if (!id) {
-        const { data } = await gateway.startPayment({ point_product_id: a.productId, payment_method: "credit_card" }, { idempotency_key: a.idempotencyKey });
+        if (otherProduct) { setView({ kind: "uncertain" }); return; }
+        const { data } = await gateway.startPayment({ point_product_id: a.productId, payment_method: a.stripe!.method }, { idempotency_key: a.idempotencyKey });
         if (!current()) return;
         if (!owned(data)) throw new Error();
         identifyPaymentAttempt(subject, a.idempotencyKey, data.id);
@@ -118,6 +135,8 @@ function StripeAttempt({ initial, subject, gateway, done }: {
       } else payment = (await gateway.getPayment(id)).data;
       if (!current()) return;
       if (settled(payment)) return;
+      if (confirmation.current !== "idle") return;
+      if (manual.current && intent === "recover") { setView({ kind: "unknown" }); return; }
       if (payment.status === "created" && payment.next_action == null && intent === "recover") {
         try {
           payment = (await gateway.resumeStripeCheckout(payment.id, { idempotency_key: a.idempotencyKey })).data;
@@ -125,35 +144,32 @@ function StripeAttempt({ initial, subject, gateway, done }: {
         if (!current()) return;
         if (settled(payment)) return;
       }
-      if (payment.status !== "requires_action" || !payment.next_action) {
-        setView({ kind: intent === "recover" ? "preparation" : "unknown" }); return;
+      let action = checkoutAction(payment);
+      if (payment.status === "requires_action" && (paymentExpired(payment) || (action && action.expiresAt <= Date.now()))) {
+        payment = (await gateway.syncStripePayment(payment.id, { timeout_ms: 5000 })).data;
+        if (!current() || settled(payment, true)) return;
+        action = checkoutAction(payment);
       }
-      let action = validateStripeAction(payment);
-      if (action.expiresAt <= Date.now()) {
-        const updated = (await gateway.syncStripePayment(payment.id, { timeout_ms: 5000 })).data;
-        if (!current()) return;
-        if (settled(updated)) return;
-        if (updated.status !== "requires_action" || !updated.next_action) { setView({ kind: "preparation" }); return; }
-        action = validateStripeAction(updated);
-        if (action.expiresAt <= Date.now()) { setView({ kind: "preparation" }); return; }
+      if (!action || action.expiresAt <= Date.now() || paymentExpired(payment)) {
+        setView({ kind: intent === "recover" ? "preparation" : "unknown" }); return;
       }
       if (intent !== "recover") { setView({ kind: "open" }); return; }
       const prepared = await prepareStripeLeave(payment.id, a.stripe!.cancelKey);
       if (!current()) return;
       leave.current = prepared;
       dispatched.current = false;
-      confirming.current = false;
       setCancellationUnconfirmed(false);
       setView({ kind: "input", action, amount: payment.amount.amount });
     } catch (problem) {
       if (!current()) return;
+      if (confirmation.current === "restored") return;
       if (!attempt.current.paymentId && problem instanceof ApiProblemError &&
           ["PAYMENT_START_RATE_LIMITED", "PAYMENT_AMOUNT_TOO_SMALL"].includes(problem.code)) {
         finishPaymentAttempt(subject, a.idempotencyKey);
         done(problem.code === "PAYMENT_START_RATE_LIMITED" ? rateLimited : "決済を準備できませんでした");
       } else setView({ kind: !attempt.current.paymentId ? "uncertain" : intent === "recover" && verifiedStripe ? "preparation" : "unknown" });
     }
-  }, [done, gateway, subject]);
+  }, [done, gateway, otherProduct, subject]);
 
   useEffect(() => {
     const generation = ++lifecycle.current;
@@ -163,9 +179,8 @@ function StripeAttempt({ initial, subject, gateway, done }: {
     const hide = () => { sendLeave(); };
     const show = (event: PageTransitionEvent) => {
       if (event.persisted) {
-        confirming.current = false;
-        manual.current = false;
-        setBusy(false);
+        if (confirmation.current === "pending") confirmation.current = "restored";
+        if (confirmation.current === "idle" && !manual.current) setBusy(false);
         void observe("recover");
       }
     };
@@ -188,7 +203,7 @@ function StripeAttempt({ initial, subject, gateway, done }: {
 
   async function cancel() {
     const a = attempt.current;
-    if (!a.paymentId || manual.current || confirming.current) return;
+    if (!a.paymentId || manual.current || confirmation.current !== "idle") return;
     manual.current = true;
     dispatched.current = true;
     leave.current = null;
@@ -210,15 +225,33 @@ function StripeAttempt({ initial, subject, gateway, done }: {
     }
     finally { controller.abort(); manual.current = false; if (mounted.current) setBusy(false); refreshOffers(); }
   }
+  function isConfirming() { return confirmation.current !== "idle"; }
   async function complete() {
     const id = attempt.current.paymentId;
-    if (!id) return;
+    if (!id || !mounted.current || !isConfirming()) return;
     const controller = new AbortController();
     try {
-      await boundedProviderOperation(gateway.syncStripePayment(id, { timeout_ms: 5000, signal: controller.signal }), controller.signal, 5000);
+      const { data } = await boundedProviderOperation(gateway.syncStripePayment(id, { timeout_ms: 5000, signal: controller.signal }), controller.signal, 5000);
+      if (mounted.current && confirmation.current === "restored" && terminal(data.status)) {
+        await observe("check", data);
+      }
     } catch { /* The owned status is also read on the thanks page. */ }
-    finally { controller.abort(); if (mounted.current) navigate(id); }
+    finally {
+      controller.abort();
+      if (mounted.current && isConfirming()) {
+        invalidateReads();
+        leave.current = null;
+        confirmation.current = "idle";
+        navigate(id);
+      }
+    }
   }
+
+  if (otherProduct) return <section aria-label="決済状態">
+    <p role="status">別の商品の決済状態を確認しています。</p>
+    <Link href={pointPurchaseDetailRoute(initial.productId)}>元の商品の決済に戻る</Link>
+    {initial.paymentId && <button type="button" onClick={() => void observe("check")}>状態を確認する</button>}
+  </section>;
 
   const messages = {
     loading: "決済状態を確認しています。", preparation: "決済を準備できませんでした",
@@ -228,7 +261,13 @@ function StripeAttempt({ initial, subject, gateway, done }: {
   return <section className="point-purchase-detail" aria-label="クレジットカード決済">
     {cancellationUnconfirmed && <p>取消の結果を確認できませんでした。反映まで数分かかることがあります。</p>}
     {view.kind === "input" ? <StripeCardElement key={view.action.clientSecret} action={view.action} amount={view.amount}
-      onConfirming={value => { confirming.current = value; setBusy(value); }} onComplete={complete} />
+      onConfirming={value => {
+        if (!mounted.current || (!value && !isConfirming())) return;
+        const restored = confirmation.current === "restored";
+        confirmation.current = value ? "pending" : "idle";
+        setBusy(value);
+        if (!value && restored) void observe("recover");
+      }} onComplete={complete} />
       : <p role="status">{messages[view.kind]}</p>}
     {["input", "preparation", "pending", "open"].includes(view.kind) && <button type="button" disabled={busy} onClick={() => void cancel()}>
       {view.kind === "pending" || view.kind === "open" ? "もう一度取り消す" : "支払いをやめる"}

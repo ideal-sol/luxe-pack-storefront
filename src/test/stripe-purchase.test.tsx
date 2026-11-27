@@ -39,9 +39,10 @@ const response = (fields: Partial<UiPayment> = {}) => ({ data: payment(fields) }
 function seed(paymentId: string | null = pid) {
   beginPaymentAttempt(subject, { productId, paymentId, idempotencyKey: "existing-start-key", stripe: { method: "credit_card", cancelKey } });
 }
-const mount = () => render(<StrictMode><StripePurchase subject={subject} productId={productId}>
+const purchase = (routeProduct: string) => <StrictMode><StripePurchase key={routeProduct} subject={subject} productId={routeProduct}>
   {({ start }) => <button onClick={start}>カード情報の入力へ進む</button>}
-</StripePurchase></StrictMode>);
+</StripePurchase></StrictMode>;
+const mount = (routeProduct = productId) => render(purchase(routeProduct));
 const button = (text: string) => screen.getByRole("button", { name: text });
 const input = () => screen.findByText("カード入力欄");
 function hide() { window.dispatchEvent(new Event("pagehide")); }
@@ -72,7 +73,7 @@ afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstub
 it("starts only on the button, disables wallets, and stores opaque correlation", async () => {
   mount();
   expect(api.startPayment).not.toHaveBeenCalled();
-  fireEvent.click(button("カード情報の入力へ進む"));
+  fireEvent.click(await screen.findByRole("button", { name: "カード情報の入力へ進む" }));
   await input();
   expect(api.startPayment).toHaveBeenCalledTimes(1);
   expect(sdk.element).toHaveBeenCalledWith({ wallets: { applePay: "never", googlePay: "never", link: "never" } });
@@ -89,7 +90,7 @@ it.each(["extra key", "other origin", "wrong pid", "bad key", "bad secret"])("re
 
 it("shows the start rate-limit message and allows choosing another method after definitive rejection", async () => {
   api.startPayment.mockRejectedValue(new ApiProblemError({ type: "about:blank", title: "rate limit", code: "PAYMENT_START_RATE_LIMITED", status: 429, request_id: "fixture", retryable: false }));
-  mount(); fireEvent.click(button("カード情報の入力へ進む"));
+  mount(); fireEvent.click(await screen.findByRole("button", { name: "カード情報の入力へ進む" }));
   await screen.findByText(/短時間に決済の開始が続いたため/);
   expect(readPaymentAttempt(subject)).toBeNull();
 });
@@ -228,4 +229,168 @@ it("keeps the attempt on cancel timeout, blocks leave duplication and uses owned
   api.cancelStripeCheckout.mockResolvedValueOnce(response({ status: "succeeded", next_action: null }));
   await act(async () => fireEvent.click(button("もう一度取り消す")));
   expect(replace).toHaveBeenCalledWith("/points/purchase/thanks?pid="+pid);
+});
+
+it("SF-R1 reconciles A after leaving for B and allows B to start only after A ends", async () => {
+  const other = "product-b";
+  seed();
+  const view = mount();
+  await input();
+  let previous = response();
+  api.getPayment.mockImplementation(async () => previous);
+  send.mockImplementationOnce(async () => {
+    previous = response({ cancellation_pending: true, next_action: null });
+    return { ok: true };
+  });
+  view.rerender(purchase(other));
+  await screen.findByRole("link", { name: "元の商品の決済に戻る" });
+  await waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+  expect(send).toHaveBeenCalledWith(expect.stringContaining("/payments/" + pid + "/"), expect.objectContaining({
+    keepalive: true, body: JSON.stringify({ trigger: "leave" }),
+  }));
+  expect(api.getPayment).toHaveBeenLastCalledWith(pid);
+  expect(readPaymentAttempt(subject)?.productId).toBe(productId);
+  expect(screen.queryByText("カード入力欄")).toBeNull();
+  expect(screen.queryByText("カード情報の入力へ進む")).toBeNull();
+  expect(api.startPayment).not.toHaveBeenCalled();
+  const refresh = vi.fn();
+  window.addEventListener("luxe-pack:stripe-offer-refresh", refresh);
+  try {
+    expect(previous.data.cancellation_pending).toBe(true);
+    previous = response({ status: "canceled", provider_sync: false, next_action: null });
+    fireEvent.click(button("状態を確認する"));
+    const start = await screen.findByRole("button", { name: "カード情報の入力へ進む" });
+    expect(readPaymentAttempt(subject)).toBeNull();
+    expect(refresh).toHaveBeenCalled();
+    api.startPayment.mockResolvedValue(response({ id: "payment-b", point_product_id: other,
+      next_action: { ...action(), return_url: origin + "/points/purchase/thanks?pid=payment-b" } }));
+    fireEvent.click(start);
+    await input();
+    expect(api.startPayment).toHaveBeenCalledTimes(1);
+    expect(api.startPayment).toHaveBeenCalledWith({ point_product_id: other, payment_method: "credit_card" },
+      { idempotency_key: expect.not.stringMatching(/^existing-start-key$/) });
+    expect(readPaymentAttempt(subject)).toMatchObject({ productId: other, paymentId: "payment-b" });
+  } finally { window.removeEventListener("luxe-pack:stripe-offer-refresh", refresh); }
+});
+
+it.each(["no id", "GET failure", "wrong product", "wrong payment"])("SF-R1 retains A on B for %s", async reason => {
+  seed(reason === "no id" ? null : pid);
+  const original = readPaymentAttempt(subject);
+  if (reason === "GET failure") api.getPayment.mockRejectedValue(new Error("offline"));
+  else api.getPayment.mockResolvedValue(response({ status: "canceled", next_action: null,
+    ...(reason === "wrong product" ? { point_product_id: "product-b" } : { id: "unrelated" }) }));
+  const view = mount("product-b");
+  expect(await screen.findByRole("link", { name: "元の商品の決済に戻る" })).toHaveAttribute("href", "/points/purchase/"+productId);
+  await act(async () => undefined);
+  expect(api.getPayment).toHaveBeenCalledTimes(reason === "no id" ? 0 : 1);
+  expect(api.startPayment).not.toHaveBeenCalled();
+  expect(readPaymentAttempt(subject)).toEqual(original);
+  expect(screen.queryByText("カード入力欄")).toBeNull();
+  if (reason === "no id") {
+    view.rerender(purchase(productId));
+    await input();
+    expect(api.startPayment).toHaveBeenCalledWith({ point_product_id: productId, payment_method: "credit_card" },
+      { idempotency_key: "existing-start-key" });
+  }
+});
+
+const expiredWithoutAction = { status: "requires_action" as const, provider_sync: true,
+  expires_at: "2020-01-01T00:00:00Z", next_action: null };
+
+it.each(["expired", "succeeded", "lookup failure", "still open"])("SF-R2 reconciles an expired Payment with null action: %s", async outcome => {
+  seed(); api.getPayment.mockResolvedValue(response(expiredWithoutAction));
+  let resolve!: (result: ReturnType<typeof response>) => void;
+  let reject!: (err: Error) => void;
+  api.syncStripePayment.mockReturnValue(new Promise((yes, no) => { resolve = yes; reject = no; }));
+  mount();
+  await waitFor(() => expect(api.syncStripePayment).toHaveBeenCalledWith(pid, { timeout_ms: 5000 }));
+  expect(readPaymentAttempt(subject)?.paymentId).toBe(pid);
+  expect(screen.queryByText("カード入力欄")).toBeNull();
+  await act(async () => {
+    if (outcome === "lookup failure") reject(new Error("offline"));
+    else if (outcome === "still open") resolve(response(expiredWithoutAction));
+    else resolve(response({ status: outcome === "expired" ? "expired" : "succeeded", provider_sync: false, next_action: null }));
+  });
+  expect(api.syncStripePayment).toHaveBeenCalledTimes(1);
+  expect(api.resumeStripeCheckout).not.toHaveBeenCalled();
+  if (outcome === "expired") expect(readPaymentAttempt(subject)).toBeNull();
+  else if (outcome === "succeeded") expect(replace).toHaveBeenCalledWith("/points/purchase/thanks?pid="+pid);
+  else expect(readPaymentAttempt(subject)?.paymentId).toBe(pid);
+  expect(screen.queryByText("カード入力欄")).toBeNull();
+});
+
+it.each([true, false])("SF-R2 avoids unnecessary sync on pending=%s", async pending => {
+  seed(); api.getPayment.mockResolvedValue(pending ? response({ ...expiredWithoutAction, cancellation_pending: true })
+    : response({ expires_at: new Date(Date.now()+2100000).toISOString() }));
+  mount();
+  if (pending) {
+    await screen.findByText("取消の結果を確認中です。");
+    expect(screen.queryByText("カード入力欄")).toBeNull();
+  } else await input();
+  expect(api.syncStripePayment).not.toHaveBeenCalled();
+  expect(readPaymentAttempt(subject)?.paymentId).toBe(pid);
+});
+
+it.each(["requires_action", "succeeded", "expired", "canceled"] as const)(
+  "SF-R3 preserves in-flight confirmation across pagehide, restored %s and another leave", async status => {
+    seed(); mount(); await input();
+    let finish!: (result: unknown) => void;
+    sdk.confirm.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+    fireEvent.click(button("1,000円を支払う"));
+    hide();
+    api.getPayment.mockResolvedValue(status === "requires_action" ? response() : response({ status, provider_sync: false, next_action: null }));
+    await act(async () => restore());
+    expect(api.getPayment).toHaveBeenCalledTimes(2);
+    hide();
+    expect(send).not.toHaveBeenCalled();
+    if (status === "requires_action") {
+      const submit = button("処理中…");
+      expect(submit).toBeDisabled(); fireEvent.click(submit);
+      expect(button("支払いをやめる")).toBeDisabled();
+      expect(sdk.confirm).toHaveBeenCalledTimes(1);
+      await act(async () => finish({ type: "error", error: { message: "declined" } }));
+      await input();
+      expect(button("1,000円を支払う")).toBeEnabled();
+      expect(api.getPayment).toHaveBeenCalledTimes(3);
+      hide(); expect(send).toHaveBeenCalledTimes(1);
+    } else {
+      await act(async () => finish({ type: "success" }));
+      expect(api.syncStripePayment).not.toHaveBeenCalled();
+      if (status === "succeeded") expect(replace).toHaveBeenCalledTimes(1);
+      else { expect(readPaymentAttempt(subject)).toBeNull(); expect(replace).not.toHaveBeenCalled(); }
+      expect(send).not.toHaveBeenCalled();
+    }
+  });
+
+it.each([true, false])("SF-R3 revalidates ordinary bfcache restoration with cancellation pending=%s", async pending => {
+  seed(); mount(); await input(); hide();
+  expect(send).toHaveBeenCalledTimes(1);
+  api.getPayment.mockResolvedValue(response({ cancellation_pending: pending }));
+  await act(async () => restore());
+  expect(api.getPayment).toHaveBeenCalledTimes(2);
+  if (pending) {
+    expect(screen.getByText("取消の結果を確認中です。")).toBeInTheDocument();
+    expect(screen.queryByText("カード入力欄")).toBeNull();
+  } else expect(button("1,000円を支払う")).toBeEnabled();
+  hide();
+  expect(send).toHaveBeenCalledTimes(pending ? 1 : 2);
+  expect(readPaymentAttempt(subject)?.paymentId).toBe(pid);
+});
+
+it("SF-R3 honors a confirmed cancellation before a slower bfcache GET finishes", async () => {
+  seed(); mount(); await input();
+  let confirmed!: (result: unknown) => void;
+  let read!: (result: ReturnType<typeof response>) => void;
+  sdk.confirm.mockReturnValue(new Promise(resolve => { confirmed = resolve; }));
+  fireEvent.click(button("1,000円を支払う")); hide();
+  api.getPayment.mockReturnValueOnce(new Promise(resolve => { read = resolve; }));
+  await act(async () => restore());
+  hide();
+  api.syncStripePayment.mockResolvedValue(response({ status: "canceled", provider_sync: false, next_action: null }));
+  await act(async () => confirmed({ type: "success" }));
+  expect(readPaymentAttempt(subject)).toBeNull();
+  await act(async () => read(response()));
+  expect(screen.queryByText("カード入力欄")).toBeNull();
+  expect(replace).not.toHaveBeenCalled();
+  expect(send).not.toHaveBeenCalled();
 });
