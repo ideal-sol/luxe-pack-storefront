@@ -7,7 +7,7 @@ settings:
 overrides:
   vite: 8.2.4
   '@oripa/site-schema@2.0.0-alpha.23': file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
-  '@oripa/storefront-client@2.0.0-alpha.54': file:vendor/oripa/LINE-FRIEND-CV-20261120/oripa-storefront-client-2.0.0-alpha.54.tgz
+  '@oripa/storefront-client@2.0.0-alpha.55': file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-client-2.0.0-alpha.55.tgz
   fast-uri@<3.1.7: 3.1.7
   undici@>=8.0.0 <8.12.2: 8.12.2
   nanoid@<3.3.18: 3.3.18
@@ -26,8 +26,14 @@ importers:
         specifier: 1.1.0
         version: 1.1.0
       '@oripa/storefront-client':
-        specifier: file:vendor/oripa/LINE-FRIEND-CV-20261120/oripa-storefront-client-2.0.0-alpha.54.tgz
-        version: file:vendor/oripa/LINE-FRIEND-CV-20261120/oripa-storefront-client-2.0.0-alpha.54.tgz
+        specifier: file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-client-2.0.0-alpha.55.tgz
+        version: file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-client-2.0.0-alpha.55.tgz
+      '@stripe/react-stripe-js':
+        specifier: 7.1.0
+        version: 7.1.0(@stripe/stripe-js@10.4.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@stripe/stripe-js':
+        specifier: 10.4.0
+        version: 10.4.0
       next:
         specifier: 16.4.5
         version: 16.4.5(@babel/core@7.29.7)(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -45,8 +51,8 @@ importers:
         specifier: file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
         version: file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
       '@oripa/storefront-testkit':
-        specifier: file:vendor/oripa/LINE-FRIEND-CV-20261120/oripa-storefront-testkit-2.0.0-alpha.54.tgz
-        version: file:vendor/oripa/LINE-FRIEND-CV-20261120/oripa-storefront-testkit-2.0.0-alpha.54.tgz
+        specifier: file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-testkit-2.0.0-alpha.55.tgz
+        version: file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-testkit-2.0.0-alpha.55.tgz
       '@tailwindcss/postcss':
         specifier: 4.3.3
         version: 4.3.3
@@ -550,14 +556,14 @@ packages:
     version: 2.0.0-alpha.23
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-client@file:vendor/oripa/LINE-FRIEND-CV-20261120/oripa-storefront-client-2.0.0-alpha.54.tgz':
-    resolution: {integrity: sha512-DvoX2acTX5gtjaz96Eos0JWOxhXU3HykBHLsOfzlQLUqAGOtcjPwTlS0wK0Eecz4kATMlqs4G0TXr4s67s7EqA==, tarball: file:vendor/oripa/LINE-FRIEND-CV-20261120/oripa-storefront-client-2.0.0-alpha.54.tgz}
-    version: 2.0.0-alpha.54
+  '@oripa/storefront-client@file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-client-2.0.0-alpha.55.tgz':
+    resolution: {integrity: sha512-KAnWve0SmCrl2D7FUfbj6EEL4p7GmcJQNRqcM6WyInAQ6TEeKZPDiKRaPVNDtmjpuiTERyJUDcKOHccQSdL8Jw==, tarball: file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-client-2.0.0-alpha.55.tgz}
+    version: 2.0.0-alpha.55
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/LINE-FRIEND-CV-20261120/oripa-storefront-testkit-2.0.0-alpha.54.tgz':
-    resolution: {integrity: sha512-pZAVX+ptHRbAqRKjg2qkdSL/uyRZlHPzDeMeBlDEMQYLHk+869IW7FT4dOr558odhRhTH5UCdzDZTCvNjggGsw==, tarball: file:vendor/oripa/LINE-FRIEND-CV-20261120/oripa-storefront-testkit-2.0.0-alpha.54.tgz}
-    version: 2.0.0-alpha.54
+  '@oripa/storefront-testkit@file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-testkit-2.0.0-alpha.55.tgz':
+    resolution: {integrity: sha512-GWS++2LTEIIo+T+5Ipb7lMIkLECRlJgr9NcFh9vMd9K7Cd4Z93L7qlmYOG88AVmK7B/6g+Qg2aP4KvQUzM7Cpg==, tarball: file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-testkit-2.0.0-alpha.55.tgz}
+    version: 2.0.0-alpha.55
     engines: {node: 22.22.3, pnpm: 10.12.1}
 
   '@oxc-project/types@0.154.0':
@@ -661,6 +667,17 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
+
+  '@stripe/react-stripe-js@7.1.0':
+    resolution: {integrity: sha512-ehXa04HVJ8j/tPy1hQW9gdgLGY4o1msb7C5Rasd0LpLMiqY9VJIyuLAI6eUUXkeFvgbv6+5kulyNgHoR4FrRfg==}
+    peerDependencies:
+      '@stripe/stripe-js': '>=10.3.0 <11.0.0'
+      react: '>=16.8.0 <20.0.0'
+      react-dom: '>=16.8.0 <20.0.0'
+
+  '@stripe/stripe-js@10.4.0':
+    resolution: {integrity: sha512-ZGwmBIbKD9V8AA79nux7YxIrY+H3x3cOR60VYHTeBykJ5ZnNqFxhD+eNOg3t5Qz5QyB4Pfy6JnGaCmysYCD9IQ==}
+    engines: {node: '>=12.16'}
 
   '@swc/helpers@0.5.23':
     resolution: {integrity: sha512-5lSsMOTXURePglDfvuAQUqkGek9Hg2kksOYay2m0+XR++b2NWYL/4sWyuvVBIs8oKnJaxkdi9whaL/sqN13afw==}
@@ -3137,12 +3154,12 @@ snapshots:
       ajv: 8.20.0
       semver: 7.8.5
 
-  '@oripa/storefront-client@file:vendor/oripa/LINE-FRIEND-CV-20261120/oripa-storefront-client-2.0.0-alpha.54.tgz': {}
+  '@oripa/storefront-client@file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-client-2.0.0-alpha.55.tgz': {}
 
-  '@oripa/storefront-testkit@file:vendor/oripa/LINE-FRIEND-CV-20261120/oripa-storefront-testkit-2.0.0-alpha.54.tgz':
+  '@oripa/storefront-testkit@file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-testkit-2.0.0-alpha.55.tgz':
     dependencies:
       '@oripa/site-schema': file:vendor/oripa/MIG-063B/oripa-site-schema-2.0.0-alpha.23.tgz
-      '@oripa/storefront-client': file:vendor/oripa/LINE-FRIEND-CV-20261120/oripa-storefront-client-2.0.0-alpha.54.tgz
+      '@oripa/storefront-client': file:vendor/oripa/STRIPE-CARD-20261125/oripa-storefront-client-2.0.0-alpha.55.tgz
 
   '@oxc-project/types@0.154.0': {}
 
@@ -3196,6 +3213,15 @@ snapshots:
   '@rtsao/scc@1.1.0': {}
 
   '@standard-schema/spec@1.1.0': {}
+
+  '@stripe/react-stripe-js@7.1.0(@stripe/stripe-js@10.4.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+    dependencies:
+      '@stripe/stripe-js': 10.4.0
+      prop-types: 15.8.1
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+
+  '@stripe/stripe-js@10.4.0': {}
 
   '@swc/helpers@0.5.23':
     dependencies:

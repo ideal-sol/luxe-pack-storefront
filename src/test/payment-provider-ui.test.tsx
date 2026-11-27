@@ -67,6 +67,7 @@ function fixturePayment(method: string, action?: unknown): UiPayment {
 function setup(methods: PaymentMethodOption[] = options) {
   const legacy = { startPayment: vi.fn(), listCards: vi.fn(), getPaymentCardUiBootstrap: vi.fn().mockResolvedValue({ data: PUBLIC_PAYMENT_CARD_UI_BOOTSTRAP_FIXTURES.sandbox, metadata }), getPayment: vi.fn() } as unknown as PaymentClientAdapter;
   const gateway: PaymentUiGateway = {
+    syncStripePayment: vi.fn(), resumeStripeCheckout: vi.fn(), cancelStripeCheckout: vi.fn(),
     listPaymentMethods: vi.fn().mockResolvedValue({ data: { data: methods } }),
     startPayment: vi.fn().mockImplementation(input => Promise.resolve({ data: fixturePayment(input.payment_method) })),
     getPayment: vi.fn().mockResolvedValue({ data: fixturePayment("paidy") }),
@@ -95,6 +96,62 @@ function setup(methods: PaymentMethodOption[] = options) {
   };
   return { legacy, gateway, sdk, session, points, event: (value: UnivapayEvent) => act(() => event(value)), validity: (v: boolean) => act(() => validity(v)), callback: (v: unknown) => act(() => callback(v)), mount };
 }
+it.each([true, false])("uses provider_sync=%s without next_action on return, independently of ordinary polls", async enabled => {
+  vi.useFakeTimers();
+  const s = setup();
+  const data = { ...fixturePayment("credit_card"), method: "credit_card" as const, status: "processing" as const, next_action: null, provider_sync: enabled };
+  vi.mocked(s.legacy.getPayment).mockResolvedValue({ data, metadata });
+  vi.mocked(s.gateway.syncStripePayment).mockRejectedValue(new Error("unavailable"));
+  try {
+    const view = await s.mount(true);
+    for (const [step, count] of [[1, 1], [5000, 2], [10000, 3], [15000, 4], [30000, 5]]) {
+      await act(async () => vi.advanceTimersByTimeAsync(step!));
+      expect(s.gateway.syncStripePayment).toHaveBeenCalledTimes(enabled ? count! : 0);
+    }
+    expect(vi.mocked(s.legacy.getPayment).mock.calls.length).toBeGreaterThan(5);
+    view.unmount();
+  } finally { vi.useRealTimers(); }
+});
+
+it("creates a Stripe payment from the real purchase CTA only on explicit submission", async () => {
+  const stripeOption = { ...options[0], method: "credit_card", flow: "stripe_payment_element", inline_form: null };
+  const s = setup([stripeOption]);
+  vi.mocked(s.gateway.startPayment).mockResolvedValue({ data: { ...fixturePayment("credit_card"), cancellation_pending: true, provider_sync: true, next_action: null } });
+  await s.mount();
+  const start = screen.getByRole("button", { name: "カード情報の入力へ進む" });
+  expect(start).toBeEnabled();
+  expect(s.gateway.startPayment).not.toHaveBeenCalled();
+  await act(async () => fireEvent.click(start));
+  expect(screen.getByText("取消の結果を確認中です。")).toBeInTheDocument();
+  expect(s.gateway.startPayment).toHaveBeenCalledTimes(1);
+  expect(s.sdk.mountInline).not.toHaveBeenCalled();
+});
+
+it("does not classify a terminal Stripe card as a failed inline UnivaPay payment", async () => {
+  const { beginPaymentAttempt, isFailedInlinePayment } = await import("@/components/payment/payment-attempt");
+  beginPaymentAttempt(subject, { productId: product.id, paymentId: "payment-fixture", idempotencyKey: "stripe-start",
+    stripe: { method: "credit_card", cancelKey: "stripe-cancel" } });
+  const s = setup();
+  vi.mocked(s.legacy.getPayment).mockResolvedValue({ data: { ...fixturePayment("credit_card"), method: "credit_card", status: "failed", provider_sync: false, next_action: null }, metadata });
+  await s.mount(true);
+  expect(readPaymentAttempt(subject)).toBeNull();
+  expect(isFailedInlinePayment(subject, "payment-fixture")).toBe(false);
+  expect(s.gateway.syncStripePayment).not.toHaveBeenCalled();
+});
+
+it("recovers a Stripe attempt after the credit-card option has switched to UnivaPay", async () => {
+  const { beginPaymentAttempt } = await import("@/components/payment/payment-attempt");
+  beginPaymentAttempt(subject, { productId: product.id, paymentId: "payment-fixture", idempotencyKey: "previous-start",
+    stripe: { method: "credit_card", cancelKey: "previous-cancel" } });
+  const s = setup([options[0]!]);
+  vi.mocked(s.gateway.getPayment).mockResolvedValue({ data: { ...fixturePayment("credit_card"), provider_sync: true, cancellation_pending: true, next_action: null } });
+  await s.mount();
+  expect(await screen.findByText("取消の結果を確認中です。")).toBeInTheDocument();
+  expect(s.sdk.mountInline).not.toHaveBeenCalled();
+  expect(s.gateway.startPayment).not.toHaveBeenCalled();
+  expect(s.gateway.getPayment).toHaveBeenCalledWith("payment-fixture");
+});
+
 async function buy() {
   // Flush provider lifecycle/correlation initialization before asserting readiness.
   await act(async () => undefined);

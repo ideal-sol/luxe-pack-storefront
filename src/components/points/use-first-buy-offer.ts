@@ -5,8 +5,13 @@ import { useSession } from "@/components/auth/session-provider";
 import type { PointProductCollection } from "@/lib/platform";
 import { firstBuyRemainingMilliseconds, presentFirstBuyOffer } from "@/lib/presentation/first-buy-offer";
 import { usePointClient } from "./point-client-provider";
+import { STRIPE_OFFER_REFRESH } from "@/lib/platform/stripe-checkout-leave";
 
 export function useFirstBuyCountdown(collection: PointProductCollection | null, refresh: () => void) {
+  useEffect(() => {
+    window.addEventListener(STRIPE_OFFER_REFRESH, refresh);
+    return () => window.removeEventListener(STRIPE_OFFER_REFRESH, refresh);
+  }, [refresh]);
   const [elapsed, setElapsed] = useState<{ readonly asOf: string; readonly milliseconds: number } | null>(null);
   const asOf = collection?.first_user_offer?.as_of;
   const duration = collection ? firstBuyRemainingMilliseconds(collection) : 0;

@@ -19,6 +19,7 @@ import {
 } from "@/components/payment/card-registration-resume";
 import { PaymentMethodSelector } from "@/components/payment/payment-method-selector";
 import { PaymentMethodLoader } from "@/components/payment/payment-method-loader";
+import { StripePurchase, type StripeEntry } from "@/components/payment/stripe-purchase";
 import { PaymentProcessingOverlay } from "@/components/payment/payment-processing-overlay";
 import { PendingPaymentStatus } from "@/components/payment/pending-payment-status";
 import { paymentThanksRoute } from "@/components/payment/provider-payment-actions";
@@ -86,6 +87,7 @@ function PurchaseSummary({ product }: { readonly product: PointProduct }) {
 }
 
 function PurchaseForm({
+  stripe,
   product,
   registrationId,
   registrationProcessing,
@@ -97,6 +99,7 @@ function PurchaseForm({
   readonly registrationId: string | null;
   readonly registrationProcessing: boolean;
   readonly onRegistrationStopped: () => void;
+  readonly stripe: StripeEntry;
   readonly options: readonly PaymentMethodOption[];
   readonly subject: string;
 }) {
@@ -112,7 +115,7 @@ function PurchaseForm({
   const providerMethod = isProviderMethod(selectedOption);
   const cardPolicy = options.find(o => o.method === "credit_card");
   const savedCardsEnabled = cardPolicy?.flow === "card_component" && cardPolicy.saved_cards_enabled;
-  const { busy: providerBusy, locked: providerLocked, error: providerError, message: providerMessage, statusPaymentId, attachTarget, valid: inlineValid, mounted: inlineMounted, providerValidates, checkValidity, submit: submitProvider } = useProviderPayment({ gateway: uiGateway, sdk: providerSdk, option: providerMethod ? selectedOption : undefined,
+  const { busy: providerBusy, locked: providerLocked, error: providerError, message: providerMessage, statusPaymentId, attachTarget, valid: inlineValid, mounted: inlineMounted, providerValidates, checkValidity, submit: submitProvider } = useProviderPayment({ gateway: uiGateway, sdk: providerSdk, option: providerMethod && selectedOption?.flow !== "stripe_payment_element" ? selectedOption : undefined,
     productId: product.id, subject, eligible: product.is_available && product.eligible && product.cta.state === "enabled" });
   const submitStartingRef = useRef(false);
   const alive = useRef(false);
@@ -211,6 +214,7 @@ function PurchaseForm({
 
   const submitPayment = async () => {
     if (!selectedOption?.available || !supportedPaymentMethod(selectedOption) || !product.is_available || !product.eligible || product.cta.state !== "enabled") return;
+    if (selectedOption.flow === "stripe_payment_element") { stripe.start(); return; }
     if (providerMethod) {
       setError(null);
       const destination = new URL(window.location.href);
@@ -539,7 +543,7 @@ function PurchaseForm({
         if (!providerMethod && savedCardsEnabled && method === "credit_card" && selectedCardId === "new") setConfirmationOpen(true);
         else void submitPayment();
       }} type="button">
-        {submitting || providerBusy ? "処理中…" : "購入する"}
+        {submitting || providerBusy ? "処理中…" : selectedOption?.flow === "stripe_payment_element" ? "カード情報の入力へ進む" : "購入する"}
       </button>
       {providerMethod && selectedOption?.flow !== "inline_card_form" && providerBusy && providerMessage ? <PaymentProcessingOverlay message={providerMessage} /> : null}
       {confirmationOpen ? (
@@ -557,12 +561,14 @@ function PurchaseForm({
 }
 
 function ProductDetail({
+  stripe,
   authenticated,
   pid,
   product,
   registrationId,
   subject,
 }: {
+  readonly stripe: StripeEntry;
   readonly authenticated: boolean;
   readonly pid: string | null;
   readonly product: PointProduct;
@@ -580,9 +586,9 @@ function ProductDetail({
       {!registrationProcessing ? <header className="point-purchase-detail__header"><p>COIN PURCHASE DETAIL</p><h1>{presentCoinTerminology(product.title)}</h1></header> : null}
       {client ? <PaymentReturnAlert client={client} pid={pid} productId={product.id} /> : null}
       {!registrationProcessing ? <PurchaseSummary product={product} /> : null}
-      {authenticated ? <PendingPaymentStatus subject={subject} productId={product.id} /> : null}
+      {authenticated ? <PendingPaymentStatus subject={subject} productId={product.id} recoverStripe={stripe.recover} /> : null}
       {authenticated ? <PaymentMethodLoader productId={product.id} subject={subject}>{(options) =>
-        <PurchaseForm options={options} product={product} registrationId={registrationId} registrationProcessing={registrationProcessing} onRegistrationStopped={onRegistrationStopped} subject={subject} />
+        <PurchaseForm stripe={stripe} options={options} product={product} registrationId={registrationId} registrationProcessing={registrationProcessing} onRegistrationStopped={onRegistrationStopped} subject={subject} />
       }</PaymentMethodLoader> : <LoginRequiredState />}
       {!registrationProcessing ? <section aria-labelledby="point-purchase-conditions-title" className="point-purchase-detail__conditions">
         <header><p>PRODUCT INFORMATION</p><h2 id="point-purchase-conditions-title">商品情報</h2></header>
@@ -611,7 +617,11 @@ export function PointPurchaseDetail(props: {
         {props.registrationId && <CardReturnStatus productId={props.productId} registrationId={props.registrationId} />}
       </>
     )}
-    <MemberAccess loading={<CatalogLoading label={props.registrationId ? "処理中…" : "コイン購入詳細を読み込み中"} />}><PointPurchaseDetailContent {...props} /></MemberAccess>
+    <MemberAccess loading={<CatalogLoading label={props.registrationId ? "処理中…" : "コイン購入詳細を読み込み中"} />}>
+      <StripePurchase key={`${state.status === "authenticated" ? state.session.user?.id : ""}:${props.productId}`} subject={state.status === "authenticated" ? state.session.user?.id ?? null : null} productId={props.productId}>
+        {stripe => <PointPurchaseDetailContent {...props} stripe={stripe} />}
+      </StripePurchase>
+    </MemberAccess>
   </>;
 }
 
@@ -637,10 +647,12 @@ function CardReturnStatus({ productId, registrationId }: { readonly productId: s
 }
 
 function PointPurchaseDetailContent({
+  stripe,
   pid = null,
   productId,
   registrationId = null,
 }: {
+  readonly stripe: StripeEntry;
   readonly pid?: string | null;
   readonly productId: string;
   readonly registrationId?: string | null;
@@ -678,5 +690,5 @@ function PointPurchaseDetailContent({
   if (displayState.status === "error") return <CatalogMessage action={() => { setState({ status: "loading" }); setRequestKey((value) => value + 1); }} description={displayState.problem.message} eyebrow="ERROR" title="コイン商品を取得できませんでした" tone="error" />;
   const product = displayState.collection.data.find((candidate) => candidate.id === productId);
   if (!product) return <CatalogMessage description="指定されたコイン商品は公開されていないか、見つかりません。" eyebrow="NOT FOUND" title="コイン商品が見つかりません" />;
-  return <ProductDetail authenticated={session.status === "authenticated"} key={`${sessionKey}:${product.id}`} pid={pid} product={product} registrationId={registrationId} subject={sessionKey ?? "anonymous"} />;
+  return <ProductDetail stripe={stripe} authenticated={session.status === "authenticated"} key={`${sessionKey}:${product.id}`} pid={pid} product={product} registrationId={registrationId} subject={sessionKey ?? "anonymous"} />;
 }

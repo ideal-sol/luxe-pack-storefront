@@ -2245,3 +2245,15 @@ exact-ID artifact readback before handoff. Preserve PR #250 rollback artifact 14
 (run 44711421196). Before merge withdraw the draft. After merge use a reviewed Authority revert.
 Runtime rollback requires operator verification of the retained release, API compatibility and
 separate GO. Migrations created/applied 0/0.
+
+## STRIPE-CARD-20261125 Storefront① クレジットカード決済
+
+Risk R3、Strict Change、Application Runtime Activation deferred。Base `29d384bf46aeaeb86ac96936e8efbcc379ca4903`。[追跡Issue #260](https://github.com/ideal-sol/luxe-pack-storefront/issues/260)
+
+正式Artifact `15185489903` の5ファイルを照合し、ClientとTestkitを `2.0.0-alpha.55` に固定。Public alpha.51は既存97件を含む100件、Admin・Webhookはalpha.48、参照Site Schemaはalpha.23。正式なSource、Manifest、SHA256SUMSと各SHA-256は[採用記録](../vendor/oripa/STRIPE-CARD-20261125/PROVENANCE.md)に記載。[台帳PR #746](https://github.com/ideal-sol/oripa/pull/746)
+
+カード選択後の明示操作で決済を作成し、Stripeの入力時だけPayment Elementを読み込む。Checkoutの確定は必要時だけ3DSに遷移し、Link・Apple Pay・Google Payは非表示。購入画面の外側で会員・商品・既存のpayment-attemptを照合するため、提供元変更後や初回限定商品が一覧から消えた場合も再確認できる。保存は相関用のID・手段・冪等キーだけ。入力再開前に取消保留と期限を確認する。
+
+手動取消・同期はCSRF管理付きClientで最大5秒。Human承認の離脱時取消だけ、画面表示中にCSRFを準備し、同一オリジンのPlatformに認証Cookie、CSRF、Client/Site版、共通の取消キーを付けてkeepalive送信する。確定・3DS中は送信を抑止し、bfcache復元時は決済を再照会する。取消が不確かな間は試行を保持し、購入可否をPlatformから再取得する。サンクスページの同期と既存のpurchase_completeを分離した。
+
+採用に必要な固定一覧では、旧Artifactの完全性検証を維持し、alpha.55、Stripeの3操作、新しいソース・テストパスを追加した。対象の決済4テストファイル103件を確認し、追加した実購入画面の入口とStripe終了時の分類も個別確認。Artifact・ローカルpolicy・決済境界・secretチェックが通過。実Stripeキー・実機3DS・端末別の受入は①＋⑦のOLD Test反映後のHuman確認対象。Runtime Activationは0件。

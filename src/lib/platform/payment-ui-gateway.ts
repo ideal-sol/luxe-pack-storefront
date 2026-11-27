@@ -33,6 +33,9 @@ export interface PaymentUiGateway {
   listPaymentMethods(pointProductId?: string): Response<{ data: PaymentMethodOption[] }>;
   startPayment(input: { point_product_id: string; payment_method: "credit_card" | "netridecash" | "paidy" }, options: MutationOptions): Response<UiPayment>;
   getPayment(paymentId: string): Response<UiPayment>;
+  syncStripePayment(id: string, options?: { signal?: AbortSignal; timeout_ms?: number }): Response<UiPayment>;
+  resumeStripeCheckout(id: string, options: MutationOptions): Response<UiPayment>;
+  cancelStripeCheckout(id: string, trigger: "user", options: MutationOptions): Response<UiPayment>;
   reportUnivapayCharge(paymentId: string, input: { charge_id: string }, options?: { signal?: AbortSignal; timeout_ms?: number }): Response<UiPayment>;
   confirmPaidyAuthorization(paymentId: string, input: { paidy_payment_id: string }, options: MutationOptions): Response<UiPayment>;
   abandonPaidyCheckout(paymentId: string, input: PaidyCheckoutAbandonment, options: MutationOptions): Response<UiPayment>;
@@ -47,11 +50,11 @@ export function isLegacyPaymentMethod(value: string): value is Extract<PaymentMe
 }
 
 export function isProviderMethod(option: PaymentMethodOption | undefined) {
-  return option?.method === "netridecash" || option?.method === "paidy" || option?.flow === "inline_card_form";
+  return option?.method === "netridecash" || option?.method === "paidy" || option?.flow === "inline_card_form" || option?.flow === "stripe_payment_element";
 }
 
 export function supportedPaymentMethod(option: PaymentMethodOption) {
-  return option.method === "credit_card" ? ["card_component", "inline_card_form"].includes(option.flow)
+  return option.method === "credit_card" ? ["card_component", "inline_card_form", "stripe_payment_element"].includes(option.flow)
     : option.method === "paidy" ? option.flow === "paidy_checkout"
       : ["netridecash", "paypay", "konbini", "virtual_account"].includes(option.method) && option.flow === "redirect";
 }

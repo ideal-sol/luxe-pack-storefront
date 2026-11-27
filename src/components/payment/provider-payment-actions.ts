@@ -37,6 +37,23 @@ export function paymentThanksRoute(id: string) {
   return `/points/purchase/thanks?pid=${encodeURIComponent(id)}`;
 }
 
+export function isStripePayment(payment: UiPayment) {
+  return payment.method === "credit_card" && (payment.provider_sync === true ||
+    object(payment.next_action) && payment.next_action.type === "stripe_checkout");
+}
+
+export function validateStripeAction(payment: UiPayment) {
+  const action = payment.next_action;
+  if (!object(action) || !only(action, ["type", "publishable_key", "client_secret", "return_url", "expires_at"]) ||
+      action.type !== "stripe_checkout" || !text(action.publishable_key) || !/^pk_(test|live)_[A-Za-z0-9]+$/.test(action.publishable_key) ||
+      !text(action.client_secret) || !/^cs_(test|live)_[A-Za-z0-9]+_secret_[A-Za-z0-9]+$/.test(action.client_secret) ||
+      !text(action.expires_at) || !Number.isFinite(Date.parse(action.expires_at)) || !text(action.return_url) ||
+      action.return_url !== new URL(paymentThanksRoute(payment.id), window.location.origin).href ||
+      payment.amount.currency !== "JPY" || !positive(payment.amount.amount) || payment.method !== "credit_card") return fail();
+  return { publishableKey: action.publishable_key, clientSecret: action.client_secret,
+    expiresAt: Date.parse(action.expires_at), returnUrl: action.return_url };
+}
+
 export function validateFormPost(action: unknown): FormPostAction {
   if (!object(action) || action.type !== "form_post" || action.url !== TECHCOIN_POST ||
       !only(action, ["type", "url", "fields"]) || !Array.isArray(action.fields) || action.fields.length !== 6) return fail();
